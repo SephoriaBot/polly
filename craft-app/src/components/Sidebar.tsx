@@ -7,7 +7,7 @@ interface SidebarProps {
 
 export default function Sidebar({ currentPage, onNavigate }: SidebarProps) {
   return (
-    <aside className="sidebar">
+    <aside className="sidebar" style={{ position: 'static' }}>
       <div className="sidebar-logo">
         <h1>Craft & Garden</h1>
         <p>Your creative sanctuary</p>
