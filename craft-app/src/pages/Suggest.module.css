@@ -1,0 +1,58 @@
+.page { padding: 1.5rem; max-width: 960px; margin: 0 auto; }
+
+.genBox { padding: 1.25rem; margin-bottom: 1.25rem; }
+
+.genTitle {
+  font-family: 'Lora', serif;
+  font-size: 16px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+.genTitle i { color: var(--sage); }
+.genSub { font-size: 12px; color: var(--text-soft); margin-bottom: 0.75rem; }
+
+.filterSection { margin-bottom: 10px; }
+.filterLabel { font-size: 10px; font-weight: 500; color: var(--text-soft); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 5px; }
+
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip {
+  background: var(--cream);
+  border: 0.5px solid var(--border);
+  border-radius: 20px;
+  padding: 4px 12px;
+  font-size: 11px;
+  color: var(--text-soft);
+  transition: all 0.15s;
+}
+.chip.active { background: var(--sage); border-color: var(--sage); color: #fff; }
+.chip:hover:not(.active) { border-color: var(--sage); color: var(--sage-dark); }
+
+.aiBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: var(--sage-light);
+  color: var(--sage-dark);
+  font-size: 10px;
+  font-weight: 500;
+  padding: 3px 10px;
+  border-radius: 20px;
+  margin-bottom: 0.75rem;
+}
+
+.resultsGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
+
+.mealCard { padding: 0; overflow: hidden; }
+.mealThumb { width: 100%; height: 130px; object-fit: cover; display: block; }
+.mealName { font-size: 13px; font-weight: 500; margin-bottom: 5px; }
+.mealDesc { font-size: 11px; color: var(--text-soft); line-height: 1.4; margin-bottom: 2px; }
+.mealTags { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; margin-bottom: 6px; }
+.mealTime { font-size: 10px; color: var(--text-soft); margin-left: auto; }
+
+.loadingBar { height: 2px; background: var(--sage-light); border-radius: 1px; overflow: hidden; margin-bottom: 1rem; }
+.loadingFill { height: 100%; width: 40%; background: var(--sage); animation: slide 1s ease-in-out infinite; }
+@keyframes slide { 0% { transform: translateX(-100%); } 100% { transform: translateX(350%); } }
+@keyframes spin { to { transform: rotate(360deg); } }
