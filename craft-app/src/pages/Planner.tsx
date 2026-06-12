@@ -1,8 +1,6 @@
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
 import type { WeekPlan, Meal } from '../types'
 import { supabase } from '../lib/supabase'
-import { useAuth } from '../lib/AuthContext'
 import styles from './Planner.module.css'
 
 const DAYS = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun']
@@ -13,20 +11,19 @@ const EMPTY_PLAN: WeekPlan = Object.fromEntries(
 )
 
 export default function Planner() {
-  const { user } = useAuth()
   const [plan, setPlan] = useState<WeekPlan>(EMPTY_PLAN)
   const [meals, setMeals] = useState<Meal[]>([])
   const [selecting, setSelecting] = useState<{day:string; type:typeof MEAL_TYPES[number]} | null>(null)
   const [loading, setLoading] = useState(true)
-  const navigate = useNavigate()
+  const [currentPage, setCurrentPage] = useState<string>('planner')
 
   useEffect(() => { fetchData() }, [])
 
   async function fetchData() {
     setLoading(true)
     const [mealsRes, planRes] = await Promise.all([
-      supabase.from('meals').select('*').eq('user_id', user!.id).order('name'),
-      supabase.from('week_plans').select('*').eq('user_id', user!.id)
+      supabase.from('meals').select('*').order('name'),
+      supabase.from('week_plans').select('*')
     ])
     if (mealsRes.data) setMeals(mealsRes.data)
     if (planRes.data?.length) {
@@ -44,8 +41,8 @@ export default function Planner() {
     if (!selecting) return
     const { day, type } = selecting
     await supabase.from('week_plans').upsert(
-      { user_id: user!.id, day, meal_type: type, meal_name: mealName },
-      { onConflict: 'user_id,day,meal_type' }
+      { day, meal_type: type, meal_name: mealName },
+      { onConflict: 'day,meal_type' }
     )
     setPlan(p => ({ ...p, [day]: { ...p[day], [type]: mealName } }))
     setSelecting(null)
@@ -54,7 +51,6 @@ export default function Planner() {
   async function clearSlot(day: string, type: string) {
     await supabase.from('week_plans')
       .delete()
-      .eq('user_id', user!.id)
       .eq('day', day)
       .eq('meal_type', type)
     setPlan(p => ({ ...p, [day]: { ...p[day], [type]: null } }))
@@ -64,7 +60,7 @@ export default function Planner() {
     <div className={styles.page}>
       <div className={styles.header}>
         <h1 className={styles.title}>this week</h1>
-        <button className="btn-primary" onClick={() => navigate('/suggest')}>
+        <button className="btn-primary" onClick={() => setCurrentPage('suggest')}>
           <i className="ti ti-sparkles" aria-hidden="true" /> get meal ideas
         </button>
       </div>
@@ -145,7 +141,7 @@ export default function Planner() {
                     <button
                       className="btn-ghost"
                       style={{fontSize:11,padding:'4px 8px',marginTop:6,width:'100%',justifyContent:'center'}}
-                      onClick={() => navigate('/cook', { state: { meal: m.name } })}
+                      onClick={() => setCurrentPage('cook')}
                     >
                       <i className="ti ti-chef-hat" aria-hidden="true" /> cook this
                     </button>
