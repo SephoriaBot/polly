@@ -1,0 +1,210 @@
+.page { padding: 28px 36px; max-width: 1100px; }
+
+.header { margin-bottom: 1.5rem; }
+
+.eyebrow {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font-weight: 600;
+  color: var(--pink);
+  margin-bottom: 4px;
+}
+
+.title {
+  font-family: 'Playfair Display', serif;
+  font-size: 2rem;
+  color: var(--ink);
+  font-style: italic;
+}
+
+.searchInput {
+  width: 100%;
+  max-width: 400px;
+  padding: 10px 14px;
+  border: 1.5px solid var(--border);
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-family: 'DM Sans', sans-serif;
+  color: var(--ink);
+  background: var(--white);
+  outline: none;
+  margin-bottom: 1rem;
+  transition: border-color 0.15s;
+}
+
+.searchInput:focus {
+  border-color: var(--pink);
+  box-shadow: 0 0 0 3px rgba(255,59,127,0.1);
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 1.5rem;
+}
+
+.chip {
+  padding: 6px 14px;
+  border-radius: 20px;
+  border: 1.5px solid var(--border);
+  background: var(--white);
+  font-size: 0.75rem;
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 600;
+  color: var(--ink-soft);
+  cursor: pointer;
+  transition: all 0.15s;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.chip:hover { border-color: var(--pink); color: var(--pink); background: var(--blush); }
+.chipActive { background: var(--pink) !important; color: white !important; border-color: var(--pink) !important; }
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.recipeCard {
+  cursor: pointer;
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.cardTop { margin-bottom: 4px; }
+
+.categoryBadge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  background: var(--blush);
+  color: var(--pink-dark);
+}
+
+.recipeName {
+  font-family: 'Playfair Display', serif;
+  font-size: 1rem;
+  color: var(--ink);
+  line-height: 1.3;
+}
+
+.recipeMeta {
+  font-size: 0.75rem;
+  color: var(--ink-muted);
+}
+
+.tweakCount {
+  font-size: 0.72rem;
+  color: var(--pink);
+  font-weight: 600;
+  margin-top: 4px;
+}
+
+.detail { max-width: 900px; }
+
+.detailHeader { margin-bottom: 1.5rem; }
+
+.detailTitle {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.8rem;
+  color: var(--ink);
+  margin: 8px 0;
+  font-style: italic;
+}
+
+.detailMeta { display: flex; gap: 8px; flex-wrap: wrap; }
+
+.metaPill {
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: var(--cream);
+  border: 1.5px solid var(--border);
+  color: var(--ink-soft);
+}
+
+.detailGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+}
+
+.detailCard { padding: 20px 22px; }
+
+.cardTitle {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.1rem;
+  color: var(--ink);
+  margin-bottom: 1rem;
+}
+
+.ingredientList {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 1rem;
+}
+
+.ingredientItem {
+  display: flex;
+  gap: 8px;
+  font-size: 0.88rem;
+  color: var(--ink);
+  line-height: 1.4;
+}
+
+.bullet { color: var(--pink); flex-shrink: 0; }
+
+.tip {
+  font-size: 0.78rem;
+  color: var(--ink-soft);
+  background: var(--blush);
+  border-left: 3px solid var(--pink);
+  padding: 10px 12px;
+  border-radius: 0 6px 6px 0;
+  line-height: 1.5;
+}
+
+.tweakList { display: flex; flex-direction: column; gap: 12px; }
+
+.tweakItem {
+  border-left: 3px solid var(--blush);
+  padding-left: 12px;
+}
+
+.tweakLabel {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--pink-dark);
+  margin-bottom: 3px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.tweakDesc {
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+  line-height: 1.5;
+}
+
+@media (max-width: 900px) {
+  .grid { grid-template-columns: repeat(2, 1fr); }
+  .detailGrid { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 640px) {
+  .page { padding: 16px; }
+  .grid { grid-template-columns: 1fr; }
+}
