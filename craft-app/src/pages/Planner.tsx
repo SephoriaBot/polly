@@ -10,12 +10,14 @@ const EMPTY_PLAN: WeekPlan = Object.fromEntries(
   DAYS.map(d => [d, { breakfast: null, lunch: null, dinner: null }])
 )
 
-export default function Planner() {
+export default function Planner({ onNavigate }: PlannerProps) {
   const [plan, setPlan] = useState<WeekPlan>(EMPTY_PLAN)
   const [meals, setMeals] = useState<Meal[]>([])
   const [selecting, setSelecting] = useState<{day:string; type:typeof MEAL_TYPES[number]} | null>(null)
   const [loading, setLoading] = useState(true)
-  const [currentPage, setCurrentPage] = useState<string>('planner')
+  interface PlannerProps {
+  onNavigate: (page: string) => void
+}
 
   useEffect(() => { fetchData() }, [])
 
@@ -60,7 +62,7 @@ export default function Planner() {
     <div className={styles.page}>
       <div className={styles.header}>
         <h1 className={styles.title}>this week</h1>
-        <button className="btn-primary" onClick={() => setCurrentPage('suggest')}>
+        <button className="btn-primary" onClick={() => onNavigate('suggest')}>
           <i className="ti ti-sparkles" aria-hidden="true" /> get meal ideas
         </button>
       </div>
@@ -141,7 +143,7 @@ export default function Planner() {
                     <button
                       className="btn-ghost"
                       style={{fontSize:11,padding:'4px 8px',marginTop:6,width:'100%',justifyContent:'center'}}
-                      onClick={() => setCurrentPage('cook')}
+                      onClick={() => onNavigate('cook')}
                     >
                       <i className="ti ti-chef-hat" aria-hidden="true" /> cook this
                     </button>
