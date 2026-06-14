@@ -1,11 +1,60 @@
-import { Leaf, FlaskConical, Sparkles, BookOpen, Home, Wand2, UtensilsCrossed, ShoppingCart, Archive, CalendarDays, Lightbulb, PawPrint, Sandwich } from 'lucide-react';
+import { useState } from 'react';
+import {
+  Leaf, FlaskConical, Sparkles, BookOpen, Home, Wand2,
+  UtensilsCrossed, ShoppingCart, Archive, CalendarDays, Lightbulb,
+  PawPrint, Sandwich, ChefHat, ChevronDown, ChevronRight
+} from 'lucide-react';
 
 interface SidebarProps {
   currentPage: string;
   onNavigate: (page: string) => void;
 }
 
+const SECTIONS = [
+  {
+    id: 'open-kitchen',
+    label: 'Open Kitchen',
+    icon: ChefHat,
+    items: [
+      { id: 'cook', label: 'Cook', icon: UtensilsCrossed },
+      { id: 'suggest', label: 'Suggestions', icon: Lightbulb },
+      { id: 'planner', label: 'Meal Planner', icon: CalendarDays },
+      { id: 'grocery', label: 'Grocery List', icon: ShoppingCart },
+      { id: 'pantry', label: 'Pantry', icon: Archive },
+      { id: 'bread', label: 'Bread Machine', icon: Sandwich },
+    ],
+  },
+  {
+    id: 'home',
+    label: 'Home',
+    icon: Home,
+    items: [
+      { id: 'plants', label: 'My Plants', icon: Leaf },
+      { id: 'pets', label: 'My Pets', icon: PawPrint },
+    ],
+  },
+  {
+    id: 'craft-table',
+    label: 'Go to Craft Table',
+    icon: Sparkles,
+    items: [
+      { id: 'recipes', label: 'Recipe Library', icon: BookOpen },
+      { id: 'wizard', label: 'Recipe Wizard', icon: Wand2 },
+      { id: 'ingredients', label: 'Ingredients', icon: FlaskConical },
+      { id: 'add-recipe', label: 'Add Recipe', icon: Sparkles },
+    ],
+  },
+];
+
 export default function Sidebar({ currentPage, onNavigate }: SidebarProps) {
+  // figure out which section (if any) the current page belongs to, so it starts expanded
+  const initialOpen = SECTIONS.find(s => s.items.some(i => i.id === currentPage))?.id ?? null;
+  const [openSection, setOpenSection] = useState<string | null>(initialOpen);
+
+  function toggleSection(id: string) {
+    setOpenSection(prev => (prev === id ? null : id));
+  }
+
   return (
     <aside className="sidebar" style={{ position: 'static' }}>
       <div className="sidebar-logo">
@@ -14,67 +63,51 @@ export default function Sidebar({ currentPage, onNavigate }: SidebarProps) {
       </div>
 
       <div className="sidebar-section">
-        <div className="sidebar-section-label">Overview</div>
         <nav className="sidebar-nav">
-          <button className={`nav-item ${currentPage === 'home' ? 'active' : ''}`} onClick={() => onNavigate('home')}>
+          <button className={`nav-item ${currentPage === 'dashboard' ? 'active' : ''}`} onClick={() => onNavigate('dashboard')}>
             <Home size={16} /> Dashboard
           </button>
         </nav>
       </div>
 
-      <div className="sidebar-section">
-        <div className="sidebar-section-label">Kitchen</div>
-        <nav className="sidebar-nav">
-          <button className={`nav-item ${currentPage === 'cook' ? 'active' : ''}`} onClick={() => onNavigate('cook')}>
-            <UtensilsCrossed size={16} /> Cook
-          </button>
-          <button className={`nav-item ${currentPage === 'suggest' ? 'active' : ''}`} onClick={() => onNavigate('suggest')}>
-            <Lightbulb size={16} /> Suggestions
-          </button>
-          <button className={`nav-item ${currentPage === 'planner' ? 'active' : ''}`} onClick={() => onNavigate('planner')}>
-            <CalendarDays size={16} /> Meal Planner
-          </button>
-          <button className={`nav-item ${currentPage === 'grocery' ? 'active' : ''}`} onClick={() => onNavigate('grocery')}>
-            <ShoppingCart size={16} /> Grocery List
-          </button>
-          <button className={`nav-item ${currentPage === 'pantry' ? 'active' : ''}`} onClick={() => onNavigate('pantry')}>
-            <Archive size={16} /> Pantry
-          </button>
-          <button className={`nav-item ${currentPage === 'bread' ? 'active' : ''}`} onClick={() => onNavigate('bread')}>
-            <Sandwich size={16} /> Bread Machine
-          </button>
-        </nav>
-      </div>
+      {SECTIONS.map(section => {
+        const Icon = section.icon;
+        const isOpen = openSection === section.id;
+        const isSectionActive = section.items.some(i => i.id === currentPage);
 
-      <div className="sidebar-section">
-        <div className="sidebar-section-label">Garden & Home</div>
-        <nav className="sidebar-nav">
-          <button className={`nav-item ${currentPage === 'plants' ? 'active' : ''}`} onClick={() => onNavigate('plants')}>
-            <Leaf size={16} /> My Plants
-          </button>
-          <button className={`nav-item ${currentPage === 'pets' ? 'active' : ''}`} onClick={() => onNavigate('pets')}>
-            <PawPrint size={16} /> My Pets
-          </button>
-        </nav>
-      </div>
+        return (
+          <div className="sidebar-section" key={section.id}>
+            <nav className="sidebar-nav">
+              <button
+                className={`nav-item ${isSectionActive ? 'active' : ''}`}
+                onClick={() => toggleSection(section.id)}
+              >
+                <Icon size={16} />
+                <span style={{ flex: 1 }}>{section.label}</span>
+                {isOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+              </button>
 
-      <div className="sidebar-section">
-        <div className="sidebar-section-label">Alchemy</div>
-        <nav className="sidebar-nav">
-          <button className={`nav-item ${currentPage === 'recipes' ? 'active' : ''}`} onClick={() => onNavigate('recipes')}>
-            <BookOpen size={16} /> Recipe Library
-          </button>
-          <button className={`nav-item ${currentPage === 'wizard' ? 'active' : ''}`} onClick={() => onNavigate('wizard')}>
-            <Wand2 size={16} /> Recipe Wizard
-          </button>
-          <button className={`nav-item ${currentPage === 'ingredients' ? 'active' : ''}`} onClick={() => onNavigate('ingredients')}>
-            <FlaskConical size={16} /> Ingredients
-          </button>
-          <button className={`nav-item ${currentPage === 'add-recipe' ? 'active' : ''}`} onClick={() => onNavigate('add-recipe')}>
-            <Sparkles size={16} /> Add Recipe
-          </button>
-        </nav>
-      </div>
+              {isOpen && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 2, paddingLeft: 10, marginTop: 2 }}>
+                  {section.items.map(item => {
+                    const ItemIcon = item.icon;
+                    return (
+                      <button
+                        key={item.id}
+                        className={`nav-item ${currentPage === item.id ? 'active' : ''}`}
+                        style={{ fontSize: '0.8rem' }}
+                        onClick={() => onNavigate(item.id)}
+                      >
+                        <ItemIcon size={14} /> {item.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </nav>
+          </div>
+        );
+      })}
 
     </aside>
   );
