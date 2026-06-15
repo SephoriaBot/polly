@@ -77,7 +77,6 @@
   transition: color 0.1s;
   flex-shrink: 0;
 }
-.removeBtn:hover { color: #c0392b; }
 .removeBtn i { font-size: 13px; }
 
 .addRow { display: flex; gap: 6px; padding: 8px; border-top: 1px solid var(--border); }
@@ -105,7 +104,7 @@
   padding: 3px;
   color: var(--green-dark);
   cursor: pointer;
-  display: flex;
+  display: fixed;
   align-items: center;
   flex-shrink: 0;
 }
