@@ -69,12 +69,11 @@
 .removeBtn {
   background: var(--pink);
   border: var(--pink-light);
-  padding: 6px;
+  padding:10px;
   color: var(--cream);
   cursor: pointer;
   display: flex;
   align-items: center;
-  transition: color 0.1s;
   flex-shrink: 0;
 }
 .removeBtn i { font-size: 13px; }
@@ -85,7 +84,7 @@
 .priceBadge {
   font-size: 10px;
   font-weight: 600;
-  color: var(--pink);
+  color: var(--pink-light);
   background: var(--pink);
   padding: 2px 8px;
   border-radius: 20px;
@@ -101,7 +100,7 @@
 .priceToggle {
   background: var(--pink);
   border: var(--pink-light);
-  padding: 6px;
+  padding: 10px;
   color: var(--cream);
   cursor: pointer;
   display: flex;
