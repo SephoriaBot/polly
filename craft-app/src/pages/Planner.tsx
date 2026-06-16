@@ -14,6 +14,12 @@ interface PlannerProps {
   onNavigate: (page: string) => void
 }
 
+// words/phrases that signal the end of the ingredient name
+const TRAILING_STOPWORDS = [
+  'to taste','or more','as needed','such as','about','approx','approximately',
+  'optional','if desired','for serving','for garnish','for topping',
+]
+
 export default function Planner({ onNavigate }: PlannerProps) {
   const [plan, setPlan] = useState<WeekPlan>(EMPTY_PLAN)
   const [meals, setMeals] = useState<Meal[]>([])
@@ -61,6 +67,11 @@ export default function Planner({ onNavigate }: PlannerProps) {
     setPlan(p => ({ ...p, [day]: { ...p[day], [type]: null } }))
   }
 
+  async function deleteMeal(id: string) {
+    await supabase.from('meals').delete().eq('id', id)
+    setMeals(prev => prev.filter(m => m.id !== id))
+  }
+
   function cleanIngredient(raw: string): string {
     const units = new Set([
       'cup','cups','tbsp','tsp','tablespoon','tablespoons','teaspoon','teaspoons',
@@ -70,27 +81,47 @@ export default function Planner({ onNavigate }: PlannerProps) {
       'handful','package','packages','pkg','sprig','sprigs','stalk','stalks',
       'head','heads','quart','quarts','pint','pints','gallon','gallons',
     ])
-    const words = raw.split(' ')
+    const skipWords = new Set([
+      'of','fresh','dried','ground','chopped','minced','diced','sliced','to',
+      'taste','or','and','finely','roughly','coarsely','about','approximately',
+    ])
+
+    // 1. strip parenthetical content
+    let cleaned = raw.replace(/\(.*?\)/g, '').trim()
+
+    // 2. strip trailing clauses like "to taste", "or more as needed", "such as X"
+    for (const phrase of TRAILING_STOPWORDS) {
+      const idx = cleaned.toLowerCase().indexOf(phrase)
+      if (idx !== -1) cleaned = cleaned.slice(0, idx).trim()
+    }
+
+    // 3. strip leading numbers, fractions, units, and skip words
+    const words = cleaned.split(/\s+/)
     const start = words.findIndex(w => {
-      const clean = w.toLowerCase().replace(/[.,()]/g, '')
+      const c = w.toLowerCase().replace(/[.,;:]/g, '')
       return (
-        isNaN(parseFloat(clean)) &&
-        !units.has(clean) &&
-        !['of','fresh','dried','ground','chopped','minced','diced','sliced','to','taste','or','and','finely','roughly','coarsely'].includes(clean) &&
-        clean.length > 0
+        c.length > 0 &&
+        isNaN(parseFloat(c)) &&
+        !/^[\d/¼½¾⅓⅔⅛⅜⅝⅞-]+$/.test(c) &&
+        !units.has(c) &&
+        !skipWords.has(c)
       )
     })
-    return start === -1 ? raw : words.slice(start).join(' ')
+
+    // 4. strip trailing punctuation
+    const result = (start === -1 ? cleaned : words.slice(start).join(' '))
+      .replace(/[,;:]+$/, '')
+      .trim()
+
+    return result || raw
   }
 
   async function sendToGroceryList(meal: Meal) {
     const ingredients = meal.ingredients ?? []
     if (!ingredients.length) return
     setAddingId(meal.id)
-
     const rows = ingredients.map(ing => ({ name: cleanIngredient(ing), qty: '', checked: false }))
     await supabase.from('grocery_items').insert(rows)
-
     setAddingId(null)
     setAddedId(meal.id)
     setTimeout(() => setAddedId(null), 2000)
@@ -175,7 +206,17 @@ export default function Planner({ onNavigate }: PlannerProps) {
                   const hasIngredients = (m.ingredients ?? []).length > 0
                   return (
                     <div key={m.id} className={`card ${styles.mealCard}`}>
-                      <div className={styles.mealName}>{m.name}</div>
+                      <div style={{display:'flex',alignItems:'flex-start',justifyContent:'space-between',gap:6}}>
+                        <div className={styles.mealName}>{m.name}</div>
+                        <button
+                          className="btn-danger btn-sm"
+                          style={{flexShrink:0,padding:'2px 6px'}}
+                          onClick={() => deleteMeal(m.id)}
+                          title="delete meal"
+                        >
+                          <i className="ti ti-trash" aria-hidden="true" />
+                        </button>
+                      </div>
                       <div className={styles.mealMeta}>
                         <span style={{color:'var(--ink-muted)',fontSize:11}}>{m.time}</span>
                         {m.tags.map(t => <span key={t} className={`tag ${t}`}>{t}</span>)}
