@@ -95,6 +95,11 @@ export default function Planner({ onNavigate }: PlannerProps) {
       if (idx !== -1) cleaned = cleaned.slice(0, idx).trim()
     }
 
+    // 2b. strip everything after the first comma (almost always prep instructions
+    // like ", finely chopped" or ", crushed" rather than part of the ingredient name)
+    const commaIdx = cleaned.indexOf(',')
+    if (commaIdx !== -1) cleaned = cleaned.slice(0, commaIdx).trim()
+
     // 3. strip leading numbers, fractions, units, and skip words
     const words = cleaned.split(/\s+/)
     const start = words.findIndex(w => {
@@ -116,12 +121,39 @@ export default function Planner({ onNavigate }: PlannerProps) {
     return result || raw
   }
 
+  function normalizeForDedup(name: string): string {
+    let n = name.toLowerCase().trim()
+    // naive singular/plural normalization: drop trailing "es" or "s" (but not for short words)
+    if (n.endsWith('es') && n.length > 4) n = n.slice(0, -2)
+    else if (n.endsWith('s') && !n.endsWith('ss') && n.length > 3) n = n.slice(0, -1)
+    return n
+  }
+
   async function sendToGroceryList(meal: Meal) {
     const ingredients = meal.ingredients ?? []
     if (!ingredients.length) return
     setAddingId(meal.id)
-    const rows = ingredients.map(ing => ({ name: cleanIngredient(ing), qty: '', checked: false }))
-    await supabase.from('grocery_items').insert(rows)
+
+    const cleanedNames = ingredients.map(cleanIngredient)
+    const seen = new Map<string, string>() // normalized -> first-seen display name
+
+    for (const name of cleanedNames) {
+      const key = normalizeForDedup(name)
+      if (!seen.has(key)) seen.set(key, name)
+    }
+
+    // check what's already on the grocery list so we don't duplicate it
+    const { data: existing } = await supabase.from('grocery_items').select('name')
+    const existingKeys = new Set((existing ?? []).map(e => normalizeForDedup(e.name)))
+
+    const rows = Array.from(seen.entries())
+      .filter(([key]) => !existingKeys.has(key))
+      .map(([, name]) => ({ name, qty: '', checked: false }))
+
+    if (rows.length) {
+      await supabase.from('grocery_items').insert(rows)
+    }
+
     setAddingId(null)
     setAddedId(meal.id)
     setTimeout(() => setAddedId(null), 2000)
