@@ -28,8 +28,22 @@ export default async function handler(req, res) {
       .slice(0, 20)
 
     const cleaned = [...new Set(names)]
-      .map(name => ({ name }))
-      .slice(0, 10)
+  .filter(name => {
+    const n = name.toLowerCase()
+
+    return (
+      n.length >= 4 &&
+      n.length <= 40 &&
+      !n.includes('delivered') &&
+      !n.includes('can i') &&
+      !n.includes('add to cart') &&
+      !n.includes('search') &&
+      !n.includes('instacart') &&
+      !n.includes('?')
+    )
+  })
+  .map(name => ({ name }))
+  .slice(0, 10)
 
     return res.status(200).json(cleaned)
   } catch (e) {
