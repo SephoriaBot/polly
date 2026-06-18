@@ -48,16 +48,24 @@ function extractItemIds(html) {
 }
 
 async function fetchItems(ids) {
-  const url = `https://www.instacart.com/graphql?operationName=Items`
-
-  const res = await fetch(url, {
+  const res = await fetch('https://www.instacart.com/graphql', {
     method: 'POST',
     headers: {
       'content-type': 'application/json'
     },
     body: JSON.stringify({
+      operationName: "Items",
       variables: {
-        ids
+        ids,
+        shopId: "754",
+        zoneId: "946",
+        postalCode: "23224"
+      },
+      extensions: {
+        persistedQuery: {
+          version: 1,
+          sha256Hash: "0362f9eaea7f55c17c95266a64f8c37a10b55d265318f85c761c59c382d96074"
+        }
       }
     })
   })
