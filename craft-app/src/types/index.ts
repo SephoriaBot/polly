@@ -24,15 +24,11 @@ export interface PlantLog {
   logged_at: string;
 }
 
-export interface Recipe {
-  id: string;
-  name: string;
-  category: RecipeCategory;
-  description: string | null;
-  difficulty: 'easy' | 'medium' | 'advanced';
-  prep_time_min: number | null;
-  tags: string[] | null;
-  created_at: string;
+export type Recipe = {
+  id: string
+  title?: string
+  description?: string
+  prep_time_min?: number
 }
 
 export interface RecipeIngredient {
@@ -45,11 +41,10 @@ export interface RecipeIngredient {
   sort_order: number;
 }
 
-export interface RecipeStep {
-  id: string;
-  recipe_id: string;
-  step_number: number;
-  instruction: string;
+export type RecipeStep = {
+  id?: string
+  step_number?: number
+  instruction?: string
 }
 
 export interface WizardQuestion {
