@@ -119,7 +119,14 @@ async function buildSmartCart() {
       })
     )
 
-    <button onClick={buildSmartCart}>
+    setCart(items)
+  }
+  finally {
+    setLoadingCart(false)
+  }
+}
+
+  <button onClick={buildSmartCart}>
   Build Smart Cart
 </button>
 
@@ -130,12 +137,6 @@ async function buildSmartCart() {
 <button onClick={clearSmartCart}>
   Clear
 </button>
-
-    setCart(items)
-  } finally {
-    setLoadingCart(false)
-  }
-}
 
   function refreshSmartCart() {
   setCart([])
