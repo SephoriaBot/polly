@@ -13,17 +13,6 @@ interface PriceEntry {
   updated_at: string
 }
 
-interface ProductMatch {
-  id: string
-  item_name: string
-  product_name: string
-  product_url: string
-  retailer: string
-  price: number
-  external_id: string
-  image_url: string
-}
-
 export default function Grocery() {
   const [items, setItems] = useState<GroceryItem[]>([])
   const [newItem, setNewItem] = useState('')
@@ -33,19 +22,18 @@ export default function Grocery() {
   const [listName, setListName] = useState('')
   const [showSaved, setShowSaved] = useState(false)
   const [saving, setSaving] = useState(false)
-const [cart, setCart] = useState<any[]>([])
-const [loadingCart, setLoadingCart] = useState(false)
+  const [cart, setCart] = useState<any[]>([])
+  const [loadingCart, setLoadingCart] = useState(false)
   const [prices, setPrices] = useState<PriceEntry[]>([])
-  const [productMatches, setProductMatches] = useState<ProductMatch[]>([])
   const [expandedItem, setExpandedItem] = useState<string | null>(null)
   const [priceForm, setPriceForm] = useState<{ store: string; price: string }>({ store: '', price: '' })
+  const [zip, setZip] = useState(() => localStorage.getItem('grocery_zip') || '')
 
   useEffect(() => {
-  fetchItems()
-  fetchSavedLists()
-  fetchPrices()
-  fetchProductMatches()
-}, [])
+    fetchItems()
+    fetchSavedLists()
+    fetchPrices()
+  }, [])
 
   async function fetchItems() {
     setLoading(true)
@@ -73,25 +61,6 @@ const [loadingCart, setLoadingCart] = useState(false)
     setPrices(data ?? [])
   }
 
-  async function fetchProductMatches() {
-  const { data } = await supabase
-    .from('grocery_product_matches')
-    .select('*')
-    .order('created_at', { ascending: false })
-
-  setProductMatches(
-  results.flatMap(r =>
-    (r.results ?? []).map((p: any) => ({
-      id: crypto.randomUUID(),
-      item_name: r.item,
-      product_name: p.name,
-      retailer: p.store,
-      price: p.price ?? 0
-    }))
-  )
-)
-}
-
   async function addItem() {
     const name = newItem.trim()
     if (!name) return
@@ -104,24 +73,31 @@ const [loadingCart, setLoadingCart] = useState(false)
     setNewQty('')
   }
 
-  async function searchProduct(itemName: string) {
-  const q = encodeURIComponent(itemName)
-
-  const res = await fetch(`/api/product-search?q=${q}`)
-  if (!res.ok) return null
-
-  return await res.json()
-}
-
+  async function buildSmartCart() {
+    const needItems = items.filter(i => !i.checked)
+    setLoadingCart(true)
+    const results = await Promise.all(
+      needItems.map(async (item) => {
+        const res = await fetch(`/api/product-search?q=${encodeURIComponent(item.name)}&zip=${encodeURIComponent(zip)}`)
+        const data = await res.json()
+        return {
+          item: item.name,
+          results: Array.isArray(data) ? data : []
+        }
+      })
+    )
+    setCart(results)
+    setLoadingCart(false)
+  }
 
   function refreshSmartCart() {
-  setCart([])
-  buildSmartCart()
-}
+    setCart([])
+    buildSmartCart()
+  }
 
   function clearSmartCart() {
-  setCart([])
-}
+    setCart([])
+  }
 
   async function toggle(id: string, checked: boolean) {
     await supabase.from('grocery_items').update({ checked: !checked }).eq('id', id)
@@ -162,7 +138,6 @@ const [loadingCart, setLoadingCart] = useState(false)
     const needItems = items.filter(i => !i.checked)
     if (!needItems.length) return
     const listText = needItems.map(i => `${i.qty ? i.qty + ' ' : ''}${i.name}`).join('\n')
-
     navigator.clipboard?.writeText(listText).then(() => {
       window.location.href = 'mobilenotes://'
       setTimeout(() => {
@@ -173,19 +148,17 @@ const [loadingCart, setLoadingCart] = useState(false)
     })
   }
 
-function searchOnInstacart(itemId: string, itemName: string) {
-  const query = encodeURIComponent(itemName)
-  const url = `https://www.instacart.com/store/s?k=${query}`
+  function searchOnInstacart(itemId: string, itemName: string) {
+    const query = encodeURIComponent(itemName)
+    window.open(`https://www.instacart.com/store/s?k=${query}`, '_blank')
+    setPriceForm({ store: 'Instacart', price: '' })
+    setExpandedItem(itemId)
+  }
 
-  window.open(url, '_blank')
-
-  setPriceForm({
-    store: 'Instacart',
-    price: '',
-  })
-
-  setExpandedItem(itemId)
-}
+  function saveZip(val: string) {
+    setZip(val)
+    localStorage.setItem('grocery_zip', val)
+  }
 
   function pricesFor(itemName: string) {
     return prices
@@ -223,98 +196,35 @@ function searchOnInstacart(itemId: string, itemName: string) {
     setPrices(prev => prev.filter(p => p.id !== id))
   }
 
-const [zip, setZip] = useState(() => localStorage.getItem('grocery_zip') || '')
+  function storeTally() {
+    const storeCounts = new Map<string, number>()
+    const storeTotals = new Map<string, number>()
 
-function saveZip(val: string) {
-  setZip(val)
-  localStorage.setItem('grocery_zip', val)
-}
-
-async function buildSmartCart() {
-  const needItems = items.filter(i => !i.checked)
-  setLoadingCart(true)
-
-  const results = await Promise.all(
-    needItems.map(async (item) => {
-      const res = await fetch(`/api/product-search?q=${encodeURIComponent(item.name)}&zip=${encodeURIComponent(zip)}`)
-      const data = await res.json()
-      return {
-        item: item.name,
-        results: Array.isArray(data) ? data : []
-      }
-    })
-  )
-
-  setCart(results)
-  setLoadingCart(false)
-}
-
-function storeTally() {
-  const storeCounts = new Map<string, number>()
-  const storeTotals = new Map<string, number>()
-
-  cart.forEach(c => {
-    // cheapest result per item per store
-    const byStore = new Map<string, number>()
-    c.results?.forEach((r: any) => {
-      if (!r.store || r.price == null) return
-      if (!byStore.has(r.store) || r.price < byStore.get(r.store)!) {
-        byStore.set(r.store, r.price)
-      }
+    cart.forEach(c => {
+      const byStore = new Map<string, number>()
+      c.results?.forEach((r: any) => {
+        if (!r.store || r.price == null) return
+        if (!byStore.has(r.store) || r.price < byStore.get(r.store)!) {
+          byStore.set(r.store, r.price)
+        }
+      })
+      byStore.forEach((price, store) => {
+        storeCounts.set(store, (storeCounts.get(store) ?? 0) + 1)
+        storeTotals.set(store, (storeTotals.get(store) ?? 0) + price)
+      })
     })
 
-    byStore.forEach((price, store) => {
-      storeCounts.set(store, (storeCounts.get(store) ?? 0) + 1)
-      storeTotals.set(store, (storeTotals.get(store) ?? 0) + price)
-    })
-  })
-
-  return Array.from(storeCounts.entries())
-    .map(([store, count]) => ({
-      store,
-      count,
-      total: storeTotals.get(store) ?? 0
-    }))
-    .sort((a, b) => b.count - a.count || a.total - b.total)
-}
-
-
-  function searchEntireListOnInstacart() {
-  const needItems = items.filter(i => !i.checked)
-
-  if (!needItems.length) return
-
-  const query = encodeURIComponent(
-    needItems
-      .map(i => `${i.qty ? i.qty + ' ' : ''}${i.name}`)
-      .join(' ')
-  )
-
-  window.open(
-    `https://www.instacart.com/store/s?k=${query}`,
-    '_blank'
-  )
-}
+    return Array.from(storeCounts.entries())
+      .map(([store, count]) => ({
+        store,
+        count,
+        total: storeTotals.get(store) ?? 0
+      }))
+      .sort((a, b) => b.count - a.count || a.total - b.total)
+  }
 
   const needs = items.filter(i => !i.checked)
   const have  = items.filter(i =>  i.checked)
-
-  function storeTally() {
-  const storeCounts = new Map<string, number>()
-
-  cart.forEach(c => {
-    c.results?.forEach((r: any) => {
-      if (!r.store) return
-      storeCounts.set(r.store, (storeCounts.get(r.store) ?? 0) + 1)
-    })
-  })
-
-  return Array.from(storeCounts.entries())
-    .map(([store, count]) => ({ store, count }))
-    .sort((a, b) => b.count - a.count)
-}
-
-
   const tally = storeTally()
   const totalTracked = tally.reduce((sum, t) => sum + t.count, 0)
 
@@ -322,28 +232,30 @@ function storeTally() {
     <div className={styles.page}>
       <div className={styles.header}>
         <h1 className={styles.title}><i className="ti ti-shopping-cart" aria-hidden="true" /> grocery list</h1>
-        <div style={{display:'flex',gap:8}}>
-
-          <button onClick={buildSmartCart}>
-  Build Smart Cart
-</button>
-
-  <button onClick={refreshSmartCart}>
-  Refresh
-</button>
-
-  <button onClick={clearSmartCart}>
-  Clear
-</button>
-          
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button onClick={buildSmartCart}>Build Smart Cart</button>
+          <button onClick={refreshSmartCart}>Refresh</button>
+          <button onClick={clearSmartCart}>Clear</button>
           <button className="btn-ghost" onClick={() => setShowSaved(!showSaved)}>
             <i className="ti ti-history" aria-hidden="true" /> saved lists {savedLists.length > 0 && `(${savedLists.length})`}
           </button>
-          
           <button className="btn-primary" onClick={openShoppingList} disabled={!needs.length}>
             <i className="ti ti-clipboard-list" aria-hidden="true" /> copy list & open notes
           </button>
         </div>
+      </div>
+
+      {/* zip code input */}
+      <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 8 }}>
+        <i className="ti ti-map-pin" aria-hidden="true" />
+        <input
+          type="text"
+          placeholder="zip code for local prices..."
+          value={zip}
+          onChange={e => saveZip(e.target.value)}
+          style={{ width: 160 }}
+          maxLength={5}
+        />
       </div>
 
       {/* save list row */}
@@ -351,7 +263,7 @@ function storeTally() {
         <input type="text" placeholder="name this list (optional)..." value={listName}
           onChange={e => setListName(e.target.value)}
           onKeyDown={e => e.key === 'Enter' && saveList()}
-          style={{flex:2}} />
+          style={{ flex: 2 }} />
         <button className="btn-primary" onClick={saveList} disabled={saving || !items.length}>
           <i className="ti ti-device-floppy" aria-hidden="true" /> save list
         </button>
@@ -367,12 +279,12 @@ function storeTally() {
         <div className={`card ${styles.savedPanel}`}>
           <div className={styles.savedPanelTitle}>saved lists</div>
           {savedLists.length === 0
-            ? <p style={{fontSize:12,color:'var(--ink-muted)',padding:'0.5rem 0'}}>no saved lists yet</p>
+            ? <p style={{ fontSize: 12, color: 'var(--ink-muted)', padding: '0.5rem 0' }}>no saved lists yet</p>
             : savedLists.map(list => (
               <div key={list.id} className={styles.savedListRow}>
                 <div>
                   <div className={styles.savedListName}>{list.name}</div>
-                  <div className={styles.savedListItems}>{list.items.slice(0,5).join(' · ')}{list.items.length > 5 ? ` +${list.items.length - 5} more` : ''}</div>
+                  <div className={styles.savedListItems}>{list.items.slice(0, 5).join(' · ')}{list.items.length > 5 ? ` +${list.items.length - 5} more` : ''}</div>
                 </div>
                 <button className={styles.removeBtn} onClick={() => deleteSavedList(list.id)}>
                   <i className="ti ti-trash" aria-hidden="true" />
@@ -384,9 +296,9 @@ function storeTally() {
       )}
 
       {/* store leaderboard */}
-      {totalTracked > 0 && (
+      {tally.length > 0 && (
         <div className={`card ${styles.savedPanel}`}>
-          <div className={styles.savedPanelTitle}>cheapest store so far</div>
+          <div className={styles.savedPanelTitle}>best store for your list</div>
           {tally.map((t, i) => (
             <div key={t.store} className={styles.tallyRow}>
               <span className={styles.tallyRank}>{i + 1}</span>
@@ -394,14 +306,15 @@ function storeTally() {
               <div className={styles.tallyBarTrack}>
                 <div className={styles.tallyBarFill} style={{ width: `${(t.count / totalTracked) * 100}%` }} />
               </div>
-              <span className={styles.tallyCount}>{t.count}/{totalTracked}</span>
+              <span className={styles.tallyCount}>{t.count}/{totalTracked} items</span>
+              <span className={styles.priceBadge}>${t.total.toFixed(2)} est.</span>
             </div>
           ))}
         </div>
       )}
 
       {loading ? (
-        <p style={{color:'var(--ink-muted)',fontSize:13}}>loading...</p>
+        <p style={{ color: 'var(--ink-muted)', fontSize: 13 }}>loading...</p>
       ) : (
         <div className={styles.layout}>
           <div className="card">
@@ -411,7 +324,7 @@ function storeTally() {
             </div>
             <div className={styles.list}>
               {needs.length === 0
-                ? <p style={{textAlign:'center',fontSize:12,color:'var(--ink-muted)',padding:'1rem'}}>list is clear!</p>
+                ? <p style={{ textAlign: 'center', fontSize: 12, color: 'var(--ink-muted)', padding: '1rem' }}>list is clear!</p>
                 : needs.map(item => {
                   const cheapest = cheapestFor(item.name)
                   const itemPrices = pricesFor(item.name)
@@ -462,7 +375,7 @@ function storeTally() {
                               placeholder="store..."
                               value={priceForm.store}
                               onChange={e => setPriceForm(f => ({ ...f, store: e.target.value }))}
-                              style={{flex:2}}
+                              style={{ flex: 2 }}
                             />
                             <input
                               type="number"
@@ -470,9 +383,9 @@ function storeTally() {
                               value={priceForm.price}
                               onChange={e => setPriceForm(f => ({ ...f, price: e.target.value }))}
                               onKeyDown={e => e.key === 'Enter' && addPrice(item.name)}
-                              style={{flex:1}}
+                              style={{ flex: 1 }}
                             />
-                            <button className="btn-primary" style={{padding:'6px 10px'}} onClick={() => addPrice(item.name)}>
+                            <button className="btn-primary" style={{ padding: '6px 10px' }} onClick={() => addPrice(item.name)}>
                               <i className="ti ti-plus" aria-hidden="true" />
                             </button>
                           </div>
@@ -487,12 +400,12 @@ function storeTally() {
               <input type="text" placeholder="add item..." value={newItem}
                 onChange={e => setNewItem(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && addItem()}
-                style={{flex:2}} />
+                style={{ flex: 2 }} />
               <input type="text" placeholder="qty" value={newQty}
                 onChange={e => setNewQty(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && addItem()}
-                style={{flex:1,minWidth:0}} />
-              <button className="btn-primary" style={{padding:'7px 12px'}} onClick={addItem}>
+                style={{ flex: 1, minWidth: 0 }} />
+              <button className="btn-primary" style={{ padding: '7px 12px' }} onClick={addItem}>
                 <i className="ti ti-plus" aria-hidden="true" />
               </button>
             </div>
@@ -505,7 +418,7 @@ function storeTally() {
             </div>
             <div className={styles.list}>
               {have.length === 0
-                ? <p style={{textAlign:'center',fontSize:12,color:'var(--ink-muted)',padding:'1rem'}}>nothing checked off yet</p>
+                ? <p style={{ textAlign: 'center', fontSize: 12, color: 'var(--ink-muted)', padding: '1rem' }}>nothing checked off yet</p>
                 : have.map(item => (
                   <div key={item.id} className={`${styles.item} ${styles.checked}`}>
                     <input type="checkbox" checked onChange={() => toggle(item.id, item.checked)} />
@@ -522,149 +435,54 @@ function storeTally() {
         </div>
       )}
 
-      {/* zip code input */}
-<div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 8 }}>
-  <i className="ti ti-map-pin" aria-hidden="true" />
-  <input
-    type="text"
-    placeholder="zip code for local prices..."
-    value={zip}
-    onChange={e => saveZip(e.target.value)}
-    style={{ width: 160 }}
-    maxLength={5}
-  />
-</div>
-
-{/* store leaderboard */}
-{tally.length > 0 && (
-  <div className={`card ${styles.savedPanel}`}>
-    <div className={styles.savedPanelTitle}>best store for your list</div>
-    {tally.map((t, i) => (
-      <div key={t.store} className={styles.tallyRow}>
-        <span className={styles.tallyRank}>{i + 1}</span>
-        <span className={styles.tallyStore}>{t.store}</span>
-        <div className={styles.tallyBarTrack}>
-          <div className={styles.tallyBarFill} style={{ width: `${(t.count / totalTracked) * 100}%` }} />
+      {/* smart cart */}
+      <div className="card">
+        <div className={styles.colHeader}>
+          <span><i className="ti ti-shopping-cart" aria-hidden="true" /> smart cart</span>
+          <span className={styles.count}>{cart.length} items</span>
         </div>
-        <span className={styles.tallyCount}>{t.count}/{totalTracked} items</span>
-        <span className={styles.priceBadge}>${t.total.toFixed(2)} est.</span>
-      </div>
-    ))}
-  </div>
-)}
 
-{/* smart cart grouped by store */}
-<div className="card">
-  <div className={styles.colHeader}>
-    <span><i className="ti ti-shopping-cart" aria-hidden="true" /> smart cart</span>
-    <span className={styles.count}>{cart.length} items</span>
-  </div>
+        {loadingCart && <p style={{ fontSize: 13, color: 'var(--ink-muted)', padding: '1rem' }}>finding prices...</p>}
 
-  {loadingCart && <p style={{ fontSize: 13, color: 'var(--ink-muted)', padding: '1rem' }}>finding prices...</p>}
+        {!loadingCart && cart.length === 0 && (
+          <p style={{ textAlign: 'center', fontSize: 12, color: 'var(--ink-muted)', padding: '1rem' }}>
+            build a smart cart to see local prices
+          </p>
+        )}
 
-  {!loadingCart && cart.length === 0 && (
-    <p style={{ textAlign: 'center', fontSize: 12, color: 'var(--ink-muted)', padding: '1rem' }}>
-      build a smart cart to see local prices
-    </p>
-  )}
+        {!loadingCart && cart.length > 0 && cart.map((c, i) => {
+          const sorted = [...(c.results ?? [])].sort((a: any, b: any) => Number(a.price ?? 9999) - Number(b.price ?? 9999))
+          const cheapest = sorted[0]
+          const priciest = sorted[sorted.length - 1]
+          const bigDiff = cheapest && priciest && (priciest.price - cheapest.price) >= 1
 
-  {!loadingCart && cart.length > 0 && (() => {
-    // group cheapest option per item, highlight big savings
-    return cart.map((c, i) => {
-      const sorted = [...(c.results ?? [])].sort((a, b) => Number(a.price ?? 9999) - Number(b.price ?? 9999))
-      const cheapest = sorted[0]
-      const priciest = sorted[sorted.length - 1]
-      const bigDiff = cheapest && priciest && (priciest.price - cheapest.price) >= 1
-
-      return (
-        <div key={i} className={styles.itemWrap}>
-          <div className={styles.item}>
-            <span className={styles.itemName}>{c.item}</span>
-            {cheapest && (
-              <>
-                <span className={styles.priceBadge}>${Number(cheapest.price).toFixed(2)}</span>
-                <span style={{ fontSize: 12, color: 'var(--ink-muted)' }}>{cheapest.store}</span>
-                {bigDiff && (
-                  <span style={{ fontSize: 11, color: 'var(--accent-warm)', fontWeight: 600 }}>
-                    save ${(priciest.price - cheapest.price).toFixed(2)} vs {priciest.store}
-                  </span>
+          return (
+            <div key={i} className={styles.itemWrap}>
+              <div className={styles.item}>
+                <span className={styles.itemName}>{c.item}</span>
+                {cheapest && (
+                  <>
+                    <span className={styles.priceBadge}>${Number(cheapest.price).toFixed(2)}</span>
+                    <span style={{ fontSize: 12, color: 'var(--ink-muted)' }}>{cheapest.store}</span>
+                    {bigDiff && (
+                      <span style={{ fontSize: 11, color: 'var(--accent-warm)', fontWeight: 600 }}>
+                        save ${(priciest.price - cheapest.price).toFixed(2)} vs {priciest.store}
+                      </span>
+                    )}
+                  </>
                 )}
-              </>
-            )}
-          </div>
-          {sorted.length > 1 && (
-            <div style={{ paddingLeft: 16, fontSize: 12, color: 'var(--ink-muted)' }}>
-              {sorted.slice(1).map((r, j) => (
-                <span key={j} style={{ marginRight: 12 }}>{r.store} ${Number(r.price).toFixed(2)}</span>
-              ))}
+              </div>
+              {sorted.length > 1 && (
+                <div style={{ paddingLeft: 16, fontSize: 12, color: 'var(--ink-muted)' }}>
+                  {sorted.slice(1).map((r: any, j: number) => (
+                    <span key={j} style={{ marginRight: 12 }}>{r.store} ${Number(r.price).toFixed(2)}</span>
+                  ))}
+                </div>
+              )}
             </div>
-          )}
-        </div>
-      )
-    })
-  })()}
-</div>
-
-
-
-  </div>
-
-  <div className={styles.list}>
-
-    {cart.length > 0 && cart.map((c, i) => (
-  <div key={i}>
-    <strong>{c.item}</strong>
-
-    {c.results.map((r: any, j: number) => (
-      <div key={j}>
-        {r.name} — {r.store} — ${r.price}
+          )
+        })}
       </div>
-    ))}
-  </div>
-))}
-    {productMatches.length === 0 ? (
-      <p
-        style={{
-          textAlign: 'center',
-          fontSize: 12,
-          color: 'var(--ink-muted)',
-          padding: '1rem'
-        }}
-      >
-        no smart cart items yet
-      </p>
-    ) : (
-      productMatches.map(match => (
-        <div key={match.id} className={styles.item}>
-          <div style={{ flex: 1 }}>
-            <strong>{match.product_name}</strong>
-            <div
-              style={{
-                fontSize: 12,
-                color: 'var(--ink-muted)'
-              }}
-            >
-              {match.item_name}
-            </div>
-          </div>
-
-          <span className={styles.priceBadge}>
-            ${Number(match.price ?? 0).toFixed(2)}
-          </span>
-
-          <span
-            style={{
-              fontSize: 12,
-              color: 'var(--ink-muted)'
-            }}
-          >
-            {match.retailer}
-          </span>
-        </div>
-      ))
-    )}
-  </div>
-</div>
     </div>
   )
 }
