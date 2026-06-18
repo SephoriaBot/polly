@@ -46,13 +46,82 @@ function extractProducts(html) {
 
 function rankProducts(products, query) {
   const q = query.toLowerCase()
+  const qWords = q.split(' ').filter(Boolean)
 
   return products
     .map(p => ({
       ...p,
-      score: scoreMatch(p.name, q)
+      score: scoreProduct(p, q, qWords)
     }))
     .sort((a, b) => b.score - a.score)
+}
+
+function scoreProduct(p, query, qWords) {
+  const name = (p.name || '').toLowerCase()
+  let score = 0
+
+  // 1. Exact match boost (huge)
+  if (name === query) score += 200
+
+  // 2. Contains full query
+  if (name.includes(query)) score += 100
+
+  // 3. Word overlap scoring
+  for (const w of qWords) {
+    if (name.includes(w)) score += 15
+  }
+
+  // 4. Penalize bad matches
+  const badWords = ['unscented wipes', 'diaper', 'pet', 'formula']
+  if (badWords.some(b => name.includes(b) && !query.includes(b))) {
+    score -= 50
+  }
+
+  // 5. Size preference boost
+  score += sizeScore(name, query)
+
+  // 6. Brand quality boost (simple heuristic)
+  score += brandScore(name)
+
+  // 7. Price sanity filter
+  if (p.price <= 0) score -= 100
+  if (p.price > 50 && query.includes('milk')) score -= 10
+
+  return score
+}
+
+function sizeScore(name, query) {
+  const sizes = ['oz', 'lb', 'gallon', 'ct', 'pack']
+
+  let score = 0
+
+  for (const s of sizes) {
+    if (name.includes(s)) score += 5
+  }
+
+  // prefer gallon milk if milk is requested
+  if (query.includes('milk') && name.includes('gallon')) {
+    score += 30
+  }
+
+  return score
+}
+
+function brandScore(name) {
+  const preferred = [
+    'fairlife',
+    'organic valley',
+    'land o lakes',
+    'kirkland',
+    'great value',
+    'heinz'
+  ]
+
+  for (const b of preferred) {
+    if (name.includes(b)) return 10
+  }
+
+  return 0
 }
 
 function scoreMatch(name, query) {
