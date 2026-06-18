@@ -93,19 +93,35 @@ export default function Grocery() {
     setNewQty('')
   }
 
+  async function searchProduct(itemName: string) {
+  const q = encodeURIComponent(itemName)
+
+  const res = await fetch(`/api/product-search?q=${q}`)
+  if (!res.ok) return null
+
+  return await res.json()
+}
   async function buildSmartCart() {
   const needItems = items.filter(i => !i.checked)
 
   for (const item of needItems) {
-    const name = item.qty ? `${item.qty} ${item.name}` : item.name
+    const query = item.qty ? `${item.qty} ${item.name}` : item.name
+
+    const product = await searchProduct(query)
+
+    const best = product?.[0] || null
+
+    if (!best) continue
 
     const { data } = await supabase
       .from('grocery_product_matches')
       .insert({
         item_name: item.name,
-        product_name: `Matched: ${item.name}`,
-        retailer: 'Instacart',
-        price: 0,
+        product_name: best.name,
+        retailer: best.retailer || 'Instacart',
+        price: best.price || 0,
+        product_url: best.url || null,
+        image_url: best.image || null,
       })
       .select()
       .single()
