@@ -513,11 +513,11 @@ function searchOnInstacart(itemId: string, itemName: string) {
   <div key={i}>
     <strong>{c.item}</strong>
 
-    {c.results.map((r: any, j: number) => (
-      <div key={j}>
-        {r.name} — {r.store} — ${r.price}
+    {c.product && (
+      <div>
+        {c.product.name} — {c.product.store} — ${c.product.price}
       </div>
-    ))}
+    )}
   </div>
 ))}
   </div>
