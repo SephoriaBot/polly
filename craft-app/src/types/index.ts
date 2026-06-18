@@ -15,11 +15,7 @@ export type Recipe = BaseEntity & {
   tags?: string[]
 }
 
-export type RecipeIngredient = {
-  name?: string
-  qty?: string
-}
-
+export type RecipeIngredient = any
 export type RecipeCategory = string
 
 export type RecipeStep = BaseEntity & {
@@ -35,11 +31,7 @@ export type Plant = BaseEntity & {
 
 export type PlantType = string
 
-export type PlantLog = BaseEntity & {
-  note?: string
-  action?: LogAction
-  date?: string
-}
+export type PlantLog = any
 
 export type LogAction = string
 
