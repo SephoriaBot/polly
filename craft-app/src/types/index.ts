@@ -1,63 +1,62 @@
-export type PlantType = 'herb' | 'flower' | 'succulent' | 'vegetable' | 'tropical' | 'other';
-export type LogAction = 'watered' | 'fertilized' | 'repotted' | 'pruned' | 'note';
-export type RecipeCategory = 'skincare' | 'soap' | 'laundry';
-export type WizardOptionType = 'single' | 'multi';
-
-export interface Plant {
-  id: string;
-  name: string;
-  type: PlantType;
-  notes: string | null;
-  watering_frequency_days: number | null;
-  last_watered: string | null;
-  acquired_date: string | null;
-  location: string | null;
-  emoji: string | null;
-  created_at: string;
-}
-
-export interface PlantLog {
-  id: string;
-  plant_id: string;
-  action: LogAction;
-  note: string | null;
-  logged_at: string;
-}
-
-export type Recipe = {
+// Base
+export type BaseEntity = {
   id: string
+  created_at?: string
+  updated_at?: string
+  [key: string]: any
+}
+
+// Recipes
+export type Recipe = BaseEntity & {
   title?: string
+  name?: string
   description?: string
+  ingredients?: string[]
+  steps?: RecipeStep[]
   prep_time_min?: number
+  cook_time_min?: number
 }
 
-export interface RecipeIngredient {
-  id: string;
-  recipe_id: string;
-  ingredient_name: string;
-  amount: string;
-  unit: string | null;
-  notes: string | null;
-  sort_order: number;
-}
-
-export type RecipeStep = {
-  id?: string
+// Recipe steps
+export type RecipeStep = BaseEntity & {
   step_number?: number
   instruction?: string
+  text?: string
 }
 
-export interface WizardQuestion {
-  id: string;
-  category: RecipeCategory;
-  step: number;
-  question: string;
-  option_type: WizardOptionType;
-  options: string[];
+// Grocery
+export type GroceryItem = BaseEntity & {
+  name: string
+  qty?: string
+  checked?: boolean
 }
 
-export interface WizardAnswer {
-  question_id: string;
-  question: string;
-  answer: string | string[];
+// Pets
+export type Pet = BaseEntity & {
+  name?: string
+  type?: string
+  breed?: string
+  age?: number
+}
+
+// Plants
+export type Plant = BaseEntity & {
+  name?: string
+  species?: string
+  water_schedule?: string
+  notes?: string
+}
+
+// Saved lists
+export type SavedList = BaseEntity & {
+  name: string
+  items: string[]
+}
+
+// Prices
+export type PriceEntry = BaseEntity & {
+  item_name: string
+  store: string
+  price: number
+  updated_at?: string
 }
