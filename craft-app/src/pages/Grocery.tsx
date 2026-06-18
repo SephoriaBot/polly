@@ -489,6 +489,14 @@ function searchOnInstacart(itemId: string, itemName: string) {
     <span className={styles.count}>
       {productMatches.length} items
     </span>
+
+      {rankedStores.length > 0 && (
+  <div style={{ marginTop: 8, fontSize: 14 }}>
+    Best overall store: <strong>{rankedStores[0][0]}</strong>
+    ({rankedStores[0][1]} items)
+  </div>
+)}
+
   </div>
 
   <div className={styles.list}>
