@@ -97,7 +97,7 @@ const [loadingCart, setLoadingCart] = useState(false)
   async function searchProduct(itemName: string) {
   const q = encodeURIComponent(itemName)
 
-  const res = await fetch(`/api/product-search?q=${encodeURIComponent(item.name)}`)
+  const res = await fetch(`/api/product-search?q=${q}`)
 const data = await res.json()
 return { item: item.name, results: data }
 }
@@ -107,7 +107,7 @@ async function buildSmartCart() {
 
   const results = await Promise.all(
   needs.map(async (item) => {
-    const res = await fetch(`/api/product-search?q=${encodeURIComponent(item.name)}`)
+    const res = await fetch(`/api/product-search?q=${q}`)
     const product = await res.json()
 
     return {
