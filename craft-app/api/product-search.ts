@@ -100,3 +100,6 @@ function score(name, q, words) {
 
   return s
 }
+
+console.log("HTML LENGTH:", html.length)
+console.log("FOUND IDS:", itemIds.slice(0, 10))
