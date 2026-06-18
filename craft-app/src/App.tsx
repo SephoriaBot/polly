@@ -37,7 +37,7 @@ export default function App() {
           {page === 'cook'         && <Cook />}
           {page === 'grocery'      && <Grocery />}
           {page === 'pantry'       && <Pantry />}
-          {page === 'planner' && <Planner onNavigate={() => {}} />}
+          {page === 'planner' && <Planner onNavigate={navigate} />}}
           {page === 'suggest'      && <Suggest />}
           {page === 'pets'         && <Pets />}
           {page === 'bread'        && <BreadRecipes />}
