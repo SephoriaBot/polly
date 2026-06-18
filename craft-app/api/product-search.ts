@@ -17,6 +17,7 @@ export default async function handler(req, res) {
       image: item.thumbnail ?? null
     }))
 
+    cleaned.sort((a, b) => Number(a.price || 9999) - Number(b.price || 9999))
     return res.status(200).json(results)
   } catch (e) {
     return res.status(200).json([])
