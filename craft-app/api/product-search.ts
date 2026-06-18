@@ -22,21 +22,6 @@ export default async function handler(req, res) {
   }))
 
     results.sort((a, b) => Number(a.price || 9999) - Number(b.price || 9999))
-    
-    const storeCounts = new Map<string, number>()
-
-cart.forEach(c => {
-  const store = c.product?.store
-  if (!store) return
-
-  storeCounts.set(
-    store,
-    (storeCounts.get(store) ?? 0) + 1
-  )
-})
-
-const rankedStores = [...storeCounts.entries()]
-  .sort((a, b) => b[1] - a[1])
 
     return res.status(200).json(results.slice(0, 1))
   } catch (e) {
