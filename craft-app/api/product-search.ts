@@ -28,23 +28,28 @@ export default async function handler(req, res) {
       .slice(0, 20)
 
     const cleaned = [...new Set(names)]
-  .filter(name => {
-  const n = normalizeQuery(name)
+  .map(n => n.trim())
+  .filter(n => {
+    const s = n.toLowerCase()
 
-  return (
-    n.length >= 2 &&
-    n.length <= 40 &&
-    /^[a-z0-9\s\-&()]+$/.test(n)
-  )
-})
-  .map(name => ({ name: normalizeQuery(name) }))
+    const looksLikeProduct =
+      s.length >= 3 &&
+      s.length <= 35 &&
+      !s.includes('how ') &&
+      !s.includes('does ') &&
+      !s.includes('same-day') &&
+      !s.includes('pickup') &&
+      !s.includes('products') &&
+      !s.includes('delivery') &&
+      !s.includes('instacart')
+
+    const hasLetters = /[a-z]/.test(s)
+    const notSentence = s.split(' ').length <= 4
+
+    return looksLikeProduct && hasLetters && notSentence
+  })
+  .map(n => ({ name: n }))
   .slice(0, 10)
-
-    return res.status(200).json(cleaned)
-  } catch (e) {
-    return res.status(200).json([])
-  }
-}
 
 function normalizeQuery(name: string) {
   return name
