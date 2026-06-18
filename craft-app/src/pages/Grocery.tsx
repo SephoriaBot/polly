@@ -264,15 +264,17 @@ function searchOnInstacart(itemId: string, itemName: string) {
   const storeCounts = new Map<string, number>()
 
   cart.forEach(c => {
-    const store = c.product?.store
-    if (!store) return
-    storeCounts.set(store, (storeCounts.get(store) ?? 0) + 1)
+    c.results?.forEach((r: any) => {
+      if (!r.store) return
+      storeCounts.set(r.store, (storeCounts.get(r.store) ?? 0) + 1)
+    })
   })
 
   return Array.from(storeCounts.entries())
     .map(([store, count]) => ({ store, count }))
     .sort((a, b) => b.count - a.count)
 }
+
 
   const tally = storeTally()
   const totalTracked = tally.reduce((sum, t) => sum + t.count, 0)
