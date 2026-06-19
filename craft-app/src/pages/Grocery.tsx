@@ -315,3 +315,177 @@ export default function Grocery() {
           ))}
         </div>
       )}
+
+      {loading ? (
+        <p style={{ color: 'var(--ink-muted)', fontSize: 13 }}>loading...</p>
+      ) : (
+        <div className={styles.layout}>
+          <div className="card">
+            <div className={styles.colHeader}>
+              <span><i className="ti ti-list-check" aria-hidden="true" /> need to buy</span>
+              <span className={styles.count}>{needs.length} items</span>
+            </div>
+            <div className={styles.list}>
+              {needs.length === 0
+                ? <p style={{ textAlign: 'center', fontSize: 12, color: 'var(--ink-muted)', padding: '1rem' }}>list is clear!</p>
+                : needs.map(item => {
+                  const cheapest = cheapestFor(item.name)
+                  const itemPrices = pricesFor(item.name)
+                  const isOpen = expandedItem === item.id
+                  return (
+                    <div key={item.id} className={styles.itemWrap}>
+                      <div className={styles.item}>
+                        <input type="checkbox" onChange={() => toggle(item.id, item.checked)} />
+                        <span className={styles.itemName}>{item.name}</span>
+                        <span className={styles.itemQty}>{item.qty}</span>
+                        {cheapest && (
+                          <span className={`${styles.priceBadge} ${isStale(cheapest.updated_at) ? styles.priceStale : ''}`}>
+                            ${cheapest.price.toFixed(2)} @ {cheapest.store}
+                          </span>
+                        )}
+                        <button className={styles.priceToggle} onClick={() => searchOnInstacart(item.id, item.name)} title="search on Instacart">
+                          <i className="ti ti-shopping-cart-plus" aria-hidden="true" />
+                        </button>
+                        <button className={styles.priceToggle} onClick={() => setExpandedItem(isOpen ? null : item.id)}>
+                          <i className={`ti ti-chevron-${isOpen ? 'up' : 'down'}`} aria-hidden="true" />
+                        </button>
+                        <button className={styles.removeBtn} onClick={() => removeItem(item.id)}>
+                          <i className="ti ti-trash" aria-hidden="true" />
+                        </button>
+                      </div>
+
+                      {isOpen && (
+                        <div className={styles.priceDrawer}>
+                          {itemPrices.length === 0 ? (
+                            <p className={styles.noPrices}>no prices logged yet</p>
+                          ) : (
+                            <div className={styles.priceList}>
+                              {itemPrices.map(p => (
+                                <div key={p.id} className={styles.priceRow}>
+                                  <span className={styles.priceStore}>{p.store}</span>
+                                  <span className={styles.priceAmt}>${p.price.toFixed(2)}</span>
+                                  <span className={`${styles.priceDate} ${isStale(p.updated_at) ? styles.priceStale : ''}`}>{p.updated_at}</span>
+                                  <button className={styles.removeBtn} onClick={() => deletePrice(p.id)}>
+                                    <i className="ti ti-x" aria-hidden="true" />
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                          <div className={styles.priceAddRow}>
+                            <input
+                              type="text"
+                              placeholder="store..."
+                              value={priceForm.store}
+                              onChange={e => setPriceForm(f => ({ ...f, store: e.target.value }))}
+                              style={{ flex: 2 }}
+                            />
+                            <input
+                              type="number"
+                              placeholder="price"
+                              value={priceForm.price}
+                              onChange={e => setPriceForm(f => ({ ...f, price: e.target.value }))}
+                              onKeyDown={e => e.key === 'Enter' && addPrice(item.name)}
+                              style={{ flex: 1 }}
+                            />
+                            <button className="btn-primary" style={{ padding: '6px 10px' }} onClick={() => addPrice(item.name)}>
+                              <i className="ti ti-plus" aria-hidden="true" />
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )
+                })
+              }
+            </div>
+            <div className={styles.addRow}>
+              <input type="text" placeholder="add item..." value={newItem}
+                onChange={e => setNewItem(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && addItem()}
+                style={{ flex: 2 }} />
+              <input type="text" placeholder="qty" value={newQty}
+                onChange={e => setNewQty(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && addItem()}
+                style={{ flex: 1, minWidth: 0 }} />
+              <button className="btn-primary" style={{ padding: '7px 12px' }} onClick={addItem}>
+                <i className="ti ti-plus" aria-hidden="true" />
+              </button>
+            </div>
+          </div>
+
+          <div className="card">
+            <div className={styles.colHeader}>
+              <span><i className="ti ti-circle-check" aria-hidden="true" /> already have</span>
+              <span className={styles.count}>{have.length} items</span>
+            </div>
+            <div className={styles.list}>
+              {have.length === 0
+                ? <p style={{ textAlign: 'center', fontSize: 12, color: 'var(--ink-muted)', padding: '1rem' }}>nothing checked off yet</p>
+                : have.map(item => (
+                  <div key={item.id} className={`${styles.item} ${styles.checked}`}>
+                    <input type="checkbox" checked onChange={() => toggle(item.id, item.checked)} />
+                    <span className={styles.itemName}>{item.name}</span>
+                    <span className={styles.itemQty}>{item.qty}</span>
+                    <button className={styles.removeBtn} onClick={() => removeItem(item.id)}>
+                      <i className="ti ti-trash" aria-hidden="true" />
+                    </button>
+                  </div>
+                ))
+              }
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* smart cart */}
+      <div className="card">
+        <div className={styles.colHeader}>
+          <span><i className="ti ti-shopping-cart" aria-hidden="true" /> smart cart</span>
+          <span className={styles.count}>{cart.length} items</span>
+        </div>
+
+        {loadingCart && <p style={{ fontSize: 13, color: 'var(--ink-muted)', padding: '1rem' }}>finding prices...</p>}
+
+        {!loadingCart && cart.length === 0 && (
+          <p style={{ textAlign: 'center', fontSize: 12, color: 'var(--ink-muted)', padding: '1rem' }}>
+            enter your city and state above, then build a smart cart to see prices
+          </p>
+        )}
+
+        {!loadingCart && cart.length > 0 && cart.map((c, i) => {
+          const sorted = [...(c.results ?? [])].sort((a: any, b: any) => Number(a.price ?? 9999) - Number(b.price ?? 9999))
+          const cheapest = sorted[0]
+          const priciest = sorted[sorted.length - 1]
+          const bigDiff = cheapest && priciest && (priciest.price - cheapest.price) >= 1
+
+          return (
+            <div key={i} className={styles.itemWrap}>
+              <div className={styles.item}>
+                <span className={styles.itemName}>{c.item}</span>
+                {cheapest && (
+                  <>
+                    <span className={styles.priceBadge}>${Number(cheapest.price).toFixed(2)}</span>
+                    <span style={{ fontSize: 12, color: 'var(--ink-muted)' }}>{cheapest.store}</span>
+                    {bigDiff && (
+                      <span style={{ fontSize: 11, color: 'var(--accent-warm)', fontWeight: 600 }}>
+                        save ${(priciest.price - cheapest.price).toFixed(2)} vs {priciest.store}
+                      </span>
+                    )}
+                  </>
+                )}
+              </div>
+              {sorted.length > 1 && (
+                <div style={{ paddingLeft: 16, fontSize: 12, color: 'var(--ink-muted)' }}>
+                  {sorted.slice(1).map((r: any, j: number) => (
+                    <span key={j} style={{ marginRight: 12 }}>{r.store} ${Number(r.price).toFixed(2)}</span>
+                  ))}
+                </div>
+              )}
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
