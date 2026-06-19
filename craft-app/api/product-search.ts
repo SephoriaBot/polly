@@ -13,13 +13,20 @@ export default async function handler(req, res) {
     const data = await r.json()
 
     const results = (data.shopping_results || [])
-      .filter((item) => (item.source || '').toLowerCase() !== 'instacart')
-      .map((item) => ({
-        name: item.title,
-        price: item.extracted_price ?? null,
-        store: item.source ?? 'unknown',
-        image: item.thumbnail ?? null
-      }))
+  .filter((item) => {
+    const source = (item.source || '').toLowerCase()
+    if (source === 'instacart') return false
+    // Filter out websites masquerading as stores
+    if (source.includes('.com') || source.includes('.net') || source.includes('.org') || source.includes('.co')) return false
+    return true
+  })
+  .map((item) => ({
+    name: item.title,
+    price: item.extracted_price ?? null,
+    store: item.source ?? 'unknown',
+    image: item.thumbnail ?? null
+  }))
+
 
     results.sort((a, b) => Number(a.price || 9999) - Number(b.price || 9999))
     return res.status(200).json(results.slice(0, 5))
