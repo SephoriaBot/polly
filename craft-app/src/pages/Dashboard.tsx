@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Leaf, BookOpen, Droplets, Sparkles } from 'lucide-react';
+import { Leaf, BookOpen, Droplets, PawPrint, ShoppingCart, Archive } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
 interface DashboardProps {
@@ -7,14 +7,25 @@ interface DashboardProps {
 }
 
 export default function Dashboard({ onNavigate }: DashboardProps) {
-  const [stats, setStats] = useState({ plants: 0, recipes: 0, needsWater: 0 });
+  const [stats, setStats] = useState({
+    plants: 0,
+    needsWater: 0,
+    recipes: 0,
+    pets: 0,
+    groceryItems: 0,
+    pantryItems: 0,
+  });
 
   useEffect(() => {
     async function loadStats() {
-      const [plantsRes, recipesRes] = await Promise.all([
+      const [plantsRes, recipesRes, petsRes, groceryRes, pantryRes] = await Promise.all([
         supabase.from('plants').select('id, last_watered, watering_frequency_days'),
         supabase.from('recipes').select('id', { count: 'exact', head: true }),
+        supabase.from('pets').select('id', { count: 'exact', head: true }),
+        supabase.from('grocery_items').select('id', { count: 'exact', head: true }).eq('checked', false),
+        supabase.from('pantry_items').select('id', { count: 'exact', head: true }),
       ]);
+
       const plants = plantsRes.data || [];
       const today = new Date();
       const needsWater = plants.filter(p => {
@@ -23,7 +34,15 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
         const diff = (today.getTime() - last.getTime()) / (1000 * 60 * 60 * 24);
         return diff >= p.watering_frequency_days;
       }).length;
-      setStats({ plants: plants.length, recipes: recipesRes.count || 0, needsWater });
+
+      setStats({
+        plants: plants.length,
+        needsWater,
+        recipes: recipesRes.count || 0,
+        pets: petsRes.count || 0,
+        groceryItems: groceryRes.count || 0,
+        pantryItems: pantryRes.count || 0,
+      });
     }
     loadStats();
   }, []);
@@ -37,48 +56,31 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
         </div>
       </div>
       <div className="page-body">
-        <div className="grid-3" style={{ marginBottom: 32 }}>
+
+        <div style={{ fontWeight: 700, fontSize: '0.75rem', color: 'var(--ink-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 12 }}>
+          Open Kitchen
+        </div>
+        <div className="grid-2" style={{ marginBottom: 28 }}>
+          <StatCard icon={<ShoppingCart size={22} />} label="Grocery Items" value={stats.groceryItems} color="amber" onClick={() => onNavigate('grocery')} />
+          <StatCard icon={<Archive size={22} />} label="Pantry Items" value={stats.pantryItems} color="green" onClick={() => onNavigate('pantry')} />
+        </div>
+
+        <div style={{ fontWeight: 700, fontSize: '0.75rem', color: 'var(--ink-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 12 }}>
+          Home
+        </div>
+        <div className="grid-3" style={{ marginBottom: 28 }}>
           <StatCard icon={<Leaf size={22} />} label="Plants" value={stats.plants} color="green" onClick={() => onNavigate('plants')} />
           <StatCard icon={<Droplets size={22} />} label="Need Water" value={stats.needsWater} color={stats.needsWater > 0 ? 'amber' : 'green'} onClick={() => onNavigate('plants')} />
+          <StatCard icon={<PawPrint size={22} />} label="Pets" value={stats.pets} color="pink" onClick={() => onNavigate('pets')} />
+        </div>
+
+        <div style={{ fontWeight: 700, fontSize: '0.75rem', color: 'var(--ink-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 12 }}>
+          Craft Table
+        </div>
+        <div className="grid-2">
           <StatCard icon={<BookOpen size={22} />} label="Recipes" value={stats.recipes} color="lavender" onClick={() => onNavigate('recipes')} />
         </div>
 
-        <div className="grid-2">
-          <QuickAction
-            emoji="🌿"
-            title="Garden"
-            description="Track your plants, log waterings, and monitor growth."
-            actions={[
-              { label: 'View Plants', page: 'plants' },
-            ]}
-            onNavigate={onNavigate}
-          />
-          <QuickAction
-            emoji="⚗️"
-            title="Alchemy Lab"
-            description="Browse recipes for skincare, soaps, and laundry — or run the wizard to find your perfect formula."
-            actions={[
-              { label: 'Browse Recipes', page: 'recipes' },
-              { label: 'Start Wizard', page: 'wizard' },
-            ]}
-            onNavigate={onNavigate}
-          />
-        </div>
-
-        <div className="card" style={{ marginTop: 24 }}>
-          <div className="card-body" style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-            <div style={{ fontSize: '2rem' }}>✨</div>
-            <div style={{ flex: 1 }}>
-              <h3 style={{ fontSize: '1rem', marginBottom: 4 }}>Add your first recipe</h3>
-              <p style={{ fontSize: '0.85rem', color: 'var(--ink-muted)' }}>
-                Build your personal apothecary — add skincare, soap, and laundry formulas to your library.
-              </p>
-            </div>
-            <button className="btn btn-primary" onClick={() => onNavigate('add-recipe')}>
-              <Sparkles size={15} /> Add Recipe
-            </button>
-          </div>
-        </div>
       </div>
     </div>
   );
@@ -106,25 +108,6 @@ function StatCard({ icon, label, value, color, onClick }: { icon: React.ReactNod
         <div>
           <div style={{ fontSize: '1.6rem', fontWeight: 700, fontFamily: 'Playfair Display, serif', color: 'var(--ink)' }}>{value}</div>
           <div style={{ fontSize: '0.8rem', color: 'var(--ink-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{label}</div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function QuickAction({ emoji, title, description, actions, onNavigate }: { emoji: string; title: string; description: string; actions: { label: string; page: string }[]; onNavigate: (p: string) => void }) {
-  return (
-    <div className="card">
-      <div className="card-body">
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }}>
-          <span style={{ fontSize: '1.8rem' }}>{emoji}</span>
-          <h3 style={{ fontSize: '1.1rem' }}>{title}</h3>
-        </div>
-        <p style={{ fontSize: '0.875rem', color: 'var(--ink-muted)', lineHeight: 1.6, marginBottom: 16 }}>{description}</p>
-        <div style={{ display: 'flex', gap: 8 }}>
-          {actions.map(a => (
-            <button key={a.page} className="btn btn-ghost btn-sm" onClick={() => onNavigate(a.page)}>{a.label}</button>
-          ))}
         </div>
       </div>
     </div>
