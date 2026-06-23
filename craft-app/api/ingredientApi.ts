@@ -1,4 +1,4 @@
-import { supabase } from "../src/lib/supabase";
+import { supabase } from "../lib/supabase";
 
 export async function searchIngredient(ingredient: string) {
   const { data, error } = await supabase.functions.invoke(
