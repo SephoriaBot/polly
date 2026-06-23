@@ -1,8 +1,8 @@
-import { supabase } from "../lib/supabase";
+import { supabase } from "../src/lib/supabase";
 
 export async function searchIngredient(ingredient: string) {
   const { data, error } = await supabase.functions.invoke(
-    "swift-responder",
+    "ingredient-search",
     {
       body: { ingredient },
     }
