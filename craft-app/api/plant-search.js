@@ -9,18 +9,14 @@ export default async function handler(req, res) {
     const searchData = await searchRes.json()
     const results = searchData.data ?? []
 
-    if (!results.length) return res.status(200).json([])
-
-    const mapped = results.slice(0, 5).map((plant) => ({
-      id: plant.id,
-      name: plant.common_name,
-      scientific_name: plant.scientific_name?.[0] ?? null,
-      watering: plant.watering ?? null,
-      sunlight: plant.sunlight ?? [],
-      cycle: plant.cycle ?? null,
-      poisonous_to_pets: plant.poisonous_to_pets ?? null,
-      poisonous_to_humans: plant.poisonous_to_humans ?? null,
-    }))
+    const mapped = results
+      .filter((plant) => plant.id <= 3000)
+      .slice(0, 5)
+      .map((plant) => ({
+        id: plant.id,
+        name: plant.common_name,
+        scientific_name: plant.scientific_name?.[0] ?? null,
+      }))
 
     return res.status(200).json(mapped)
   } catch (e) {
