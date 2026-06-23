@@ -76,36 +76,40 @@ export default function IngredientsPage() {
     !search || i.name.toLowerCase().includes(search.toLowerCase())
   );
 
-  return (
-    <div>
-      <div className="page-header">
-        <div>
-          <h2>Ingredients 🧪</h2>
-          <p>{ingredients.length} ingredient{ingredients.length !== 1 ? 's' : ''} in your pantry</p>
-        </div>
+ return (
+  <div>
+    <div className="page-header">
+      <div>
+        <h2>Ingredients 🧪</h2>
+        <p>
+          {ingredients.length} ingredient{ingredients.length !== 1 ? 's' : ''} in your pantry
+        </p>
+      </div>
+
+      <div style={{ display: 'flex', gap: 8 }}>
         <button className="btn btn-primary" onClick={openAdd}>
           <Plus size={14} /> Add Ingredient
         </button>
 
+        <button
+          className="btn btn-primary"
+          onClick={async () => {
+            console.log("clicked");
 
+            if (!search) return;
+
+            setLoadingApi(true);
+            const res = await searchIngredient(search);
+            setApiResult(res);
+            setLoadingApi(false);
+          }}
+        >
+          AI Lookup
+        </button>
       </div>
+    </div>
 
-<button
-  className="btn btn-primary"
-  onClick={async () => {
-    console.log("clicked");
-    if (!search) return;
-
-    setLoadingApi(true);
-    const res = await searchIngredient(search);
-    setApiResult(res);
-    setLoadingApi(false);
-  }}
->
-  AI Lookup
-</button>
-
-      <div className="page-body">
+    <div className="page-body">
         <div style={{ position: 'relative', maxWidth: 360, marginBottom: 24 }}>
           <Search size={15} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--ink-muted)' }} />
           <input className="form-input" style={{ paddingLeft: 32 }} placeholder="Search ingredients…" value={search} onChange={e => setSearch(e.target.value)} />
