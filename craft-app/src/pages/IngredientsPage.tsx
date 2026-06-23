@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Search, Plus, X, Pencil, Trash2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
-import { searchIngredient } from "craft-app/api/ingredientApi.ts";
+import { searchIngredient } from "../../api/ingredientApi.ts";
 
 
 interface CraftIngredient {
