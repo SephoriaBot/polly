@@ -63,25 +63,22 @@ export default function PlantsPage() {
     setWaterings(data ?? [])
   }
 
-  async function searchPlants(q: string) {
+    async function searchPlants(q: string) {
     if (!q.trim()) { setSearchResults([]); return }
     setSearching(true)
     setSearchError('')
     try {
       const res = await fetch(`/api/plant-search?q=${encodeURIComponent(q.trim())}`)
       const data = await res.json()
-      if (!data) {
-        setSearchResults([])
-      } else {
-        // plant-search returns single top result — adapt to show it
-        setSearchResults([data])
-      }
+      setSearchResults(Array.isArray(data) ? data : [])
+      if (!data?.length) setSearchError('No results found.')
     } catch {
       setSearchError('Search failed, try again.')
       setSearchResults([])
     }
     setSearching(false)
   }
+
 
   function handleQueryChange(val: string) {
     setQuery(val)
