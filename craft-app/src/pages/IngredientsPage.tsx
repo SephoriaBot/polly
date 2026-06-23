@@ -100,7 +100,7 @@ export default function IngredientsPage() {
 
             setLoadingApi(true);
             const res = await searchIngredient(search);
-            setApiResult(res);
+            setApiResult(res.data);
             setLoadingApi(false);
           }}
         >
