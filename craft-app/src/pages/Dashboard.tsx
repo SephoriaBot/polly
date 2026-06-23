@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Leaf, BookOpen, Droplets, PawPrint, ShoppingCart, Archive } from 'lucide-react';
+import { Leaf, BookOpen, PawPrint, ShoppingCart, Archive } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
 interface DashboardProps {
@@ -18,7 +18,6 @@ interface ReminderItem {
 export default function Dashboard({ onNavigate }: DashboardProps) {
   const [stats, setStats] = useState({
     plants: 0,
-    needsWater: 0,
     recipes: 0,
     pets: 0,
     groceryItems: 0,
@@ -43,16 +42,8 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
       const vaccinations = vaccinationsRes.data || [];
       const today = new Date();
 
-      const needsWater = plants.filter(p => {
-        if (!p.last_watered || !p.watering_frequency_days) return false;
-        const last = new Date(p.last_watered);
-        const diff = (today.getTime() - last.getTime()) / (1000 * 60 * 60 * 24);
-        return diff >= p.watering_frequency_days;
-      }).length;
-
       setStats({
         plants: plants.length,
-        needsWater,
         recipes: recipesRes.count || 0,
         pets: pets.length,
         groceryItems: groceryRes.count || 0,
@@ -209,7 +200,6 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
         </div>
         <div className="grid-3" style={{ marginBottom: 28 }}>
           <StatCard icon={<Leaf size={22} />} label="Plants" value={stats.plants} color="green" onClick={() => onNavigate('plants')} />
-          <StatCard icon={<Droplets size={22} />} label="Need Water" value={stats.needsWater} color={stats.needsWater > 0 ? 'amber' : 'green'} onClick={() => onNavigate('plants')} />
           <StatCard icon={<PawPrint size={22} />} label="Pets" value={stats.pets} color="pink" onClick={() => onNavigate('pets')} />
         </div>
 
