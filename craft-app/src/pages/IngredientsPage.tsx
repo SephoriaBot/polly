@@ -125,22 +125,17 @@ export default function IngredientsPage() {
           <input className="form-input" style={{ paddingLeft: 32 }} placeholder="Search ingredients…" value={search} onChange={e => setSearch(e.target.value)} />
         </div>
 
-{apiResult && (
+{apiResult?.ingredient_name && (
   <div className="card" style={{ marginBottom: 16 }}>
     <h3>{apiResult.ingredient_name}</h3>
 
     <p>{apiResult.description}</p>
 
-    <p>
-      <b>Benefits:</b> {apiResult.benefits?.join(", ")}
-    </p>
+    <p><b>Benefits:</b> {apiResult.benefits?.join(", ")}</p>
 
-    <p>
-      <b>Best for:</b> {apiResult.best_for?.join(", ")}
-    </p>
+    <p><b>Best for:</b> {apiResult.best_for?.join(", ")}</p>
 
-    <p>
-      <b>Usage:</b> {apiResult.usage_rate}</p>
+    <p><b>Usage:</b> {apiResult.usage_rate}</p>
   </div>
 )}
         {loading ? (
