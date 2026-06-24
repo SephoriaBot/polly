@@ -83,51 +83,38 @@ export default function IngredientsPage() {
   }
 
   async function lookupIngredient() {
-    if (!search.trim()) return;
-    setLoadingApi(true);
-    setApiResult(null);
-    try {
-      const res = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          model: 'claude-sonnet-4-6',
-          max_tokens: 1000,
-          messages: [{
-            role: 'user',
-            content: `You are a cosmetic formulation expert. Give me detailed ingredient info for: "${search.trim()}". Respond ONLY with a JSON object, no markdown, no backticks, no extra text:
-{
-  "ingredient_name": "full INCI or common name",
-  "description": "what it is and where it comes from in 2-3 sentences",
-  "benefits": ["benefit 1", "benefit 2", "benefit 3"],
-  "best_for": ["skin type or concern 1", "skin type or concern 2"],
-  "usage_rate": "typical usage percentage range e.g. 2-5%",
-  "category": "e.g. Emollient, Humectant, Preservative, Active, Surfactant, Occlusive",
-  "ph_notes": "any pH considerations as a string, or null",
-  "cautions": "any safety or formulation notes as a string, or null"
-}`
-          }]
-        })
-      });
-      const data = await res.json();
-      const text = data.content?.[0]?.text ?? '';
-      const parsed: IngredientInfo = JSON.parse(text.replace(/```json|```/g, '').trim());
-      setApiResult(parsed);
-    } catch {
-      setApiResult({
-        ingredient_name: search.trim(),
-        description: 'Could not load info for this ingredient. Check the spelling and try again.',
-        benefits: [],
-        best_for: [],
-        usage_rate: '',
-        category: '',
-        ph_notes: null,
-        cautions: null,
-      });
-    }
-    setLoadingApi(false);
+  if (!search.trim()) return;
+  setLoadingApi(true);
+  setApiResult(null);
+  try {
+    const { data, error } = await supabase.functions.invoke('swift-responder', {
+      body: { ingredient: search.trim() }
+    });
+    if (error) throw error;
+    setApiResult({
+      ingredient_name: data.ingredient_name,
+      description: data.description,
+      benefits: data.benefits ?? [],
+      best_for: data.best_for ?? [],
+      usage_rate: data.usage_rate ?? '',
+      category: data.category ?? '',
+      ph_notes: data.ph_notes ?? null,
+      cautions: data.cautions ?? null,
+    });
+  } catch {
+    setApiResult({
+      ingredient_name: search.trim(),
+      description: 'Could not load info. Try again.',
+      benefits: [],
+      best_for: [],
+      usage_rate: '',
+      category: '',
+      ph_notes: null,
+      cautions: null,
+    });
   }
-
+  setLoadingApi(false);
+}
   const filtered = ingredients.filter(i =>
     !search || i.name.toLowerCase().includes(search.toLowerCase())
   );
