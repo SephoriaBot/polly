@@ -99,8 +99,9 @@ export default function IngredientsPage() {
             if (!search) return;
 
             setLoadingApi(true);
-            const res = await searchIngredient(search);
-            setApiResult(res.data);
+           const res = await searchIngredient(search);
+setApiResult(res?.data ?? res);
+
             setLoadingApi(false);
           }}
         >
