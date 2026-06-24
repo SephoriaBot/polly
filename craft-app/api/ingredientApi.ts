@@ -1,9 +1,14 @@
 import { supabase } from "../src/lib/supabase";
 
 export async function searchIngredient(ingredient: string) {
-  const result = await supabase.functions.invoke("ingredient-search", {
+  const { data, error } = await supabase.functions.invoke("ingredient-search", {
     body: { ingredient }
   });
 
-  return result;
+  if (error) {
+    console.error(error);
+    return null;
+  }
+
+  return data;
 }
