@@ -107,7 +107,7 @@ if (error) {
   return;
 }
 
-setApiResult(data);
+setApiResult(data.data);
 
             setLoadingApi(false);
           }}
