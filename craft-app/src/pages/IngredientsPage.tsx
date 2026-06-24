@@ -87,7 +87,7 @@ export default function IngredientsPage() {
   setLoadingApi(true);
   setApiResult(null);
   try {
-    const { data, error } = await supabase.functions.invoke('swift-responder', {
+    const { data, error } = await supabase.functions.invoke('ingredient-search', {
       body: { ingredient: search.trim() }
     });
     if (error) throw error;
