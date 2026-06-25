@@ -5,7 +5,7 @@ import { supabase } from '../lib/supabase';
 import {
   INGREDIENT_DB,
   type IngredientInfo
-} from '../../api/ingredientDatabase';
+} from '../api/ingredientDatabase';
 
 interface CraftIngredient {
   id: string;
