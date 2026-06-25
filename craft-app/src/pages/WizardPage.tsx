@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { ArrowLeft, ArrowRight, Wand2, RotateCcw, X, Clock, ChevronRight, BookmarkPlus } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import type { Recipe, RecipeIngredient, RecipeStep, RecipeCategory } from '../types';
-import { INGREDIENT_DB } from '../api/ingredientDatabase';
+import { INGREDIENT_DB } from '../../api/ingredientDatabase';
 
 const CATEGORY_META: Record<RecipeCategory, { label: string; emoji: string; className: string; badge: string }> = {
   skincare: { label: 'Skincare', emoji: '🌸', className: 'cat-skincare', badge: 'badge-pink' },
