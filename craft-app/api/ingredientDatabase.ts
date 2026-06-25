@@ -9,7 +9,7 @@ export interface IngredientInfo {
   cautions: string | null;
 }
 
-export const INGREDIENT_DB: Record<string, IngredientInfo> = {
+export const INGREDIENT_DaB: Record<string, IngredientInfo> = {
   'shea butter': {
     ingredient_name: 'Shea Butter',
     description: 'A fat extracted from the nut of the African shea tree. Rich in fatty acids and vitamins, it is solid at room temperature and melts on contact with skin.',
