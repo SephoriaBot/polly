@@ -21,7 +21,6 @@ const SECTIONS = [
       { id: 'planner', label: 'Meal Planner', icon: CalendarDays },
       { id: 'grocery', label: 'Grocery List', icon: ShoppingCart },
       { id: 'pantry', label: 'Pantry', icon: Archive },
-      { id: 'bread', label: 'Bread Machine', icon: Sandwich },
     ],
   },
   {
