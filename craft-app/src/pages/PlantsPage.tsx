@@ -266,7 +266,7 @@ export default function PlantsPage() {
         <X size={16} />
       </button>
 
-      <PlantTroubleshooter plant={selectedPlant} />
+      //<PlantTroubleshooter plant={selectedPlant} />
     </div>
   </div>
 
