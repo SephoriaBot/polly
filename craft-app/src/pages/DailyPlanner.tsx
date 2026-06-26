@@ -87,10 +87,22 @@ export default function DailyPlanner() {
     setTasks(prev => prev.filter(t => t.id !== id));
   }
 
-  async function resetAll() {
-    await supabase.from('daily_tasks').update({ done: false }).neq('id', '');
-    setTasks(prev => prev.map(t => ({ ...t, done: false })));
+ async function resetAll() {
+  const { error } = await supabase
+    .from('daily_tasks')
+    .update({ done: false })
+    .in(
+      'id',
+      tasks.map(t => t.id)
+    );
+
+  if (error) {
+    console.error(error);
+    return;
   }
+
+  setTasks(prev => prev.map(t => ({ ...t, done: false })));
+}
 
   async function addAppointment() {
     const title = newApptTitle.trim();
