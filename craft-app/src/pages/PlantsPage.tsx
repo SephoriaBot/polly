@@ -269,7 +269,7 @@ export default function PlantsPage() {
       <PlantTroubleshooter plant={selectedPlant} />
     </div>
   </div>
-)
+
           </div>
 
           {/* Watering */}
@@ -323,7 +323,7 @@ export default function PlantsPage() {
           </div>
         </div>
       </div>
-
+)
 {selectedPlant && (
   <div
     style={{
