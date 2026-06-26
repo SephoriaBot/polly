@@ -71,7 +71,7 @@ const [savedMeals, setSavedMeals] = useState<{ id: number; name: string }[]>([])
 async function loadSavedMeals() {
   const { data } = await supabase
     .from('meals')
-    .select('id, name')
+    .select('spoonacular_id, name')
     .order('name')
 
   setSavedMeals(data ?? [])
@@ -125,7 +125,7 @@ async function loadSavedMeals() {
       <button
         key={m.name}
         className={`${styles.chip} ${meal?.title === m.name ? styles.active : ''}`}
-        onClick={() => fetchMeal(m.id)}
+        onClick={() => fetchMeal(m.spoonacular_id)}
       >
         {m.name}
       </button>
