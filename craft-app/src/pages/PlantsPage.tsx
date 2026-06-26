@@ -323,7 +323,7 @@ export default function PlantsPage() {
           </div>
         </div>
       </div>
-    
+ )   
 {selectedPlant && (
   <div
     style={{
