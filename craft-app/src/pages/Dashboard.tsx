@@ -28,7 +28,7 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
 
   useEffect(() => {
     async function loadStats() { 
-      const [apptsRes, plantsRes, recipesRes, petsRes, groceryRes, pantryRes, vaccinationsRes] = await Promise.all([
+      const [plantsRes, recipesRes, petsRes, groceryRes, pantryRes, vaccinationsRes, apptsRes] = await Promise.all([
         supabase.from('garden_plants').select('id', { count: 'exact', head: true }),
         supabase.from('recipes').select('id', { count: 'exact', head: true }),
         supabase.from('pets').select('id, name'),
