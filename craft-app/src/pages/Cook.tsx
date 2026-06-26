@@ -1,10 +1,6 @@
 import { useState, useEffect } from 'react'
 import styles from './Cook.module.css'
-
-const PRESET_MEALS = [
-  'pasta','chicken',
-  'pancakes','stir fry','omelette'
-]
+import { supabase } from '../lib/supabase'
 
 const CONVERSIONS = {
   us: [
@@ -57,6 +53,7 @@ function parseMeal(raw: Record<string, string>): MealData {
 export default function Cook() {
   const initialMeal = null
   const [search, setSearch] = useState(initialMeal ?? '')
+const [savedMeals, setSavedMeals] = useState<{ name: string }[]>([])
   const [meal, setMeal] = useState<MealData | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -64,8 +61,21 @@ export default function Cook() {
   const [unit, setUnit] = useState<'us' | 'metric'>('us')
 
   useEffect(() => {
-    if (initialMeal) fetchMeal(initialMeal)
-  }, [])
+  loadSavedMeals()
+
+  if (initialMeal) {
+    fetchMeal(initialMeal)
+  }
+}, [])
+
+async function loadSavedMeals() {
+  const { data } = await supabase
+    .from('meals')
+    .select('name')
+    .order('name')
+
+  setSavedMeals(data ?? [])
+}
 
   async function fetchMeal(query: string) {
     if (!query.trim()) return
@@ -93,34 +103,28 @@ export default function Cook() {
 
   return (
     <div className={styles.page}>
-      {/* search bar */}
-      <div className={styles.mealPicker}>
-        <div className={styles.pickerLabel}>search for a recipe</div>
-        <div className={styles.searchRow}>
-          <input
-            type="text"
-            placeholder="e.g. chicken, pasta, omelette..."
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && fetchMeal(search)}
-            style={{flex:1}}
-          />
-          <button className="btn-primary" onClick={() => fetchMeal(search)}>
-            <i className="ti ti-search" aria-hidden="true" /> search
-          </button>
-        </div>
-        <div className={styles.chips} style={{marginTop:8}}>
-          {PRESET_MEALS.map(m => (
-            <button
-              key={m}
-              className={`${styles.chip} ${meal?.title.toLowerCase().includes(m) ? styles.active : ''}`}
-              onClick={() => { setSearch(m); fetchMeal(m) }}
-            >
-              {m}
-            </button>
-          ))}
-        </div>
-      </div>
+
+<div className={styles.mealPicker}>
+  <div className={styles.pickerLabel}>choose one of your saved meals</div>
+
+  <div className={styles.chips}>
+    {savedMeals.map(m => (
+      <button
+        key={m.name}
+        className={`${styles.chip} ${meal?.title === m.name ? styles.active : ''}`}
+        onClick={() => fetchMeal(m.name)}
+      >
+        {m.name}
+      </button>
+    ))}
+  </div>
+
+  {savedMeals.length === 0 && (
+    <div className="empty-state">
+      Save some meals from the Suggestions page first.
+    </div>
+  )}
+</div>
 
       <div className={`card ${styles.cookCard}`}>
         {!meal && !loading && !error && (
