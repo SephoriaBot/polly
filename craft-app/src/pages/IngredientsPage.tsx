@@ -2,11 +2,6 @@ import { useEffect, useState } from 'react';
 import { Search, Plus, X, Pencil, Trash2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
-import {
-  INGREDIENT_DB,
-  type IngredientInfo
-} from '../../api/ingredientDatabase';
-
 interface CraftIngredient {
   id: string;
   name: string;
