@@ -16,6 +16,7 @@ const SECTIONS = [
     label: 'Open Kitchen',
     icon: ChefHat,
     items: [
+      { id: 'maid', label: 'Maid Wizard', icon: Sparkles },
       { id: 'cook', label: 'Cook', icon: UtensilsCrossed },
       { id: 'suggest', label: 'Suggestions', icon: Lightbulb },
       { id: 'planner', label: 'Meal Planner', icon: CalendarDays },
