@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Clock, Package, ChevronRight, RotateCcw, CheckCircle2, Circle } from 'lucide-react'
+import { Clock, Package, ChevronRight, RotateCcw, CheckCircle2, Circle, Sparkles } from 'lucide-react'
 
 const ROOMS = [
   { value: 'kitchen', label: 'Kitchen', emoji: '🍳' },
@@ -15,140 +15,60 @@ interface CleaningPlan {
   steps: { title: string; detail: string }[]
 }
 
-const CLEANING_PLANS: Record<string, CleaningPlan> = {
-  kitchen: {
-    supplies: [
-      'All-purpose cleaner',
-      'Degreaser spray',
-      'Dish soap',
-      'Microfiber cloths',
-      'Scrub sponge',
-      'Baking soda',
-      'White vinegar',
-      'Trash bags',
-    ],
-    estimatedMinutes: 45,
-    steps: [
-      { title: 'Clear all surfaces', detail: 'Remove everything from countertops, stovetop, and the top of the fridge. Set items aside on the table.' },
-      { title: 'Soak the stovetop grates', detail: 'Place grates and burner covers in the sink with hot soapy water to soak while you clean everything else.' },
-      { title: 'Wipe down cabinet fronts', detail: 'Spray degreaser on a cloth and wipe all cabinet and drawer fronts, paying extra attention to handles.' },
-      { title: 'Clean the microwave', detail: 'Microwave a bowl of water + 2 tbsp vinegar for 3 minutes, then wipe the interior clean with a damp cloth.' },
-      { title: 'Scrub the stovetop', detail: 'Spray degreaser on the stovetop, let sit 2 minutes, then scrub with a sponge. Dry the soaked grates and replace.' },
-      { title: 'Wipe countertops', detail: 'Spray all-purpose cleaner on countertops and scrub any stains with baking soda. Rinse and dry.' },
-      { title: 'Clean the sink', detail: 'Sprinkle baking soda in the sink, scrub with a sponge, rinse, then wipe the faucet and handles.' },
-      { title: 'Wipe down appliances', detail: 'Clean the outside of the fridge, dishwasher, and any small appliances with an all-purpose cloth.' },
-      { title: 'Take out trash & reline', detail: 'Empty the trash, wipe the inside of the can with a disinfecting wipe, and put in a fresh bag.' },
-      { title: 'Sweep and mop the floor', detail: 'Sweep corners and under appliances first, then mop the full floor. Let dry before walking on it.' },
-    ],
-  },
-  bathroom: {
-    supplies: [
-      'Toilet bowl cleaner',
-      'Bathroom disinfectant spray',
-      'Glass cleaner',
-      'Scrub brush',
-      'Microfiber cloths',
-      'Old toothbrush (for grout)',
-      'Trash bags',
-      'Rubber gloves',
-    ],
-    estimatedMinutes: 35,
-    steps: [
-      { title: 'Apply toilet bowl cleaner', detail: 'Squirt cleaner under the rim and let it sit while you clean everything else.' },
-      { title: 'Clear the counters', detail: 'Remove everything from the sink counter and the top of the toilet tank.' },
-      { title: 'Spray the shower/tub', detail: 'Spray bathroom cleaner on all shower and tub surfaces and let it soak for 5 minutes.' },
-      { title: 'Scrub the shower/tub', detail: 'Scrub walls, floor, and fixtures with a sponge. Use an old toothbrush on grout lines and around the drain.' },
-      { title: 'Rinse the shower/tub', detail: 'Rinse all surfaces thoroughly and wipe the fixtures dry to prevent water spots.' },
-      { title: 'Clean the sink and counter', detail: 'Spray and scrub the sink basin, faucet, and handles. Wipe the counter dry and replace items.' },
-      { title: 'Scrub and flush the toilet', detail: 'Scrub the bowl with the brush, then flush. Spray and wipe the outside of the toilet top to bottom: tank, seat, base.' },
-      { title: 'Clean the mirror', detail: 'Spray glass cleaner and wipe in an S-pattern with a microfiber cloth for a streak-free finish.' },
-      { title: 'Wipe walls and light switch', detail: 'Spot-clean any visible splatter on walls and wipe the light switch plate.' },
-      { title: 'Sweep and mop the floor', detail: 'Sweep around the toilet base and in corners, then mop. Replace the trash bag.' },
-    ],
-  },
-  bedroom: {
-    supplies: [
-      'All-purpose cleaner',
-      'Glass cleaner',
-      'Microfiber cloths',
-      'Vacuum with attachments',
-      'Laundry basket',
-      'Dusting wand or cloth',
-      'Trash bag',
-    ],
-    estimatedMinutes: 40,
-    steps: [
-      { title: 'Strip the bed', detail: 'Remove all bedding and pillowcases and start a wash cycle if needed.' },
-      { title: 'Declutter surfaces', detail: 'Clear nightstands, dresser tops, and the floor. Put laundry in the basket and trash in the bag.' },
-      { title: 'Dust ceiling fans and light fixtures', detail: 'Wipe fan blades with a damp cloth and dust any overhead fixtures from the top down.' },
-      { title: 'Dust all surfaces', detail: 'Dust shelves, nightstands, dresser, headboard, and baseboards using a microfiber cloth or duster.' },
-      { title: 'Wipe mirrors and glass', detail: 'Spray glass cleaner on mirrors and wipe in an S-pattern until streak-free.' },
-      { title: 'Wipe down furniture', detail: 'Wipe hard furniture surfaces with an all-purpose cleaner, paying attention to handles and knobs.' },
-      { title: 'Vacuum upholstered items', detail: 'Use the upholstery attachment on any chairs, cushions, or the mattress.' },
-      { title: 'Vacuum the floor', detail: 'Vacuum under the bed, in corners, and along baseboards, then do the main floor area.' },
-      { title: 'Remake the bed', detail: 'Put on fresh sheets and pillowcases. Fluff and arrange pillows.' },
-      { title: 'Open a window', detail: 'Air the room out for 10–15 minutes after cleaning to freshen the space.' },
-    ],
-  },
-  living_room: {
-    supplies: [
-      'All-purpose cleaner',
-      'Glass cleaner',
-      'Microfiber cloths',
-      'Vacuum with attachments',
-      'Dusting wand',
-      'Trash bag',
-    ],
-    estimatedMinutes: 40,
-    steps: [
-      { title: 'Declutter the room', detail: 'Pick up any items that don\'t belong, put remotes and books in their places, and clear the coffee table.' },
-      { title: 'Dust from the top down', detail: 'Start with ceiling fans, then light fixtures, shelves, and entertainment center. Work your way down to lower surfaces.' },
-      { title: 'Wipe hard surfaces', detail: 'Wipe down the coffee table, side tables, and shelves with all-purpose cleaner.' },
-      { title: 'Clean electronics and screens', detail: 'Wipe TV screens with a dry microfiber cloth. Clean remotes and gaming controllers with a slightly damp cloth.' },
-      { title: 'Clean windows and mirrors', detail: 'Spray glass cleaner on windows and mirrors and wipe streak-free.' },
-      { title: 'Fluff and rotate cushions', detail: 'Remove couch cushions, vacuum under them, then fluff and replace or rotate them.' },
-      { title: 'Vacuum upholstery', detail: 'Use the upholstery attachment to vacuum the sofa, chairs, and any fabric surfaces.' },
-      { title: 'Wipe baseboards', detail: 'Run a damp cloth along baseboards and door frames.' },
-      { title: 'Vacuum or sweep the floor', detail: 'Vacuum rugs and carpet, or sweep hard floors, getting into corners and under furniture edges.' },
-      { title: 'Mop hard floors', detail: 'Mop any hard floor areas and let dry.' },
-    ],
-  },
-  laundry_room: {
-    supplies: [
-      'All-purpose cleaner',
-      'White vinegar',
-      'Microfiber cloths',
-      'Old toothbrush',
-      'Vacuum with hose attachment',
-      'Trash bag',
-    ],
-    estimatedMinutes: 30,
-    steps: [
-      { title: 'Clear the space', detail: 'Remove any laundry, empty baskets, and items sitting on top of the washer and dryer.' },
-      { title: 'Clean the washing machine drum', detail: 'Run a hot empty cycle with 2 cups of white vinegar to deodorize and descale the drum.' },
-      { title: 'Wipe washer exterior', detail: 'Spray all-purpose cleaner on the top, sides, and control panel of the washer. Wipe clean.' },
-      { title: 'Clean the detergent drawer', detail: 'Pull out the detergent tray and scrub with an old toothbrush under warm water. Dry and replace.' },
-      { title: 'Clean the dryer drum', detail: 'Wipe the inside of the dryer drum with a damp cloth to remove lint residue and any marks.' },
-      { title: 'Clean the lint trap', detail: 'Remove the lint screen, peel off accumulated lint, and wash the screen with warm soapy water. Let dry.' },
-      { title: 'Vacuum behind and under appliances', detail: 'Use the hose attachment to vacuum the floor and wall behind the washer and dryer, and the exhaust vent area.' },
-      { title: 'Wipe dryer exterior', detail: 'Wipe down the outside of the dryer including the control panel and the door gasket.' },
-      { title: 'Wipe shelves and walls', detail: 'Wipe any shelving, the tops of machines, and any visible wall splatter.' },
-      { title: 'Sweep and mop the floor', detail: 'Sweep lint and dust from corners and under appliances, then mop the full floor.' },
-    ],
-  },
-}
-
-type WizardState = 'select' | 'plan'
+type WizardState = 'select' | 'loading' | 'plan'
 
 export default function MaidWizard() {
   const [wizardState, setWizardState] = useState<WizardState>('select')
   const [selectedRoom, setSelectedRoom] = useState<string | null>(null)
+  const [plan, setPlan] = useState<CleaningPlan | null>(null)
   const [checkedSteps, setCheckedSteps] = useState<Set<number>>(new Set())
+  const [error, setError] = useState('')
 
-  function selectRoom(roomValue: string) {
+  async function generatePlan(roomValue: string) {
+    const room = ROOMS.find(r => r.value === roomValue)
+    if (!room) return
+
     setSelectedRoom(roomValue)
+    setWizardState('loading')
     setCheckedSteps(new Set())
-    setWizardState('plan')
+    setError('')
+
+    const prompt = `You are a deep cleaning expert. Generate a deep cleaning plan for: ${room.label}
+
+Respond ONLY with a valid JSON object, no markdown, no backticks, no explanation. Use this exact shape:
+{
+  "supplies": ["item1", "item2"],
+  "estimatedMinutes": 45,
+  "steps": [
+    { "title": "Short action title", "detail": "One to two sentences of specific guidance." }
+  ]
+}
+Include 4–8 supplies, a realistic time estimate, and 6–10 steps in logical cleaning order (top to bottom, least dirty to most dirty). Be specific and practical.`
+
+    try {
+      const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${import.meta.env.VITE_GROQ_API_KEY}`,
+        },
+        body: JSON.stringify({
+          model: 'llama-3.3-70b-versatile',
+          max_tokens: 1000,
+          messages: [{ role: 'user', content: prompt }],
+        }),
+      })
+
+      const data = await response.json()
+      const raw = data.choices?.[0]?.message?.content ?? ''
+      const clean = raw.replace(/```json|```/g, '').trim()
+      const parsed: CleaningPlan = JSON.parse(clean)
+      setPlan(parsed)
+      setWizardState('plan')
+    } catch {
+      setError('Something went wrong generating your plan. Please try again.')
+      setWizardState('select')
+    }
   }
 
   function toggleStep(index: number) {
@@ -162,11 +82,12 @@ export default function MaidWizard() {
   function reset() {
     setWizardState('select')
     setSelectedRoom(null)
+    setPlan(null)
     setCheckedSteps(new Set())
+    setError('')
   }
 
   const room = ROOMS.find(r => r.value === selectedRoom)
-  const plan = selectedRoom ? CLEANING_PLANS[selectedRoom] : null
   const doneCount = checkedSteps.size
   const totalSteps = plan?.steps.length ?? 0
   const allDone = totalSteps > 0 && doneCount === totalSteps
@@ -190,6 +111,16 @@ export default function MaidWizard() {
         {/* Room selection */}
         {wizardState === 'select' && (
           <div style={{ maxWidth: 500 }}>
+            {error && (
+              <div style={{
+                marginBottom: 16, padding: '10px 14px', borderRadius: 12,
+                background: '#fff0f0', border: '1.5px solid #fecaca',
+                fontSize: '0.85rem', color: '#b91c1c'
+              }}>
+                {error}
+              </div>
+            )}
+
             <p style={{ fontSize: '0.88rem', color: 'var(--ink-muted)', marginBottom: 20, lineHeight: 1.6 }}>
               Which room are we tackling today? ✨
             </p>
@@ -198,7 +129,7 @@ export default function MaidWizard() {
               {ROOMS.map(r => (
                 <button
                   key={r.value}
-                  onClick={() => selectRoom(r.value)}
+                  onClick={() => generatePlan(r.value)}
                   style={{
                     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                     padding: '14px 18px', borderRadius: 16, cursor: 'pointer',
@@ -230,11 +161,36 @@ export default function MaidWizard() {
           </div>
         )}
 
-        {/* Plan view */}
+        {/* Loading */}
+        {wizardState === 'loading' && (
+          <div style={{
+            display: 'flex', flexDirection: 'column', alignItems: 'center',
+            justifyContent: 'center', padding: '60px 20px', gap: 16
+          }}>
+            <div style={{
+              width: 56, height: 56, borderRadius: '50%',
+              background: 'linear-gradient(135deg, #fde8f5, #e8d5ff)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              animation: 'gentlePulse 1.4s ease-in-out infinite',
+            }}>
+              <Sparkles size={24} style={{ color: '#9B72CF' }} />
+            </div>
+            <p style={{ fontSize: '0.9rem', color: 'var(--ink-muted)', fontStyle: 'italic' }}>
+              Building your {room?.label.toLowerCase()} cleaning plan…
+            </p>
+            <style>{`
+              @keyframes gentlePulse {
+                0%, 100% { transform: scale(1); opacity: 1; }
+                50% { transform: scale(1.08); opacity: 0.8; }
+              }
+            `}</style>
+          </div>
+        )}
+
+        {/* Plan */}
         {wizardState === 'plan' && plan && (
           <div style={{ maxWidth: 640 }}>
 
-            {/* Header strip */}
             <div style={{
               padding: '16px 20px', borderRadius: 16, marginBottom: 20,
               background: 'linear-gradient(135deg, #fde8f5, #e8d5ff)',
@@ -258,7 +214,6 @@ export default function MaidWizard() {
               </div>
             </div>
 
-            {/* Progress bar */}
             <div style={{ marginBottom: 24 }}>
               <div style={{ height: 8, borderRadius: 99, background: 'var(--border)', overflow: 'hidden' }}>
                 <div style={{
@@ -275,7 +230,6 @@ export default function MaidWizard() {
 
             <div className="grid-2" style={{ alignItems: 'start', gap: 16 }}>
 
-              {/* Steps */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 <div style={{ fontWeight: 700, fontSize: '0.8rem', color: 'var(--ink-soft)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>
                   🧽 Steps
@@ -321,7 +275,6 @@ export default function MaidWizard() {
                 })}
               </div>
 
-              {/* Supplies */}
               <div>
                 <div style={{ fontWeight: 700, fontSize: '0.8rem', color: 'var(--ink-soft)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 12 }}>
                   🧴 Supplies
