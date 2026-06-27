@@ -16,7 +16,8 @@ import DailyPlanner from './pages/DailyPlanner';
 import MaidWizard from './pages/MaidWizard';
 import { ToastProvider } from './hooks/useToast';
 
-type Page = 'dashboard' | 'plants' | 'recipes' | 'wizard' | 'add-recipe' | 'ingredients' | 'cook' | 'grocery' | 'pantry' | 'planner' | 'suggest' | 'pets' | 'bread';
+type Page = 'dashboard' | 'plants' | 'recipes' | 'wizard' | 'add-recipe' | 'ingredients' | 'cook' | 'grocery' | 'pantry' | 'planner' | 'suggest' | 'pets' | 'bread' | 'dailyplanner' | 'maidwizard';
+
 
 export default function App() {
   const [page, setPage] = useState<Page>('dashboard');
