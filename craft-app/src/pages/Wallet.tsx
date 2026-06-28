@@ -1176,4 +1176,3 @@ export default function Wallet() {
           <>
             {snowballExtra < 0 && (
               <div style={{ background: "#FDE8E8", border: "1.5px solid #C0404A", borderRadius: 16, padding: "12px 16px", fontSize: 13, color: "#C0404A", fontWeight: 600 }}>
-  
