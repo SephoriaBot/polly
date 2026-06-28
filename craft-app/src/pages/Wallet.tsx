@@ -1,5 +1,4 @@
 import { useState, useMemo, useEffect } from "react";
-import "./App.css";
 
 interface Debt {
   id: number;
