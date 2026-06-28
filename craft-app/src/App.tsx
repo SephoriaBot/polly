@@ -17,7 +17,7 @@ import MaidWizard from './pages/MaidWizard';
 import Wallet from './pages/Wallet';
 import { ToastProvider } from './hooks/useToast';
 
-type Page = 'dashboard' | 'plants' | 'recipes' | 'wizard' | 'add-recipe' | 'ingredients' | 'cook' | 'grocery' | 'pantry' | 'planner' | 'suggest' | 'pets' | 'bread' | 'dailyplanner' | 'maidwizard';
+type Page = 'dashboard' | 'plants' | 'recipes' | 'wizard' | 'add-recipe' | 'ingredients' | 'cook' | 'grocery' | 'pantry' | 'planner' | 'suggest' | 'pets' | 'bread' | 'dailyplanner' | 'maidwizard' | 'wallet';
 
 
 export default function App() {
