@@ -153,7 +153,7 @@ function EditableCell({ value, onChange, type = "number" }: { value: string | nu
       type={type}
       value={value}
       onChange={e => onChange(e.target.value)}
-      style={{ width: "100%", background: "transparent", border: "none", borderBottom: "1px dashed #FFB6C1", color: "#6B4C57", fontSize: 13, padding: "2px 4px", outline: "none", fontFamily: "inherit" }}
+      style={{ width: "100%", background: "transparent", border: "none", borderBottom: "1.5px dashed var(--border)", color: "var(--ink)", fontSize: 13, padding: "2px 4px", outline: "none", fontFamily: "inherit" }}
     />
   );
 }
@@ -192,7 +192,6 @@ export default function Wallet() {
   });
   const [showConfetti, setShowConfetti] = useState(false);
   const [paidOffDebt, setPaidOffDebt] = useState<string>("");
-
   const [wizardCost, setWizardCost] = useState("");
   const [wizardDebtId, setWizardDebtId] = useState<number | null>(null);
   const [wizardResult, setWizardResult] = useState<{ days: number; payments: number } | null>(null);
@@ -228,7 +227,7 @@ export default function Wallet() {
           { data: savedData },
         ] = await Promise.all([
           supabase.from("debts").select("*"),
-          supabase.from("budget").select("*").eq("id", 1).maybeSingle(), // ← was .single(), throws if no row
+          supabase.from("budget").select("*").eq("id", 1).maybeSingle(),
           supabase.from("bills").select("*").order("due_day"),
           supabase.from("bill_payments").select("*"),
           supabase.from("daily_log").select("*").order("date", { ascending: false }).limit(30),
@@ -236,10 +235,7 @@ export default function Wallet() {
         ]);
 
         if (debtData && debtData.length > 0) {
-          const fixed = debtData.map((d: Debt) => ({
-            ...d,
-            original_balance: d.original_balance || d.balance,
-          }));
+          const fixed = debtData.map((d: Debt) => ({ ...d, original_balance: d.original_balance || d.balance }));
           setDebts(fixed);
           setNextId(Math.max(...fixed.map((d: Debt) => d.id)) + 1);
           await processMonthlyMinimums(fixed);
@@ -248,7 +244,7 @@ export default function Wallet() {
           setDebts(DEFAULT_DEBTS);
         }
 
-        if (budgetData) setBudget(budgetData); // falls back to default state if null
+        if (budgetData) setBudget(budgetData);
         if (billData) {
           setBills(billData);
           if (billData.length > 0) setNextBillId(Math.max(...billData.map((b: Bill) => b.id)) + 1);
@@ -259,7 +255,7 @@ export default function Wallet() {
       } catch (err) {
         console.error("Wallet loadData failed:", err);
       } finally {
-        setLoading(false); // ← always runs, even if something throws
+        setLoading(false);
       }
     }
     loadData();
@@ -328,11 +324,11 @@ export default function Wallet() {
   const unifiedFun = afterBuffer * 0.35;
 
   const allocations = [
-    { label: "🏠 Bills & Minimums", amount: unifiedBills, color: "#E85D75", note: urgentBills.length > 0 ? `⚠ ${urgentBills.length} bill(s) due soon!` : "bills + debt minimums" },
-    { label: "❄️ Snowball Extra", amount: unifiedSnowball, color: "#8ECDF2", note: "extra toward target debt" },
-    ...(isWeeklyMode ? [] : [{ label: "🏦 Buffer", amount: unifiedBuffer, color: "#FFB68A", note: "Robinhood -- $22/day until $650" }]),
-    { label: "🛒 Needs", amount: unifiedNeeds, color: "#7ED9A8", note: "groceries, gas, essentials" },
-    { label: "🎉 Fun Money", amount: unifiedFun, color: "#FF6FA0", note: "whimsy -- wants, not needs!" },
+    { label: "🏠 Bills & Minimums", amount: unifiedBills, color: "var(--pink-dark)", note: urgentBills.length > 0 ? `⚠ ${urgentBills.length} bill(s) due soon!` : "bills + debt minimums" },
+    { label: "❄️ Snowball Extra", amount: unifiedSnowball, color: "#6BBFD4", note: "extra toward target debt" },
+    ...(isWeeklyMode ? [] : [{ label: "🏦 Buffer", amount: unifiedBuffer, color: "#C4933F", note: "Robinhood -- $22/day until $650" }]),
+    { label: "🛒 Needs", amount: unifiedNeeds, color: "var(--green-dark)", note: "groceries, gas, essentials" },
+    { label: "🎉 Fun Money", amount: unifiedFun, color: "var(--ink-soft)", note: "whimsy -- wants, not needs!" },
   ];
 
   async function processMonthlyMinimums(debtList: Debt[]) {
@@ -343,9 +339,7 @@ export default function Wallet() {
       if (debt.paid_off || debt.last_processed_month === currentMonth) return debt;
       const interest = debt.balance * (debt.apr / 100 / 12);
       const newBalance = Math.max(0, debt.balance + interest - debt.min_payment);
-      updates.push(
-        supabase.from("debts").update({ balance: newBalance, last_processed_month: currentMonth }).eq("id", debt.id).then(() => {})
-      );
+      updates.push(supabase.from("debts").update({ balance: newBalance, last_processed_month: currentMonth }).eq("id", debt.id).then(() => {}));
       return { ...debt, balance: newBalance, last_processed_month: currentMonth };
     });
     await Promise.all(updates);
@@ -522,53 +516,38 @@ export default function Wallet() {
   const totalDebt = debts.reduce((s, d) => s + (Number(d.balance) || 0), 0);
   const activeTotal = activeDebts.filter(d => !d.paid_off).reduce((s, d) => s + (Number(d.balance) || 0), 0);
   const payoffMonth = months.length;
-  const finalDeferred = months.length > 0 ? Object.values(months[months.length - 1].deferredBalances).reduce((s, v) => s + v, 0) : deferredDebts.reduce((s, d) => s + d.balance, 0);
+  const finalDeferred = months.length > 0
+    ? Object.values(months[months.length - 1].deferredBalances).reduce((s, v) => s + v, 0)
+    : deferredDebts.reduce((s, d) => s + d.balance, 0);
 
-  const s = {
-    app: { minHeight: "100vh", background: "#FFF8F3", fontFamily: "'Comic Sans MS', 'Segoe UI', sans-serif", color: "#6B4C57", paddingBottom: 60 } as React.CSSProperties,
-    header: { background: "linear-gradient(135deg, #FFB6C1 0%, #FFC4D6 50%, #FFD4E5 100%)", borderBottom: "3px solid #FF8FAB", padding: "20px 20px 16px", borderRadius: "0 0 24px 24px" } as React.CSSProperties,
-    statsRow: { display: "flex", gap: 10, padding: "14px 20px", flexWrap: "wrap" as const, background: "#FFF8F3" },
-    stat: { flex: "1 1 120px", background: "#FFFFFF", border: "2px solid #FFD4E5", borderRadius: 16, padding: "10px 14px", boxShadow: "0 2px 8px rgba(255,182,193,0.25)" } as React.CSSProperties,
-    tabs: { display: "flex", background: "#FFF8F3", borderBottom: "2px solid #FFD4E5", paddingLeft: 8, overflowX: "auto" as const, gap: 2 } as React.CSSProperties,
-    content: { padding: "20px" } as React.CSSProperties,
-    card: { background: "#FFFFFF", border: "2px solid #FFE0EB", borderRadius: 18, overflow: "hidden", marginBottom: 20, boxShadow: "0 3px 12px rgba(255,182,193,0.2)" } as React.CSSProperties,
-    cardHead: { background: "linear-gradient(135deg, #FFE5EC, #FFF0F5)", padding: "12px 16px", display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "2px solid #FFE0EB" } as React.CSSProperties,
-    table: { width: "100%", borderCollapse: "collapse" } as React.CSSProperties,
-    th: { fontSize: 10, color: "#D4839B", textTransform: "uppercase" as const, padding: "8px 10px", textAlign: "left" as const, borderBottom: "2px solid #FFE0EB", background: "#FFF5F8", fontWeight: 700 },
-    td: { padding: "9px 10px", fontSize: 12, borderBottom: "1px solid #FFEEF3", verticalAlign: "middle" as const, color: "#6B4C57" },
+  const TABS = ["planner","wizard","bills","debts","budget","schedule"];
+  const TAB_LABELS: Record<string, string> = {
+    planner: "📅 Planner", wizard: "🧙 Wizard", bills: "🏠 Bills",
+    debts: "🍓 Debts", budget: "💰 Budget", schedule: "📋 Schedule",
   };
 
-  const btn = (color = "#FF8FAB") => ({ background: color, border: "none", borderRadius: 12, color: "#fff", fontSize: 12, fontWeight: 700, padding: "7px 14px", cursor: "pointer", boxShadow: `0 2px 6px ${color}66` } as React.CSSProperties);
-  const btnSm = (color = "#D4A5C9") => ({ background: color, border: "none", borderRadius: 10, color: "#fff", fontSize: 11, padding: "4px 10px", cursor: "pointer", fontWeight: 600 } as React.CSSProperties);
-  const tag = (color: string) => ({ display: "inline-block", background: color, borderRadius: 10, fontSize: 10, fontWeight: 700, padding: "3px 9px", color: "#fff" } as React.CSSProperties);
-  const tabBtn = (active: boolean) => ({ padding: "12px 14px", fontSize: 11, fontWeight: 700, cursor: "pointer", background: active ? "#FFFFFF" : "transparent", border: "none", borderRadius: active ? "14px 14px 0 0" : 0, color: active ? "#FF6B95" : "#D4A5C9", borderBottom: active ? "3px solid #FF8FAB" : "3px solid transparent", whiteSpace: "nowrap" as const, transition: "all 0.2s" } as React.CSSProperties);
-  const inputStyle = { background: "#FFF8FB", border: "2px solid #FFD4E5", borderRadius: 10, color: "#6B4C57", fontSize: 13, padding: "6px 10px", width: 90, outline: "none", fontWeight: 600 } as React.CSSProperties;
-  const inputFull = { ...inputStyle, width: "100%", boxSizing: "border-box" as const };
-
   const Confetti = () => {
-    const colors = ["#C9A4F0","#7ED9A8","#FFB68A","#8ECDF2","#E85D75","#FFE0A3"];
+    const colors = ["var(--pink-dark)","var(--green)","var(--pink-light)","var(--ink-soft)","#FEFBE8"];
     return (
       <div style={{ position: "fixed", top: 0, left: 0, width: "100%", height: "100%", pointerEvents: "none", zIndex: 9999, overflow: "hidden" }}>
         {Array.from({ length: 60 }).map((_, i) => (
           <div key={i} style={{ position: "absolute", left: `${Math.random() * 100}%`, top: "-10px", width: `${Math.random() * 8 + 4}px`, height: `${Math.random() * 8 + 4}px`, background: colors[Math.floor(Math.random() * colors.length)], borderRadius: Math.random() > 0.5 ? "50%" : "0", animation: `fall ${Math.random() * 2 + 2}s linear ${Math.random() * 2}s forwards` }} />
         ))}
         <style>{`@keyframes fall { to { transform: translateY(100vh) rotate(720deg); opacity: 0; } }`}</style>
-        <div style={{ position: "absolute", top: "35%", left: "50%", transform: "translateX(-50%)", textAlign: "center", background: "#FFFFFF", border: "3px solid #FFB6C1", borderRadius: 20, padding: "24px 32px", minWidth: 220 }}>
+        <div style={{ position: "absolute", top: "35%", left: "50%", transform: "translateX(-50%)", textAlign: "center", background: "var(--white)", border: "2px solid var(--border)", borderRadius: 32, padding: "24px 32px", minWidth: 220 }}>
           <div style={{ fontSize: 48 }}>🎉</div>
-          <div style={{ fontSize: 20, fontWeight: 800, color: "#7ED9A8", marginTop: 8 }}>DEBT PAID OFF!</div>
-          <div style={{ fontSize: 16, color: "#C9A4F0", marginTop: 4 }}>{paidOffDebt}</div>
-          <div style={{ fontSize: 13, color: "#C4A8B5", marginTop: 8 }}>Keep going -- you are crushing it!</div>
+          <div style={{ fontSize: 20, fontWeight: 800, color: "var(--green-dark)", marginTop: 8 }}>DEBT PAID OFF!</div>
+          <div style={{ fontSize: 16, color: "var(--pink-dark)", marginTop: 4 }}>{paidOffDebt}</div>
+          <div style={{ fontSize: 13, color: "var(--ink-muted)", marginTop: 8 }}>Keep going — you are crushing it!</div>
         </div>
       </div>
     );
   };
 
   if (loading) return (
-    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "60vh" }}>
-      <div style={{ textAlign: "center" }}>
-        <div style={{ fontSize: 40, marginBottom: 16 }}>🍓</div>
-        <div style={{ color: "#D4A5C9", fontSize: 14, fontWeight: 700 }}>Loading your sweet tracker...</div>
-      </div>
+    <div className="loading-spinner" style={{ minHeight: "60vh" }}>
+      <span style={{ fontSize: 32 }}>🍓</span>
+      <span>Loading your tracker...</span>
     </div>
   );
 
@@ -576,313 +555,310 @@ export default function Wallet() {
     <div>
       {showConfetti && <Confetti />}
 
-      <div style={s.header}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <div>
-            <div style={{ fontSize: 18, fontWeight: 800, color: "#8B5A6B" }}>🍓 Strawberry Snowball Tracker</div>
-            <div style={{ fontSize: 10, color: "#A6708A", marginTop: 2 }}>Syncs across all devices</div>
-          </div>
-          {savedMsg && <span style={{ fontSize: 11, color: "#7ED9A8" }}>Saved!</span>}
+      {/* ── HEADER ── */}
+      <div className="page-header">
+        <div>
+          <h2>🍓 Snowball Tracker</h2>
+          <p>Syncs across all devices</p>
         </div>
+        {savedMsg && <span className="badge badge-green">Saved!</span>}
       </div>
 
-      <div style={s.statsRow}>
-        {[
-          { label: "Total Debt", val: fmt(totalDebt), color: "#6B4C57" },
-          { label: "Active Debt", val: fmt(activeTotal), color: "#6B4C57" },
-          { label: "Snowball Extra", val: fmt(snowballExtra), color: snowballExtra >= 0 ? "#7ED9A8" : "#E85D75" },
-          { label: "Payoff", val: `${payoffMonth}mo`, color: "#7ED9A8" },
-          { label: "Deferred @ Done", val: fmt(finalDeferred), color: "#FFB68A" },
-        ].map(({ label, val, color }) => (
-          <div key={label} style={s.stat}>
-            <div style={{ fontSize: 9, color: "#D4A5C9", textTransform: "uppercase", letterSpacing: 1 }}>{label}</div>
-            <div style={{ fontSize: 15, fontWeight: 800, color, marginTop: 4 }}>{val}</div>
-          </div>
-        ))}
-      </div>
-
-      <div style={{ background: "#FFF0F5", borderBottom: "2px solid #FFD4E5", padding: "10px 20px", display: "flex", gap: 12, overflowX: "auto" as const, alignItems: "center" }}>
-        {[
-          { icon: "🔥", label: "No-Spend Streak", val: `${streakCount} ${streakCount === 1 ? "day" : "days"}`, color: "#E85D75" },
-          { icon: "🏦", label: "Buffer", val: `${fmt(bufferBalance)} / $650`, color: bufferBalance >= 650 ? "#7ED9A8" : "#FFB68A" },
-          { icon: "💸", label: "Saved Instead", val: fmt(totalSavedInstead), color: "#C9A4F0" },
-          { icon: "🎯", label: "Payoff", val: `${payoffMonth} months`, color: "#C9A4F0" },
-        ].map(({ icon, label, val, color }) => (
-          <div key={label} style={{ display: "flex", alignItems: "center", gap: 6, minWidth: "fit-content", background: "#FFFFFF", border: "2px solid #FFD4E5", borderRadius: 12, padding: "6px 12px" }}>
-            <span style={{ fontSize: 16 }}>{icon}</span>
-            <div>
-              <div style={{ fontSize: 9, color: "#C4A8B5", textTransform: "uppercase" as const, fontWeight: 700 }}>{label}</div>
-              <div style={{ fontSize: 14, fontWeight: 800, color }}>{val}</div>
+      {/* ── STAT CARDS ── */}
+      <div className="page-body" style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 10 }}>
+          {[
+            { label: "Total Debt", val: fmt(totalDebt), color: "var(--ink)" },
+            { label: "Active Debt", val: fmt(activeTotal), color: "var(--ink)" },
+            { label: "Snowball Extra / mo", val: fmt(snowballExtra), color: snowballExtra >= 0 ? "var(--green-dark)" : "#C0404A" },
+            { label: "Payoff", val: `${payoffMonth} months`, color: "var(--green-dark)" },
+            { label: "Deferred @ Done", val: fmt(finalDeferred), color: "var(--pink-dark)" },
+          ].map(({ label, val, color }) => (
+            <div key={label} className="card" style={{ cursor: "default" }}>
+              <div className="card-body" style={{ padding: "12px 16px" }}>
+                <div className="section-label" style={{ marginBottom: 4 }}>{label}</div>
+                <div style={{ fontSize: 18, fontWeight: 800, color }}>{val}</div>
+              </div>
             </div>
-          </div>
-        ))}
-        {milestones.slice(-2).map(m => (
-          <div key={m} style={{ display: "flex", alignItems: "center", gap: 6, minWidth: "fit-content", background: "#FFF5F8", border: "2px solid #FFB6C1", borderRadius: 12, padding: "6px 12px" }}>
-            <span style={{ fontSize: 16 }}>{MILESTONE_DEFS[m]?.emoji}</span>
-            <div style={{ fontSize: 12, fontWeight: 700, color: "#E85D75" }}>{MILESTONE_DEFS[m]?.label}</div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
 
-      <div style={s.tabs}>
-        {["planner", "wizard", "bills", "debts", "budget", "schedule"].map(t => (
-          <button key={t} style={tabBtn(tab === t)} onClick={() => setTab(t)}>
-            {t === "planner" ? "📅 Planner" : t === "wizard" ? "🧙 Wizard" : t === "bills" ? "🏠 Bills" : t === "debts" ? "🍓 Debts" : t === "budget" ? "💰 Budget" : "📋 Schedule"}
-          </button>
-        ))}
-      </div>
+        {/* ── MOTIVATIONAL STRIP ── */}
+        <div style={{ display: "flex", gap: 10, overflowX: "auto", paddingBottom: 4 }}>
+          {[
+            { icon: "🔥", label: "No-Spend Streak", val: `${streakCount} days`, color: "var(--pink-dark)" },
+            { icon: "🏦", label: "Buffer", val: `${fmt(bufferBalance)} / $650`, color: bufferBalance >= 650 ? "var(--green-dark)" : "var(--ink-soft)" },
+            { icon: "💸", label: "Saved Instead", val: fmt(totalSavedInstead), color: "var(--pink-dark)" },
+          ].map(({ icon, label, val, color }) => (
+            <div key={label} className="card" style={{ flexShrink: 0, cursor: "default" }}>
+              <div className="card-body" style={{ padding: "10px 14px", display: "flex", alignItems: "center", gap: 10 }}>
+                <span style={{ fontSize: 20 }}>{icon}</span>
+                <div>
+                  <div className="section-label" style={{ marginBottom: 2 }}>{label}</div>
+                  <div style={{ fontSize: 14, fontWeight: 800, color }}>{val}</div>
+                </div>
+              </div>
+            </div>
+          ))}
+          {milestones.slice(-2).map(m => (
+            <div key={m} className="card" style={{ flexShrink: 0, cursor: "default" }}>
+              <div className="card-body" style={{ padding: "10px 14px", display: "flex", alignItems: "center", gap: 8 }}>
+                <span style={{ fontSize: 20 }}>{MILESTONE_DEFS[m]?.emoji}</span>
+                <div style={{ fontSize: 12, fontWeight: 700, color: "var(--pink-dark)" }}>{MILESTONE_DEFS[m]?.label}</div>
+              </div>
+            </div>
+          ))}
+        </div>
 
-      <div style={s.content}>
+        {/* ── TABS ── */}
+        <div style={{ display: "flex", gap: 6, overflowX: "auto", paddingBottom: 2 }}>
+          {TABS.map(t => (
+            <button
+              key={t}
+              onClick={() => setTab(t)}
+              className={tab === t ? "btn btn-primary btn-sm" : "btn btn-ghost btn-sm"}
+            >
+              {TAB_LABELS[t]}
+            </button>
+          ))}
+        </div>
 
         {/* ── PLANNER TAB ── */}
         {tab === "planner" && (
           <>
             {urgentBills.length > 0 && (
-              <div style={{ background: "#FFE0E5", border: "2px solid #E85D75", borderRadius: 12, padding: "12px 16px", marginBottom: 16, fontSize: 12, color: "#8B5A6B" }}>
-                Bills due within 7 days: {urgentBills.map(b => `${b.name} ($${b.amount}) in ${b.days} days`).join(" . ")}
+              <div style={{ background: "#FDE8E8", border: "1.5px solid #C0404A", borderRadius: 16, padding: "12px 16px", fontSize: 13, color: "#C0404A", fontWeight: 600 }}>
+                ⚠️ Bills due within 7 days: {urgentBills.map(b => `${b.name} (${fmt(b.amount)}) in ${b.days}d`).join(" · ")}
               </div>
             )}
-            <div style={{ background: isWeeklyMode ? "#E8F8EE" : "#FFF5F8", border: `2px solid ${isWeeklyMode ? "#7ED9A8" : "#FFB6C1"}`, borderRadius: 12, padding: "10px 16px", marginBottom: 16, fontSize: 12, color: isWeeklyMode ? "#3D8B62" : "#A6708A", fontWeight: 600 }}>
-              {isWeeklyMode ? "Buffer goal reached! Now in weekly paycheck mode." : "Daily Anytime Pay mode -- building your $650 buffer."}
+
+            <div style={{ background: isWeeklyMode ? "var(--green-light)" : "var(--blush)", border: `1.5px solid ${isWeeklyMode ? "var(--green)" : "var(--border)"}`, borderRadius: 16, padding: "10px 16px", fontSize: 13, color: isWeeklyMode ? "var(--green-dark)" : "var(--ink-soft)", fontWeight: 600 }}>
+              {isWeeklyMode ? "🎉 Buffer goal reached! Now in weekly paycheck mode." : "📅 Daily Anytime Pay mode — building your $650 buffer."}
             </div>
 
-            <div style={s.card}>
-              <div style={s.cardHead}>
-                <span style={{ fontSize: 11, fontWeight: 700, color: "#D4839B", textTransform: "uppercase" as const }}>
-                  {isWeeklyMode ? "This Week's Paycheck" : "Today's Anytime Pay"}
-                </span>
-                <span style={{ fontSize: 10, color: "#C4A8B5" }}>{new Date().toLocaleDateString()}</span>
-              </div>
-              <div style={{ padding: "16px" }}>
-                <div style={{ fontSize: 12, color: "#6B4C57", marginBottom: 8 }}>
-                  {isWeeklyMode ? "Enter your weekly take-home pay:" : "How much are you withdrawing today?"}
-                </div>
+            <div className="card">
+              <div className="card-body">
+                <div className="section-label">{isWeeklyMode ? "This Week's Paycheck" : "Today's Anytime Pay"}</div>
                 <input
                   type="number"
+                  className="form-input"
                   placeholder={isWeeklyMode ? "e.g. 900" : "e.g. 120"}
                   value={isWeeklyMode ? weeklyPay : anytimePay}
                   onChange={e => isWeeklyMode ? setWeeklyPay(e.target.value) : setAnytimePay(e.target.value)}
-                  style={{ ...inputFull, fontSize: 20, padding: "10px 14px", fontWeight: 700 }}
+                  style={{ fontSize: 22, fontWeight: 700, marginTop: 8, marginBottom: 6 }}
                 />
                 {inputAmount > 0 && (
-                  <div style={{ fontSize: 11, color: "#C4A8B5", marginTop: 6 }}>
+                  <div style={{ fontSize: 11, color: "var(--ink-muted)", marginBottom: 14 }}>
                     = {(inputAmount / 20.50).toFixed(1)} hours of your life
                   </div>
                 )}
-              </div>
-              {inputAmount > 0 && (
-                <div style={{ padding: "0 16px 16px" }}>
-                  <div style={{ display: "flex", height: 16, borderRadius: 8, overflow: "hidden", marginBottom: 16 }}>
-                    {allocations.map(a => (
-                      <div key={a.label} style={{ width: pct(a.amount, inputAmount), background: a.color, transition: "width 0.3s" }} />
-                    ))}
-                  </div>
-                  {allocations.map(a => (
-                    <div key={a.label} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: "1px solid #FFEEF3" }}>
-                      <div>
-                        <div style={{ fontSize: 13, color: "#6B4C57", fontWeight: 600 }}>{a.label}</div>
-                        <div style={{ fontSize: 10, color: "#C4A8B5", marginTop: 2 }}>{a.note}</div>
-                      </div>
-                      <div style={{ textAlign: "right" as const }}>
-                        <div style={{ fontSize: 15, fontWeight: 800, color: a.color }}>{fmt(a.amount)}</div>
-                        <div style={{ fontSize: 10, color: "#C4A8B5" }}>{pct(a.amount, inputAmount)}</div>
-                      </div>
-                    </div>
-                  ))}
-                  <div style={{ marginTop: 12 }}>
-                    <input type="text" placeholder="Notes (optional)..." value={planNotes} onChange={e => setPlanNotes(e.target.value)} style={{ ...inputFull, marginBottom: 10 }} />
-                    <button style={{ ...btn("#FF8FAB"), width: "100%", padding: "10px", fontSize: 14 }} onClick={saveLog}>
-                      Save {isWeeklyMode ? "Weekly" : "Daily"} Plan
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
 
-            <div style={s.card}>
-              <div style={s.cardHead}>
-                <span style={{ fontSize: 11, fontWeight: 700, color: "#D4839B", textTransform: "uppercase" as const }}>Purchase Reality Check</span>
-                <button style={btnSm()} onClick={() => setShowCalculator(v => !v)}>{showCalculator ? "Hide" : "Show"}</button>
-              </div>
-              {showCalculator && (
-                <div style={{ padding: 16 }}>
-                  <div style={{ fontSize: 12, color: "#6B4C57", marginBottom: 8 }}>How much does it cost?</div>
-                  <input type="number" placeholder="e.g. 45.00" value={purchaseAmount} onChange={e => setPurchaseAmount(e.target.value)} style={{ ...inputFull, marginBottom: 12 }} />
-                  {parseFloat(purchaseAmount) > 0 && (
-                    <>
-                      <div style={{ background: "#FFF5F8", borderRadius: 12, padding: 14, marginBottom: 10 }}>
-                        <div style={{ fontSize: 13, color: "#A6708A", marginBottom: 6 }}>That purchase costs you:</div>
-                        <div style={{ fontSize: 22, fontWeight: 800, color: "#E85D75" }}>{(parseFloat(purchaseAmount) / 20.50).toFixed(1)} hours of work</div>
-                        <div style={{ fontSize: 11, color: "#C4A8B5", marginTop: 4 }}>at $20.50/hr</div>
-                      </div>
-                      <div style={{ background: "#E8F8EE", borderRadius: 12, padding: 14 }}>
-                        <div style={{ fontSize: 13, color: "#3D8B62", marginBottom: 4 }}>If saved toward debt instead:</div>
-                        <div style={{ fontSize: 14, fontWeight: 700, color: "#3D8B62" }}>
-                          Saves ~{snowballExtra > 0 ? Math.ceil(parseFloat(purchaseAmount) / (snowballExtra / 30)) : "?"} days off your payoff
+                {inputAmount > 0 && (
+                  <>
+                    <div style={{ display: "flex", height: 12, borderRadius: 99, overflow: "hidden", marginBottom: 16, gap: 2 }}>
+                      {allocations.map(a => (
+                        <div key={a.label} style={{ width: pct(a.amount, inputAmount), background: a.color, transition: "width 0.3s" }} />
+                      ))}
+                    </div>
+                    {allocations.map(a => (
+                      <div key={a.label} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "9px 0", borderBottom: "1px solid var(--border)" }}>
+                        <div>
+                          <div style={{ fontSize: 13, color: "var(--ink)", fontWeight: 600 }}>{a.label}</div>
+                          <div style={{ fontSize: 11, color: "var(--ink-muted)", marginTop: 2 }}>{a.note}</div>
+                        </div>
+                        <div style={{ textAlign: "right" }}>
+                          <div style={{ fontSize: 15, fontWeight: 800, color: a.color }}>{fmt(a.amount)}</div>
+                          <div style={{ fontSize: 10, color: "var(--ink-muted)" }}>{pct(a.amount, inputAmount)}</div>
                         </div>
                       </div>
-                    </>
-                  )}
-                </div>
-              )}
+                    ))}
+                    <div style={{ marginTop: 14, display: "flex", flexDirection: "column", gap: 8 }}>
+                      <input type="text" className="form-input" placeholder="Notes (optional)..." value={planNotes} onChange={e => setPlanNotes(e.target.value)} />
+                      <button className="btn btn-primary" style={{ width: "100%", justifyContent: "center" }} onClick={saveLog}>
+                        Save {isWeeklyMode ? "Weekly" : "Daily"} Plan
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
 
-            <div style={s.card}>
-              <div style={s.cardHead}>
-                <span style={{ fontSize: 11, fontWeight: 700, color: "#D4839B", textTransform: "uppercase" as const }}>No-Spend Streak</span>
-                <span style={{ fontSize: 20, fontWeight: 800, color: "#E85D75" }}>{streakCount} days</span>
+            <div className="card">
+              <div className="card-body">
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+                  <div className="section-label" style={{ marginBottom: 0 }}>Purchase Reality Check</div>
+                  <button className="btn btn-ghost btn-sm" onClick={() => setShowCalculator(v => !v)}>{showCalculator ? "Hide" : "Show"}</button>
+                </div>
+                {showCalculator && (
+                  <>
+                    <input type="number" className="form-input" placeholder="e.g. 45.00" value={purchaseAmount} onChange={e => setPurchaseAmount(e.target.value)} style={{ marginBottom: 12 }} />
+                    {parseFloat(purchaseAmount) > 0 && (
+                      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                        <div style={{ background: "var(--blush)", borderRadius: 16, padding: 14 }}>
+                          <div style={{ fontSize: 12, color: "var(--ink-muted)", marginBottom: 4 }}>That purchase costs you:</div>
+                          <div style={{ fontSize: 22, fontWeight: 800, color: "var(--pink-dark)" }}>{(parseFloat(purchaseAmount) / 20.50).toFixed(1)} hours of work</div>
+                          <div style={{ fontSize: 11, color: "var(--ink-muted)", marginTop: 2 }}>at $20.50/hr</div>
+                        </div>
+                        <div style={{ background: "var(--green-light)", borderRadius: 16, padding: 14 }}>
+                          <div style={{ fontSize: 12, color: "var(--green-dark)", marginBottom: 4 }}>If saved toward debt instead:</div>
+                          <div style={{ fontSize: 14, fontWeight: 700, color: "var(--green-dark)" }}>
+                            Saves ~{snowballExtra > 0 ? Math.ceil(parseFloat(purchaseAmount) / (snowballExtra / 30)) : "?"} days off your payoff
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
               </div>
-              <div style={{ padding: 16 }}>
-                <div style={{ fontSize: 12, color: "#6B4C57", marginBottom: 12 }}>Did you avoid unplanned spending today?</div>
+            </div>
+
+            <div className="card">
+              <div className="card-body">
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+                  <div className="section-label" style={{ marginBottom: 0 }}>No-Spend Streak</div>
+                  <span style={{ fontSize: 20, fontWeight: 800, color: "var(--pink-dark)" }}>{streakCount} days 🔥</span>
+                </div>
                 <div style={{ display: "flex", gap: 8 }}>
-                  <button style={{ ...btn(lastCheckIn === todayStr() ? "#D4A5C9" : "#FF8FAB"), flex: 1, padding: "12px", fontSize: 14 }} onClick={checkStreak} disabled={lastCheckIn === todayStr()}>
-                    {lastCheckIn === todayStr() ? "Checked In" : "No Spend Today"}
+                  <button className={`btn btn-sm ${lastCheckIn === todayStr() ? "btn-ghost" : "btn-primary"}`} style={{ flex: 1, justifyContent: "center" }} onClick={checkStreak} disabled={lastCheckIn === todayStr()}>
+                    {lastCheckIn === todayStr() ? "✓ Checked In" : "No Spend Today"}
                   </button>
-                  <button style={{ ...btn("#E85D75"), flex: 1, padding: "12px", fontSize: 14 }} onClick={breakStreak}>
+                  <button className="btn btn-danger btn-sm" style={{ flex: 1, justifyContent: "center" }} onClick={breakStreak}>
                     I Bought Something
                   </button>
                 </div>
-                {streakCount >= 7 && <div style={{ marginTop: 10, textAlign: "center" as const, fontSize: 12, color: "#7ED9A8", fontWeight: 700 }}>On fire! {streakCount} days strong!</div>}
+                {streakCount >= 7 && <div style={{ marginTop: 10, textAlign: "center", fontSize: 12, color: "var(--green-dark)", fontWeight: 700 }}>On fire! {streakCount} days strong! 🔥</div>}
               </div>
             </div>
 
             {milestones.length > 0 && (
-              <div style={s.card}>
-                <div style={s.cardHead}>
-                  <span style={{ fontSize: 11, fontWeight: 700, color: "#D4839B", textTransform: "uppercase" as const }}>Milestones Earned</span>
-                </div>
-                <div style={{ padding: "8px 16px", display: "flex", flexWrap: "wrap" as const, gap: 10 }}>
-                  {milestones.map(m => (
-                    <div key={m} style={{ background: "#FFF5F8", border: "2px solid #FFD4E5", borderRadius: 12, padding: "8px 14px", textAlign: "center" as const }}>
-                      <div style={{ fontSize: 24 }}>{MILESTONE_DEFS[m]?.emoji}</div>
-                      <div style={{ fontSize: 11, fontWeight: 700, color: "#E85D75", marginTop: 4 }}>{MILESTONE_DEFS[m]?.label}</div>
-                      <div style={{ fontSize: 10, color: "#C4A8B5" }}>{MILESTONE_DEFS[m]?.desc}</div>
-                    </div>
-                  ))}
+              <div className="card">
+                <div className="card-body">
+                  <div className="section-label">Milestones Earned</div>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginTop: 8 }}>
+                    {milestones.map(m => (
+                      <div key={m} style={{ background: "var(--blush)", border: "1.5px solid var(--border)", borderRadius: 16, padding: "10px 14px", textAlign: "center" }}>
+                        <div style={{ fontSize: 24 }}>{MILESTONE_DEFS[m]?.emoji}</div>
+                        <div style={{ fontSize: 11, fontWeight: 700, color: "var(--pink-dark)", marginTop: 4 }}>{MILESTONE_DEFS[m]?.label}</div>
+                        <div style={{ fontSize: 10, color: "var(--ink-muted)" }}>{MILESTONE_DEFS[m]?.desc}</div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
             )}
 
-            <div style={s.card}>
-              <div style={s.cardHead}>
-                <span style={{ fontSize: 11, fontWeight: 700, color: "#D4839B", textTransform: "uppercase" as const }}>Recent History</span>
-                <button style={btnSm()} onClick={() => setShowHistory(v => !v)}>{showHistory ? "Hide" : "Show"}</button>
-              </div>
-              {showHistory && (
-                <div style={{ overflowX: "auto" }}>
-                  <table style={s.table}>
-                    <thead><tr>{["Date","Amount","Bills","Buffer","Spending","Snowball","Notes"].map(h => <th key={h} style={s.th}>{h}</th>)}</tr></thead>
-                    <tbody>
-                      {dailyLogs.map((log, i) => (
-                        <tr key={log.id} style={{ background: i % 2 === 0 ? "#FFFFFF" : "#FFF8FB" }}>
-                          <td style={{ ...s.td, color: "#D4A5C9", fontWeight: 700 }}>{log.date}</td>
-                          <td style={{ ...s.td, color: "#6B4C57", fontWeight: 700 }}>{fmt(log.anytime_pay_amount)}</td>
-                          <td style={{ ...s.td, color: "#E85D75" }}>{fmt(log.bills_allocation)}</td>
-                          <td style={{ ...s.td, color: "#FFB68A" }}>{fmt(log.buffer_allocation)}</td>
-                          <td style={{ ...s.td, color: "#7ED9A8" }}>{fmt(log.spending_allocation)}</td>
-                          <td style={{ ...s.td, color: "#8ECDF2" }}>{fmt(log.snowball_allocation)}</td>
-                          <td style={{ ...s.td, color: "#C4A8B5", fontSize: 11 }}>{log.notes}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+            <div className="card">
+              <div className="card-body">
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: showHistory ? 12 : 0 }}>
+                  <div className="section-label" style={{ marginBottom: 0 }}>Recent History</div>
+                  <button className="btn btn-ghost btn-sm" onClick={() => setShowHistory(v => !v)}>{showHistory ? "Hide" : "Show"}</button>
                 </div>
-              )}
+                {showHistory && (
+                  <div style={{ overflowX: "auto" }}>
+                    <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
+                      <thead>
+                        <tr>
+                          {["Date","Amount","Bills","Buffer","Spending","Snowball","Notes"].map(h => (
+                            <th key={h} style={{ fontSize: 10, color: "var(--ink-muted)", textTransform: "uppercase", padding: "8px 8px", textAlign: "left", borderBottom: "1.5px solid var(--border)", fontWeight: 700 }}>{h}</th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {dailyLogs.map((log, i) => (
+                          <tr key={log.id} style={{ background: i % 2 === 0 ? "transparent" : "var(--blush)" }}>
+                            <td style={{ padding: "8px", color: "var(--ink-muted)", fontWeight: 700 }}>{log.date}</td>
+                            <td style={{ padding: "8px", color: "var(--ink)", fontWeight: 700 }}>{fmt(log.anytime_pay_amount)}</td>
+                            <td style={{ padding: "8px", color: "var(--pink-dark)" }}>{fmt(log.bills_allocation)}</td>
+                            <td style={{ padding: "8px", color: "var(--ink-soft)" }}>{fmt(log.buffer_allocation)}</td>
+                            <td style={{ padding: "8px", color: "var(--green-dark)" }}>{fmt(log.spending_allocation)}</td>
+                            <td style={{ padding: "8px", color: "#6BBFD4" }}>{fmt(log.snowball_allocation)}</td>
+                            <td style={{ padding: "8px", color: "var(--ink-muted)", fontSize: 11 }}>{log.notes}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
             </div>
           </>
         )}
 
-        {/* ── DADDY WIZARD TAB ── */}
+        {/* ── WIZARD TAB ── */}
         {tab === "wizard" && (
           <>
-            <div style={s.card}>
-              <div style={s.cardHead}>
-                <span style={{ fontSize: 11, fontWeight: 700, color: "#D4839B", textTransform: "uppercase" as const }}>🧙 Can I Buy This?</span>
-              </div>
-              <div style={{ padding: 16 }}>
-                <div style={{ fontSize: 12, color: "#6B4C57", marginBottom: 8 }}>How much does it cost?</div>
-                <input
-                  type="number"
-                  placeholder="e.g. 49.99"
-                  value={wizardCost}
-                  onChange={e => { setWizardCost(e.target.value); setWizardResult(null); }}
-                  style={{ ...inputFull, fontSize: 20, fontWeight: 700, marginBottom: 14 }}
-                />
-                <div style={{ fontSize: 12, color: "#6B4C57", marginBottom: 8 }}>Which debt are you paying off?</div>
-                <select
-                  value={wizardDebtId ?? ""}
-                  onChange={e => { setWizardDebtId(Number(e.target.value)); setWizardResult(null); }}
-                  style={{ ...inputFull, marginBottom: 14 }}
-                >
-                  <option value="">-- Select a debt --</option>
-                  {activeDebts.filter(d => !d.paid_off).map(d => (
-                    <option key={d.id} value={d.id}>{d.name} ({fmt(d.balance)})</option>
-                  ))}
-                </select>
-                <button style={{ ...btn("#C9A4F0"), width: "100%", padding: "12px", fontSize: 14 }} onClick={runWizard}>
-                  Ask the Wizard
-                </button>
+            <div className="card">
+              <div className="card-body">
+                <div className="section-label">🧙 Can I Buy This?</div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 12, marginTop: 10 }}>
+                  <div>
+                    <div style={{ fontSize: 12, color: "var(--ink-muted)", marginBottom: 6 }}>How much does it cost?</div>
+                    <input type="number" className="form-input" placeholder="e.g. 49.99" value={wizardCost} onChange={e => { setWizardCost(e.target.value); setWizardResult(null); }} style={{ fontSize: 20, fontWeight: 700 }} />
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 12, color: "var(--ink-muted)", marginBottom: 6 }}>Which debt are you targeting?</div>
+                    <select className="form-select" value={wizardDebtId ?? ""} onChange={e => { setWizardDebtId(Number(e.target.value)); setWizardResult(null); }}>
+                      <option value="">-- Select a debt --</option>
+                      {activeDebts.filter(d => !d.paid_off).map(d => (
+                        <option key={d.id} value={d.id}>{d.name} ({fmt(d.balance)})</option>
+                      ))}
+                    </select>
+                  </div>
+                  <button className="btn btn-primary" style={{ justifyContent: "center" }} onClick={runWizard}>Ask the Wizard ✨</button>
+                </div>
 
                 {wizardResult && parseFloat(wizardCost) > 0 && (
-                  <div style={{ marginTop: 16 }}>
-                    <div style={{ background: "#FFF5F8", borderRadius: 14, padding: 16, marginBottom: 10 }}>
-                      <div style={{ fontSize: 13, color: "#A6708A", marginBottom: 8, fontWeight: 700 }}>The Wizard Says...</div>
-                      <div style={{ display: "flex", flexDirection: "column" as const, gap: 10 }}>
-                        <div style={{ background: "#FFE0E5", borderRadius: 10, padding: "10px 14px" }}>
-                          <div style={{ fontSize: 11, color: "#A6708A", marginBottom: 2 }}>Payoff delay</div>
-                          <div style={{ fontSize: 20, fontWeight: 800, color: "#E85D75" }}>+{wizardResult.days} days</div>
-                          <div style={{ fontSize: 11, color: "#C4A8B5" }}>This purchase would delay your payoff by {wizardResult.days} days</div>
-                        </div>
-                        {wizardResult.payments > 0 && (
-                          <div style={{ background: "#FFF0D4", borderRadius: 10, padding: "10px 14px" }}>
-                            <div style={{ fontSize: 11, color: "#A6708A", marginBottom: 2 }}>Minimum payments equivalent</div>
-                            <div style={{ fontSize: 20, fontWeight: 800, color: "#FFB68A" }}>{wizardResult.payments}x payments</div>
-                            <div style={{ fontSize: 11, color: "#C4A8B5" }}>
-                              This equals {wizardResult.payments} minimum payments on {debts.find(d => d.id === wizardDebtId)?.name}
-                            </div>
-                          </div>
-                        )}
-                        <div style={{ background: "#E8F8EE", borderRadius: 10, padding: "10px 14px" }}>
-                          <div style={{ fontSize: 11, color: "#3D8B62", marginBottom: 2 }}>Work hours cost</div>
-                          <div style={{ fontSize: 20, fontWeight: 800, color: "#7ED9A8" }}>{(parseFloat(wizardCost) / 20.50).toFixed(1)} hrs</div>
-                          <div style={{ fontSize: 11, color: "#C4A8B5" }}>at $20.50/hr</div>
-                        </div>
-                      </div>
+                  <div style={{ marginTop: 16, display: "flex", flexDirection: "column", gap: 10 }}>
+                    <div style={{ background: "var(--blush)", borderRadius: 16, padding: 14 }}>
+                      <div style={{ fontSize: 11, color: "var(--ink-muted)", marginBottom: 4 }}>Payoff delay</div>
+                      <div style={{ fontSize: 22, fontWeight: 800, color: "var(--pink-dark)" }}>+{wizardResult.days} days</div>
                     </div>
-                    <button style={{ ...btn("#7ED9A8"), width: "100%", padding: "12px", fontSize: 14 }} onClick={saveToBank}>
-                      I Skipped It -- Save {fmt(parseFloat(wizardCost))} to My Bank
+                    {wizardResult.payments > 0 && (
+                      <div style={{ background: "#FEFBE8", borderRadius: 16, padding: 14 }}>
+                        <div style={{ fontSize: 11, color: "var(--ink-muted)", marginBottom: 4 }}>Equivalent minimum payments</div>
+                        <div style={{ fontSize: 22, fontWeight: 800, color: "#8B6000" }}>{wizardResult.payments}x payments</div>
+                        <div style={{ fontSize: 11, color: "var(--ink-muted)" }}>on {debts.find(d => d.id === wizardDebtId)?.name}</div>
+                      </div>
+                    )}
+                    <div style={{ background: "var(--green-light)", borderRadius: 16, padding: 14 }}>
+                      <div style={{ fontSize: 11, color: "var(--ink-muted)", marginBottom: 4 }}>Work hours cost</div>
+                      <div style={{ fontSize: 22, fontWeight: 800, color: "var(--green-dark)" }}>{(parseFloat(wizardCost) / 20.50).toFixed(1)} hrs</div>
+                    </div>
+                    <button className="btn btn-green" style={{ justifyContent: "center" }} onClick={saveToBank}>
+                      I Skipped It — Save {fmt(parseFloat(wizardCost))} to My Bank
                     </button>
                   </div>
                 )}
               </div>
             </div>
 
-            <div style={s.card}>
-              <div style={s.cardHead}>
-                <span style={{ fontSize: 11, fontWeight: 700, color: "#D4839B", textTransform: "uppercase" as const }}>Saved Instead Bank</span>
-                <div style={{ textAlign: "right" as const }}>
-                  <div style={{ fontSize: 9, color: "#C4A8B5", textTransform: "uppercase" as const }}>Total Saved</div>
-                  <div style={{ fontSize: 18, fontWeight: 800, color: "#7ED9A8" }}>{fmt(totalSavedInstead)}</div>
+            <div className="card">
+              <div className="card-body">
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+                  <div className="section-label" style={{ marginBottom: 0 }}>💸 Saved Instead Bank</div>
+                  <div style={{ fontSize: 18, fontWeight: 800, color: "var(--green-dark)" }}>{fmt(totalSavedInstead)}</div>
                 </div>
-              </div>
-              <div style={{ padding: "10px 16px 4px", background: "#E8F8EE" }}>
-                <div style={{ fontSize: 12, color: "#3D8B62" }}>
-                  Every dollar in this bank is a dollar you chose NOT to spend. That's real discipline.
+                <div style={{ background: "var(--green-light)", borderRadius: 12, padding: "10px 14px", fontSize: 12, color: "var(--green-dark)", marginBottom: 10 }}>
+                  Every dollar here is a dollar you chose NOT to spend. That's real discipline.
                 </div>
-              </div>
-              <div style={{ padding: "4px 16px" }}>
-                <button style={{ ...btnSm(), marginTop: 8, marginBottom: 8 }} onClick={() => setShowSavedHistory(v => !v)}>
+                <button className="btn btn-ghost btn-sm" onClick={() => setShowSavedHistory(v => !v)}>
                   {showSavedHistory ? "Hide History" : "Show History"}
                 </button>
                 {showSavedHistory && (
-                  <table style={s.table}>
-                    <thead><tr>{["Date","Amount","Item"].map(h => <th key={h} style={s.th}>{h}</th>)}</tr></thead>
+                  <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12, marginTop: 10 }}>
+                    <thead>
+                      <tr>
+                        {["Date","Amount","Item"].map(h => (
+                          <th key={h} style={{ fontSize: 10, color: "var(--ink-muted)", textTransform: "uppercase", padding: "8px", textAlign: "left", borderBottom: "1.5px solid var(--border)", fontWeight: 700 }}>{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
                     <tbody>
                       {savedInstead.map((entry, i) => (
-                        <tr key={entry.id} style={{ background: i % 2 === 0 ? "#FFFFFF" : "#FFF8FB" }}>
-                          <td style={{ ...s.td, color: "#D4A5C9", fontWeight: 700 }}>{entry.saved_at?.split("T")[0]}</td>
-                          <td style={{ ...s.td, color: "#7ED9A8", fontWeight: 800 }}>{fmt(entry.amount)}</td>
-                          <td style={{ ...s.td, color: "#6B4C57" }}>{entry.item_name}</td>
+                        <tr key={entry.id} style={{ background: i % 2 === 0 ? "transparent" : "var(--blush)" }}>
+                          <td style={{ padding: "8px", color: "var(--ink-muted)" }}>{entry.saved_at?.split("T")[0]}</td>
+                          <td style={{ padding: "8px", color: "var(--green-dark)", fontWeight: 800 }}>{fmt(entry.amount)}</td>
+                          <td style={{ padding: "8px", color: "var(--ink)" }}>{entry.item_name}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -896,83 +872,102 @@ export default function Wallet() {
         {/* ── BILLS TAB ── */}
         {tab === "bills" && (
           <>
-            <div style={{ display: "flex", gap: 8, marginBottom: 16, overflowX: "auto" as const, paddingBottom: 4 }}>
+            <div style={{ display: "flex", gap: 6, overflowX: "auto", paddingBottom: 4 }}>
               {availableMonths.map(({ month, year, label }) => (
-                <button key={`${month}-${year}`} onClick={() => { setSelectedMonth(month); setSelectedYear(year); }}
-                  style={{ ...btnSm(selectedMonth === month && selectedYear === year ? "#FF8FAB" : "#FFE0EB"), padding: "6px 12px", fontSize: 11, whiteSpace: "nowrap" as const, color: selectedMonth === month && selectedYear === year ? "#fff" : "#D4839B" }}>
+                <button
+                  key={`${month}-${year}`}
+                  onClick={() => { setSelectedMonth(month); setSelectedYear(year); }}
+                  className={selectedMonth === month && selectedYear === year ? "btn btn-primary btn-sm" : "btn btn-ghost btn-sm"}
+                  style={{ whiteSpace: "nowrap" }}
+                >
                   {label}
                 </button>
               ))}
             </div>
-            <div style={{ display: "flex", gap: 10, marginBottom: 16 }}>
+
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10 }}>
               {[
-                { label: "Total", val: fmt(totalMonthlyBills), color: "#6B4C57" },
-                { label: "Paid", val: fmt(paidTotal), color: "#7ED9A8" },
-                { label: "Unpaid", val: fmt(unpaidTotal), color: "#E85D75" },
+                { label: "Total", val: fmt(totalMonthlyBills), color: "var(--ink)" },
+                { label: "Paid", val: fmt(paidTotal), color: "var(--green-dark)" },
+                { label: "Unpaid", val: fmt(unpaidTotal), color: "var(--pink-dark)" },
               ].map(({ label, val, color }) => (
-                <div key={label} style={{ flex: 1, background: "#FFF0F5", border: "2px solid #FFD4E5", borderRadius: 10, padding: "8px 12px", textAlign: "center" as const }}>
-                  <div style={{ fontSize: 9, color: "#D4A5C9", textTransform: "uppercase" as const }}>{label}</div>
-                  <div style={{ fontSize: 14, fontWeight: 800, color, marginTop: 2 }}>{val}</div>
+                <div key={label} className="card" style={{ cursor: "default" }}>
+                  <div className="card-body" style={{ padding: "10px 12px" }}>
+                    <div className="section-label" style={{ marginBottom: 4 }}>{label}</div>
+                    <div style={{ fontSize: 15, fontWeight: 800, color }}>{val}</div>
+                  </div>
                 </div>
               ))}
             </div>
-            <div style={s.card}>
-              <div style={s.cardHead}>
-                <span style={{ fontSize: 11, fontWeight: 700, color: "#D4839B", textTransform: "uppercase" as const }}>
-                  {MONTH_NAMES[selectedMonth - 1]} {selectedYear} Bills
-                </span>
-                <button style={btn()} onClick={() => setShowBillForm(v => !v)}>+ Add Bill</button>
-              </div>
-              {showBillForm && (
-                <div style={{ padding: "16px", borderBottom: "1px solid #FFE0EB", background: "#FFF8F3" }}>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 10 }}>
-                    <div>
-                      <div style={{ fontSize: 10, color: "#D4A5C9", marginBottom: 4 }}>BILL NAME</div>
-                      <input type="text" placeholder="e.g. Rent" value={newBill.name} onChange={e => setNewBill(p => ({ ...p, name: e.target.value }))} style={inputFull} />
-                    </div>
-                    <div>
-                      <div style={{ fontSize: 10, color: "#D4A5C9", marginBottom: 4 }}>AMOUNT ($)</div>
-                      <input type="number" placeholder="e.g. 1375" value={newBill.amount} onChange={e => setNewBill(p => ({ ...p, amount: e.target.value }))} style={inputFull} />
-                    </div>
-                    <div>
-                      <div style={{ fontSize: 10, color: "#D4A5C9", marginBottom: 4 }}>DUE DAY OF MONTH</div>
-                      <input type="number" placeholder="e.g. 1" value={newBill.due_day} onChange={e => setNewBill(p => ({ ...p, due_day: e.target.value }))} style={inputFull} />
-                    </div>
-                    <div style={{ display: "flex", alignItems: "flex-end" }}>
-                      <label style={{ fontSize: 12, color: "#6B4C57", display: "flex", alignItems: "center", gap: 6 }}>
-                        <input type="checkbox" checked={newBill.recurring} onChange={e => setNewBill(p => ({ ...p, recurring: e.target.checked }))} />
-                        Recurring monthly
-                      </label>
-                    </div>
-                  </div>
-                  <button style={{ ...btn("#7ED9A8"), width: "100%" }} onClick={addBill}>Save Bill</button>
+
+            <div className="card">
+              <div className="card-body">
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+                  <div className="section-label" style={{ marginBottom: 0 }}>{MONTH_NAMES[selectedMonth - 1]} {selectedYear}</div>
+                  <button className="btn btn-primary btn-sm" onClick={() => setShowBillForm(v => !v)}>+ Add Bill</button>
                 </div>
-              )}
-              <table style={s.table}>
-                <thead><tr>{["", "Bill", "Amount", "Due", "Status", ""].map(h => <th key={h} style={s.th}>{h}</th>)}</tr></thead>
-                <tbody>
-                  {monthBills.map((b, i) => (
-                    <tr key={b.id} style={{ background: b.late ? "#FFE0E5" : b.paid ? "#EAFBF1" : i % 2 === 0 ? "#FFFFFF" : "#FFF8FB" }}>
-                      <td style={{ ...s.td, width: 36 }}>
-                        <input type="checkbox" checked={b.paid} onChange={() => togglePaid(b)} style={{ width: 16, height: 16, cursor: "pointer", accentColor: "#7ED9A8" }} />
-                      </td>
-                      <td style={{ ...s.td, textDecoration: b.paid ? "line-through" : "none", color: b.paid ? "#C4A8B5" : "#6B4C57", fontWeight: 600 }}>{b.name}</td>
-                      <td style={{ ...s.td, textDecoration: b.paid ? "line-through" : "none", color: b.paid ? "#C4A8B5" : "#E85D75", fontWeight: 700 }}>{fmt(b.amount)}</td>
-                      <td style={{ ...s.td, color: "#D4A5C9" }}>{MONTH_NAMES[selectedMonth - 1].slice(0, 3)} {b.due_day}</td>
-                      <td style={s.td}>
-                        {b.paid ? <span style={tag("#7ED9A8")}>PAID</span>
-                          : b.late ? <span style={tag("#E85D75")}>LATE</span>
-                          : b.days <= 3 ? <span style={tag("#FFB68A")}>DUE SOON</span>
-                          : <span style={tag("#D4A5C9")}>{b.days}d away</span>}
-                      </td>
-                      <td style={s.td}><button style={btnSm("#E89BAA")} onClick={() => removeBill(b.id)}>x</button></td>
+
+                {showBillForm && (
+                  <div style={{ background: "var(--blush)", borderRadius: 16, padding: 14, marginBottom: 14, display: "flex", flexDirection: "column", gap: 10 }}>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                      <div>
+                        <div className="form-label">Bill Name</div>
+                        <input className="form-input" type="text" placeholder="e.g. Rent" value={newBill.name} onChange={e => setNewBill(p => ({ ...p, name: e.target.value }))} />
+                      </div>
+                      <div>
+                        <div className="form-label">Amount ($)</div>
+                        <input className="form-input" type="number" placeholder="e.g. 1375" value={newBill.amount} onChange={e => setNewBill(p => ({ ...p, amount: e.target.value }))} />
+                      </div>
+                      <div>
+                        <div className="form-label">Due Day</div>
+                        <input className="form-input" type="number" placeholder="e.g. 1" value={newBill.due_day} onChange={e => setNewBill(p => ({ ...p, due_day: e.target.value }))} />
+                      </div>
+                      <div style={{ display: "flex", alignItems: "flex-end" }}>
+                        <label style={{ fontSize: 13, color: "var(--ink)", display: "flex", alignItems: "center", gap: 6, fontWeight: 600 }}>
+                          <input type="checkbox" checked={newBill.recurring} onChange={e => setNewBill(p => ({ ...p, recurring: e.target.checked }))} />
+                          Recurring
+                        </label>
+                      </div>
+                    </div>
+                    <button className="btn btn-green" style={{ justifyContent: "center" }} onClick={addBill}>Save Bill</button>
+                  </div>
+                )}
+
+                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+                  <thead>
+                    <tr>
+                      {["", "Bill", "Amount", "Due", "Status", ""].map(h => (
+                        <th key={h} style={{ fontSize: 10, color: "var(--ink-muted)", textTransform: "uppercase", padding: "8px 8px", textAlign: "left", borderBottom: "1.5px solid var(--border)", fontWeight: 700 }}>{h}</th>
+                      ))}
                     </tr>
-                  ))}
-                  {monthBills.length === 0 && (
-                    <tr><td colSpan={6} style={{ ...s.td, textAlign: "center" as const, color: "#C4A8B5", padding: 24 }}>No bills yet. Click + Add Bill to get started.</td></tr>
-                  )}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {monthBills.map((b, i) => (
+                      <tr key={b.id} style={{ background: b.late ? "#FDE8E8" : b.paid ? "var(--green-light)" : i % 2 === 0 ? "transparent" : "var(--blush)" }}>
+                        <td style={{ padding: "9px 8px" }}>
+                          <input type="checkbox" checked={b.paid} onChange={() => togglePaid(b)} style={{ width: 16, height: 16, cursor: "pointer", accentColor: "var(--green-dark)" }} />
+                        </td>
+                        <td style={{ padding: "9px 8px", textDecoration: b.paid ? "line-through" : "none", color: b.paid ? "var(--ink-muted)" : "var(--ink)", fontWeight: 600 }}>{b.name}</td>
+                        <td style={{ padding: "9px 8px", color: b.paid ? "var(--ink-muted)" : "var(--pink-dark)", fontWeight: 700, textDecoration: b.paid ? "line-through" : "none" }}>{fmt(b.amount)}</td>
+                        <td style={{ padding: "9px 8px", color: "var(--ink-muted)" }}>{MONTH_NAMES[selectedMonth - 1].slice(0, 3)} {b.due_day}</td>
+                        <td style={{ padding: "9px 8px" }}>
+                          {b.paid
+                            ? <span className="badge badge-green">PAID</span>
+                            : b.late ? <span className="badge" style={{ background: "#FDE8E8", color: "#C0404A" }}>LATE</span>
+                            : b.days <= 3 ? <span className="badge badge-lavender">DUE SOON</span>
+                            : <span className="badge badge-pink">{b.days}d away</span>}
+                        </td>
+                        <td style={{ padding: "9px 8px" }}>
+                          <button className="btn btn-danger btn-sm" onClick={() => removeBill(b.id)}>✕</button>
+                        </td>
+                      </tr>
+                    ))}
+                    {monthBills.length === 0 && (
+                      <tr><td colSpan={6} style={{ padding: 24, textAlign: "center", color: "var(--ink-muted)" }}>No bills yet — click + Add Bill to get started.</td></tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </>
         )}
@@ -980,94 +975,117 @@ export default function Wallet() {
         {/* ── DEBTS TAB ── */}
         {tab === "debts" && (
           <>
-            <div style={s.card}>
-              <div style={s.cardHead}>
-                <span style={{ fontSize: 11, fontWeight: 700, color: "#D4839B", textTransform: "uppercase" as const }}>Active Debts -- Snowball Order</span>
-                <button style={btn()} onClick={() => addDebt(false)}>+ Add</button>
-              </div>
-              <div style={{ overflowX: "auto" }}>
-                <table style={s.table}>
-                  <thead><tr>{["#","Name","Balance","Progress","APR%","Min/Mo","Status","",""].map(h => <th key={h} style={s.th}>{h}</th>)}</tr></thead>
-                  <tbody>
-                    {activeDebts.filter(d => !d.paid_off).map((d, i) => {
-                      const origBal = d.original_balance || d.balance;
-                      const paidPct = origBal > 0 ? Math.min(100, ((origBal - d.balance) / origBal) * 100) : 0;
-                      return (
-                        <tr key={d.id} style={{ background: i % 2 === 0 ? "#FFFFFF" : "#FFF8FB" }}>
-                          <td style={s.td}>{i === 0 ? <span style={tag("#FF8FAB")}>Target</span> : <span style={{ color: "#C4A8B5" }}>{i + 1}</span>}</td>
-                          <td style={s.td}><EditableCell value={d.name} onChange={v => updateDebt(d.id, "name", v)} type="text" /></td>
-                          <td style={s.td}><EditableCell value={d.balance} onChange={v => updateDebt(d.id, "balance", parseFloat(v) || 0)} /></td>
-                          <td style={{ ...s.td, minWidth: 100 }}>
-                            <div className="progress-bar" style={{ marginBottom: 3 }}>
-                              <div className="progress-fill" style={{ width: `${paidPct}%` }} />
-                            </div>
-                            <div style={{ fontSize: 10, color: "#C4A8B5" }}>{paidPct.toFixed(1)}%</div>
-                          </td>
-                          <td style={s.td}><EditableCell value={d.apr} onChange={v => updateDebt(d.id, "apr", parseFloat(v) || 0)} /></td>
-                          <td style={s.td}><EditableCell value={d.min_payment} onChange={v => updateDebt(d.id, "min_payment", parseFloat(v) || 0)} /></td>
-                          <td style={s.td}>
-                            {i === 0 ? <span style={tag("#7ED9A8")}>TARGET</span> : d.min_payment > 0 ? <span style={tag("#8ECDF2")}>Min</span> : <span style={tag("#D4A5C9")}>Waiting</span>}
-                          </td>
-                          <td style={s.td}><button style={{ ...btnSm("#7ED9A8"), fontSize: 10 }} onClick={() => markDebtPaid(d.id, d.name)}>Paid</button></td>
-                          <td style={s.td}><button style={btnSm("#E89BAA")} onClick={() => removeDebt(d.id)}>x</button></td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+            <div className="card">
+              <div className="card-body">
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+                  <div className="section-label" style={{ marginBottom: 0 }}>Active Debts — Snowball Order</div>
+                  <button className="btn btn-primary btn-sm" onClick={() => addDebt(false)}>+ Add</button>
+                </div>
+                <div style={{ overflowX: "auto" }}>
+                  <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+                    <thead>
+                      <tr>
+                        {["#","Name","Balance","Progress","APR%","Min/Mo","",""].map(h => (
+                          <th key={h} style={{ fontSize: 10, color: "var(--ink-muted)", textTransform: "uppercase", padding: "8px", textAlign: "left", borderBottom: "1.5px solid var(--border)", fontWeight: 700 }}>{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {activeDebts.filter(d => !d.paid_off).map((d, i) => {
+                        const origBal = d.original_balance || d.balance;
+                        const paidPct = origBal > 0 ? Math.min(100, ((origBal - d.balance) / origBal) * 100) : 0;
+                        return (
+                          <tr key={d.id} style={{ background: i % 2 === 0 ? "transparent" : "var(--blush)" }}>
+                            <td style={{ padding: "9px 8px" }}>
+                              {i === 0
+                                ? <span className="badge badge-pink">Target</span>
+                                : <span style={{ color: "var(--ink-muted)", fontWeight: 700 }}>{i + 1}</span>}
+                            </td>
+                            <td style={{ padding: "9px 8px" }}><EditableCell value={d.name} onChange={v => updateDebt(d.id, "name", v)} type="text" /></td>
+                            <td style={{ padding: "9px 8px" }}><EditableCell value={d.balance} onChange={v => updateDebt(d.id, "balance", parseFloat(v) || 0)} /></td>
+                            <td style={{ padding: "9px 8px", minWidth: 90 }}>
+                              <div style={{ height: 6, background: "var(--border)", borderRadius: 99, overflow: "hidden" }}>
+                                <div style={{ height: "100%", width: `${paidPct}%`, background: "var(--green-dark)", borderRadius: 99 }} />
+                              </div>
+                              <div style={{ fontSize: 10, color: "var(--ink-muted)", marginTop: 3 }}>{paidPct.toFixed(1)}%</div>
+                            </td>
+                            <td style={{ padding: "9px 8px" }}><EditableCell value={d.apr} onChange={v => updateDebt(d.id, "apr", parseFloat(v) || 0)} /></td>
+                            <td style={{ padding: "9px 8px" }}><EditableCell value={d.min_payment} onChange={v => updateDebt(d.id, "min_payment", parseFloat(v) || 0)} /></td>
+                            <td style={{ padding: "9px 8px" }}>
+                              <button className="btn btn-green btn-sm" onClick={() => markDebtPaid(d.id, d.name)}>Paid ✓</button>
+                            </td>
+                            <td style={{ padding: "9px 8px" }}>
+                              <button className="btn btn-danger btn-sm" onClick={() => removeDebt(d.id)}>✕</button>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
 
             {activeDebts.filter(d => d.paid_off).length > 0 && (
-              <div style={{ ...s.card, border: "2px solid #7ED9A8" }}>
-                <div style={{ ...s.cardHead, background: "#E8F8EE" }}>
-                  <span style={{ fontSize: 11, fontWeight: 700, color: "#7ED9A8", textTransform: "uppercase" as const }}>Paid Off</span>
-                  <span style={{ fontSize: 11, color: "#7ED9A8" }}>Amazing work!</span>
-                </div>
-                <table style={s.table}>
-                  <tbody>
-                    {activeDebts.filter(d => d.paid_off).map(d => (
-                      <tr key={d.id} style={{ background: "#EAFBF1" }}>
-                        <td style={{ ...s.td, textDecoration: "line-through", color: "#7ED9A8", fontWeight: 700 }}>{d.name}</td>
-                        <td style={{ ...s.td, color: "#7ED9A8", fontWeight: 800 }}>$0.00</td>
-                        <td style={s.td}><span style={tag("#7ED9A8")}>PAID OFF</span></td>
-                        <td style={s.td}>
-                          <button style={{ ...btnSm("#D4A5C9"), marginRight: 4 }} onClick={() => unmarkDebtPaid(d.id)}>Undo</button>
-                          <button style={btnSm("#E89BAA")} onClick={() => removeDebt(d.id)}>x</button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-
-            <div style={s.card}>
-              <div style={s.cardHead}>
-                <span style={{ fontSize: 11, fontWeight: 700, color: "#FFB68A", textTransform: "uppercase" as const }}>Deferred Debts</span>
-                <div style={{ display: "flex", gap: 8 }}>
-                  <button style={btnSm()} onClick={() => setShowDeferred(v => !v)}>{showDeferred ? "Hide" : "Show"}</button>
-                  <button style={btn()} onClick={() => addDebt(true)}>+ Add</button>
-                </div>
-              </div>
-              {showDeferred && (
-                <div style={{ overflowX: "auto" }}>
-                  <table style={s.table}>
-                    <thead><tr>{["Name","Balance","APR%","Note",""].map(h => <th key={h} style={s.th}>{h}</th>)}</tr></thead>
+              <div className="card" style={{ border: "1.5px solid var(--green)" }}>
+                <div className="card-body">
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+                    <div className="section-label" style={{ marginBottom: 0, color: "var(--green-dark)" }}>🎉 Paid Off</div>
+                    <span style={{ fontSize: 12, color: "var(--green-dark)", fontWeight: 600 }}>Amazing work!</span>
+                  </div>
+                  <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
                     <tbody>
-                      {deferredDebts.map((d, i) => (
-                        <tr key={d.id} style={{ background: i % 2 === 0 ? "#FFFFFF" : "#FFF8FB" }}>
-                          <td style={s.td}><EditableCell value={d.name} onChange={v => updateDebt(d.id, "name", v)} type="text" /></td>
-                          <td style={s.td}><EditableCell value={d.balance} onChange={v => updateDebt(d.id, "balance", parseFloat(v) || 0)} /></td>
-                          <td style={s.td}><EditableCell value={d.apr} onChange={v => updateDebt(d.id, "apr", parseFloat(v) || 0)} /></td>
-                          <td style={{ ...s.td, color: "#FFB68A", fontSize: 11 }}>Not targeted until active debts clear</td>
-                          <td style={s.td}><button style={btnSm("#E89BAA")} onClick={() => removeDebt(d.id)}>x</button></td>
+                      {activeDebts.filter(d => d.paid_off).map(d => (
+                        <tr key={d.id} style={{ background: "var(--green-light)" }}>
+                          <td style={{ padding: "9px 8px", textDecoration: "line-through", color: "var(--green-dark)", fontWeight: 700 }}>{d.name}</td>
+                          <td style={{ padding: "9px 8px", color: "var(--green-dark)", fontWeight: 800 }}>$0.00</td>
+                          <td style={{ padding: "9px 8px" }}><span className="badge badge-green">PAID OFF</span></td>
+                          <td style={{ padding: "9px 8px", display: "flex", gap: 6 }}>
+                            <button className="btn btn-ghost btn-sm" onClick={() => unmarkDebtPaid(d.id)}>Undo</button>
+                            <button className="btn btn-danger btn-sm" onClick={() => removeDebt(d.id)}>✕</button>
+                          </td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
                 </div>
-              )}
+              </div>
+            )}
+
+            <div className="card">
+              <div className="card-body">
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: showDeferred ? 12 : 0 }}>
+                  <div className="section-label" style={{ marginBottom: 0 }}>Deferred Debts</div>
+                  <div style={{ display: "flex", gap: 8 }}>
+                    <button className="btn btn-ghost btn-sm" onClick={() => setShowDeferred(v => !v)}>{showDeferred ? "Hide" : "Show"}</button>
+                    <button className="btn btn-primary btn-sm" onClick={() => addDebt(true)}>+ Add</button>
+                  </div>
+                </div>
+                {showDeferred && (
+                  <div style={{ overflowX: "auto" }}>
+                    <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+                      <thead>
+                        <tr>
+                          {["Name","Balance","APR%","Note",""].map(h => (
+                            <th key={h} style={{ fontSize: 10, color: "var(--ink-muted)", textTransform: "uppercase", padding: "8px", textAlign: "left", borderBottom: "1.5px solid var(--border)", fontWeight: 700 }}>{h}</th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {deferredDebts.map((d, i) => (
+                          <tr key={d.id} style={{ background: i % 2 === 0 ? "transparent" : "var(--blush)" }}>
+                            <td style={{ padding: "9px 8px" }}><EditableCell value={d.name} onChange={v => updateDebt(d.id, "name", v)} type="text" /></td>
+                            <td style={{ padding: "9px 8px" }}><EditableCell value={d.balance} onChange={v => updateDebt(d.id, "balance", parseFloat(v) || 0)} /></td>
+                            <td style={{ padding: "9px 8px" }}><EditableCell value={d.apr} onChange={v => updateDebt(d.id, "apr", parseFloat(v) || 0)} /></td>
+                            <td style={{ padding: "9px 8px", color: "var(--ink-muted)", fontSize: 11 }}>Not targeted until active debts clear</td>
+                            <td style={{ padding: "9px 8px" }}><button className="btn btn-danger btn-sm" onClick={() => removeDebt(d.id)}>✕</button></td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
             </div>
           </>
         )}
@@ -1075,80 +1093,80 @@ export default function Wallet() {
         {/* ── BUDGET TAB ── */}
         {tab === "budget" && (
           <>
-            <div style={s.card}>
-              <div style={s.cardHead}>
-                <span style={{ fontSize: 11, fontWeight: 700, color: "#D4839B", textTransform: "uppercase" as const }}>Monthly Budget</span>
-              </div>
-              {[
-                { label: "Monthly Take-Home (est.)", val: budget.take_home, field: "take_home" as keyof Budget, note: "~$3,800 conservative -- after taxes + benefits + 401K" },
-                { label: "Fixed Expenses", val: budget.fixed_expenses, field: "fixed_expenses" as keyof Budget, note: "rent + transport + bills + groceries" },
-              ].map(({ label, val, field, note }) => (
-                <div key={label} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 16px", borderBottom: "1px solid #FFEEF3" }}>
-                  <div>
-                    <div style={{ fontSize: 13, color: "#6B4C57" }}>{label}</div>
-                    {note && <div style={{ fontSize: 11, color: "#C4A8B5" }}>{note}</div>}
+            <div className="card">
+              <div className="card-body">
+                <div className="section-label">Monthly Budget</div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+                  {[
+                    { label: "Monthly Take-Home (est.)", val: budget.take_home, field: "take_home" as keyof Budget, note: "~$3,800 conservative — after taxes + benefits + 401K" },
+                    { label: "Fixed Expenses", val: budget.fixed_expenses, field: "fixed_expenses" as keyof Budget, note: "rent + transport + bills + groceries" },
+                  ].map(({ label, val, field, note }) => (
+                    <div key={label} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 0", borderBottom: "1px solid var(--border)" }}>
+                      <div>
+                        <div style={{ fontSize: 13, color: "var(--ink)", fontWeight: 600 }}>{label}</div>
+                        <div style={{ fontSize: 11, color: "var(--ink-muted)", marginTop: 2 }}>{note}</div>
+                      </div>
+                      <input type="number" className="form-input" value={val} onChange={e => updateBudget(field, parseFloat(e.target.value) || 0)} style={{ width: 100, textAlign: "right" }} />
+                    </div>
+                  ))}
+                  {[
+                    { label: "Debt Minimums (auto)", val: fmt(totalMins) },
+                    { label: "Total Outflow", val: fmt(budget.fixed_expenses + totalMins) },
+                  ].map(({ label, val }) => (
+                    <div key={label} style={{ display: "flex", justifyContent: "space-between", padding: "12px 0", borderBottom: "1px solid var(--border)", background: "var(--blush)", margin: "0 -18px", padding: "12px 18px" }}>
+                      <span style={{ fontSize: 13, color: "var(--ink)" }}>{label}</span>
+                      <span style={{ fontSize: 14, fontWeight: 700, color: "var(--ink)" }}>{val}</span>
+                    </div>
+                  ))}
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 0", marginTop: 4 }}>
+                    <div>
+                      <div style={{ fontSize: 14, fontWeight: 700, color: "var(--green-dark)" }}>True Snowball Extra</div>
+                      <div style={{ fontSize: 11, color: "var(--ink-muted)" }}>thrown at target debt each month</div>
+                    </div>
+                    <div style={{ fontSize: 22, fontWeight: 800, color: snowballExtra >= 0 ? "var(--green-dark)" : "#C0404A" }}>{fmt(snowballExtra)}</div>
                   </div>
-                  <input type="number" value={val} onChange={e => updateBudget(field, parseFloat(e.target.value) || 0)} style={inputStyle} />
                 </div>
-              ))}
-              {[
-                { label: "Debt Minimums (auto)", val: fmt(totalMins) },
-                { label: "Total Outflow", val: fmt(budget.fixed_expenses + totalMins) },
-              ].map(({ label, val }) => (
-                <div key={label} style={{ display: "flex", justifyContent: "space-between", padding: "12px 16px", borderBottom: "1px solid #FFEEF3", background: "#FFF0F5" }}>
-                  <span style={{ fontSize: 13, color: "#6B4C57" }}>{label}</span>
-                  <span style={{ fontSize: 14, fontWeight: 700, color: "#6B4C57" }}>{val}</span>
-                </div>
-              ))}
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 16px", background: "#E8F8EE" }}>
-                <div>
-                  <div style={{ fontSize: 14, fontWeight: 700, color: "#3D8B62" }}>True Snowball Extra</div>
-                  <div style={{ fontSize: 11, color: "#7ED9A8" }}>thrown at target debt each month</div>
-                </div>
-                <div style={{ fontSize: 22, fontWeight: 800, color: snowballExtra >= 0 ? "#7ED9A8" : "#E85D75" }}>{fmt(snowballExtra)}</div>
               </div>
             </div>
 
-            <div style={s.card}>
-              <div style={s.cardHead}>
-                <span style={{ fontSize: 11, fontWeight: 700, color: "#D4839B", textTransform: "uppercase" as const }}>Robinhood Buffer</span>
-              </div>
-              <div style={{ padding: "16px" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
-                  <span style={{ fontSize: 13, color: "#6B4C57" }}>Current Balance</span>
-                  <span style={{ fontSize: 16, fontWeight: 800, color: "#FFB68A" }}>{fmt(bufferBalance)} / $650.00</span>
+            <div className="card">
+              <div className="card-body">
+                <div className="section-label">🏦 Robinhood Buffer</div>
+                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8, marginTop: 8 }}>
+                  <span style={{ fontSize: 13, color: "var(--ink)" }}>Current Balance</span>
+                  <span style={{ fontSize: 16, fontWeight: 800, color: "var(--ink-soft)" }}>{fmt(bufferBalance)} / $650.00</span>
                 </div>
-                <div className="progress-bar" style={{ height: 20, marginBottom: 12 }}>
-                  <div className="progress-fill" style={{ width: `${Math.min((bufferBalance / 650) * 100, 100)}%`, background: bufferBalance >= 650 ? "#7ED9A8" : "linear-gradient(90deg, #FFB68A, #FFD4A3)" }} />
+                <div style={{ height: 14, background: "var(--border)", borderRadius: 99, overflow: "hidden", marginBottom: 10 }}>
+                  <div style={{ height: "100%", width: `${Math.min((bufferBalance / 650) * 100, 100)}%`, background: bufferBalance >= 650 ? "var(--green-dark)" : "var(--pink-dark)", borderRadius: 99, transition: "width 0.3s" }} />
                 </div>
-                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 12 }}>
-                  <span style={{ fontSize: 11, color: "#C4A8B5" }}>{Math.round((bufferBalance / 650) * 100)}% complete</span>
-                  <span style={{ fontSize: 11, color: bufferBalance >= 650 ? "#7ED9A8" : "#C4A8B5" }}>
-                    {bufferBalance >= 650 ? "GOAL REACHED!" : `$${(650 - bufferBalance).toFixed(2)} to go`}
+                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 14 }}>
+                  <span style={{ fontSize: 11, color: "var(--ink-muted)" }}>{Math.round((bufferBalance / 650) * 100)}% complete</span>
+                  <span style={{ fontSize: 11, color: bufferBalance >= 650 ? "var(--green-dark)" : "var(--ink-muted)", fontWeight: 600 }}>
+                    {bufferBalance >= 650 ? "GOAL REACHED! 🎉" : `$${(650 - bufferBalance).toFixed(2)} to go`}
                   </span>
                 </div>
-                <input type="number" placeholder="Update balance..." onBlur={e => { const v = parseFloat(e.target.value); if (!isNaN(v)) { setBufferBalance(v); e.target.value = ""; }}} style={{ ...inputFull }} />
-                <div style={{ fontSize: 10, color: "#C4A8B5", marginTop: 6 }}>Enter your current Robinhood cash balance to update</div>
+                <input type="number" className="form-input" placeholder="Update balance..." onBlur={e => { const v = parseFloat(e.target.value); if (!isNaN(v)) { setBufferBalance(v); e.target.value = ""; }}} />
+                <div style={{ fontSize: 11, color: "var(--ink-muted)", marginTop: 6 }}>Enter your current Robinhood cash balance to update</div>
               </div>
             </div>
 
-            <div style={s.card}>
-              <div style={s.cardHead}>
-                <span style={{ fontSize: 11, fontWeight: 700, color: "#D4839B", textTransform: "uppercase" as const }}>Savings & Deductions</span>
-              </div>
-              {[
-                { label: "401K Contributions", val: "~$200/mo", color: "#7ED9A8", note: "auto-deducted before you see it" },
-                { label: "Buffer Goal (Robinhood)", val: "$650", color: "#FFB68A", note: "5-week build -- $110/wk -- $22/day less" },
-                { label: "Daily Anytime Pay reduction", val: "$22/day", color: "#FFB68A", note: "pull $22 less per day to fund buffer" },
-              ].map(({ label, val, color, note }) => (
-                <div key={label} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 16px", borderBottom: "1px solid #FFEEF3" }}>
-                  <div>
-                    <div style={{ fontSize: 13, color: "#6B4C57" }}>{label}</div>
-                    <div style={{ fontSize: 11, color: "#C4A8B5", marginTop: 2 }}>{note}</div>
+            <div className="card">
+              <div className="card-body">
+                <div className="section-label">Savings & Deductions</div>
+                {[
+                  { label: "401K Contributions", val: "~$200/mo", color: "var(--green-dark)", note: "auto-deducted before you see it" },
+                  { label: "Buffer Goal (Robinhood)", val: "$650", color: "var(--ink-soft)", note: "5-week build — $110/wk — $22/day" },
+                  { label: "Daily Anytime Pay reduction", val: "$22/day", color: "var(--ink-soft)", note: "pull $22 less per day to fund buffer" },
+                ].map(({ label, val, color, note }) => (
+                  <div key={label} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 0", borderBottom: "1px solid var(--border)" }}>
+                    <div>
+                      <div style={{ fontSize: 13, color: "var(--ink)", fontWeight: 600 }}>{label}</div>
+                      <div style={{ fontSize: 11, color: "var(--ink-muted)", marginTop: 2 }}>{note}</div>
+                    </div>
+                    <div style={{ fontSize: 13, fontWeight: 700, color }}>{val}</div>
                   </div>
-                  <div style={{ fontSize: 13, fontWeight: 700, color }}>{val}</div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </>
         )}
@@ -1157,79 +1175,5 @@ export default function Wallet() {
         {tab === "schedule" && (
           <>
             {snowballExtra < 0 && (
-              <div style={{ background: "#FFE0E5", border: "2px solid #E85D75", borderRadius: 12, padding: "12px 16px", marginBottom: 16, fontSize: 12 }}>
-                Snowball extra is negative -- minimums exceed your budget!
-              </div>
-            )}
-            <div style={s.card}>
-              <div style={s.cardHead}>
-                <span style={{ fontSize: 11, fontWeight: 700, color: "#D4839B", textTransform: "uppercase" as const }}>Month-by-Month Payoff</span>
-                <span style={{ fontSize: 11, color: "#7ED9A8", fontWeight: 700 }}>Done in {payoffMonth} months</span>
-              </div>
-              <div style={{ overflowX: "auto" }}>
-                <table style={s.table}>
-                  <thead>
-                    <tr>
-                      <th style={s.th}>Mo.</th>
-                      {activeDebts.filter(d => !d.paid_off).map(d => <th key={d.id} style={{ ...s.th, minWidth: 100 }}>{d.name}</th>)}
-                      <th style={{ ...s.th, color: "#FFB68A" }}>Target</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {months.map((snap, mi) => (
-                      <tr key={mi} style={{ background: mi % 2 === 0 ? "#FFFFFF" : "#FFF8FB" }}>
-                        <td style={{ ...s.td, color: "#D4A5C9", fontWeight: 700 }}>{snap.month}</td>
-                        {activeDebts.filter(d => !d.paid_off).map(d => {
-                          const bal = snap.balances[d.id] ?? 0;
-                          const paid = bal < 0.01;
-                          const isTgt = snap.target === d.name;
-                          const origBal = d.original_balance || d.balance;
-                          const paidPct = origBal > 0 ? Math.min(100, ((origBal - bal) / origBal) * 100) : 0;
-                          return (
-                            <td key={d.id} style={{ ...s.td, background: paid ? "#EAFBF1" : isTgt ? "#F3E8FF" : "transparent", color: paid ? "#7ED9A8" : isTgt ? "#C9A4F0" : "#C4A8B5", fontWeight: isTgt ? 700 : 400, textAlign: "right" as const }}>
-                              <div style={{ fontSize: 11 }}>{paid ? "PAID" : fmt(bal)}</div>
-                              {!paid && (
-                                <div className="progress-bar" style={{ marginTop: 3 }}>
-                                  <div className="progress-fill" style={{ width: `${paidPct}%` }} />
-                                </div>
-                              )}
-                            </td>
-                          );
-                        })}
-                        <td style={{ ...s.td, color: "#C9A4F0", fontWeight: 700, fontSize: 11 }}>{snap.target}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-            {deferredDebts.length > 0 && (
-              <div style={{ ...s.card, border: "2px solid #FFD4B8" }}>
-                <div style={{ ...s.cardHead, background: "#FFF3E5" }}>
-                  <span style={{ fontSize: 11, fontWeight: 700, color: "#FFB68A", textTransform: "uppercase" as const }}>Deferred Loans (accruing)</span>
-                  <span style={{ fontSize: 11, color: "#FFB68A" }}>At payoff: {fmt(finalDeferred)}</span>
-                </div>
-                <div style={{ overflowX: "auto" }}>
-                  <table style={s.table}>
-                    <thead><tr><th style={s.th}>Mo.</th>{deferredDebts.map(d => <th key={d.id} style={{ ...s.th, minWidth: 110 }}>{d.name}</th>)}</tr></thead>
-                    <tbody>
-                      {months.filter((_, i) => i % 3 === 0 || i === months.length - 1).map((snap, mi) => (
-                        <tr key={mi} style={{ background: mi % 2 === 0 ? "#FFFFFF" : "#FFF8FB" }}>
-                          <td style={{ ...s.td, color: "#D4A5C9", fontWeight: 700 }}>{snap.month}</td>
-                          {deferredDebts.map(d => (
-                            <td key={d.id} style={{ ...s.td, color: "#FFB68A", textAlign: "right" as const }}>{fmt(snap.deferredBalances[d.id] ?? d.balance)}</td>
-                          ))}
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
-          </>
-        )}
-
-      </div>
-    </div>
-  );
-}
+              <div style={{ background: "#FDE8E8", border: "1.5px solid #C0404A", borderRadius: 16, padding: "12px 16px", fontSize: 13, color: "#C0404A", fontWeight: 600 }}>
+  
