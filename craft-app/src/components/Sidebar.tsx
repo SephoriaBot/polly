@@ -2,7 +2,7 @@ import { useState } from 'react';
 import {
   Leaf, FlaskConical, Sparkles, BookOpen, Home, Wand2,
   UtensilsCrossed, ShoppingCart, Archive, CalendarDays, Lightbulb,
-  PawPrint, Sandwich, ChefHat, PiggyBank, CalendarCheck, ChevronDown, ChevronRight
+  PawPrint, ChefHat, PiggyBank, CalendarCheck, ChevronDown, ChevronRight
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -21,7 +21,8 @@ const SECTIONS = [
       { id: 'planner', label: 'Meal Planner', icon: CalendarDays },
       { id: 'grocery', label: 'Grocery List', icon: ShoppingCart },
       { id: 'pantry', label: 'Pantry', icon: Archive },
-    
+    ],
+  },
   {
     id: 'home',
     label: 'Home',
@@ -32,22 +33,11 @@ const SECTIONS = [
       { id: 'pets', label: 'My Pets', icon: PawPrint },
       { id: 'dailyplanner', label: 'Daily Planner', icon: CalendarCheck },
       { id: 'wallet', label: 'Wallet', icon: PiggyBank },
-{
-  id: 'money',
-  label: 'Money',
-  icon: Wallet, // import Wallet from lucide-react
-  items: [
-    { id: 'wallet', label: 'Wallet', icon: PiggyBank },
-  ],
-},
-
-],
-  },
     ],
   },
   {
     id: 'craft-table',
-    label: 'Go to Craft Table',
+    label: 'Craft Table',
     icon: Sparkles,
     items: [
       { id: 'recipes', label: 'Recipe Library', icon: BookOpen },
@@ -59,7 +49,6 @@ const SECTIONS = [
 ];
 
 export default function Sidebar({ currentPage, onNavigate }: SidebarProps) {
-  // figure out which section (if any) the current page belongs to, so it starts expanded
   const initialOpen = SECTIONS.find(s => s.items.some(i => i.id === currentPage))?.id ?? null;
   const [openSection, setOpenSection] = useState<string | null>(initialOpen);
 
@@ -75,7 +64,10 @@ export default function Sidebar({ currentPage, onNavigate }: SidebarProps) {
 
       <div className="sidebar-section">
         <nav className="sidebar-nav">
-          <button className={`nav-item ${currentPage === 'dashboard' ? 'active' : ''}`} onClick={() => onNavigate('dashboard')}>
+          <button
+            className={`nav-item ${currentPage === 'dashboard' ? 'active' : ''}`}
+            onClick={() => onNavigate('dashboard')}
+          >
             <Home size={16} /> Dashboard
           </button>
         </nav>
@@ -119,7 +111,6 @@ export default function Sidebar({ currentPage, onNavigate }: SidebarProps) {
           </div>
         );
       })}
-
     </aside>
   );
 }
