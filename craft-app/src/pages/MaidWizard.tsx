@@ -114,7 +114,7 @@ Include 4–8 supplies, a realistic time estimate, and 6–10 steps in logical c
             {error && (
               <div style={{
                 marginBottom: 16, padding: '10px 14px', borderRadius: 12,
-                background: '#fff0f0', border: '1.5px solid #fecaca',
+                background: 'var(--white)', border: '1.5px solid #fecaca',
                 fontSize: '0.85rem', color: '#b91c1c'
               }}>
                 {error}
