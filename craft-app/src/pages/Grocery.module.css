@@ -221,5 +221,11 @@
 }
 
 @media (max-width: 700px) {
-  .layout { grid-template-columns: 1fr; }
+  .grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+  }
+
+  /* 5th item (Fri) starts a new visual row but needs centering — 
+     easiest is just let it flow and accept 4+3 */
 }
