@@ -89,7 +89,7 @@
 }
 
 .picker {
-  background: var(--white);     /* ← make sure this is solid, not transparent */
+  background: #ffffff;     /* ← make sure this is solid, not transparent */
   border-radius: 12px;
   width: 100%;
   max-width: 340px;
