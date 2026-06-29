@@ -79,36 +79,42 @@ async function buildSmartCart() {
   setLoadingCart(true)
   setCart([])
 
+  const results = []
+  const cache = new Map()
+
   try {
-    const results = await Promise.all(
-      needItems.map(async (item) => {
-        try {
+    for (let i = 0; i < needItems.length; i += 3) {
+      const batch = needItems.slice(i, i + 3)
+
+      const batchResults = await Promise.all(
+        batch.map(async (item) => {
+          if (cache.has(item.name)) {
+            return cache.get(item.name)
+          }
+
           const res = await fetch(
-            `/api/product-search?q=${encodeURIComponent(item.name)}&zip=${encodeURIComponent(location)}`
+            `/api/product-search?q=${encodeURIComponent(item.name)}`
           )
 
           const data = await res.json()
 
-          return {
+          const result = {
             item: item.name,
             results: Array.isArray(data) ? data : []
           }
-        } catch (err) {
-          console.error("product-search failed for:", item.name, err)
-          return {
-            item: item.name,
-            results: []
-          }
-        }
-      })
-    )
 
-    setCart(results)
+          cache.set(item.name, result)
+          return result
+        })
+      )
+
+      results.push(...batchResults)
+      setCart([...results]) // updates progressively
+    }
   } finally {
     setLoadingCart(false)
   }
 }
-
   function refreshSmartCart() {
     buildSmartCart()
   }
