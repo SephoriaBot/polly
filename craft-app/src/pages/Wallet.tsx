@@ -591,7 +591,7 @@ width: "100%"
         <div style={{ display: "flex", gap: 10, overflowX: "auto", paddingBottom: 4 }}>
           {[
             { icon: "🔥", label: "No-Spend Streak", val: `${streakCount} days`, color: "var(--pink-dark)" },
-            { icon: "🏦", label: "Buffer", val: `${fmt(bufferBalance)} / $1000`, color: bufferBalance >= 1000 ? "var(--green-dark)" : "var(--ink-soft)" },
+            { icon: "🏦", label: "Savings Goal", val: `${fmt(bufferBalance)} / $1000`, color: bufferBalance >= 1000 ? "var(--green-dark)" : "var(--ink-soft)" },
             { icon: "💸", label: "Saved Instead", val: fmt(totalSavedInstead), color: "var(--pink-dark)" },
           ].map(({ icon, label, val, color }) => (
             <div key={label} className="card" style={{ flexShrink: 0, cursor: "default" }}>
