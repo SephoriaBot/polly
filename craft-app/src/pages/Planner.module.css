@@ -84,11 +84,14 @@
   align-items: center;
   justify-content: center;
   z-index: 200;
+  padding: 20px;        /* ← add this so it doesn't touch screen edges */
 }
+
 .picker {
   background: var(--white);
   border-radius: 12px;
-  width: 340px;
+  width: 100%;           /* ← change from 340px to 100% */
+  max-width: 340px;      /* ← add this */
   max-height: 70vh;
   overflow: hidden;
   display: flex;
@@ -96,6 +99,7 @@
   border: 1.5px solid var(--border);
   box-shadow: 0 20px 60px rgba(26,26,26,0.25);
 }
+
 .pickerHeader {
   padding: 12px 16px;
   font-size: 13px;
