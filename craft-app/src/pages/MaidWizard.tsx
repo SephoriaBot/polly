@@ -133,8 +133,8 @@ Include 4–8 supplies, a realistic time estimate, and 6–10 steps in logical c
                   style={{
                     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                     padding: '14px 18px', borderRadius: 16, cursor: 'pointer',
-                    border: '1.5px solid var(--border)',
-                    background: 'linear-gradient(135deg, var(--cream), #fef6ff)',
+                    border: '1.5px dashed var(--border)',
+                    background: 'linear-gradient(135deg, var(--white), #fef6ff)',
                     transition: 'all 0.15s ease',
                     textAlign: 'left',
                     color: 'var(--ink-soft)',
