@@ -513,7 +513,7 @@ export default function Wallet() {
 
   const TABS = ["wizard","bills","debts","budget","schedule"];
   const TAB_LABELS: Record<string, string> = {
-    planner: "wizard: "🧙 Daddy Wizard", bills: "🏠 Bills",
+    wizard: "🧙 Daddy Wizard", bills: "🏠 Bills",
     debts: "🍓 Debts", budget: "💰 Budget", schedule: "📋 Payment Schedule",
   };
 
