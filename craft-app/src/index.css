@@ -38,29 +38,31 @@ img {
   display: grid;
   grid-template-columns: 240px 1fr;
   min-height: 100vh;
+  overflow: hidden;
 }
 
 .main {
-  padding: 20px;
+  height: 100vh;
+  overflow-y: auto;
 }
 
 /* ================= SIDEBAR ================= */
 
 .sidebar {
-  width: 240px;
-  height: 100vh;
+  height: 100%;
   padding: 16px;
   background: linear-gradient(180deg, var(--primary), var(--accent));
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  color: white;
+  gap: 6px;
+  overflow: hidden;
+  justify-content: flex-start;
 }
 
 .sidebar-title {
   font-size: 18px;
   font-weight: 700;
-  margin-bottom: 10px;
+  margin: 0 0 10px 0;
 }
 
 .nav-item {
