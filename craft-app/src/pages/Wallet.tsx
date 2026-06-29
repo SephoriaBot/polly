@@ -573,7 +573,7 @@ export default function Wallet() {
         gridTemplateColumns: "repeat(4, 1fr)",
         gap: 10,
         height: auto,
-        min-height: 200px
+        min-height: 200px,
       }}
     >
       {[
