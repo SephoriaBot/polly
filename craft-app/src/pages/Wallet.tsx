@@ -511,10 +511,10 @@ export default function Wallet() {
     ? Object.values(months[months.length - 1].deferredBalances).reduce((s, v) => s + v, 0)
     : deferredDebts.reduce((s, d) => s + d.balance, 0);
 
-  const TABS = ["planner","wizard","bills","debts","budget","schedule"];
+  const TABS = ["wizard","bills","debts","budget","schedule"];
   const TAB_LABELS: Record<string, string> = {
-    planner: "📅 Planner", wizard: "🧙 Wizard", bills: "🏠 Bills",
-    debts: "🍓 Debts", budget: "💰 Budget", schedule: "📋 Schedule",
+    planner: "wizard: "🧙 Daddy Wizard", bills: "🏠 Bills",
+    debts: "🍓 Debts", budget: "💰 Budget", schedule: "📋 Payment Schedule",
   };
 
   const Confetti = () => {
@@ -538,7 +538,7 @@ export default function Wallet() {
   if (loading) return (
     <div className="loading-spinner" style={{ minHeight: "60vh" }}>
       <span style={{ fontSize: 32 }}>🍓</span>
-      <span>Loading your tracker...</span>
+      <span>Loading...</span>
     </div>
   );
 
@@ -992,7 +992,7 @@ width: "100%"
                 <div className="section-label">Monthly Budget</div>
                 <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
                   {[
-                    { label: "Monthly Take-Home (est.)", val: budget.take_home, field: "take_home" as keyof Budget, note: "~$3,800 conservative — after taxes + benefits + 401K" },
+                    { label: "Monthly Take-Home (est.)", val: budget.take_home, field: "take_home" as keyof Budget, note: "~$3,800 — after taxes + other deductions" },
                     { label: "Fixed Expenses", val: budget.fixed_expenses, field: "fixed_expenses" as keyof Budget, note: "rent + transport + bills + groceries" },
                   ].map(({ label, val, field, note }) => (
                     <div key={label} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 0", borderBottom: "1px solid var(--border)" }}>
