@@ -56,61 +56,62 @@ export default function Sidebar({ currentPage, onNavigate }: SidebarProps) {
     setOpenSection(prev => (prev === id ? null : id));
   }
 
-  return (
-    <aside className="sidebar">
-      <div className="sidebar-logo">
-        <h1>Homebody</h1>
-      </div>
+ return (
+  <div className="sidebar">
+    <div className="sidebar-logo">
+      <h1>Homebody</h1>
+    </div>
 
-      <div className="sidebar-section">
-        <nav className="sidebar-nav">
-          <button
-            className={`nav-item ${currentPage === 'dashboard' ? 'active' : ''}`}
-            onClick={() => onNavigate('dashboard')}
-          >
-            <Home size={16} /> Dashboard
-          </button>
-        </nav>
-      </div>
+    <div className="sidebar-section">
+      <nav className="sidebar-nav">
+        <button
+          className={`nav-item ${currentPage === 'dashboard' ? 'active' : ''}`}
+          onClick={() => onNavigate('dashboard')}
+        >
+          <Home size={16} /> Dashboard
+        </button>
+      </nav>
+    </div>
 
-      {SECTIONS.map(section => {
-        const Icon = section.icon;
-        const isOpen = openSection === section.id;
-        const isSectionActive = section.items.some(i => i.id === currentPage);
+    {SECTIONS.map(section => {
+      const Icon = section.icon;
+      const isOpen = openSection === section.id;
+      const isSectionActive = section.items.some(i => i.id === currentPage);
 
-        return (
-          <div className="sidebar-section" key={section.id}>
-            <nav className="sidebar-nav">
-              <button
-                className={`nav-item ${isSectionActive ? 'active' : ''}`}
-                onClick={() => toggleSection(section.id)}
-              >
-                <Icon size={16} />
-                <span style={{ flex: 1 }}>{section.label}</span>
-                {isOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-              </button>
+      return (
+        <div className="sidebar-section" key={section.id}>
+          <nav className="sidebar-nav">
+            <button
+              className={`nav-item ${isSectionActive ? 'active' : ''}`}
+              onClick={() => toggleSection(section.id)}
+            >
+              <Icon size={16} />
+              <span style={{ flex: 1 }}>{section.label}</span>
+              {isOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+            </button>
 
-              {isOpen && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 2, paddingLeft: 10, marginTop: 2 }}>
-                  {section.items.map(item => {
-                    const ItemIcon = item.icon;
-                    return (
-                      <button
-                        key={item.id}
-                        className={`nav-item ${currentPage === item.id ? 'active' : ''}`}
-                        style={{ fontSize: '0.8rem' }}
-                        onClick={() => onNavigate(item.id)}
-                      >
-                        <ItemIcon size={14} /> {item.label}
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
-            </nav>
-          </div>
-        );
-      })}
-    </aside>
+            {isOpen && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 2, paddingLeft: 10, marginTop: 2 }}>
+                {section.items.map(item => {
+                  const ItemIcon = item.icon;
+                  return (
+                    <button
+                      key={item.id}
+                      className={`nav-item ${currentPage === item.id ? 'active' : ''}`}
+                      style={{ fontSize: '0.8rem' }}
+                      onClick={() => onNavigate(item.id)}
+                    >
+                      <ItemIcon size={14} /> {item.label}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </nav>
+        </div>
+      );
+    })}
+  </div>
+);
   );
 }
