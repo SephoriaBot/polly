@@ -51,7 +51,7 @@
 }
 .count { font-size: 11px; opacity: 0.7; }
 
-.list { padding: 6px 8px; overflow-y: auto;}
+.list { padding: 6px 8px; overflow-y: auto; max-height: 420px; }
 
 .itemWrap { border-bottom: 1px solid var(--border); }
 .itemWrap:last-child { border-bottom: none; }
