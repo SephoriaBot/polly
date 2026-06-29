@@ -252,6 +252,7 @@ h1, h2, h3 {
   background: #EDE6FF;
   border: 1.5px solid #DDD0F8;
   border-radius: 32px;
+  overflow: visible;
   box-shadow: 0 6px 28px rgba(155,114,207,0.10), 0 2px 8px rgba(155,114,207,0.06);
   transition: box-shadow 0.2s ease, transform 0.2s ease;
   
@@ -615,7 +616,7 @@ h1, h2, h3 {
 }
 
 .page-body { padding: 14px; }
-.page-header { padding: 12px 14px; flex-wrap: wrap; }
+.page-header { padding: 12px 14px; flex-wrap: wrap; text-align: center;}
 
 @media (min-width: 641px) {
   .page-body { padding: 24px 36px; }
