@@ -323,10 +323,11 @@ export default function Pets() {
                         border: petForm.icon_color === c.name ? '2px solid var(--pink)' : '1.5px dashed var(--border)',
                         background: petForm.icon_color === c.name ? 'var(--blush)' : '#fff',
                         cursor: 'pointer',
-                        filter: c.filter,
                       }}
                     >
-                      {SPECIES_EMOJI[petForm.species] ?? '🐾'}
+                      <span style={{ filter: c.filter, display: 'inline-block' }}>
+                        {SPECIES_EMOJI[petForm.species] ?? '🐾'}
+                      </span>
                     </button>
                   ))}
                 </div>
@@ -409,8 +410,10 @@ export default function Pets() {
                 className={`${styles.petCard} ${selectedPet?.id === pet.id ? styles.petCardActive : ''}`}
                 onClick={() => setSelectedPet(pet)}
               >
-                <span className={styles.petEmoji} style={{ filter: getFilter(pet.icon_color) }}>
-                  {SPECIES_EMOJI[pet.species] ?? '🐾'}
+                <span className={styles.petEmoji}>
+                  <span style={{ filter: getFilter(pet.icon_color), display: 'inline-block' }}>
+                    {SPECIES_EMOJI[pet.species] ?? '🐾'}
+                  </span>
                 </span>
                 <div className={styles.petInfo}>
                   <div className={styles.petName}>{pet.name}</div>
@@ -429,8 +432,10 @@ export default function Pets() {
               {/* Pet summary */}
               <div className={`card ${styles.petSummary}`}>
                 <div className={styles.summaryLeft}>
-                  <span className={styles.summaryEmoji} style={{ filter: getFilter(selectedPet.icon_color) }}>
-                    {SPECIES_EMOJI[selectedPet.species] ?? '🐾'}
+                  <span className={styles.summaryEmoji}>
+                    <span style={{ filter: getFilter(selectedPet.icon_color), display: 'inline-block' }}>
+                      {SPECIES_EMOJI[selectedPet.species] ?? '🐾'}
+                    </span>
                   </span>
                   <div style={{ flex: 1 }}>
                     <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 }}>
