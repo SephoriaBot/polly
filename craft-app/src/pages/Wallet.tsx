@@ -324,11 +324,11 @@ export default function Wallet() {
   const unifiedFun = afterBuffer * 0.35;
 
   const allocations = [
-    { label: "🏠 Bills & Minimums", amount: unifiedBills, color: "var(--pink-dark)", note: urgentBills.length > 0 ? `⚠ ${urgentBills.length} bill(s) due soon!` : "bills + debt minimums" },
+    { label: "🏠 Bills", amount: unifiedBills, color: "var(--pink-dark)", note: urgentBills.length > 0 ? `⚠ ${urgentBills.length} bill(s) due soon!` : "bills + debt minimums" },
     { label: "❄️ Snowball Extra", amount: unifiedSnowball, color: "#6BBFD4", note: "extra toward target debt" },
     ...(isWeeklyMode ? [] : [{ label: "🏦 Buffer", amount: unifiedBuffer, color: "#C4933F", note: "Robinhood -- $22/day until $650" }]),
     { label: "🛒 Needs", amount: unifiedNeeds, color: "var(--green-dark)", note: "groceries, gas, essentials" },
-    { label: "🎉 Fun Money", amount: unifiedFun, color: "var(--ink-soft)", note: "whimsy -- wants, not needs!" },
+    { label: "🎉 Treats", amount: unifiedFun, color: "var(--ink-soft)", note: "whimsy -- wants, not needs!" },
   ];
 
   async function processMonthlyMinimums(debtList: Debt[]) {
@@ -522,8 +522,8 @@ export default function Wallet() {
 
   const TABS = ["planner","wizard","bills","debts","budget","schedule"];
   const TAB_LABELS: Record<string, string> = {
-    planner: "📅 Planner", wizard: "🧙 Wizard", bills: "🏠 Bills",
-    debts: "🍓 Debts", budget: "💰 Budget", schedule: "📋 Schedule",
+    planner: "📅 Check-ins", wizard: "🧙 Daddy Wizard", bills: "🏠 Bills",
+    debts: "🍓 Debts", budget: "💰 Budget", schedule: "📋 Payoff Schedule",
   };
 
   const Confetti = () => {
@@ -547,7 +547,7 @@ export default function Wallet() {
   if (loading) return (
     <div className="loading-spinner" style={{ minHeight: "60vh" }}>
       <span style={{ fontSize: 32 }}>🍓</span>
-      <span>Loading your tracker...</span>
+      <span>Loading...</span>
     </div>
   );
 
@@ -599,7 +599,7 @@ width: "100%"
         {/* ── MOTIVATIONAL STRIP ── */}
         <div style={{ display: "flex", gap: 10, overflowX: "auto", paddingBottom: 4 }}>
           {[
-            { icon: "🔥", label: "No-Spend Streak", val: `${streakCount} days`, color: "var(--pink-dark)" },
+            { icon: "🔥", label: "Saved-Not-Spent Streak", val: `${streakCount} days`, color: "var(--pink-dark)" },
             { icon: "🏦", label: "Buffer", val: `${fmt(bufferBalance)} / $650`, color: bufferBalance >= 650 ? "var(--green-dark)" : "var(--ink-soft)" },
             { icon: "💸", label: "Saved Instead", val: fmt(totalSavedInstead), color: "var(--pink-dark)" },
           ].map(({ icon, label, val, color }) => (
