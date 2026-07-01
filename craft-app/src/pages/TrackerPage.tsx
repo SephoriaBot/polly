@@ -13,7 +13,7 @@ import {
 // e.g. '../lib/supabaseClient' or '../supabaseClient'
 import { supabase } from '../lib/supabase';
 
-import './TrackerPage.css';
+import './TrackerPage.module.css';
 
 // ------------------------------------------------------------------
 // Types
