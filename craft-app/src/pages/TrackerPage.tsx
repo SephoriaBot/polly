@@ -52,6 +52,19 @@ const MOOD_OPTIONS = [
   { value: 'emotional', label: '😢 Emotional' },
 ];
 
+// Rough 1-5 valence scale purely for charting mood over time —
+// not a clinical scale, just enough ordering to plot a trend line.
+const MOOD_SCORE: Record<string, number> = {
+  emotional: 1,
+  irritable: 2,
+  low: 3,
+  okay: 4,
+  good: 5,
+};
+const MOOD_SCORE_EMOJI: Record<number, string> = {
+  1: '😢', 2: '😤', 3: '😔', 4: '😐', 5: '😊',
+};
+
 const todayStr = () => new Date().toISOString().slice(0, 10);
 
 // ------------------------------------------------------------------
@@ -536,13 +549,57 @@ function TrackerChart({
 
   const data =
     type === 'period'
-      ? cycleLengthData(recent)
+      ? moodCrampsData(recent)
       : recent.map((e) => ({
           date: e.entry_date.slice(5), // MM-DD
           value: e.value_numeric,
         }));
 
-  const yLabel = type === 'sleep' ? 'hrs' : 'days';
+  if (type === 'period') {
+    const renderDot = (props: any) => {
+      const { cx, cy, payload } = props;
+      if (payload.value == null) return <></>;
+      const fill = payload.cramps ? '#c0404a' : TRACKER_META.period.color;
+      return <circle cx={cx} cy={cy} r={4} fill={fill} stroke="#fff" strokeWidth={1} />;
+    };
+
+    return (
+      <div>
+        <div className="tracker-card__chart">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={data} margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#e4d9c8" />
+              <XAxis dataKey="date" tick={{ fontSize: 11 }} interval="preserveStartEnd" />
+              <YAxis
+                tick={{ fontSize: 14 }}
+                width={30}
+                domain={[1, 5]}
+                ticks={[1, 2, 3, 4, 5]}
+                tickFormatter={(v) => MOOD_SCORE_EMOJI[v] ?? ''}
+              />
+              <Tooltip
+                formatter={(value: any, _name, item: any) => [
+                  `${MOOD_SCORE_EMOJI[value] ?? ''}${item?.payload?.cramps ? ' · cramps' : ''}`,
+                  'Mood',
+                ]}
+              />
+              <Line
+                type="monotone"
+                dataKey="value"
+                stroke={TRACKER_META.period.color}
+                strokeWidth={2}
+                dot={renderDot}
+                connectNulls
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+        <p className="tracker-card__chart-caption">🔴 red dot = cramps logged that day</p>
+      </div>
+    );
+  }
+
+  const yLabel = 'hrs';
 
   return (
     <div className="tracker-card__chart">
@@ -569,23 +626,17 @@ function TrackerChart({
   );
 }
 
-// Turns raw "period start" entries into cycle-length data points
-// (days between consecutive start dates), which is more useful to
-// graph than raw daily logs.
-function cycleLengthData(entries: TrackerEntry[]) {
-  const starts = entries
-    .filter((e) => e.details?.event === 'start')
-    .map((e) => e.entry_date)
-    .sort();
-
-  const points: { date: string; value: number }[] = [];
-  for (let i = 1; i < starts.length; i++) {
-    const prev = new Date(starts[i - 1]);
-    const curr = new Date(starts[i]);
-    const days = Math.round((curr.getTime() - prev.getTime()) / 86400000);
-    points.push({ date: starts[i].slice(5), value: days });
-  }
-  return points;
+// Turns period entries into a daily mood/cramps view — shows a data
+// point (and cramp marker) for every logged day, rather than needing
+// two "bleeding started" entries before anything appears on the chart.
+function moodCrampsData(entries: TrackerEntry[]) {
+  return entries
+    .filter((e) => e.details?.mood || e.details?.cramps)
+    .map((e) => ({
+      date: e.entry_date.slice(5),
+      value: e.details?.mood ? MOOD_SCORE[e.details.mood] ?? null : null,
+      cramps: !!e.details?.cramps,
+    }));
 }
 
 // ------------------------------------------------------------------
