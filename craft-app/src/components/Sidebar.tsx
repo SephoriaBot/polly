@@ -2,8 +2,10 @@ import { useState } from 'react';
 import {
   Leaf, FlaskConical, Sparkles, BookOpen, Home, Wand2,
   UtensilsCrossed, ShoppingCart, Archive, CalendarDays, Lightbulb,
-  PawPrint, ChefHat, PiggyBank, CalendarCheck, ChevronDown, ChevronRight
+  PawPrint, ChefHat, PiggyBank, CalendarCheck, ChevronDown, ChevronRight,
+  LineChart
 } from 'lucide-react';
+
 
 interface SidebarProps {
   currentPage: string;
@@ -23,7 +25,7 @@ const SECTIONS = [
       { id: 'pantry', label: 'Pantry', icon: Archive },
     ],
   },
-  {
+    {
     id: 'home',
     label: 'Home',
     icon: Home,
@@ -33,8 +35,10 @@ const SECTIONS = [
       { id: 'pets', label: 'My Pets', icon: PawPrint },
       { id: 'dailyplanner', label: 'Daily Planner', icon: CalendarCheck },
       { id: 'wallet', label: 'Wallet', icon: PiggyBank },
+      { id: 'trackers', label: 'Trackers', icon: LineChart },
     ],
   },
+
   {
     id: 'craft-table',
     label: 'Craft Table',
