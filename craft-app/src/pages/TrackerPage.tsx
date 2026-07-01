@@ -11,7 +11,8 @@ import {
 } from 'recharts';
 // Adjust this import to wherever Homebody's Supabase client lives,
 // e.g. '../lib/supabaseClient' or '../supabaseClient'
-import { supabase } from '../supabaseClient';
+import { supabase } from '../lib/supabase';
+
 import './TrackerPage.css';
 
 // ------------------------------------------------------------------
