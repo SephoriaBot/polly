@@ -139,9 +139,14 @@ const SEVERITIES = [
   { value: 'very_worried', label: 'Very worried' },
 ]
 
+interface PossibleCause {
+  cause: string
+  tips: string[]
+}
+
 interface Assessment {
   summary: string
-  possibleCauses: string[]
+  possibleCauses: PossibleCause[]
   homeCareTips: string[]
   vetUrgency: 'monitor' | 'soon' | 'urgent'
 }
@@ -157,6 +162,7 @@ export default function DrGroq({ pet }: { pet: PetContext }) {
   const [triggeredRedFlags, setTriggeredRedFlags] = useState<string[]>([])
   const [assessment, setAssessment] = useState<Assessment | null>(null)
   const [error, setError] = useState('')
+  const [expandedCause, setExpandedCause] = useState<number | null>(null)
 
   const allSymptoms = SYMPTOM_GROUPS.flatMap(g => g.symptoms)
 
@@ -177,6 +183,7 @@ export default function DrGroq({ pet }: { pet: PetContext }) {
     setTriggeredRedFlags([])
     setAssessment(null)
     setError('')
+    setExpandedCause(null)
   }
 
   async function submit() {
@@ -212,11 +219,15 @@ Additional details from owner: ${freeText.trim() || 'none provided'}.
 Respond ONLY with a valid JSON object, no markdown, no backticks, no explanation. Use this exact shape:
 {
   "summary": "1-2 sentence plain-language summary of what's being observed",
-  "possibleCauses": ["possibility 1", "possibility 2", "possibility 3"],
-  "homeCareTips": ["safe, conservative tip 1", "tip 2", "tip 3"],
+  "possibleCauses": [
+    { "cause": "short possibility name, e.g. Overeating / free-feeding", "tips": ["specific, practical tip 1 for this cause", "tip 2", "tip 3"] },
+    { "cause": "possibility 2", "tips": ["tip 1", "tip 2"] },
+    { "cause": "possibility 3", "tips": ["tip 1", "tip 2"] }
+  ],
+  "homeCareTips": ["safe, conservative general tip 1", "tip 2", "tip 3"],
   "vetUrgency": "monitor" | "soon" | "urgent"
 }
-Use "monitor" only for clearly minor, low-risk situations. Use "soon" when a vet visit within a few days is wise. Use "urgent" if there's any meaningful chance this needs prompt veterinary attention. Keep homeCareTips conservative and never suggest withholding care that could be needed — when uncertain, lean toward recommending the vet. Keep possibleCauses to non-alarmist, plausible options, not worst-case scenarios.`
+Use "monitor" only for clearly minor, low-risk situations. Use "soon" when a vet visit within a few days is wise. Use "urgent" if there's any meaningful chance this needs prompt veterinary attention. Keep tips conservative and never suggest withholding care that could be needed — when uncertain, lean toward recommending the vet. Keep possibleCauses to non-alarmist, plausible options, not worst-case scenarios. Each cause's "tips" should be specific, actionable steps for managing or preventing that particular cause (2-4 tips each), not generic advice.`
 
     try {
       const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
@@ -450,12 +461,39 @@ Use "monitor" only for clearly minor, low-risk situations. Use "soon" when a vet
                 <div style={{ fontWeight: 700, fontSize: '0.8rem', color: 'var(--ink-soft)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10 }}>
                   🔎 Possible Causes
                 </div>
+                <p style={{ fontSize: '0.76rem', color: 'var(--ink-muted)', marginBottom: 8, fontStyle: 'italic' }}>
+                  Tap a cause for tips
+                </p>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  {assessment.possibleCauses.map((c, i) => (
-                    <div key={i} className="card" style={{ padding: '10px 14px', borderRadius: 12, fontSize: '0.85rem', color: 'var(--ink)' }}>
-                      {c}
-                    </div>
-                  ))}
+                  {assessment.possibleCauses.map((c, i) => {
+                    const isOpen = expandedCause === i
+                    return (
+                      <div
+                        key={i}
+                        className="card"
+                        onClick={() => setExpandedCause(isOpen ? null : i)}
+                        style={{
+                          padding: '10px 14px', borderRadius: 12, cursor: 'pointer',
+                          border: isOpen ? '1.5px solid #C9A6F0' : undefined,
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                          <span style={{ fontSize: '0.85rem', color: 'var(--ink)', fontWeight: isOpen ? 600 : 500 }}>{c.cause}</span>
+                          <span style={{ fontSize: '0.75rem', color: '#9B72CF', flexShrink: 0 }}>{isOpen ? '▲' : '▼ tips'}</span>
+                        </div>
+                        {isOpen && c.tips?.length > 0 && (
+                          <div style={{ marginTop: 10, paddingTop: 10, borderTop: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: 6 }}>
+                            {c.tips.map((tip, ti) => (
+                              <div key={ti} style={{ display: 'flex', alignItems: 'flex-start', gap: 6, fontSize: '0.8rem', color: 'var(--ink-soft)', lineHeight: 1.5 }}>
+                                <CheckCircle2 size={13} style={{ color: '#9B72CF', flexShrink: 0, marginTop: 2 }} />
+                                {tip}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })}
                 </div>
               </div>
 
