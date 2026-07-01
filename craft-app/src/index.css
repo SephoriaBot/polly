@@ -117,12 +117,15 @@ a {
 
 /* ================= CARD SYSTEM — ENVELOPE STYLE ================= */
 /*
-  Each card is a normal rounded card with a solid-color triangular
-  flap band pinned flush to the top (fixed 46px height, matching the
-  card's padding-top exactly — no formulas on either side, so there's
-  no room for the two to drift out of sync). A small wax-seal dot sits
-  where the flap points meet. ::before is the dashed inner border,
-  tucked below the flap, reading as the envelope's interior stitching.
+  The card's own outline is clipped into an envelope-back silhouette:
+  a rectangle body with a pointed triangular flap forming the top edge,
+  plus a small wax-seal dot where the flap's point meets the body.
+  Every measurement here is a fixed pixel value (46px flap, matched in
+  both the parent's clip-path and the flap fill's height) rather than a
+  formula, so the two can't drift out of sync the way they did with
+  cqw/clamp(). ::before is the dashed inner border, tucked below the
+  flap, reading as the envelope's interior stitching. box-shadow can't
+  follow a clip-path, so filter: drop-shadow() is used instead.
 */
 
 .card,
@@ -131,14 +134,21 @@ a {
 .plant-card,
 .wizard-box {
   background: var(--surface);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow);
-  border: 1px solid var(--border);
+  border: 1.5px solid rgba(180, 140, 100, 0.45);
   padding: 16px;
-  padding-top: 46px;
+  padding-top: 60px;
   position: relative;
-  overflow: hidden;
   min-width: 0;
+  clip-path: polygon(
+    0 46px,
+    50% 0,
+    100% 46px,
+    100% calc(100% - 8px),
+    calc(100% - 8px) 100%,
+    8px 100%,
+    0 calc(100% - 8px)
+  );
+  filter: drop-shadow(var(--shadow));
 }
 
 .list-item {
@@ -185,7 +195,7 @@ a {
   left: 0;
   right: 0;
   height: 46px;
-  clip-path: polygon(0 0, 100% 0, 50% 100%);
+  clip-path: polygon(50% 0, 100% 100%, 0 100%);
   background:
     radial-gradient(circle at 50% 68%, var(--mint) 0 8px, rgba(216,243,220,0.7) 9px, transparent 11px),
     linear-gradient(135deg, var(--secondary), var(--primary));
