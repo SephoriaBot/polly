@@ -183,7 +183,7 @@ export default function DailyPlanner() {
                 display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16
               }}>
                 <span style={{ fontSize: '1.1rem' }}>🌿</span>
-                <span style={{ fontWeight: 700, fontSize: '0.85rem', color: 'var(--ink-soft)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                <span style={{ fontWeight: 700, fontSize: '0.85rem', color: 'var(--ink-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
                   My Dailies
                 </span>
               </div>
@@ -229,7 +229,7 @@ export default function DailyPlanner() {
 
                       <span style={{
                         flex: 1, fontSize: '0.88rem',
-                        color: task.done ? '#9B72CF' : 'var(--ink)',
+                        color: task.done ? '#9B72CF' : 'var(--ink-muted)',
                         textDecoration: task.done ? 'line-through' : 'none',
                         transition: 'all 0.2s ease',
                       }}>
@@ -272,7 +272,7 @@ export default function DailyPlanner() {
             <div className="card-body">
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
                 <span style={{ fontSize: '1.1rem' }}>🌸</span>
-                <span style={{ fontWeight: 700, fontSize: '0.85rem', color: 'var(--ink-soft)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                <span style={{ fontWeight: 700, fontSize: '0.85rem', color: 'var(--ink-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
                   Upcoming
                 </span>
               </div>
@@ -299,7 +299,7 @@ export default function DailyPlanner() {
                         <Calendar size={13} style={{ color: '#9B72CF' }} />
                       </div>
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontWeight: 600, fontSize: '0.88rem', color: 'var(--ink)' }}>{appt.title}</div>
+                        <div style={{ fontWeight: 600, fontSize: '0.88rem', color: 'var(--ink-muted)' }}>{appt.title}</div>
                         <div style={{ fontSize: '0.74rem', color: '#9B72CF', marginTop: 2 }}>{formatApptDate(appt.date_time)}</div>
                       </div>
                       <button
