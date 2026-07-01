@@ -557,31 +557,34 @@ export default function Wallet() {
       </div>
 
         {/* ── MOTIVATIONAL STRIP ── */}
-        <div style={{ display: "flex", gap: 10, overflowX: "auto", paddingBottom: 4 }}>
-          {[
-            { icon: "💵", label: "Saved-Not-Spent Streak", val: `${streakCount} days`, color: "var(--pink-dark)" },
-            { icon: "🏦", label: "Buffer", val: `${fmt(bufferBalance)} / $650`, color: bufferBalance >= 650 ? "var(--green-dark)" : "var(--ink-soft)" },
-            { icon: "⛓️‍💥", label: "Payoff", val: `${payoffMonth} months`, color: "var(--green-dark)" },
-          ].map(({ icon, label, val, color }) => (
-            <div key={label} className="card" style={{ flexShrink: 0, cursor: "default" }}>
-              <div className="card-body" style={{ padding: "10px 14px", display: "flex", alignItems: "center", gap: 10 }}>
-                <span style={{ fontSize: 20 }}>{icon}</span>
-                <div>
-                  <div className="section-label" style={{ marginBottom: 2 }}>{label}</div>
-                  <div style={{ fontSize: 14, fontWeight: 800, color }}>{val}</div>
-                </div>
-              </div>
-            </div>
-          ))}
-          {milestones.slice(-2).map(m => (
-            <div key={m} className="card" style={{ flexShrink: 0, cursor: "default" }}>
-              <div className="card-body" style={{ padding: "10px 14px", display: "flex", alignItems: "center", gap: 8 }}>
-                <span style={{ fontSize: 20 }}>{MILESTONE_DEFS[m]?.emoji}</span>
-                <div style={{ fontSize: 12, fontWeight: 700, color: "var(--pink-dark)" }}>{MILESTONE_DEFS[m]?.label}</div>
-              </div>
-            </div>
-          ))}
+<div style={{ display: "flex", gap: 10, overflowX: "auto", paddingBottom: 4 }}>
+  {[
+    { icon: "💵", label: "Saved-Not-Spent Streak", val: `${streakCount} days`, color: "var(--pink-dark)" },
+    { icon: "🏦", label: "Buffer", val: `${fmt(bufferBalance)} / $650`, color: bufferBalance >= 650 ? "var(--green-dark)" : "var(--ink-soft)" },
+    { icon: "⛓️‍💥", label: "Payoff", val: `${payoffMonth} months`, color: "var(--green-dark)" },
+  ].map(({ icon, label, val, color }) => (
+    <div key={label} className="card" style={{ flexShrink: 0, cursor: "default" }}>
+      <div className="card-body" style={{ padding: "10px 14px", display: "flex", alignItems: "center", gap: 10 }}>
+        <span style={{ fontSize: 20 }}>{icon}</span>
+        <div>
+          <div className="section-label" style={{ marginBottom: 2 }}>{label}</div>
+          <div style={{ fontSize: 14, fontWeight: 800, color }}>{val}</div>
         </div>
+      </div>
+    </div>
+  ))}
+
+  {milestones.slice(-2).map(m => (
+    <div key={m} className="card" style={{ flexShrink: 0, cursor: "default" }}>
+      <div className="card-body" style={{ padding: "10px 14px", display: "flex", alignItems: "center", gap: 8 }}>
+        <span style={{ fontSize: 20 }}>{MILESTONE_DEFS[m]?.emoji}</span>
+        <div style={{ fontSize: 12, fontWeight: 700, color: "var(--pink-dark)" }}>
+          {MILESTONE_DEFS[m]?.label}
+        </div>
+      </div>
+    </div>
+  ))}
+</div>
 
         {/* ── TABS ── */}
         <div style={{ display: "flex", gap: 6, overflowX: "auto", paddingBottom: 2 }}>
