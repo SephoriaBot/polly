@@ -16,7 +16,7 @@
 .chip.active { background: var(--sage); border-color: var(--sage); color: #fff; font-weight: 500; }
 .chip:hover:not(.active) { border-color: var(--sage); color: var(--sage-dark); }
 
-.cookCard { overflow: hidden; }
+.cookCard { overflow: auto; }
 
 .spinner {
   width: 22px; height: 22px;
