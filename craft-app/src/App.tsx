@@ -49,7 +49,6 @@ export default function App() {
           {page === 'dailyplanner' && <DailyPlanner />}
           {page === 'maidwizard' && <MaidWizard />}
           {page === 'wallet' && <Wallet />}
-          {page === 'wallet' && <Wallet />}
           {page === 'trackers' && <TrackerPage />}
 
     
