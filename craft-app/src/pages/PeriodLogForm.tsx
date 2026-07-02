@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { upsertTrackerLog, getTrackerLog } from '../../api/trackerApi';
-import { PeriodValue } from '../../types';
+import { PeriodValue } from '../types';
 
 interface Props {
   date: string;
