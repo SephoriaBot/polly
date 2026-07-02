@@ -43,6 +43,16 @@
   margin-bottom: 0.75rem;
 }
 
+.tag {
+  background: var(--sage-light);
+  color: var(--sage-dark);
+  font-size: 10px;
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: 20px;
+}
+
+
 .resultsGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
 
 .mealCard { padding: 0; overflow: hidden; }
