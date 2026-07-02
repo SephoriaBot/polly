@@ -1,6 +1,5 @@
 import { supabase } from '../src/lib/supabase';
-import { TrackerLog, TrackerType, TrackerValue } from '../src/types';
-
+import { TrackerLog, TrackerType, TrackerValue } from '../src/types/tracker';
 
 export async function upsertTrackerLog(
   type: TrackerType,
@@ -8,16 +7,11 @@ export async function upsertTrackerLog(
   value: TrackerValue,
   note: string | null = null
 ): Promise<TrackerLog> {
-  const { data: userData, error: userError } = await supabase.auth.getUser();
-  if (userError) throw userError;
-  const userId = userData.user?.id;
-  if (!userId) throw new Error('Not authenticated');
-
   const { data, error } = await supabase
     .from('tracker_logs')
     .upsert(
-      { user_id: userId, type, log_date: logDate, value, note },
-      { onConflict: 'user_id,type,log_date' }
+      { type, log_date: logDate, value, note },
+      { onConflict: 'type,log_date' }
     )
     .select()
     .maybeSingle();
