@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
-import SleepLogForm from '../components/Tracker/SleepLogForm';
-import PeriodLogForm from '../components/Tracker/PeriodLogForm';
-import WeightLogForm from '../components/Tracker/WeightLogForm';
-import TrackerChart from '../components/Tracker/TrackerChart';
+import SleepLogForm from '../pages/SleepLogForm';
+import PeriodLogForm from '../pages/PeriodLogForm';
+import WeightLogForm from '../pages/WeightLogForm';
+import TrackerChart from '../pages/TrackerChart';
 import { TRACKER_CONFIG } from '../data/trackerConfig';
 import { TrackerType, PeriodValue } from '../types';
 import { getTrackerLogsInRange } from '../../api/trackerApi';
