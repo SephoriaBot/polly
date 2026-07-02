@@ -16,6 +16,7 @@ interface Debt {
 interface Budget {
   take_home: number;
   fixed_expenses: number;
+  hourly_wage: number;
 }
 
 interface Bill {
@@ -147,6 +148,11 @@ function daysUntilDue(dueDay: number, month: number, year: number) {
   return Math.ceil((due.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
 }
 
+function hoursOfWork(amount: number, wage: number) {
+  if (!wage || wage <= 0) return null;
+  return (amount / wage).toFixed(1);
+}
+
 function EditableCell({ value, onChange, type = "number" }: { value: string | number; onChange: (v: string) => void; type?: string }) {
   return (
     <input
@@ -160,7 +166,7 @@ function EditableCell({ value, onChange, type = "number" }: { value: string | nu
 
 export default function Wallet() {
   const [debts, setDebts] = useState<Debt[]>([]);
-  const [budget, setBudget] = useState<Budget>({ take_home: 3800, fixed_expenses: 2630 });
+  const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, hourly_wage: 0 });
   const [bills, setBills] = useState<Bill[]>([]);
   const [payments, setPayments] = useState<BillPayment[]>([]);
   const [dailyLogs, setDailyLogs] = useState<DailyLog[]>([]);
@@ -244,7 +250,7 @@ export default function Wallet() {
           setDebts(DEFAULT_DEBTS);
         }
 
-        if (budgetData) setBudget(budgetData);
+        if (budgetData) setBudget(prev => ({ ...prev, ...budgetData }));
         if (billData) {
           setBills(billData);
           if (billData.length > 0) setNextBillId(Math.max(...billData.map((b: Bill) => b.id)) + 1);
@@ -301,9 +307,7 @@ export default function Wallet() {
     });
   }, [bills, payments, selectedMonth, selectedYear]);
 
-  // "Urgent" = due within a week (used for the heads-up banner + soft weighting)
   const urgentBills = monthBills.filter(b => !b.paid && b.days <= 7 && b.days >= 0);
-  // "Crisis" = late OR due within 3 days -- this is what triggers equity mode
   const crisisBills = monthBills.filter(b => !b.paid && (b.late || (b.days <= 3 && b.days >= 0)));
   const totalMonthlyBills = bills.reduce((s, b) => s + b.amount, 0);
   const paidTotal = monthBills.filter(b => b.paid).reduce((s, b) => s + b.amount, 0);
@@ -320,9 +324,7 @@ export default function Wallet() {
   const isCrisis = crisisTotal > 0;
   const billsRate = totalMonthlyBills / (isWeeklyMode ? 4.33 : 30);
 
-  // Groceries + gas, treated as ONE protected category -- this floor gets funded
-  // right after crisis bills, before anything else (buffer/snowball/fun).
-  const NEEDS_FLOOR = isWeeklyMode ? 105 : 25; // ~$65 groceries + $40 gas/wk, or ~$15 + $10/day
+  const NEEDS_FLOOR = isWeeklyMode ? 105 : 25;
 
   let unifiedBills: number;
   let unifiedSnowball: number;
@@ -331,15 +333,10 @@ export default function Wallet() {
   let unifiedFun: number;
 
   if (isCrisis) {
-    // Equity mode: bills that are late or due within 3 days get paid first --
-    // not split proportionally, just covered as fully as this pay allows.
     unifiedBills = Math.min(inputAmount, crisisTotal);
     const afterBills = Math.max(0, inputAmount - unifiedBills);
-    // Groceries & gas still get their floor -- you have to eat and get to work.
     unifiedNeeds = Math.min(afterBills, NEEDS_FLOOR);
     const leftover = Math.max(0, afterBills - unifiedNeeds);
-    // Any leftover goes back into bills (other unpaid bills / cushion),
-    // never into buffer or fun money while a crisis bill is outstanding.
     unifiedBills += leftover;
     unifiedSnowball = 0;
     unifiedBuffer = 0;
@@ -351,7 +348,6 @@ export default function Wallet() {
     const afterSnowball = Math.max(0, afterBills - unifiedSnowball);
     unifiedBuffer = isWeeklyMode ? 0 : Math.min(22, afterSnowball);
     const afterBuffer = Math.max(0, afterSnowball - unifiedBuffer);
-    // Groceries & gas floor still gets priority over fun money even outside crisis mode.
     unifiedNeeds = Math.min(afterBuffer, Math.max(NEEDS_FLOOR, afterBuffer * 0.65));
     unifiedFun = Math.max(0, afterBuffer - unifiedNeeds);
   }
@@ -372,10 +368,10 @@ export default function Wallet() {
       note: isCrisis ? "paused -- bills come first" : "extra toward target debt",
     },
     ...(isWeeklyMode ? [] : [{
-      label: "🏦 Buffer",
+      label: "🏦 General Savings",
       amount: unifiedBuffer,
       color: "#C4933F",
-      note: isCrisis ? "paused -- bills come first" : "Robinhood -- $22/day until $650",
+      note: isCrisis ? "paused -- bills come first" : "$22/day until $650",
     }]),
     {
       label: "🛒 Groceries & Gas",
@@ -568,7 +564,7 @@ export default function Wallet() {
     under3k: { emoji: "🍓", label: "Under $3,000!", desc: "Active debt below $3k" },
     under1k: { emoji: "✨", label: "Under $1,000!", desc: "Almost there!" },
     zero:    { emoji: "🎊", label: "DEBT FREE!", desc: "All active debts paid off!" },
-    buffer:  { emoji: "🏦", label: "Buffer Goal!", desc: "$650 Robinhood buffer reached" },
+    buffer:  { emoji: "🏦", label: "Savings Goal!", desc: "$650 general savings reached" },
     streak7: { emoji: "🔥", label: "7 Day Streak!", desc: "7 days no unplanned spending" },
     streak30:{ emoji: "💎", label: "30 Day Streak!", desc: "30 days no unplanned spending" },
   };
@@ -624,7 +620,7 @@ export default function Wallet() {
 <div style={{ display: "flex", gap: 10, overflowX: "auto", paddingBottom: 4 }}>
   {[
     { icon: "💵", label: "Saved-Not-Spent Streak", val: `${streakCount} days`, color: "var(--pink-dark)" },
-    { icon: "🏦", label: "Buffer", val: `${fmt(bufferBalance)} / $650`, color: bufferBalance >= 650 ? "var(--green-dark)" : "var(--ink-soft)" },
+    { icon: "🏦", label: "General Savings", val: `${fmt(bufferBalance)} / $650`, color: bufferBalance >= 650 ? "var(--green-dark)" : "var(--ink-soft)" },
     { icon: "⛓️‍💥", label: "Payoff", val: `${payoffMonth} months`, color: "var(--green-dark)" },
   ].map(({ icon, label, val, color }) => (
     <div key={label} className="card" style={{ flexShrink: 0, cursor: "default" }}>
@@ -668,7 +664,7 @@ export default function Wallet() {
           <>
             {isCrisis && (
               <div style={{ background: "#FDE8E8", border: "1.5px solid #C0404A", borderRadius: 16, padding: "12px 16px", fontSize: 13, color: "#C0404A", fontWeight: 700 }}>
-                🚨 Equity Mode Active — {crisisBills.length} bill(s) late or due within 3 days ({fmt(crisisTotal)} total). Fun money and buffer are zeroed until these are covered. Groceries & gas are still protected.
+                🚨 Equity Mode Active — {crisisBills.length} bill(s) late or due within 3 days ({fmt(crisisTotal)} total). Fun money and general savings are zeroed until these are covered. Groceries & gas are still protected.
               </div>
             )}
 
@@ -680,7 +676,7 @@ export default function Wallet() {
 
             <div className="card">
               <div className="card-body">
-                <div className="section-label">{isWeeklyMode ? "This Week's Paycheck" : "Today's Anytime Pay"}</div>
+                <div className="section-label">{isWeeklyMode ? "This Week's Paycheck" : "Today's Paycheck"}</div>
                 <input
                   type="number"
                   className="form-input"
@@ -689,9 +685,9 @@ export default function Wallet() {
                   onChange={e => isWeeklyMode ? setWeeklyPay(e.target.value) : setAnytimePay(e.target.value)}
                   style={{ fontSize: 22, fontWeight: 700, marginTop: 8, marginBottom: 6 }}
                 />
-                {inputAmount > 0 && (
+                {inputAmount > 0 && hoursOfWork(inputAmount, budget.hourly_wage) && (
                   <div style={{ fontSize: 11, color: "var(--ink-muted)", marginBottom: 14 }}>
-                    = {(inputAmount / 20.50).toFixed(1)} hours of your life
+                    = {hoursOfWork(inputAmount, budget.hourly_wage)} hours of your life
                   </div>
                 )}
 
@@ -736,11 +732,13 @@ export default function Wallet() {
                     <input type="number" className="form-input" placeholder="e.g. 45.00" value={purchaseAmount} onChange={e => setPurchaseAmount(e.target.value)} style={{ marginBottom: 12 }} />
                     {parseFloat(purchaseAmount) > 0 && (
                       <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                        <div style={{ background: "var(--blush)", borderRadius: 16, padding: 14 }}>
-                          <div style={{ fontSize: 12, color: "var(--ink-muted)", marginBottom: 4 }}>That purchase costs you:</div>
-                          <div style={{ fontSize: 22, fontWeight: 800, color: "var(--pink-dark)" }}>{(parseFloat(purchaseAmount) / 20.50).toFixed(1)} hours of work</div>
-                          <div style={{ fontSize: 11, color: "var(--ink-muted)", marginTop: 2 }}>at $20.50/hr</div>
-                        </div>
+                        {hoursOfWork(parseFloat(purchaseAmount), budget.hourly_wage) && (
+                          <div style={{ background: "var(--blush)", borderRadius: 16, padding: 14 }}>
+                            <div style={{ fontSize: 12, color: "var(--ink-muted)", marginBottom: 4 }}>That purchase costs you:</div>
+                            <div style={{ fontSize: 22, fontWeight: 800, color: "var(--pink-dark)" }}>{hoursOfWork(parseFloat(purchaseAmount), budget.hourly_wage)} hours of work</div>
+                            <div style={{ fontSize: 11, color: "var(--ink-muted)", marginTop: 2 }}>at {fmt(budget.hourly_wage)}/hr</div>
+                          </div>
+                        )}
                         <div style={{ background: "var(--green-light)", borderRadius: 16, padding: 14 }}>
                           <div style={{ fontSize: 12, color: "var(--green-dark)", marginBottom: 4 }}>If saved toward debt instead:</div>
                           <div style={{ fontSize: 14, fontWeight: 700, color: "var(--green-dark)" }}>
@@ -827,10 +825,12 @@ export default function Wallet() {
                         <div style={{ fontSize: 11, color: "var(--ink-muted)" }}>on {debts.find(d => d.id === wizardDebtId)?.name}</div>
                       </div>
                     )}
-                    <div style={{ background: "var(--green-light)", borderRadius: 16, padding: 14 }}>
-                      <div style={{ fontSize: 11, color: "var(--ink-muted)", marginBottom: 4 }}>Work hours cost</div>
-                      <div style={{ fontSize: 22, fontWeight: 800, color: "var(--green-dark)" }}>{(parseFloat(wizardCost) / 20.50).toFixed(1)} hrs</div>
-                    </div>
+                    {hoursOfWork(parseFloat(wizardCost), budget.hourly_wage) && (
+                      <div style={{ background: "var(--green-light)", borderRadius: 16, padding: 14 }}>
+                        <div style={{ fontSize: 11, color: "var(--ink-muted)", marginBottom: 4 }}>Work hours cost</div>
+                        <div style={{ fontSize: 22, fontWeight: 800, color: "var(--green-dark)" }}>{hoursOfWork(parseFloat(wizardCost), budget.hourly_wage)} hrs</div>
+                      </div>
+                    )}
                     <button className="btn btn-green" style={{ justifyContent: "center" }} onClick={saveToBank}>
                       I Skipped It — Save {fmt(parseFloat(wizardCost))} to My Bank
                     </button>
@@ -1108,8 +1108,9 @@ export default function Wallet() {
                 <div className="section-label">Monthly Budget</div>
                 <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
                   {[
-                    { label: "Monthly Take-Home (est.)", val: budget.take_home, field: "take_home" as keyof Budget, note: "~$3,800 conservative — after taxes + benefits + 401K" },
+                    { label: "Monthly Take-Home (est.)", val: budget.take_home, field: "take_home" as keyof Budget, note: "after taxes + benefits + 401K" },
                     { label: "Fixed Expenses", val: budget.fixed_expenses, field: "fixed_expenses" as keyof Budget, note: "rent + transport + bills + groceries" },
+                    { label: "Hourly Wage", val: budget.hourly_wage, field: "hourly_wage" as keyof Budget, note: "used for work-hours calculations" },
                   ].map(({ label, val, field, note }) => (
                     <div key={label} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 0", borderBottom: "1px solid var(--border)" }}>
                       <div>
@@ -1141,7 +1142,7 @@ export default function Wallet() {
 
             <div className="card">
               <div className="card-body">
-                <div className="section-label">🏦 Robinhood Buffer</div>
+                <div className="section-label">🏦 General Savings</div>
                 <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8, marginTop: 8 }}>
                   <span style={{ fontSize: 13, color: "var(--ink)" }}>Current Balance</span>
                   <span style={{ fontSize: 16, fontWeight: 800, color: "var(--ink-soft)" }}>{fmt(bufferBalance)} / $650.00</span>
@@ -1156,7 +1157,7 @@ export default function Wallet() {
                   </span>
                 </div>
                 <input type="number" className="form-input" placeholder="Update balance..." onBlur={e => { const v = parseFloat(e.target.value); if (!isNaN(v)) { setBufferBalance(v); e.target.value = ""; }}} />
-                <div style={{ fontSize: 11, color: "var(--ink-muted)", marginTop: 6 }}>Enter your current Robinhood cash balance to update</div>
+                <div style={{ fontSize: 11, color: "var(--ink-muted)", marginTop: 6 }}>Enter your current savings balance to update</div>
               </div>
             </div>
 
@@ -1165,8 +1166,8 @@ export default function Wallet() {
                 <div className="section-label">Savings & Deductions</div>
                 {[
                   { label: "401K Contributions", val: "~$200/mo", color: "var(--green-dark)", note: "auto-deducted before you see it" },
-                  { label: "Buffer Goal (Robinhood)", val: "$650", color: "var(--ink-soft)", note: "5-week build — $110/wk — $22/day" },
-                  { label: "Daily Anytime Pay reduction", val: "$22/day", color: "var(--ink-soft)", note: "pull $22 less per day to fund buffer" },
+                  { label: "General Savings Goal", val: "$650", color: "var(--ink-soft)", note: "5-week build — $110/wk — $22/day" },
+                  { label: "Daily Savings Set-Aside", val: "$22/day", color: "var(--ink-soft)", note: "pull $22 less per day to fund general savings" },
                 ].map(({ label, val, color, note }) => (
                   <div key={label} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 0", borderBottom: "1px solid var(--border)" }}>
                     <div>
