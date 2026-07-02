@@ -5,7 +5,7 @@ import WeightLogForm from '../components/Tracker/WeightLogForm';
 import TrackerChart from '../components/Tracker/TrackerChart';
 import { TRACKER_CONFIG } from '../data/trackerConfig';
 import { TrackerType, PeriodValue } from '../types';
-import { getTrackerLogsInRange } from '../api/trackerApi';
+import { getTrackerLogsInRange } from '../../api/trackerApi';
 
 function todayISO() {
   return new Date().toISOString().slice(0, 10);
