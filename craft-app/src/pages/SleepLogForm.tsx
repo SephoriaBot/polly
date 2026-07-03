@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { upsertTrackerLog, getTrackerLog } from '../../api/trackerApi';
+import { upsertTrackerLog, getTrackerLog, deleteTrackerLog } from '../../api/trackerApi';
 import type { SleepValue } from '../types/tracker';
 
 interface Props {
@@ -34,6 +34,20 @@ export default function SleepLogForm({ date, onSaved }: Props) {
       setSaving(false);
     }
   }
+
+async function handleDelete() {
+  if (!confirm('Delete this sleep entry?')) return;
+  setSaving(true);
+  try {
+    await deleteTrackerLog('sleep', date);
+    setHours(7);
+    setQuality(3);
+    onSaved?.();
+  } finally {
+    setSaving(false);
+  }
+}
+
 
   return (
     <div className="card">
@@ -72,6 +86,16 @@ export default function SleepLogForm({ date, onSaved }: Props) {
       >
         {saving ? 'Saving…' : 'Save'}
       </button>
+
+<button
+  className="btn-secondary"
+  onClick={handleDelete}
+  disabled={saving}
+  style={{ marginTop: '0.75rem', marginLeft: '0.5rem' }}
+>
+  🗑️ Delete
+</button>
+
     </div>
   );
 }
