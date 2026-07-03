@@ -1,3 +1,6 @@
+import type { TrackerLog, TrackerType } from '../types/tracker';
+
+
 export interface TrackerTypeConfig {
   type: TrackerType;
   label: string;
