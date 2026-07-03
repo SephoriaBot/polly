@@ -168,7 +168,7 @@ return date.toLocaleDateString(undefined, {
     <div>
       <div className="page-header">
         <div>
-          <p>{todayName} · {new Date().toLocaleDateString(undefined, { month: 'long', day: 'numeric' })}</p>
+          <h1>{todayName} · {new Date().toLocaleDateString(undefined, { month: 'long', day: 'numeric' })}</h1>
         </div>
       </div>
 
