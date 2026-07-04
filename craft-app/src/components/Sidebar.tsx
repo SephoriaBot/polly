@@ -3,7 +3,7 @@ import {
   Leaf, FlaskConical, Sparkles, BookOpen, Home, Wand2,
   UtensilsCrossed, ShoppingCart, Archive, CalendarDays, Lightbulb,
   PawPrint, ChefHat, PiggyBank, CalendarCheck, ChevronDown, ChevronRight,
-  LineChart
+  LineChart, GitBranch
 } from 'lucide-react';
 
 
@@ -35,15 +35,17 @@ const SECTIONS = [
     ],
   },
   {
-    id: 'planning',
-    label: 'Planning',
-    icon: CalendarCheck,
-    items: [
-      { id: 'dailyplanner', label: 'Daily Planner', icon: CalendarCheck },
-      { id: 'wallet', label: 'Wallet', icon: PiggyBank },
-      { id: 'trackers', label: 'Trackers', icon: LineChart },
-    ],
-  },
+  id: 'planning',
+  label: 'Planning',
+  icon: CalendarCheck,
+  items: [
+    { id: 'dailyplanner', label: 'Daily Planner', icon: CalendarCheck },
+    { id: 'wallet', label: 'Wallet', icon: PiggyBank },
+    { id: 'trackers', label: 'Trackers', icon: LineChart },
+    { id: 'decisions', label: 'Decisions', icon: GitBranch },
+  ],
+},
+
 
   {
     id: 'craft-table',
