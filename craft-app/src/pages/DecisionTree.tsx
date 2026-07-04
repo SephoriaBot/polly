@@ -14,6 +14,12 @@ interface TreeNode {
   children: TreeNode[];
 }
 
+interface SavedTreeSummary {
+  id: string;
+  title: string | null;
+  updated_at: string | null;
+}
+
 function newNode(type: NodeType): TreeNode {
   return { id: crypto.randomUUID(), label: '', type, children: [] };
 }
@@ -79,6 +85,15 @@ const styles = {
   evBadge: { fontSize: '0.75rem', fontWeight: 700, color: '#6b3f2b', background: '#f4a988', padding: '3px 8px', borderRadius: 10 },
   removeBtn: { background: 'none', border: 'none', color: '#c98b8b', fontSize: '0.85rem' },
   errorText: { color: '#b85c5c', fontWeight: 600 },
+  // list view styles
+  listHeaderRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
+  pageTitle: { fontSize: '1.2rem', fontWeight: 700, color: '#4a3b3b', margin: 0 },
+  newBtn: { background: '#f4a988', color: '#5a3521', border: 'none', borderRadius: 12, padding: '10px 16px', fontWeight: 600 },
+  treeCard: { background: '#fdf6ee', border: '2px solid #f3c9d4', borderRadius: 16, padding: '12px 16px', display: 'flex', flexDirection: 'column' as const, gap: 4, textAlign: 'left' as const, cursor: 'pointer' },
+  treeCardTitle: { fontWeight: 600, color: '#4a3b3b', fontSize: '1rem' },
+  treeCardMeta: { fontSize: '0.75rem', color: '#a98a8a' },
+  backBtn: { background: 'none', border: 'none', color: '#6b3f4b', fontSize: '0.85rem', alignSelf: 'flex-start' as const, padding: 0 },
+  emptyText: { color: '#a98a8a', fontStyle: 'italic' as const },
 };
 
 const TreeNodeView: FC<{
@@ -152,7 +167,7 @@ const TreeNodeView: FC<{
   );
 };
 
-const DecisionTree: FC<{ treeId?: string }> = ({ treeId }) => {
+const DecisionTreeEditor: FC<{ treeId?: string; onBack: () => void; onSaved: (id: string) => void }> = ({ treeId, onBack, onSaved }) => {
   const [title, setTitle] = useState('');
   const [root, setRoot] = useState<TreeNode>(newNode('root'));
   const [rowId, setRowId] = useState<string | undefined>(treeId);
@@ -210,10 +225,14 @@ const DecisionTree: FC<{ treeId?: string }> = ({ treeId }) => {
       if (rowId) {
         const { error } = await supabase.from('decision_trees').update({ title, root, updated_at: new Date().toISOString() }).eq('id', rowId);
         if (error) throw error;
+        onSaved(rowId);
       } else {
         const { data, error } = await supabase.from('decision_trees').insert({ title, root }).select().maybeSingle();
         if (error) throw error;
-        if (data) setRowId((data as any).id);
+        if (data) {
+          setRowId((data as any).id);
+          onSaved((data as any).id);
+        }
       }
     } catch (err: any) {
       setSaveError(err?.message ?? 'Something went wrong saving this decision.');
@@ -226,6 +245,7 @@ const DecisionTree: FC<{ treeId?: string }> = ({ treeId }) => {
 
   return (
     <div style={styles.page}>
+      <button style={styles.backBtn} onClick={onBack}>← Back to saved decisions</button>
       {status === 'loading' && <p>Loading decision...</p>}
       {status === 'error' && <p style={styles.errorText}>Couldn't load: {loadError}</p>}
       {status === 'ready' && (
@@ -250,4 +270,92 @@ const DecisionTree: FC<{ treeId?: string }> = ({ treeId }) => {
   );
 };
 
-export default DecisionTree;
+const DecisionTreeList: FC<{ onSelect: (id: string) => void; onNew: () => void; refreshKey: number }> = ({ onSelect, onNew, refreshKey }) => {
+  const [trees, setTrees] = useState<SavedTreeSummary[]>([]);
+  const [status, setStatus] = useState<'loading' | 'error' | 'ready'>('loading');
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    setStatus('loading');
+    supabase
+      .from('decision_trees')
+      .select('id, title, updated_at')
+      .order('updated_at', { ascending: false })
+      .then(({ data, error }) => {
+        if (cancelled) return;
+        if (error) {
+          setError(error.message);
+          setStatus('error');
+          return;
+        }
+        setTrees((data as SavedTreeSummary[]) ?? []);
+        setStatus('ready');
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        setError(err?.message ?? 'Something went wrong loading your decisions.');
+        setStatus('error');
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [refreshKey]);
+
+  return (
+    <div style={styles.page}>
+      <div style={styles.listHeaderRow}>
+        <h2 style={styles.pageTitle}>Decisions</h2>
+        <button style={styles.newBtn} onClick={onNew}>+ New decision</button>
+      </div>
+      {status === 'loading' && <p>Loading saved decisions...</p>}
+      {status === 'error' && <p style={styles.errorText}>Couldn't load decisions: {error}</p>}
+      {status === 'ready' && trees.length === 0 && (
+        <p style={styles.emptyText}>No saved decisions yet. Start a new one above.</p>
+      )}
+      {status === 'ready' && trees.map((t) => (
+        <button key={t.id} style={styles.treeCard} onClick={() => onSelect(t.id)}>
+          <span style={styles.treeCardTitle}>{t.title?.trim() ? t.title : 'Untitled decision'}</span>
+          {t.updated_at && (
+            <span style={styles.treeCardMeta}>Updated {new Date(t.updated_at).toLocaleDateString()}</span>
+          )}
+        </button>
+      ))}
+    </div>
+  );
+};
+
+const DecisionPage: FC = () => {
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [mode, setMode] = useState<'list' | 'editor'>('list');
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  if (mode === 'editor') {
+    return (
+      <DecisionTreeEditor
+        treeId={selectedId ?? undefined}
+        onBack={() => {
+          setRefreshKey((k) => k + 1);
+          setMode('list');
+        }}
+        onSaved={(id) => setSelectedId(id)}
+      />
+    );
+  }
+
+  return (
+    <DecisionTreeList
+      refreshKey={refreshKey}
+      onSelect={(id) => {
+        setSelectedId(id);
+        setMode('editor');
+      }}
+      onNew={() => {
+        setSelectedId(null);
+        setMode('editor');
+      }}
+    />
+  );
+};
+
+export default DecisionPage;
