@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import type { FC } from 'react';
-import { supabase } from '../lib/supabaseClient'; // adjust path to your existing client
+import { supabase } from '../lib/supabase'; // adjust path to your existing client
 import './DecisionTree.css';
 
 type NodeType = 'root' | 'choice' | 'outcome';
