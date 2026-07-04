@@ -13,6 +13,93 @@ interface PriceEntry {
   updated_at: string
 }
 
+interface BasicItem { name: string; qty: string }
+
+interface BasicsPreset {
+  label: string
+  emoji: string
+  items: BasicItem[]
+}
+
+const BASICS_PRESETS: Record<string, BasicsPreset> = {
+  vegan: {
+    label: 'Vegan Basics',
+    emoji: '🌱',
+    items: [
+      { name: 'Tofu', qty: '1 block' },
+      { name: 'Tempeh', qty: '1 pack' },
+      { name: 'Canned black beans', qty: '2 cans' },
+      { name: 'Canned chickpeas', qty: '2 cans' },
+      { name: 'Lentils', qty: '1 bag' },
+      { name: 'Quinoa', qty: '1 bag' },
+      { name: 'Brown rice', qty: '1 bag' },
+      { name: 'Rolled oats', qty: '1 container' },
+      { name: 'Plant-based milk', qty: '1 carton' },
+      { name: 'Nutritional yeast', qty: '1 jar' },
+      { name: 'Peanut butter', qty: '1 jar' },
+      { name: 'Mixed nuts', qty: '1 bag' },
+      { name: 'Olive oil', qty: '1 bottle' },
+      { name: 'Frozen mixed vegetables', qty: '2 bags' },
+      { name: 'Bananas', qty: '1 bunch' },
+      { name: 'Spinach', qty: '1 bag' },
+      { name: 'Garlic', qty: '1 bulb' },
+      { name: 'Onions', qty: '3' },
+      { name: 'Vegetable broth', qty: '1 carton' },
+      { name: 'Nutritional supplement (B12)', qty: '1 bottle' },
+    ],
+  },
+  vegetarian: {
+    label: 'Vegetarian Basics',
+    emoji: '🥦',
+    items: [
+      { name: 'Eggs', qty: '1 dozen' },
+      { name: 'Greek yogurt', qty: '1 tub' },
+      { name: 'Cheese', qty: '1 block' },
+      { name: 'Milk', qty: '1 gallon' },
+      { name: 'Canned black beans', qty: '2 cans' },
+      { name: 'Canned chickpeas', qty: '2 cans' },
+      { name: 'Lentils', qty: '1 bag' },
+      { name: 'Tofu', qty: '1 block' },
+      { name: 'Quinoa', qty: '1 bag' },
+      { name: 'Brown rice', qty: '1 bag' },
+      { name: 'Pasta', qty: '2 boxes' },
+      { name: 'Peanut butter', qty: '1 jar' },
+      { name: 'Mixed nuts', qty: '1 bag' },
+      { name: 'Olive oil', qty: '1 bottle' },
+      { name: 'Frozen mixed vegetables', qty: '2 bags' },
+      { name: 'Bananas', qty: '1 bunch' },
+      { name: 'Spinach', qty: '1 bag' },
+      { name: 'Garlic', qty: '1 bulb' },
+      { name: 'Onions', qty: '3' },
+      { name: 'Vegetable broth', qty: '1 carton' },
+    ],
+  },
+  budget: {
+    label: 'Budget Basics',
+    emoji: '💵',
+    items: [
+      { name: 'Eggs', qty: '1 dozen' },
+      { name: 'Rice', qty: '1 bag' },
+      { name: 'Dried or canned beans', qty: '3 cans' },
+      { name: 'Pasta', qty: '3 boxes' },
+      { name: 'Canned tomatoes', qty: '2 cans' },
+      { name: 'Peanut butter', qty: '1 jar' },
+      { name: 'Rolled oats', qty: '1 container' },
+      { name: 'Frozen mixed vegetables', qty: '2 bags' },
+      { name: 'Bananas', qty: '1 bunch' },
+      { name: 'Potatoes', qty: '5 lb bag' },
+      { name: 'Onions', qty: '3' },
+      { name: 'Garlic', qty: '1 bulb' },
+      { name: 'Chicken thighs', qty: '1 pack' },
+      { name: 'Milk', qty: '1 gallon' },
+      { name: 'Bread', qty: '1 loaf' },
+      { name: 'Cooking oil', qty: '1 bottle' },
+      { name: 'Salt', qty: '1 container' },
+      { name: 'Canned tuna', qty: '3 cans' },
+    ],
+  },
+}
+
 export default function Grocery() {
   const [items, setItems] = useState<GroceryItem[]>([])
   const [newItem, setNewItem] = useState('')
@@ -28,6 +115,11 @@ export default function Grocery() {
   const [expandedItem, setExpandedItem] = useState<string | null>(null)
   const [priceForm, setPriceForm] = useState<{ store: string; price: string }>({ store: '', price: '' })
   const [location, setLocation] = useState(() => localStorage.getItem('grocery_location') || '')
+
+  const [showBasicsModal, setShowBasicsModal] = useState(false)
+  const [basicsPreset, setBasicsPreset] = useState<string | null>(null)
+  const [basicsChecked, setBasicsChecked] = useState<Set<string>>(new Set())
+  const [addingBasics, setAddingBasics] = useState(false)
 
   useEffect(() => {
     fetchItems()
@@ -71,6 +163,54 @@ export default function Grocery() {
     if (data) setItems(prev => [...prev, data])
     setNewItem('')
     setNewQty('')
+  }
+
+  function openBasicsModal() {
+    setBasicsPreset(null)
+    setBasicsChecked(new Set())
+    setShowBasicsModal(true)
+  }
+
+  function selectPreset(key: string) {
+    setBasicsPreset(key)
+    const preset = BASICS_PRESETS[key]
+    setBasicsChecked(new Set(preset.items.map(i => i.name)))
+  }
+
+  function toggleBasicItem(name: string) {
+    setBasicsChecked(prev => {
+      const next = new Set(prev)
+      next.has(name) ? next.delete(name) : next.add(name)
+      return next
+    })
+  }
+
+  function backToPresets() {
+    setBasicsPreset(null)
+    setBasicsChecked(new Set())
+  }
+
+  async function addBasicsToList() {
+    if (!basicsPreset) return
+    const preset = BASICS_PRESETS[basicsPreset]
+    const toAdd = preset.items.filter(i => basicsChecked.has(i.name))
+    if (toAdd.length === 0) return
+
+    setAddingBasics(true)
+    const existingNames = new Set(items.map(i => i.name.toLowerCase()))
+    const payload = toAdd
+      .filter(i => !existingNames.has(i.name.toLowerCase()))
+      .map(i => ({ name: i.name, qty: i.qty, checked: false }))
+
+    if (payload.length > 0) {
+      const { data } = await supabase.from('grocery_items').insert(payload).select()
+      if (data) setItems(prev => [...prev, ...data])
+    }
+
+    setAddingBasics(false)
+    setShowBasicsModal(false)
+    setBasicsPreset(null)
+    setBasicsChecked(new Set())
   }
 
 async function buildSmartCart() {
@@ -267,7 +407,10 @@ try {
     <div className={styles.page}>
       <div className={styles.header}>
         <h1 className={styles.title}><i className="ti ti-shopping-cart" aria-hidden="true" /> grocery list</h1>
-        <div style={{ display: 'flex', gap: 8 }}>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <button className="btn-ghost" onClick={openBasicsModal}>
+            <i className="ti ti-list-details" aria-hidden="true" /> build basics list
+          </button>
           <button onClick={buildSmartCart}>Build Smart Cart</button>
           <button onClick={refreshSmartCart}>Refresh</button>
           <button onClick={clearSmartCart}>Clear</button>
@@ -279,6 +422,90 @@ try {
           </button>
         </div>
       </div>
+
+      {/* Build Basics List modal */}
+      {showBasicsModal && (
+        <div className="modal-overlay" onClick={() => setShowBasicsModal(false)}>
+          <div className="modal" style={{ maxWidth: 520 }} onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>{basicsPreset ? `${BASICS_PRESETS[basicsPreset].emoji} ${BASICS_PRESETS[basicsPreset].label}` : 'Build a Basics List'}</h3>
+              <button className="close-btn" onClick={() => setShowBasicsModal(false)}>✕</button>
+            </div>
+            <div className="modal-body">
+              {!basicsPreset ? (
+                <>
+                  <p style={{ fontSize: '0.85rem', color: 'var(--ink-muted)', marginBottom: 16 }}>
+                    Pick a starting point — you'll be able to customize before adding anything.
+                  </p>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                    {Object.entries(BASICS_PRESETS).map(([key, preset]) => (
+                      <button
+                        key={key}
+                        onClick={() => selectPreset(key)}
+                        className="card"
+                        style={{
+                          display: 'flex', alignItems: 'center', gap: 12,
+                          padding: '14px 16px', cursor: 'pointer', textAlign: 'left',
+                          background: '#fff', color: 'var(--ink)',
+                        }}
+                      >
+                        <span style={{ fontSize: '1.4rem' }}>{preset.emoji}</span>
+                        <div>
+                          <div style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--ink)' }}>{preset.label}</div>
+                          <div style={{ fontSize: '0.75rem', color: 'var(--ink-muted)' }}>{preset.items.length} staple items</div>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+                    <p style={{ fontSize: '0.8rem', color: 'var(--ink-muted)' }}>
+                      Uncheck anything you don't want — {basicsChecked.size} of {BASICS_PRESETS[basicsPreset].items.length} selected
+                    </p>
+                    <button className="btn-ghost btn-sm" onClick={backToPresets}>
+                      <i className="ti ti-arrow-left" aria-hidden="true" /> back
+                    </button>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 360, overflowY: 'auto' }}>
+                    {BASICS_PRESETS[basicsPreset].items.map(item => {
+                      const checked = basicsChecked.has(item.name)
+                      const alreadyOnList = items.some(i => i.name.toLowerCase() === item.name.toLowerCase())
+                      return (
+                        <label
+                          key={item.name}
+                          style={{
+                            display: 'flex', alignItems: 'center', gap: 10,
+                            padding: '9px 12px', borderRadius: 10, cursor: 'pointer',
+                            background: checked ? 'var(--cream)' : '#fff',
+                            border: '1.5px solid var(--border)',
+                            opacity: alreadyOnList ? 0.55 : 1,
+                            color: 'var(--ink)',
+                          }}
+                        >
+                          <input type="checkbox" checked={checked} onChange={() => toggleBasicItem(item.name)} />
+                          <span style={{ flex: 1, fontSize: '0.86rem', color: 'var(--ink)' }}>{item.name}</span>
+                          <span style={{ fontSize: '0.76rem', color: 'var(--ink-muted)' }}>{item.qty}</span>
+                          {alreadyOnList && <span style={{ fontSize: '0.7rem', color: 'var(--ink-muted)' }}>on list</span>}
+                        </label>
+                      )
+                    })}
+                  </div>
+                </>
+              )}
+            </div>
+            {basicsPreset && (
+              <div className="modal-footer">
+                <button className="btn-ghost" onClick={() => setShowBasicsModal(false)}>Cancel</button>
+                <button className="btn-primary" onClick={addBasicsToList} disabled={addingBasics || basicsChecked.size === 0}>
+                  {addingBasics ? 'Adding...' : `Add ${basicsChecked.size} item${basicsChecked.size === 1 ? '' : 's'} to list`}
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* location input */}
       <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 8 }}>

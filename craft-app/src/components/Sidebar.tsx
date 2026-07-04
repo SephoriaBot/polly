@@ -2,8 +2,10 @@ import { useState } from 'react';
 import {
   Leaf, FlaskConical, Sparkles, BookOpen, Home, Wand2,
   UtensilsCrossed, ShoppingCart, Archive, CalendarDays, Lightbulb,
-  PawPrint, ChefHat, PiggyBank, CalendarCheck, ChevronDown, ChevronRight
+  PawPrint, ChefHat, PiggyBank, CalendarCheck, ChevronDown, ChevronRight,
+  LineChart
 } from 'lucide-react';
+
 
 interface SidebarProps {
   currentPage: string;
@@ -20,10 +22,9 @@ const SECTIONS = [
       { id: 'suggest', label: 'Suggestions', icon: Lightbulb },
       { id: 'planner', label: 'Meal Planner', icon: CalendarDays },
       { id: 'grocery', label: 'Grocery List', icon: ShoppingCart },
-      { id: 'pantry', label: 'Pantry', icon: Archive },
     ],
   },
-  {
+    {
     id: 'home',
     label: 'Home',
     icon: Home,
@@ -31,10 +32,19 @@ const SECTIONS = [
       { id: 'maidwizard', label: 'Maid Wizard', icon: Sparkles },
       { id: 'plants', label: 'My Plants', icon: Leaf },
       { id: 'pets', label: 'My Pets', icon: PawPrint },
-      { id: 'dailyplanner', label: 'Daily Planner', icon: CalendarCheck },
-      { id: 'wallet', label: 'Wallet', icon: PiggyBank },
     ],
   },
+  {
+    id: 'planning',
+    label: 'Planning',
+    icon: CalendarCheck,
+    items: [
+      { id: 'dailyplanner', label: 'Daily Planner', icon: CalendarCheck },
+      { id: 'wallet', label: 'Wallet', icon: PiggyBank },
+      { id: 'trackers', label: 'Trackers', icon: LineChart },
+    ],
+  },
+
   {
     id: 'craft-table',
     label: 'Craft Table',
@@ -42,7 +52,6 @@ const SECTIONS = [
     items: [
       { id: 'recipes', label: 'Recipe Library', icon: BookOpen },
       { id: 'wizard', label: 'Recipe Wizard', icon: Wand2 },
-      { id: 'ingredients', label: 'Ingredients', icon: FlaskConical },
       { id: 'add-recipe', label: 'Add Recipe', icon: Sparkles },
     ],
   },
@@ -59,7 +68,8 @@ export default function Sidebar({ currentPage, onNavigate }: SidebarProps) {
  return (
   <div className="sidebar">
     <div className="sidebar-logo">
-      <h1>Homebody</h1>
+      <h1>Polly</h1>
+      <p>your pocket assistant</p>
     </div>
 
     <div className="sidebar-section">
@@ -94,10 +104,13 @@ export default function Sidebar({ currentPage, onNavigate }: SidebarProps) {
               <div
                 style={{
                   display: 'flex',
-                  flexDirection: 'column',
-                  gap: 2,
-                  paddingLeft: 10,
-                  marginTop: 2
+                  flexDirection: 'row',
+                  gap: 6,
+                  paddingLeft: 4,
+                  marginTop: 4,
+                  overflowX: 'auto',
+                  WebkitOverflowScrolling: 'touch',
+                  scrollbarWidth: 'none',
                 }}
               >
                 {section.items.map(item => {
@@ -107,10 +120,19 @@ export default function Sidebar({ currentPage, onNavigate }: SidebarProps) {
                     <button
                       key={item.id}
                       className={`nav-item ${currentPage === item.id ? 'active' : ''}`}
-                      style={{ fontSize: '0.8rem' }}
+                      style={{
+                        fontSize: '0.8rem',
+                        flexShrink: 0,
+                        whiteSpace: 'nowrap',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        gap: 4,
+                        padding: '8px 12px',
+                      }}
                       onClick={() => onNavigate(item.id)}
                     >
-                      <ItemIcon size={14} /> {item.label}
+                      <ItemIcon size={16} />
+                      <span>{item.label}</span>
                     </button>
                   );
                 })}

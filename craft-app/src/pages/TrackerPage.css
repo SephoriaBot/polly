@@ -1,0 +1,511 @@
+/* ============================================================
+   Tracker Page — cottagecore styling
+   Uses var(--token, fallback) so it inherits Homebody's existing
+   CSS variables automatically if the names match, and otherwise
+   falls back to a self-contained palette.
+   ============================================================ */
+
+.tracker-page {
+  --tp-cream: var(--color-cream, #fbf5ec);
+  --tp-sage: var(--color-sage, #97a97c);
+  --tp-peach: var(--color-peach, #f3c6a5);
+  --tp-lavender: var(--color-lavender, #c9b6db);
+  --tp-ink: var(--color-ink, #4a3f35);
+  --tp-line: var(--color-border, #e4d9c8);
+
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 16px 14px 40px;
+  color: var(--tp-ink);
+  font-family: var(--font-body, 'Quicksand', system-ui, sans-serif);
+}
+
+.tracker-page__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.tracker-page__title {
+  font-family: var(--font-display, 'Fredoka', sans-serif);
+  font-size: 1.5rem;
+  margin: 0;
+}
+
+.tracker-page__manage-btn {
+  border: 1px solid var(--tp-line);
+  background: #fff;
+  border-radius: 999px;
+  padding: 6px 14px;
+  font-size: 0.85rem;
+  color: var(--tp-ink);
+  cursor: pointer;
+}
+
+/* ---------- Picker (empty state / manage trackers) ---------- */
+
+.tracker-picker {
+  background: var(--tp-cream);
+  border: 1px dashed var(--tp-line);
+  border-radius: 18px;
+  padding: 20px;
+  text-align: center;
+}
+
+.tracker-picker__prompt {
+  margin: 0 0 14px;
+  font-size: 0.95rem;
+  opacity: 0.85;
+}
+
+.tracker-picker__options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.tracker-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 14px 8px;
+  border-radius: 14px;
+  border: 2px solid var(--tp-line);
+  background: #fff;
+  cursor: pointer;
+  transition: transform 0.12s ease, border-color 0.12s ease;
+}
+
+.tracker-option:active {
+  transform: scale(0.97);
+}
+
+.tracker-option--selected {
+  border-color: var(--tp-sage);
+  background: #f4f8ef;
+}
+
+.tracker-option__emoji {
+  font-size: 1.6rem;
+}
+
+.tracker-option__label {
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.tracker-picker__save {
+  border: none;
+  background: var(--tp-sage);
+  color: #fff;
+  padding: 10px 22px;
+  border-radius: 999px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.tracker-picker__save:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ---------- Envelope-style tracker cards ---------- */
+
+.tracker-card {
+  position: relative;
+  background: #fff;
+  border: 1px solid var(--tp-line);
+  border-radius: 14px;
+  margin-bottom: 14px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(74, 63, 53, 0.06);
+}
+
+/* the envelope "flap" */
+.tracker-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 34px;
+  background: linear-gradient(135deg, var(--tp-flap, var(--tp-peach)) 50%, transparent 50.5%),
+              linear-gradient(45deg, var(--tp-flap, var(--tp-peach)) 50%, transparent 50.5%);
+  background-size: 50% 100%;
+  background-position: left top, right top;
+  background-repeat: no-repeat;
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.tracker-card--sleep { --tp-flap: var(--tp-lavender); }
+.tracker-card--period { --tp-flap: var(--tp-peach); }
+
+.tracker-card__body {
+  position: relative;
+  padding: 14px 14px 12px;
+}
+
+.tracker-card__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 2px;
+}
+
+.tracker-card__title {
+  font-family: var(--font-display, 'Fredoka', sans-serif);
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin: 0;
+}
+
+.tracker-card__stat {
+  font-size: 0.8rem;
+  opacity: 0.75;
+}
+
+/* ---------- Quick-add form ---------- */
+
+.tracker-form {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 10px 0;
+  padding: 10px;
+  background: var(--tp-cream);
+  border-radius: 10px;
+}
+
+.tracker-form__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.tracker-form input[type='number'],
+.tracker-form input[type='date'],
+.tracker-form input[type='time'],
+.tracker-form select {
+  border: 1px solid var(--tp-line);
+  border-radius: 8px;
+  padding: 6px 8px;
+  font-size: 0.9rem;
+  background: #fff;
+  color: var(--tp-ink);
+  min-width: 0;
+}
+
+.tracker-form__field {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 90px;
+}
+
+.tracker-form__field-label {
+  font-size: 0.7rem;
+  opacity: 0.65;
+  font-weight: 600;
+}
+
+.tracker-form__stepper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--tp-line);
+  border-radius: 8px;
+  background: #fff;
+  padding: 4px 8px;
+  font-size: 0.85rem;
+}
+
+.tracker-form__stepper button {
+  border: none;
+  background: var(--tp-line);
+  color: var(--tp-ink);
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  font-size: 0.9rem;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tracker-form__quality {
+  display: flex;
+  gap: 2px;
+}
+
+.tracker-form__star {
+  cursor: pointer;
+  font-size: 1.1rem;
+  opacity: 0.35;
+}
+
+.tracker-form__star--active {
+  opacity: 1;
+}
+
+.tracker-form__symptoms {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.symptom-chip {
+  font-size: 0.78rem;
+  padding: 5px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--tp-line);
+  background: #fff;
+  color: var(--tp-ink);
+  cursor: pointer;
+  opacity: 0.75;
+  transition: all 0.12s ease;
+}
+
+.symptom-chip--active {
+  background: var(--tp-peach);
+  border-color: var(--tp-peach);
+  opacity: 1;
+  font-weight: 600;
+}
+
+.tracker-form__notes {
+  border: 1px solid var(--tp-line);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 0.85rem;
+  font-family: inherit;
+  background: #fff;
+  color: var(--tp-ink);
+  resize: vertical;
+  min-height: 40px;
+}
+
+.tracker-form__submit {
+  border: none;
+  background: var(--tp-ink);
+  color: #fff;
+  padding: 7px 16px;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  flex: 1;
+}
+
+.tracker-form__submit:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.tracker-card__empty {
+  font-size: 0.85rem;
+  opacity: 0.6;
+  text-align: center;
+  padding: 24px 0;
+}
+
+.tracker-card__chart {
+  width: 100%;
+  height: 140px;
+}
+
+.tracker-card__chart-caption {
+  font-size: 0.7rem;
+  opacity: 0.55;
+  text-align: center;
+  margin: 4px 0 0;
+}
+
+/* ---------- Recent entries ---------- */
+
+.tracker-entries {
+  margin-top: 14px;
+  border-top: 1px solid var(--tp-line);
+  padding-top: 10px;
+}
+
+.tracker-entries__title {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  opacity: 0.6;
+  margin-bottom: 8px;
+}
+
+.tracker-entry-row {
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: var(--tp-cream);
+  margin-bottom: 6px;
+}
+
+.tracker-entry-row__top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+}
+
+.tracker-entry-row__date {
+  font-weight: 700;
+  opacity: 0.7;
+  flex-shrink: 0;
+}
+
+.tracker-entry-row__value {
+  text-align: right;
+}
+
+.tracker-entry-row__detail {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 5px;
+  font-size: 0.76rem;
+  opacity: 0.75;
+}
+
+.tracker-entry-row__tag {
+  background: #fff;
+  border: 1px solid var(--tp-line);
+  border-radius: 999px;
+  padding: 2px 8px;
+}
+
+.tracker-entry-row__note {
+  margin-top: 5px;
+  font-size: 0.78rem;
+  font-style: italic;
+  opacity: 0.7;
+}
+
+/* ---------- Correlation section ---------- */
+
+.correlation-section {
+  margin-top: 8px;
+}
+
+.correlation-section__title {
+  font-family: var(--font-display, 'Fredoka', sans-serif);
+  font-size: 1.05rem;
+  margin: 0 0 10px;
+  opacity: 0.85;
+}
+
+.correlation-card {
+  background: #fff;
+  border: 1px solid var(--tp-line);
+  border-radius: 14px;
+  padding: 14px 16px 6px;
+  margin-bottom: 14px;
+}
+
+.correlation-card__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px;
+  margin-bottom: 4px;
+}
+
+.correlation-card__pair {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.correlation-card__vs {
+  font-weight: 400;
+  opacity: 0.5;
+  font-size: 0.8rem;
+}
+
+.correlation-card__r {
+  font-size: 0.82rem;
+}
+
+.correlation-card__r em {
+  font-style: normal;
+  opacity: 0.7;
+}
+
+.correlation-card__r--muted {
+  opacity: 0.5;
+}
+
+/* ---------- Mobile ---------- */
+
+@media (max-width: 480px) {
+  .tracker-page {
+    padding: 12px 10px 32px;
+  }
+
+  .tracker-page__title {
+    font-size: 1.25rem;
+  }
+
+  .tracker-card {
+    border-radius: 12px;
+    margin-bottom: 10px;
+  }
+
+  .tracker-card__body {
+    padding: 12px 12px 10px;
+  }
+
+  .tracker-card__chart {
+    height: 120px;
+  }
+
+  .tracker-form {
+    padding: 8px;
+  }
+
+  .tracker-form__row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .tracker-form__row input,
+  .tracker-form__row select,
+  .tracker-form__field,
+  .tracker-form__stepper,
+  .tracker-form__submit {
+    width: 100%;
+  }
+
+  .tracker-form__quality {
+    justify-content: center;
+    padding: 2px 0;
+  }
+
+  .tracker-entry-row__top {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+  }
+
+  .tracker-entry-row__value {
+    text-align: left;
+  }
+
+  .correlation-card {
+    padding: 10px 12px 4px;
+  }
+}

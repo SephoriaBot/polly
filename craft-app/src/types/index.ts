@@ -2,6 +2,7 @@ export type PlantType = 'herb' | 'flower' | 'succulent' | 'vegetable' | 'tropica
 export type LogAction = 'watered' | 'fertilized' | 'repotted' | 'pruned' | 'note';
 export type RecipeCategory = 'skincare' | 'soap' | 'laundry';
 export type WizardOptionType = 'single' | 'multi';
+export * from './tracker';
 
 export interface Plant {
   id: string;

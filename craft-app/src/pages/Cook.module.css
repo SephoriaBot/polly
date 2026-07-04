@@ -16,7 +16,19 @@
 .chip.active { background: var(--sage); border-color: var(--sage); color: #fff; font-weight: 500; }
 .chip:hover:not(.active) { border-color: var(--sage); color: var(--sage-dark); }
 
-.cookCard { overflow: hidden; }
+.cookCard {
+
+  width: 100%;
+
+  max-width: 100%;
+
+  overflow-y: auto;
+
+  overflow-x: hidden;
+
+}
+
+
 
 .spinner {
   width: 22px; height: 22px;
@@ -139,11 +151,19 @@
 .stepsList { display: flex; flex-direction: column; gap: 6px; flex: 1; }
 
 .stepCard {
+
   border: 0.5px solid var(--border);
+
   border-radius: 10px;
+
   padding: 10px 12px;
+
   cursor: pointer;
+
   transition: all .15s;
+
+  min-width: 0;
+
 }
 .stepCard:hover { border-color: var(--sage); }
 .active { border-color: var(--sage); background: var(--sage-light); }
@@ -192,3 +212,28 @@
 }
 
 .recipeHeaderText { flex: 1; }
+
+@media (max-width: 800px) {
+
+  .body {
+
+    grid-template-columns: 1fr;
+
+  }
+
+  .ingCol {
+
+    border-right: none;
+
+    border-bottom: 1px solid var(--border);
+
+  }
+
+  .recipeThumb {
+
+    width: 80px;
+
+    height: 80px;
+}
+}
+  

@@ -1,11 +1,14 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import styles from './Pets.module.css'
+import DrGroq from './DrGroq'
+import { Cat, Dog, Bird, Rabbit, Fish, PawPrint, type LucideIcon } from 'lucide-react'
 
 interface Pet {
   id: string
   name: string
   species: string
+  icon_color: string | null
   breed: string
   age: number
   weight: number
@@ -47,12 +50,25 @@ interface FeedingEntry {
   fed_at: string
 }
 
-const SPECIES_EMOJI: Record<string, string> = {
-  cat: '🐱', dog: '🐶', bird: '🐦', rabbit: '🐰', fish: '🐠', other: '🐾'
+// One consistent line-icon per species, instead of emoji.
+const SPECIES_ICONS: Record<string, LucideIcon> = {
+  cat: Cat, dog: Dog, bird: Bird, rabbit: Rabbit, fish: Fish, other: PawPrint
 }
 
+function SpeciesIcon({ species, size = 24, style }: { species: string; size?: number; style?: React.CSSProperties }) {
+  const Icon = SPECIES_ICONS[species] ?? PawPrint
+  return <Icon size={size} style={style} strokeWidth={1.75} />
+}
+
+const COLOR_OPTIONS = [
+  { name: 'natural', filter: 'none' },
+  { name: 'black',   filter: 'brightness(0.35) saturate(1.2)' },
+  { name: 'white',   filter: 'brightness(1.6) saturate(0.3)' },
+  { name: 'grey',    filter: 'grayscale(1) brightness(1.1)' }
+]
+
 const EMPTY_PET_FORM = {
-  name: '', species: 'cat', breed: '', age: '', weight: '', notes: '',
+  name: '', species: 'cat', icon_color: 'natural', breed: '', age: '', weight: '', notes: '',
   vet_name: '', vet_phone: '', insurance_provider: '', insurance_policy: '',
   feeding_routine: '', personality: '', hiding_spots: ''
 }
@@ -60,7 +76,7 @@ const EMPTY_PET_FORM = {
 export default function Pets() {
   const [pets, setPets] = useState<Pet[]>([])
   const [selectedPet, setSelectedPet] = useState<Pet | null>(null)
-  const [tab, setTab] = useState<'feeding' | 'vaccinations' | 'weight' | 'sitter'>('feeding')
+  const [tab, setTab] = useState<'feeding' | 'vaccinations' | 'weight' | 'sitter' | 'troubleshoot'>('feeding')
   const [vaccinations, setVaccinations] = useState<Vaccination[]>([])
   const [weights, setWeights] = useState<WeightEntry[]>([])
   const [feedings, setFeedings] = useState<FeedingEntry[]>([])
@@ -120,6 +136,7 @@ export default function Pets() {
       name: pet.name,
       species: pet.species ?? 'cat',
       breed: pet.breed ?? '',
+      icon_color: pet.icon_color ?? 'natural',
       age: pet.age != null ? String(pet.age) : '',
       weight: pet.weight != null ? String(pet.weight) : '',
       notes: pet.notes ?? '',
@@ -140,6 +157,7 @@ export default function Pets() {
       name: petForm.name.trim(),
       species: petForm.species,
       breed: petForm.breed.trim(),
+      icon_color: petForm.icon_color || 'natural',
       age: petForm.age ? parseFloat(petForm.age) : null,
       weight: petForm.weight ? parseFloat(petForm.weight) : null,
       notes: petForm.notes.trim(),
@@ -244,6 +262,10 @@ export default function Pets() {
     return new Date(dateStr) < new Date()
   }
 
+  function getFilter(colorName: string | null) {
+    return COLOR_OPTIONS.find(c => c.name === colorName)?.filter ?? 'none'
+  }
+
   function formatDateTime(isoStr: string) {
     return new Date(isoStr).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
   }
@@ -289,6 +311,33 @@ export default function Pets() {
                   <input className="form-input" value={petForm.breed} onChange={e => setPetForm(f => ({ ...f, breed: e.target.value }))} placeholder="e.g. Domestic Shorthair" />
                 </div>
               </div>
+
+              <div className="form-group">
+                <label className="form-label">Icon Color</label>
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+                  {COLOR_OPTIONS.map(c => (
+                    <button
+                      key={c.name}
+                      type="button"
+                      onClick={() => setPetForm(f => ({ ...f, icon_color: c.name }))}
+                      title={c.name}
+                      style={{
+                        padding: '6px 10px',
+                        borderRadius: 8,
+                        border: petForm.icon_color === c.name ? '2px solid var(--pink)' : '1.5px dashed var(--border)',
+                        background: petForm.icon_color === c.name ? 'var(--blush)' : '#fff',
+                        cursor: 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <SpeciesIcon species={petForm.species} size={22} style={{ filter: c.filter, color: 'var(--ink)' }} />
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               <div style={{ display: 'flex', gap: 12 }}>
                 <div className="form-group" style={{ flex: 1 }}>
                   <label className="form-label">Age (years)</label>
@@ -352,7 +401,7 @@ export default function Pets() {
         <p style={{ color: 'var(--ink-muted)', fontSize: 13 }}>loading...</p>
       ) : pets.length === 0 ? (
         <div className="empty-state">
-          <p style={{ fontSize: '2.5rem', marginBottom: 12 }}>🐾</p>
+          <PawPrint size={40} style={{ marginBottom: 12, color: 'var(--ink-muted)' }} />
           <p>No pets yet — add your first one above!</p>
         </div>
       ) : (
@@ -366,7 +415,9 @@ export default function Pets() {
                 className={`${styles.petCard} ${selectedPet?.id === pet.id ? styles.petCardActive : ''}`}
                 onClick={() => setSelectedPet(pet)}
               >
-                <span className={styles.petEmoji}>{SPECIES_EMOJI[pet.species] ?? '🐾'}</span>
+                <span className={styles.petEmoji}>
+                  <SpeciesIcon species={pet.species} size={28} style={{ filter: getFilter(pet.icon_color), color: 'var(--ink)' }} />
+                </span>
                 <div className={styles.petInfo}>
                   <div className={styles.petName}>{pet.name}</div>
                   <div className={styles.petMeta}>{pet.breed || pet.species}</div>
@@ -384,7 +435,9 @@ export default function Pets() {
               {/* Pet summary */}
               <div className={`card ${styles.petSummary}`}>
                 <div className={styles.summaryLeft}>
-                  <span className={styles.summaryEmoji}>{SPECIES_EMOJI[selectedPet.species] ?? '🐾'}</span>
+                  <span className={styles.summaryEmoji}>
+                    <SpeciesIcon species={selectedPet.species} size={40} style={{ filter: getFilter(selectedPet.icon_color), color: 'var(--ink)' }} />
+                  </span>
                   <div style={{ flex: 1 }}>
                     <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 }}>
                       <h2 className={styles.summaryName}>{selectedPet.name}</h2>
@@ -409,9 +462,9 @@ export default function Pets() {
 
               {/* Tabs */}
               <div className={styles.tabs}>
-                {(['feeding', 'vaccinations', 'weight', 'sitter'] as const).map(t => (
+                {(['feeding', 'vaccinations', 'weight', 'sitter', 'troubleshoot'] as const).map(t => (
                   <button key={t} className={`${styles.tabBtn} ${tab === t ? styles.tabActive : ''}`} onClick={() => setTab(t)}>
-                    {t === 'sitter' ? '🏠 catsitter' : t === 'feeding' ? '🍽 feeding' : t === 'vaccinations' ? '💉 vaccines' : '⚖️ weight'}
+                    {t === 'sitter' ? '🏠 catsitter' : t === 'feeding' ? '🍽 feeding' : t === 'vaccinations' ? '💉 vaccines' : t === 'weight' ? '⚖️ weight' : '🩺 ask dr. groq'}
                   </button>
                 ))}
               </div>
@@ -520,8 +573,9 @@ export default function Pets() {
               {tab === 'sitter' && (
                 <div className={styles.section}>
                   <div className="card" style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 16 }}>
-                    <div style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--ink)' }}>
-                      {SPECIES_EMOJI[selectedPet.species]} {selectedPet.name}'s Care Card
+                    <div style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--ink)', display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <SpeciesIcon species={selectedPet.species} size={20} style={{ color: 'var(--ink)' }} />
+                      {selectedPet.name}'s Care Card
                     </div>
 
                     {selectedPet.feeding_routine ? (
@@ -570,6 +624,13 @@ export default function Pets() {
                       <p style={{ fontSize: '0.85rem', color: 'var(--ink-muted)' }}>No catsitter info yet — edit this pet to add feeding routine, personality, and hiding spots.</p>
                     )}
                   </div>
+                </div>
+              )}
+
+              {/* Ask Dr. Groq */}
+              {tab === 'troubleshoot' && (
+                <div className={styles.section}>
+                  <DrGroq pet={selectedPet} />
                 </div>
               )}
 

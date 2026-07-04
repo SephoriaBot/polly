@@ -36,7 +36,6 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
     recipes: 0,
     pets: 0,
     groceryItems: 0,
-    pantryItems: 0,
   });
   const [soonReminders, setSoonReminders] = useState<ReminderItem[]>([]);
   const [laterReminders, setLaterReminders] = useState<ReminderItem[]>([]);
@@ -55,14 +54,13 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
 
   async function loadAll() {
     const [
-      plantsRes, recipesRes, petsRes, groceryRes, pantryRes,
+      plantsRes, recipesRes, petsRes, groceryRes,
       vaccinationsRes, apptsRes, focusRes, mealsRes,
     ] = await Promise.all([
       supabase.from('garden_plants').select('id', { count: 'exact', head: true }),
       supabase.from('recipes').select('id', { count: 'exact', head: true }),
       supabase.from('pets').select('id, name'),
       supabase.from('grocery_items').select('id', { count: 'exact', head: true }).eq('checked', false),
-      supabase.from('pantry_items').select('id', { count: 'exact', head: true }),
       supabase.from('pet_vaccinations').select('id, name, pet_id, next_due'),
       supabase.from('appointments').select('id, title, date_time'),
       supabase.from('focuses').select('*').eq('date', todayStr).order('created_at'),
@@ -78,7 +76,6 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
       recipes: recipesRes.count || 0,
       pets: pets.length,
       groceryItems: groceryRes.count || 0,
-      pantryItems: pantryRes.count || 0,
     });
 
     setFocuses(focusRes.data || []);
@@ -151,7 +148,13 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
     if (diffDays === 0) return 'today';
     if (diffDays === 1) return 'tomorrow';
     if (diffDays <= 30) return `in ${diffDays}d`;
-    return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+    const isNextYear = date.getFullYear() !== today.getFullYear();
+return date.toLocaleDateString(undefined, {
+  month: 'short',
+  day: 'numeric',
+  year: isNextYear ? 'numeric' : undefined,
+});
+
   }
 
   const MEAL_ORDER = ['breakfast', 'lunch', 'dinner', 'snack'];
@@ -165,25 +168,12 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
     <div>
       <div className="page-header">
         <div>
-          <p>{todayName} · {new Date().toLocaleDateString(undefined, { month: 'long', day: 'numeric' })}</p>
+          <h1>{todayName} · {new Date().toLocaleDateString(undefined, { month: 'long', day: 'numeric' })}</h1>
         </div>
       </div>
 
       <div className="page-body" style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
 
-        {/* ── QUICK STATS ── */}
-        <section>
-          <div className="section-label">Your Home at a Glance</div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
-            <MiniStatCard emoji="🌿" label="Plants" value={stats.plants} onClick={() => onNavigate('plants')} />
-            <MiniStatCard emoji="🐾" label="Pets" value={stats.pets} onClick={() => onNavigate('pets')} />
-            <MiniStatCard emoji="🫐" label="Meal Planner" value={null} onClick={() => onNavigate('planner')} />
-            <MiniStatCard emoji="🛒" label="Grocery" value={stats.groceryItems} onClick={() => onNavigate('grocery')} />
-            <MiniStatCard emoji="✔️" label="Daily Planner" value={null} onClick={() => onNavigate('dailyplanner')} />
-            <MiniStatCard emoji="🐷" label="Wallet" value={null} onClick={() => onNavigate('wallet')} />
-             <MiniStatCard emoji="🧼" label="Clean" value={null} onClick={() => onNavigate('maidwizard')} />
- </div>
-        </section>
 
         {/* ── TODAY'S FOCUS ── */}
         <section>
@@ -365,7 +355,7 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
 // ── MINI STAT CARD ──
 function MiniStatCard({ emoji, label, value, addLabel, onAdd, onClick }: {
   emoji: string; label: string; value: number | null;
-  addLabel: string; onAdd: () => void; onClick: () => void;
+  addLabel?: string; onAdd?: () => void; onClick: () => void;
 }) {
   return (
     <div
@@ -383,18 +373,20 @@ function MiniStatCard({ emoji, label, value, addLabel, onAdd, onClick }: {
         <div style={{ fontSize: '0.72rem', color: 'var(--ink-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 8 }}>
           {label}
         </div>
-        <button
-          onClick={e => { e.stopPropagation(); onAdd(); }}
-          style={{
-            display: 'flex', alignItems: 'center', gap: 4,
-            padding: '3px 8px', borderRadius: 10,
-            background: 'var(--blush)', border: '1px solid var(--border)',
-            color: 'var(--pink-dark)', fontSize: '0.65rem', fontWeight: 700,
-            cursor: 'pointer', fontFamily: 'DM Sans, sans-serif',
-          }}
-        >
-          <Plus size={9} /> {addLabel}
-        </button>
+        {onAdd && (
+          <button
+            onClick={e => { e.stopPropagation(); onAdd(); }}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 4,
+              padding: '3px 8px', borderRadius: 10,
+              background: 'var(--blush)', border: '1px solid var(--border)',
+              color: 'var(--pink-dark)', fontSize: '0.65rem', fontWeight: 700,
+              cursor: 'pointer', fontFamily: 'DM Sans, sans-serif',
+            }}
+          >
+            <Plus size={9} /> {addLabel}
+          </button>
+        )}
       </div>
     </div>
   );
