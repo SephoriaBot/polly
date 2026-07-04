@@ -26,8 +26,12 @@
   --green-dark: #2f6b4f;
   --citrus-blue: #3b82c4;
   --sage: #8ba888;
-  --sage-dark: #5f7a5c;
-  --sage-light: #e8efe6;
+--sage-dark: #5f7a5c;
+--sage-light: #e8efe6;
+
+--pink: #e8a0ac;         /* rose accent — was sage */
+--pink-dark: #b56575;    /* deeper rose — was sage-dark */
+--pink-light: #fbe1e5;   /* pale rose — was sage-light */
 
 }
 
