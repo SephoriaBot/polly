@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { Search, Plus, Minus, Droplets, Trash2, X } from 'lucide-react';
 import { supabase } from '../lib/supabase';
-import PlantTroubleshooter from '../components/plantTroubleshooter'
+import PlantTroubleshooter from '../components/PlantTroubleshooter'
 import type { GardenPlant } from '../types/legacy'
 
 interface WateringEntry {
