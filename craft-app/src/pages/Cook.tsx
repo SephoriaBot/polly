@@ -29,31 +29,9 @@ interface MealData {
   category: string
 }
 
-function parseMeal(raw: Record<string, string>): MealData {
-  const ingredients: Ingredient[] = []
-  for (let i = 1; i <= 20; i++) {
-    const name = raw[`strIngredient${i}`]?.trim()
-    const measure = raw[`strMeasure${i}`]?.trim()
-    if (name) ingredients.push({ name, measure: measure || '' })
-  }
-  const steps = (raw.strInstructions || '')
-    .split(/\r?\n/)
-    .map(s => s.replace(/^STEP\s*\d+[:\.\s]*/i, '').trim())
-    .filter(s => s.length > 15)
-  return {
-    id: raw.idMeal,
-    title: raw.strMeal,
-    thumb: raw.strMealThumb,
-    category: raw.strCategory,
-    ingredients,
-    steps,
-  }
-}
-
 export default function Cook() {
   const initialMeal = null
-  const [search, setSearch] = useState(initialMeal ?? '')
-const [savedMeals, setSavedMeals] = useState<{ id: number; name: string }[]>([])
+const [savedMeals, setSavedMeals] = useState<{ spoonacular_id: number; name: string }[]>([])
   const [meal, setMeal] = useState<MealData | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
