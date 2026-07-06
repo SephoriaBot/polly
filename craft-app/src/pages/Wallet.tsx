@@ -169,20 +169,18 @@ export default function Wallet() {
   const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, hourly_wage: 0 });
   const [bills, setBills] = useState<Bill[]>([]);
   const [payments, setPayments] = useState<BillPayment[]>([]);
-  const [dailyLogs, setDailyLogs] = useState<DailyLog[]>([]);
   const [savedInstead, setSavedInstead] = useState<SavedInstead[]>([]);
   const [nextId, setNextId] = useState(20);
   const [nextBillId, setNextBillId] = useState(10);
   const [tab, setTab] = useState("planner");
   const [showDeferred, setShowDeferred] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [, setLoading] = useState(true);
   const [savedMsg, setSavedMsg] = useState(false);
   const [anytimePay, setAnytimePay] = useState("");
   const [weeklyPay, setWeeklyPay] = useState("");
   const [planNotes, setPlanNotes] = useState("");
   const [showBillForm, setShowBillForm] = useState(false);
   const [newBill, setNewBill] = useState({ name: "", amount: "", due_day: "", recurring: true });
-  const [showHistory, setShowHistory] = useState(false);
   const [streakCount, setStreakCount] = useState<number>(() => {
     const s = localStorage.getItem("streak_count"); return s ? parseInt(s) : 0;
   });
@@ -229,14 +227,12 @@ export default function Wallet() {
           { data: budgetData },
           { data: billData },
           { data: paymentData },
-          { data: logData },
           { data: savedData },
         ] = await Promise.all([
           supabase.from("debts").select("*"),
           supabase.from("budget").select("*").eq("id", 1).maybeSingle(),
           supabase.from("bills").select("*").order("due_day"),
           supabase.from("bill_payments").select("*"),
-          supabase.from("daily_log").select("*").order("date", { ascending: false }).limit(30),
           supabase.from("saved_instead").select("*").order("saved_at", { ascending: false }),
         ]);
 
@@ -256,7 +252,6 @@ export default function Wallet() {
           if (billData.length > 0) setNextBillId(Math.max(...billData.map((b: Bill) => b.id)) + 1);
         }
         if (paymentData) setPayments(paymentData);
-        if (logData) setDailyLogs(logData);
         if (savedData) setSavedInstead(savedData);
       } catch (err) {
         console.error("Wallet loadData failed:", err);
@@ -404,7 +399,7 @@ export default function Wallet() {
       if (debt.paid_off || debt.last_processed_month === currentMonth) return debt;
       const interest = debt.balance * (debt.apr / 100 / 12);
       const newBalance = Math.max(0, debt.balance + interest - debt.min_payment);
-      updates.push(supabase.from("debts").update({ balance: newBalance, last_processed_month: currentMonth }).eq("id", debt.id).then(() => {}));
+      updates.push(Promise.resolve(supabase.from("debts").update({ balance: newBalance, last_processed_month: currentMonth }).eq("id", debt.id).then(() => {})));
       return { ...debt, balance: newBalance, last_processed_month: currentMonth };
     });
     await Promise.all(updates);
@@ -436,8 +431,7 @@ export default function Wallet() {
       snowball_allocation: unifiedSnowball,
       notes: planNotes,
     };
-    const { data } = await supabase.from("daily_log").insert(log).select().single();
-    if (data) setDailyLogs(prev => [data, ...prev]);
+    await supabase.from("daily_log").insert(log).select().single();
     setSavedMsg(true);
     setTimeout(() => setSavedMsg(false), 2000);
     isWeeklyMode ? setWeeklyPay("") : setAnytimePay("");
@@ -578,8 +572,6 @@ export default function Wallet() {
     streak30:{ emoji: "💎", label: "30 Day Streak!", desc: "30 days no unplanned spending" },
   };
 
-  const totalDebt = debts.reduce((s, d) => s + (Number(d.balance) || 0), 0);
-  const activeTotal = activeDebts.filter(d => !d.paid_off).reduce((s, d) => s + (Number(d.balance) || 0), 0);
   const payoffMonth = months.length;
   const finalDeferred = months.length > 0
     ? Object.values(months[months.length - 1].deferredBalances).reduce((s, v) => s + v, 0)
@@ -1133,7 +1125,7 @@ export default function Wallet() {
                     { label: "Debt Minimums (auto)", val: fmt(totalMins) },
                     { label: "Total Outflow", val: fmt(budget.fixed_expenses + totalMins) },
                   ].map(({ label, val }) => (
-                    <div key={label} style={{ display: "flex", justifyContent: "space-between", padding: "12px 0", borderBottom: "1px solid var(--border)", background: "var(--blush)", margin: "0 -18px", padding: "12px 18px" }}>
+                    <div key={label} style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid var(--border)", background: "var(--blush)", margin: "0 -18px", padding: "12px 18px" }}>
                       <span style={{ fontSize: 13, color: "var(--ink)" }}>{label}</span>
                       <span style={{ fontSize: 14, fontWeight: 700, color: "var(--ink)" }}>{val}</span>
                     </div>
