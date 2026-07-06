@@ -26,12 +26,17 @@
   --green-dark: #2f6b4f;
   --citrus-blue: #3b82c4;
   --sage: #8ba888;
---sage-dark: #5f7a5c;
---sage-light: #e8efe6;
-
---pink: #e8a0ac;         /* rose accent — was sage */
---pink-dark: #b56575;    /* deeper rose — was sage-dark */
---pink-light: #fbe1e5;   /* pale rose — was sage-light */
+  --sage-dark: #5f7a5c;
+  --sage-light: #e8efe6;
+  --pink: #e8a0ac;         /* rose accent — was sage */
+  --pink-dark: #b56575;    /* deeper rose — was sage-dark */
+  --pink-light: #fbe1e5;   /* pale rose — was sage-light */
+  --sky: #6BBFD4;         /* snowball/ice category color */
+  --gold: #C4933F;        /* savings category color */
+  --gold-dark: #8B6000;   /* savings highlight text */
+  --gold-light: #FEFBE8;  /* savings highlight background */
+  --danger: #C0404A;      /* late/negative amounts */
+  --danger-bg: #FDE8E8;   /* late/negative background */
 
 }
 
