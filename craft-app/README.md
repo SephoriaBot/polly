@@ -2,7 +2,7 @@
 
 A full-stack household management application for organizing home, finances, meals, pets, plants, and daily routines in one place. Housekeepers Club combines multiple household tools into a single responsive web app with cloud sync through Supabase.
 
-**Live demo:** [homebody-demo.vercel.app](https://homebody-demo.vercel.app)
+**Live demo:** [polly-demo.vercel.app](https://polly-demo.vercel.app)
 
 ## Features
 
