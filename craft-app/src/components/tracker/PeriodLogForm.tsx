@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
-import { upsertTrackerLog, getTrackerLog } from '../lib/trackerApi';
-import type { PeriodValue } from '../types/tracker';
-
+import { upsertTrackerLog, getTrackerLog } from '../../lib/trackerApi';
+import type { PeriodValue } from '../../types/tracker';
 interface Props {
   date: string;
   onSaved?: () => void;
