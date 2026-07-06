@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import styles from './Pets.module.css'
-import DrGroq from './DrGroq'
+import DrGroq from '../components/pets/DrGroq'
 import { Cat, Dog, Bird, Rabbit, Fish, PawPrint, type LucideIcon } from 'lucide-react'
 
 interface Pet {
