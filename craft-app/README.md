@@ -38,18 +38,18 @@ Built With
 
 ### Grocery & Meal Planner
 ![Grocery](docs/images/IMG_2938.jpeg)
-(docs/images/IMG_2939.jpeg)
-(docs/images/IMG_2940.jpeg)
-(docs/images/IMG_2941.jpeg)
+![Grocery](docs/images/IMG_2939.jpeg)
+![Grocery](docs/images/IMG_2940.jpeg)
+![Grocery](docs/images/IMG_2941.jpeg)
 
 ### Plant Tracker
-![Plants] (docs/images/IMG_2943.jpeg)
+![Plants](docs/images/IMG_2943.jpeg)
 
 ### Pet Tracker
-![Pets] (docs/images/IMG_2944.jpeg)
+![Pets](docs/images/IMG_2944.jpeg)
 
 ### Personal Tracker
-![Tracker] (docs/images/IMG_2945.jpeg)
+![Tracker](docs/images/IMG_2945.jpeg)
 
 Getting Started
 
