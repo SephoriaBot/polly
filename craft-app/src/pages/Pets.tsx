@@ -8,7 +8,6 @@ interface Pet {
   id: string
   name: string
   species: string
-  icon_color: string | null
   breed: string
   age: number
   weight: number
@@ -60,15 +59,8 @@ function SpeciesIcon({ species, size = 24, style }: { species: string; size?: nu
   return <Icon size={size} style={style} strokeWidth={1.75} />
 }
 
-const COLOR_OPTIONS = [
-  { name: 'natural', filter: 'none' },
-  { name: 'black',   filter: 'brightness(0.35) saturate(1.2)' },
-  { name: 'white',   filter: 'brightness(1.6) saturate(0.3)' },
-  { name: 'grey',    filter: 'grayscale(1) brightness(1.1)' }
-]
-
 const EMPTY_PET_FORM = {
-  name: '', species: 'cat', icon_color: 'natural', breed: '', age: '', weight: '', notes: '',
+  name: '', species: 'cat', breed: '', age: '', weight: '', notes: '',
   vet_name: '', vet_phone: '', insurance_provider: '', insurance_policy: '',
   feeding_routine: '', personality: '', hiding_spots: ''
 }
@@ -136,7 +128,6 @@ export default function Pets() {
       name: pet.name,
       species: pet.species ?? 'cat',
       breed: pet.breed ?? '',
-      icon_color: pet.icon_color ?? 'natural',
       age: pet.age != null ? String(pet.age) : '',
       weight: pet.weight != null ? String(pet.weight) : '',
       notes: pet.notes ?? '',
@@ -157,7 +148,6 @@ export default function Pets() {
       name: petForm.name.trim(),
       species: petForm.species,
       breed: petForm.breed.trim(),
-      icon_color: petForm.icon_color || 'natural',
       age: petForm.age ? parseFloat(petForm.age) : null,
       weight: petForm.weight ? parseFloat(petForm.weight) : null,
       notes: petForm.notes.trim(),
@@ -262,10 +252,6 @@ export default function Pets() {
     return new Date(dateStr) < new Date()
   }
 
-  function getFilter(colorName: string | null) {
-    return COLOR_OPTIONS.find(c => c.name === colorName)?.filter ?? 'none'
-  }
-
   function formatDateTime(isoStr: string) {
     return new Date(isoStr).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
   }
@@ -309,32 +295,6 @@ export default function Pets() {
                 <div className="form-group" style={{ flex: 1 }}>
                   <label className="form-label">Breed</label>
                   <input className="form-input" value={petForm.breed} onChange={e => setPetForm(f => ({ ...f, breed: e.target.value }))} placeholder="e.g. Domestic Shorthair" />
-                </div>
-              </div>
-
-              <div className="form-group">
-                <label className="form-label">Icon Color</label>
-                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-                  {COLOR_OPTIONS.map(c => (
-                    <button
-                      key={c.name}
-                      type="button"
-                      onClick={() => setPetForm(f => ({ ...f, icon_color: c.name }))}
-                      title={c.name}
-                      style={{
-                        padding: '6px 10px',
-                        borderRadius: 8,
-                        border: petForm.icon_color === c.name ? '2px solid var(--pink)' : '1.5px dashed var(--border)',
-                        background: petForm.icon_color === c.name ? 'var(--blush)' : '#fff',
-                        cursor: 'pointer',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}
-                    >
-                      <SpeciesIcon species={petForm.species} size={22} style={{ filter: c.filter, color: 'var(--ink)' }} />
-                    </button>
-                  ))}
                 </div>
               </div>
 
@@ -416,7 +376,7 @@ export default function Pets() {
                 onClick={() => setSelectedPet(pet)}
               >
                 <span className={styles.petEmoji}>
-                  <SpeciesIcon species={pet.species} size={28} style={{ filter: getFilter(pet.icon_color), color: 'var(--ink)' }} />
+                  <SpeciesIcon species={pet.species} size={28} style={{ color: 'var(--ink)' }} />
                 </span>
                 <div className={styles.petInfo}>
                   <div className={styles.petName}>{pet.name}</div>
@@ -436,7 +396,7 @@ export default function Pets() {
               <div className={`card ${styles.petSummary}`}>
                 <div className={styles.summaryLeft}>
                   <span className={styles.summaryEmoji}>
-                    <SpeciesIcon species={selectedPet.species} size={40} style={{ filter: getFilter(selectedPet.icon_color), color: 'var(--ink)' }} />
+                    <SpeciesIcon species={selectedPet.species} size={40} style={{ color: 'var(--ink)' }} />
                   </span>
                   <div style={{ flex: 1 }}>
                     <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 }}>
