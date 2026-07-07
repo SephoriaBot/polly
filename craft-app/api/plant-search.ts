@@ -1,7 +1,8 @@
 /// <reference types="node" />
+import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 
-export default async function handler(req, res) {
+export default async function handler(req: VercelRequest, res: VercelResponse) {
   const q = (req.query.q || "").toString().trim()
   if (!q) return res.status(400).json([])
 

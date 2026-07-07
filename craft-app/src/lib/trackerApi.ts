@@ -1,5 +1,5 @@
-import { supabase } from '../src/lib/supabase.js'
-import { TrackerType, TrackerValue, TrackerLog } from '../src/types/tracker.js'
+import { supabase } from './supabase'
+import type { TrackerType, TrackerValue, TrackerLog } from '../types/tracker';
 
 export async function upsertTrackerLog(
   type: TrackerType,
@@ -61,4 +61,3 @@ export async function deleteTrackerLog(type: TrackerType, logDate: string): Prom
 
   if (error) throw error;
 }
-

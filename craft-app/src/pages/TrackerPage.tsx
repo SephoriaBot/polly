@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
-import SleepLogForm from '../pages/SleepLogForm';
-import PeriodLogForm from '../pages/PeriodLogForm';
-import WeightLogForm from '../pages/WeightLogForm';
-import TrackerChart from '../pages/TrackerChart';
+import SleepLogForm from '../components/tracker/SleepLogForm';
+import PeriodLogForm from '../components/tracker/PeriodLogForm';
+import WeightLogForm from '../components/tracker/WeightLogForm';
+import TrackerChart from '../components/tracker/TrackerChart';
 import { TRACKER_CONFIG } from '../data/trackerConfig';
 import type { TrackerType, PeriodValue } from '../types/tracker';
-import { getTrackerLogsInRange } from '../../api/trackerApi';
+import { getTrackerLogsInRange } from '../lib/trackerApi';
 
 
 function todayISO() {

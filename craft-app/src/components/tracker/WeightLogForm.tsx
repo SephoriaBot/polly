@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { upsertTrackerLog, getTrackerLog } from '../../api/trackerApi';
-import type { WeightValue } from '../types/tracker';
+import { upsertTrackerLog, getTrackerLog } from '../../lib/trackerApi';
+import type { WeightValue } from '../../types/tracker';
 
 
 interface Props {

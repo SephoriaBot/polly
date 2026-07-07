@@ -30,25 +30,25 @@ A full-stack household management application for organizing home, finances, mea
 ## Screenshots
 
 ### Dashboard
-![Dashboard](docs/images/IMG_2936.jpeg)
+![Dashboard](craft-app/docs/images/IMG_2936.jpeg)
 
 ### Wallet
-![Wallet](docs/images/IMG_2937.jpeg)
+![Wallet](craft-app/docs/images/Wallet.png)
 
 ### Grocery & Meal Planner
-![Grocery](docs/images/IMG_2938.jpeg)
-![Grocery](docs/images/IMG_2939.jpeg)
-![Grocery](docs/images/IMG_2940.jpeg)
-![Grocery](docs/images/IMG_2941.jpeg)
+![Grocery](craft-app/docs/images/IMG_2938.jpeg)
+![Grocery](craft-app/docs/images/IMG_2939.jpeg)
+![Grocery](craft-app/docs/images/IMG_2940.jpeg)
+![Grocery](craft-app/docs/images/IMG_2941.jpeg)
 
 ### Plant Tracker
-![Plants](docs/images/IMG_2943.jpeg)
+![Plants](craft-app/docs/images/IMG_2943.jpeg)
 
 ### Pet Tracker
-![Pets](docs/images/IMG_2944.jpeg)
+![Pets](craft-app/docs/images/Pets.png)
 
 ### Personal Tracker
-![Tracker](docs/images/IMG_2945.jpeg)
+![Tracker](craft-app/docs/images/IMG_2945.jpeg)
 
 ## Getting Started
 
