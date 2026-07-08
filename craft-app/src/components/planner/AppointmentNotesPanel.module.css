@@ -1,0 +1,37 @@
+.wrapper {
+  max-width: 460px;
+  margin: 0 auto;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.headerIcon {
+  color: var(--an-apricot, #f3a26d);
+}
+
+.headerLabel {
+  font-family: 'Fraunces', serif;
+  font-weight: 600;
+  font-size: 22px;
+  color: var(--an-ink, #4a3f35);
+}
+
+.newButton {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px dashed var(--an-apricot, #f3a26d);
+  background: var(--an-apricot-soft, #fbe3d0);
+  color: var(--an-ink, #4a3f35);
+  cursor: pointer;
+  margin-bottom: 16px;
+}
