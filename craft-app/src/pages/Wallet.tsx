@@ -631,8 +631,12 @@ export default function Wallet() {
           <>
             {/* ── NAV CARDS ── */}
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-              <button onClick={() => setView("bills")} className="card" style={{ textAlign: "left", cursor: "pointer", border: "none", padding: 0 }}>
-                <div className="card-body">
+              <button
+                onClick={() => setView("bills")}
+                className="card"
+                style={{ textAlign: "left", cursor: "pointer", border: "none", padding: 0, width: "100%", height: "100%", display: "flex", flexDirection: "column", alignItems: "stretch", justifyContent: "flex-start", background: "var(--white)", fontFamily: "inherit" }}
+              >
+                <div className="card-body" style={{ width: "100%" }}>
                   <div style={{ fontSize: 24 }}>🏠</div>
                   <div style={{ fontSize: 14, fontWeight: 800, color: "var(--ink)", marginTop: 6 }}>Bills</div>
                   <div style={{ fontSize: 11, color: "var(--ink-muted)", marginTop: 2 }}>
@@ -640,8 +644,12 @@ export default function Wallet() {
                   </div>
                 </div>
               </button>
-              <button onClick={() => setView("debts")} className="card" style={{ textAlign: "left", cursor: "pointer", border: "none", padding: 0 }}>
-                <div className="card-body">
+              <button
+                onClick={() => setView("debts")}
+                className="card"
+                style={{ textAlign: "left", cursor: "pointer", border: "none", padding: 0, width: "100%", height: "100%", display: "flex", flexDirection: "column", alignItems: "stretch", justifyContent: "flex-start", background: "var(--white)", fontFamily: "inherit" }}
+              >
+                <div className="card-body" style={{ width: "100%" }}>
                   <div style={{ fontSize: 24 }}>💳</div>
                   <div style={{ fontSize: 14, fontWeight: 800, color: "var(--ink)", marginTop: 6 }}>Debts</div>
                   <div style={{ fontSize: 11, color: "var(--ink-muted)", marginTop: 2 }}>
