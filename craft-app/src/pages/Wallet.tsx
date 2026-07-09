@@ -330,12 +330,13 @@ export default function Wallet() {
   const needs = plannerItems.filter(p => p.type === "need");
   const wants = plannerItems.filter(p => p.type === "want");
 
-  // Bills due in the next 8 days, regardless of which month tab is selected —
-  // handles recurring bills that roll from this month into next.
+  // Bills due in the next 8 days, split into two 4-day stretches, regardless
+  // of which month tab is selected — handles recurring bills that roll from
+  // this month into next.
   const upcomingWindowBills = useMemo(() => {
     const now = new Date();
     const start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const results: { id: number; name: string; amount: number; dueDate: Date; days: number }[] = [];
+    const results: { id: number; name: string; amount: number; dueDate: Date; days: number; bucket: "A" | "B" }[] = [];
     bills.forEach(bill => {
       const candidates: { month: number; year: number }[] = [];
       if (bill.recurring) {
@@ -350,38 +351,48 @@ export default function Wallet() {
         const effectiveDueDay = bill.recurring ? (payment?.due_day ?? bill.due_day) : bill.due_day;
         const dueDate = new Date(year, month - 1, effectiveDueDay);
         const diffDays = Math.ceil((dueDate.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
-        if (diffDays >= 0 && diffDays <= 8) {
+        if (diffDays >= 0 && diffDays <= 7) {
           const paid = payment?.paid ?? false;
           const amount = bill.recurring ? (payment?.amount ?? bill.amount) : bill.amount;
           const name = bill.recurring ? (payment?.name ?? bill.name) : bill.name;
-          if (!paid) results.push({ id: bill.id, name, amount, dueDate, days: diffDays });
+          const bucket: "A" | "B" = diffDays <= 3 ? "A" : "B";
+          if (!paid) results.push({ id: bill.id, name, amount, dueDate, days: diffDays, bucket });
         }
       });
     });
     return results.sort((a, b) => a.dueDate.getTime() - b.dueDate.getTime());
   }, [bills, payments]);
 
-  const upcomingWindowTotal = upcomingWindowBills.reduce((s, b) => s + b.amount, 0);
+  const bucketABills = upcomingWindowBills.filter(b => b.bucket === "A");
+  const bucketBBills = upcomingWindowBills.filter(b => b.bucket === "B");
+
   const effectiveOtWage = parseFloat(otWageOverride) > 0 ? parseFloat(otWageOverride) : budget.hourly_wage * 1.5;
   const netHourlyWage = budget.hourly_wage > 0 ? budget.hourly_wage * (1 - taxRate / 100) : 0;
   const netOtWage = effectiveOtWage > 0 ? effectiveOtWage * (1 - taxRate / 100) : 0;
 
-  // First 40 hrs/week at regular rate, anything beyond at OT rate
-  let minHoursNeeded: number | null = null;
-  let minRegHours = 0;
-  let minOtHours = 0;
-  if (netHourlyWage > 0) {
-    const regCapPay = netHourlyWage * 40;
-    if (upcomingWindowTotal <= regCapPay) {
-      minRegHours = upcomingWindowTotal / netHourlyWage;
-      minOtHours = 0;
-    } else {
-      minRegHours = 40;
-      const remaining = upcomingWindowTotal - regCapPay;
-      minOtHours = netOtWage > 0 ? remaining / netOtWage : 0;
+  // First 40 hrs/week at regular rate, anything beyond at OT rate — computed
+  // independently per 4-day stretch so each answers "hours needed in THIS stretch."
+  function calcHoursForBucket(billsInBucket: typeof upcomingWindowBills) {
+    const total = billsInBucket.reduce((s, b) => s + b.amount, 0);
+    let regHours = 0;
+    let otHours = 0;
+    let hours: number | null = null;
+    if (netHourlyWage > 0) {
+      const regCapPay = netHourlyWage * 40;
+      if (total <= regCapPay) {
+        regHours = total / netHourlyWage;
+      } else {
+        regHours = 40;
+        const remaining = total - regCapPay;
+        otHours = netOtWage > 0 ? remaining / netOtWage : 0;
+      }
+      hours = regHours + otHours;
     }
-    minHoursNeeded = minRegHours + minOtHours;
+    return { total, regHours, otHours, hours };
   }
+
+  const bucketA = calcHoursForBucket(bucketABills);
+  const bucketB = calcHoursForBucket(bucketBBills);
 
   const monthBills = useMemo(() => {
     const filtered = bills.filter(bill => {
@@ -742,7 +753,7 @@ export default function Wallet() {
               <div className="card-body">
                 <div className="section-label">⏱️ Minimum Hours Needed</div>
                 <div style={{ fontSize: 11, color: "var(--ink-muted)", marginBottom: 14 }}>
-                  Based on unpaid bills due in the next 8 days, after your tax withholding. First 40 hrs at your regular rate, anything beyond that at OT.
+                  Based on unpaid bills due in the next 8 days, split into two 4-day stretches, after your tax withholding. First 40 hrs at your regular rate, anything beyond that at OT.
                 </div>
 
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 10 }}>
@@ -779,38 +790,47 @@ export default function Wallet() {
                 ) : upcomingWindowBills.length === 0 ? (
                   <div style={{ fontSize: 12, color: "var(--green-dark)", fontWeight: 600 }}>🌸 No unpaid bills due in the next 8 days!</div>
                 ) : (
-                  <>
-                    <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 14 }}>
-                      {upcomingWindowBills.map((b, i) => (
-                        <div key={`${b.id}-${i}`} style={{ display: "flex", justifyContent: "space-between", fontSize: 12, padding: "6px 0", borderBottom: "1px solid var(--border)" }}>
-                          <span style={{ color: "var(--ink)" }}>{b.name} <span style={{ color: "var(--ink-muted)" }}>({b.days === 0 ? "today" : `${b.days}d`})</span></span>
-                          <span style={{ fontWeight: 700, color: "var(--pink-dark)" }}>{fmt(b.amount)}</span>
-                        </div>
-                      ))}
+                  <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: "var(--ink-muted)" }}>
+                      <span>Net Regular / OT Wage</span>
+                      <span style={{ fontWeight: 600, color: "var(--ink)" }}>{fmt(netHourlyWage)}/hr · {fmt(netOtWage)}/hr OT</span>
                     </div>
-                    <div style={{ background: "var(--accent)", borderRadius: 16, padding: 14 }}>
-                      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
-                        <span style={{ fontSize: 12, color: "var(--ink-muted)" }}>Total Needed</span>
-                        <span style={{ fontSize: 14, fontWeight: 700, color: "var(--ink)" }}>{fmt(upcomingWindowTotal)}</span>
-                      </div>
-                      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
-                        <span style={{ fontSize: 12, color: "var(--ink-muted)" }}>Net Regular / OT Wage</span>
-                        <span style={{ fontSize: 13, fontWeight: 600, color: "var(--ink)" }}>{fmt(netHourlyWage)}/hr · {fmt(netOtWage)}/hr OT</span>
-                      </div>
-                      {minOtHours > 0 && (
-                        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
-                          <span style={{ fontSize: 11, color: "var(--ink-muted)" }}>Breakdown</span>
-                          <span style={{ fontSize: 11, color: "var(--ink-muted)" }}>{minRegHours.toFixed(1)} reg + {minOtHours.toFixed(1)} OT</span>
+                    {[{ label: "Days 1–4", bills: bucketABills, calc: bucketA }, { label: "Days 5–8", bills: bucketBBills, calc: bucketB }].map(({ label, bills: bucketBills, calc }) => (
+                      <div key={label}>
+                        <div style={{ fontSize: 12, fontWeight: 700, color: "var(--ink)", marginBottom: 6 }}>{label}</div>
+                        {bucketBills.length === 0 ? (
+                          <div style={{ fontSize: 11, color: "var(--green-dark)", fontWeight: 600, marginBottom: 6 }}>🌸 Nothing due</div>
+                        ) : (
+                          <div style={{ display: "flex", flexDirection: "column", gap: 4, marginBottom: 8 }}>
+                            {bucketBills.map((b, i) => (
+                              <div key={`${b.id}-${i}`} style={{ display: "flex", justifyContent: "space-between", fontSize: 12, padding: "5px 0", borderBottom: "1px solid var(--border)" }}>
+                                <span style={{ color: "var(--ink)" }}>{b.name} <span style={{ color: "var(--ink-muted)" }}>({b.days === 0 ? "today" : `${b.days}d`})</span></span>
+                                <span style={{ fontWeight: 700, color: "var(--pink-dark)" }}>{fmt(b.amount)}</span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                        <div style={{ background: "var(--accent)", borderRadius: 16, padding: 12 }}>
+                          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+                            <span style={{ fontSize: 11, color: "var(--ink-muted)" }}>Needed</span>
+                            <span style={{ fontSize: 13, fontWeight: 700, color: "var(--ink)" }}>{fmt(calc.total)}</span>
+                          </div>
+                          {calc.otHours > 0 && (
+                            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+                              <span style={{ fontSize: 10, color: "var(--ink-muted)" }}>Breakdown</span>
+                              <span style={{ fontSize: 10, color: "var(--ink-muted)" }}>{calc.regHours.toFixed(1)} reg + {calc.otHours.toFixed(1)} OT</span>
+                            </div>
+                          )}
+                          <div style={{ display: "flex", justifyContent: "space-between" }}>
+                            <span style={{ fontSize: 12, fontWeight: 700, color: "var(--pink-dark)" }}>Min. Hours</span>
+                            <span style={{ fontSize: 18, fontWeight: 800, color: "var(--pink-dark)" }}>
+                              {calc.hours !== null ? calc.hours.toFixed(1) : "—"}
+                            </span>
+                          </div>
                         </div>
-                      )}
-                      <div style={{ display: "flex", justifyContent: "space-between" }}>
-                        <span style={{ fontSize: 13, fontWeight: 700, color: "var(--pink-dark)" }}>Minimum Hours This Week</span>
-                        <span style={{ fontSize: 20, fontWeight: 800, color: "var(--pink-dark)" }}>
-                          {minHoursNeeded !== null ? minHoursNeeded.toFixed(1) : "—"}
-                        </span>
                       </div>
-                    </div>
-                  </>
+                    ))}
+                  </div>
                 )}
               </div>
             </div>
