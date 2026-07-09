@@ -330,7 +330,7 @@ export default function Wallet() {
   const needs = plannerItems.filter(p => p.type === "need");
   const wants = plannerItems.filter(p => p.type === "want");
 
-  // Bills due in the next 10 days, regardless of which month tab is selected —
+  // Bills due in the next 8 days, regardless of which month tab is selected —
   // handles recurring bills that roll from this month into next.
   const upcomingWindowBills = useMemo(() => {
     const now = new Date();
@@ -350,7 +350,7 @@ export default function Wallet() {
         const effectiveDueDay = bill.recurring ? (payment?.due_day ?? bill.due_day) : bill.due_day;
         const dueDate = new Date(year, month - 1, effectiveDueDay);
         const diffDays = Math.ceil((dueDate.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
-        if (diffDays >= 0 && diffDays <= 10) {
+        if (diffDays >= 0 && diffDays <= 8) {
           const paid = payment?.paid ?? false;
           const amount = bill.recurring ? (payment?.amount ?? bill.amount) : bill.amount;
           const name = bill.recurring ? (payment?.name ?? bill.name) : bill.name;
@@ -742,7 +742,7 @@ export default function Wallet() {
               <div className="card-body">
                 <div className="section-label">⏱️ Minimum Hours Needed</div>
                 <div style={{ fontSize: 11, color: "var(--ink-muted)", marginBottom: 14 }}>
-                  Based on unpaid bills due in the next 10 days, after your tax withholding. First 40 hrs at your regular rate, anything beyond that at OT.
+                  Based on unpaid bills due in the next 8 days, after your tax withholding. First 40 hrs at your regular rate, anything beyond that at OT.
                 </div>
 
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 10 }}>
@@ -777,7 +777,7 @@ export default function Wallet() {
                 {budget.hourly_wage <= 0 ? (
                   <div style={{ fontSize: 12, color: "var(--ink-muted)" }}>Enter your hourly wage above (or save it from the Budget Calculator below) to see hours needed.</div>
                 ) : upcomingWindowBills.length === 0 ? (
-                  <div style={{ fontSize: 12, color: "var(--green-dark)", fontWeight: 600 }}>🌸 No unpaid bills due in the next 10 days!</div>
+                  <div style={{ fontSize: 12, color: "var(--green-dark)", fontWeight: 600 }}>🌸 No unpaid bills due in the next 8 days!</div>
                 ) : (
                   <>
                     <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 14 }}>
