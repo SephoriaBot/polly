@@ -204,6 +204,12 @@ export default function Wallet() {
   const [plannerItems, setPlannerItems] = useState<PlannerItem[]>([]);
   const [newNeed, setNewNeed] = useState("");
   const [newWant, setNewWant] = useState("");
+  const [taxRate, setTaxRate] = useState<number>(() => {
+    const s = localStorage.getItem("tax_withholding_rate");
+    return s ? parseFloat(s) : 20;
+  });
+
+  useEffect(() => { localStorage.setItem("tax_withholding_rate", taxRate.toString()); }, [taxRate]);
 
   // Budget calculator (landing page) — starts blank
   const [calcRegWage, setCalcRegWage] = useState("");
@@ -311,6 +317,39 @@ export default function Wallet() {
   const deferredDebts = debts.filter(d => d.deferred);
   const needs = plannerItems.filter(p => p.type === "need");
   const wants = plannerItems.filter(p => p.type === "want");
+
+  // Bills due in the next 10 days, regardless of which month tab is selected —
+  // handles recurring bills that roll from this month into next.
+  const upcomingWindowBills = useMemo(() => {
+    const now = new Date();
+    const start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const results: { id: number; name: string; amount: number; dueDate: Date; days: number }[] = [];
+    bills.forEach(bill => {
+      const candidates: { month: number; year: number }[] = [];
+      if (bill.recurring) {
+        candidates.push({ month: now.getMonth() + 1, year: now.getFullYear() });
+        const nextMonthDate = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+        candidates.push({ month: nextMonthDate.getMonth() + 1, year: nextMonthDate.getFullYear() });
+      } else if (bill.bill_month && bill.bill_year) {
+        candidates.push({ month: bill.bill_month, year: bill.bill_year });
+      }
+      candidates.forEach(({ month, year }) => {
+        const dueDate = new Date(year, month - 1, bill.due_day);
+        const diffDays = Math.ceil((dueDate.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+        if (diffDays >= 0 && diffDays <= 10) {
+          const payment = payments.find(p => p.bill_id === bill.id && p.month === month && p.year === year);
+          const paid = payment?.paid ?? false;
+          const amount = bill.recurring ? (payment?.amount ?? bill.amount) : bill.amount;
+          if (!paid) results.push({ id: bill.id, name: bill.name, amount, dueDate, days: diffDays });
+        }
+      });
+    });
+    return results.sort((a, b) => a.dueDate.getTime() - b.dueDate.getTime());
+  }, [bills, payments]);
+
+  const upcomingWindowTotal = upcomingWindowBills.reduce((s, b) => s + b.amount, 0);
+  const netHourlyWage = budget.hourly_wage > 0 ? budget.hourly_wage * (1 - taxRate / 100) : 0;
+  const minHoursNeeded = netHourlyWage > 0 ? upcomingWindowTotal / netHourlyWage : null;
 
   const monthBills = useMemo(() => {
     const filtered = bills.filter(bill => {
