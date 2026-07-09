@@ -633,28 +633,32 @@ export default function Wallet() {
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
               <button
                 onClick={() => setView("bills")}
-                className="card"
-                style={{ textAlign: "left", cursor: "pointer", border: "none", padding: 0, width: "100%", height: "100%", display: "flex", flexDirection: "column", alignItems: "stretch", justifyContent: "flex-start", background: "var(--white)", fontFamily: "inherit" }}
+                style={{
+                  textAlign: "left", cursor: "pointer", fontFamily: "inherit",
+                  border: "1.5px dashed var(--border)", borderRadius: 18,
+                  background: "var(--white)", padding: "14px 16px",
+                  display: "flex", flexDirection: "column", gap: 6,
+                }}
               >
-                <div className="card-body" style={{ width: "100%", display: "block", justifyContent: "flex-start", height: "auto" }}>
-                  <div style={{ fontSize: 24 }}>🏠</div>
-                  <div style={{ fontSize: 14, fontWeight: 800, color: "var(--ink)", marginTop: 6 }}>Bills</div>
-                  <div style={{ fontSize: 11, color: "var(--ink-muted)", marginTop: 2 }}>
-                    {unpaidTotal > 0 ? `${fmt(unpaidTotal)} unpaid` : "all paid up ✓"}
-                  </div>
+                <div style={{ fontSize: 24, lineHeight: 1 }}>🏠</div>
+                <div style={{ fontSize: 14, fontWeight: 800, color: "var(--ink)" }}>Bills</div>
+                <div style={{ fontSize: 11, color: "var(--ink-muted)" }}>
+                  {unpaidTotal > 0 ? `${fmt(unpaidTotal)} unpaid` : "all paid up ✓"}
                 </div>
               </button>
               <button
                 onClick={() => setView("debts")}
-                className="card"
-                style={{ textAlign: "left", cursor: "pointer", border: "none", padding: 0, width: "100%", height: "100%", display: "flex", flexDirection: "column", alignItems: "stretch", justifyContent: "flex-start", background: "var(--white)", fontFamily: "inherit" }}
+                style={{
+                  textAlign: "left", cursor: "pointer", fontFamily: "inherit",
+                  border: "1.5px dashed var(--border)", borderRadius: 18,
+                  background: "var(--white)", padding: "14px 16px",
+                  display: "flex", flexDirection: "column", gap: 6,
+                }}
               >
-                <div className="card-body" style={{ width: "100%", display: "block", justifyContent: "flex-start", height: "auto" }}>
-                  <div style={{ fontSize: 24 }}>💳</div>
-                  <div style={{ fontSize: 14, fontWeight: 800, color: "var(--ink)", marginTop: 6 }}>Debts</div>
-                  <div style={{ fontSize: 11, color: "var(--ink-muted)", marginTop: 2 }}>
-                    {activeDebts.filter(d => !d.paid_off).length} active · {payoffMonth}mo payoff
-                  </div>
+                <div style={{ fontSize: 24, lineHeight: 1 }}>💳</div>
+                <div style={{ fontSize: 14, fontWeight: 800, color: "var(--ink)" }}>Debts</div>
+                <div style={{ fontSize: 11, color: "var(--ink-muted)" }}>
+                  {activeDebts.filter(d => !d.paid_off).length} active · {payoffMonth}mo payoff
                 </div>
               </button>
             </div>
