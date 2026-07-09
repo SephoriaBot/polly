@@ -208,8 +208,10 @@ export default function Wallet() {
     const s = localStorage.getItem("tax_withholding_rate");
     return s ? parseFloat(s) : 20;
   });
+  const [otWageOverride, setOtWageOverride] = useState<string>(() => localStorage.getItem("ot_wage_override") || "");
 
   useEffect(() => { localStorage.setItem("tax_withholding_rate", taxRate.toString()); }, [taxRate]);
+  useEffect(() => { localStorage.setItem("ot_wage_override", otWageOverride); }, [otWageOverride]);
 
   // Budget calculator (landing page) — starts blank
   const [calcRegWage, setCalcRegWage] = useState("");
@@ -348,8 +350,26 @@ export default function Wallet() {
   }, [bills, payments]);
 
   const upcomingWindowTotal = upcomingWindowBills.reduce((s, b) => s + b.amount, 0);
+  const effectiveOtWage = parseFloat(otWageOverride) > 0 ? parseFloat(otWageOverride) : budget.hourly_wage * 1.5;
   const netHourlyWage = budget.hourly_wage > 0 ? budget.hourly_wage * (1 - taxRate / 100) : 0;
-  const minHoursNeeded = netHourlyWage > 0 ? upcomingWindowTotal / netHourlyWage : null;
+  const netOtWage = effectiveOtWage > 0 ? effectiveOtWage * (1 - taxRate / 100) : 0;
+
+  // First 40 hrs/week at regular rate, anything beyond at OT rate
+  let minHoursNeeded: number | null = null;
+  let minRegHours = 0;
+  let minOtHours = 0;
+  if (netHourlyWage > 0) {
+    const regCapPay = netHourlyWage * 40;
+    if (upcomingWindowTotal <= regCapPay) {
+      minRegHours = upcomingWindowTotal / netHourlyWage;
+      minOtHours = 0;
+    } else {
+      minRegHours = 40;
+      const remaining = upcomingWindowTotal - regCapPay;
+      minOtHours = netOtWage > 0 ? remaining / netOtWage : 0;
+    }
+    minHoursNeeded = minRegHours + minOtHours;
+  }
 
   const monthBills = useMemo(() => {
     const filtered = bills.filter(bill => {
@@ -707,19 +727,37 @@ export default function Wallet() {
               <div className="card-body">
                 <div className="section-label">⏱️ Minimum Hours Needed</div>
                 <div style={{ fontSize: 11, color: "var(--ink-muted)", marginBottom: 14 }}>
-                  Based on unpaid bills due in the next 10 days, after your tax withholding.
+                  Based on unpaid bills due in the next 10 days, after your tax withholding. First 40 hrs at your regular rate, anything beyond that at OT.
                 </div>
 
-                <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
-                  <div style={{ flex: 1 }}>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 10 }}>
+                  <div>
                     <div className="form-label">Tax Withholding (%)</div>
                     <input type="number" className="form-input" value={taxRate} onChange={e => setTaxRate(parseFloat(e.target.value) || 0)} />
                   </div>
-                  <div style={{ flex: 1 }}>
+                  <div>
                     <div className="form-label">Hourly Wage</div>
                     <input type="number" className="form-input" value={budget.hourly_wage || ""} placeholder="set in Budget Calculator" onChange={e => updateBudget("hourly_wage", parseFloat(e.target.value) || 0)} />
                   </div>
+                  <div>
+                    <div className="form-label">OT Wage</div>
+                    <input type="number" className="form-input" value={otWageOverride} placeholder={budget.hourly_wage > 0 ? `${(budget.hourly_wage * 1.5).toFixed(2)} (1.5x)` : "e.g. 29.25"} onChange={e => setOtWageOverride(e.target.value)} />
+                  </div>
+                  <div style={{ display: "flex", alignItems: "flex-end" }}>
+                    <div style={{ fontSize: 10, color: "var(--ink-muted)" }}>leave blank to auto-use 1.5x your hourly wage</div>
+                  </div>
                 </div>
+
+                <details style={{ marginBottom: 14 }}>
+                  <summary style={{ fontSize: 11, color: "var(--pink-dark)", fontWeight: 600, cursor: "pointer" }}>Not sure what % to enter?</summary>
+                  <div style={{ fontSize: 11, color: "var(--ink-muted)", marginTop: 8, lineHeight: 1.6 }}>
+                    Easiest way: grab a recent pay stub and find the line(s) for federal tax, state tax, Social Security, and Medicare. Add those dollar amounts together, divide by your gross pay for that same period, and multiply by 100 — that's your real withholding rate.
+                    <br /><br />
+                    No pay stub handy? Most hourly W-2 workers land somewhere around 15–25% total depending on state and filing status. 20% is a reasonable starting guess.
+                    <br /><br />
+                    For a precise number, the IRS has a free calculator that walks you through it: <a href="https://www.irs.gov/individuals/tax-withholding-estimator" target="_blank" rel="noopener noreferrer" style={{ color: "var(--pink-dark)" }}>irs.gov/individuals/tax-withholding-estimator</a>
+                  </div>
+                </details>
 
                 {budget.hourly_wage <= 0 ? (
                   <div style={{ fontSize: 12, color: "var(--ink-muted)" }}>Enter your hourly wage above (or save it from the Budget Calculator below) to see hours needed.</div>
@@ -741,9 +779,15 @@ export default function Wallet() {
                         <span style={{ fontSize: 14, fontWeight: 700, color: "var(--ink)" }}>{fmt(upcomingWindowTotal)}</span>
                       </div>
                       <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
-                        <span style={{ fontSize: 12, color: "var(--ink-muted)" }}>Net Wage (after {taxRate}% tax)</span>
-                        <span style={{ fontSize: 13, fontWeight: 600, color: "var(--ink)" }}>{fmt(netHourlyWage)}/hr</span>
+                        <span style={{ fontSize: 12, color: "var(--ink-muted)" }}>Net Regular / OT Wage</span>
+                        <span style={{ fontSize: 13, fontWeight: 600, color: "var(--ink)" }}>{fmt(netHourlyWage)}/hr · {fmt(netOtWage)}/hr OT</span>
                       </div>
+                      {minOtHours > 0 && (
+                        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
+                          <span style={{ fontSize: 11, color: "var(--ink-muted)" }}>Breakdown</span>
+                          <span style={{ fontSize: 11, color: "var(--ink-muted)" }}>{minRegHours.toFixed(1)} reg + {minOtHours.toFixed(1)} OT</span>
+                        </div>
+                      )}
                       <div style={{ display: "flex", justifyContent: "space-between" }}>
                         <span style={{ fontSize: 13, fontWeight: 700, color: "var(--pink-dark)" }}>Minimum Hours This Week</span>
                         <span style={{ fontSize: 20, fontWeight: 800, color: "var(--pink-dark)" }}>
