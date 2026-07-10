@@ -219,9 +219,11 @@ export default function Wallet() {
     return s ? parseFloat(s) : 20;
   });
   const [otWageOverride, setOtWageOverride] = useState<string>(() => localStorage.getItem("ot_wage_override") || "");
+  const [currentBalanceInput, setCurrentBalanceInput] = useState<string>(() => localStorage.getItem("current_balance") || "");
 
   useEffect(() => { localStorage.setItem("tax_withholding_rate", taxRate.toString()); }, [taxRate]);
   useEffect(() => { localStorage.setItem("ot_wage_override", otWageOverride); }, [otWageOverride]);
+  useEffect(() => { localStorage.setItem("current_balance", currentBalanceInput); }, [currentBalanceInput]);
 
   // Budget calculator (landing page) — starts blank
   const [calcRegWage, setCalcRegWage] = useState("");
@@ -411,7 +413,7 @@ export default function Wallet() {
     return { rows, endingHoursInWeek: runningHoursInWeek, endingBalance: runningBalance };
   }
 
-  const week1Result = useMemo(() => buildWeekRows(calendarWeeks.week1, 0, 0), [calendarWeeks, billsByDate, dailyHours, netHourlyWage, netOtWage]);
+  const week1Result = useMemo(() => buildWeekRows(calendarWeeks.week1, 0, parseFloat(currentBalanceInput) || 0), [calendarWeeks, billsByDate, dailyHours, netHourlyWage, netOtWage, currentBalanceInput]);
   const week2Result = useMemo(() => buildWeekRows(calendarWeeks.week2, 0, week1Result.endingBalance), [calendarWeeks, billsByDate, dailyHours, netHourlyWage, netOtWage, week1Result.endingBalance]);
 
   const monthBills = useMemo(() => {
@@ -774,6 +776,14 @@ export default function Wallet() {
                 <div className="section-label">📅 Money Calendar</div>
                 <div style={{ fontSize: 11, color: "var(--ink-muted)", marginBottom: 14 }}>
                   Real dates. Log the hours you're working (or plan to work) each day and watch your running balance — see exactly when a bill hits and whether you'll have covered it by then.
+                </div>
+
+                <div style={{ marginBottom: 14 }}>
+                  <div className="form-label">Current Balance</div>
+                  <input type="number" className="form-input" placeholder="check your bank app, enter it here" value={currentBalanceInput} onChange={e => setCurrentBalanceInput(e.target.value)} style={{ fontSize: 18, fontWeight: 700 }} />
+                  <div style={{ fontSize: 10, color: "var(--ink-muted)", marginTop: 4 }}>
+                    The calendar's running balance starts from this number. Update it whenever you check your real balance for the most accurate picture — it won't drift correct on its own.
+                  </div>
                 </div>
 
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 10 }}>
