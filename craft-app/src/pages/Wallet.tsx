@@ -353,7 +353,7 @@ export default function Wallet() {
 
   // Map every unpaid bill occurrence (respecting per-month edits) onto its exact calendar date.
   const billsByDate = useMemo(() => {
-    const map: Record<string, { id: number; name: string; amount: number }[]> = {};
+    const map: Record<string, { id: number; name: string; amount: number; paid: boolean }[]> = {};
     const allDays = [...calendarWeeks.week1, ...calendarWeeks.week2];
     const monthsInView = new Set(allDays.map(d => `${d.getFullYear()}-${d.getMonth() + 1}`));
     bills.forEach(bill => {
@@ -369,14 +369,13 @@ export default function Wallet() {
       candidates.forEach(({ month, year }) => {
         const payment = payments.find(p => p.bill_id === bill.id && p.month === month && p.year === year);
         const paid = payment?.paid ?? false;
-        if (paid) return;
         const effectiveDueDay = bill.recurring ? (payment?.due_day ?? bill.due_day) : bill.due_day;
         const amount = bill.recurring ? (payment?.amount ?? bill.amount) : bill.amount;
         const name = bill.recurring ? (payment?.name ?? bill.name) : bill.name;
         const dueDate = new Date(year, month - 1, effectiveDueDay);
         const key = dateKey(dueDate);
         if (!map[key]) map[key] = [];
-        map[key].push({ id: bill.id, name, amount });
+        map[key].push({ id: bill.id, name, amount, paid });
       });
     });
     return map;
@@ -830,9 +829,9 @@ export default function Wallet() {
                               {row.billsToday.length > 0 && (
                                 <div style={{ marginBottom: 6 }}>
                                   {row.billsToday.map(b => (
-                                    <div key={b.id} style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: "var(--pink-dark)" }}>
-                                      <span>🏠 {b.name}</span>
-                                      <span style={{ fontWeight: 700 }}>-{fmt(b.amount)}</span>
+                                    <div key={b.id} style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: b.paid ? "var(--ink-muted)" : "var(--pink-dark)" }}>
+                                      <span style={{ textDecoration: b.paid ? "line-through" : "none" }}>{b.paid ? "✓" : "🏠"} {b.name}</span>
+                                      <span style={{ fontWeight: 700, textDecoration: b.paid ? "line-through" : "none" }}>-{fmt(b.amount)}</span>
                                     </div>
                                   ))}
                                 </div>
