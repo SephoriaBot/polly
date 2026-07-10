@@ -342,20 +342,21 @@ export default function Wallet() {
   const calendarWeeks = useMemo(() => {
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const sunday = new Date(today);
-    sunday.setDate(today.getDate() - today.getDay()); // back up to this week's Sunday
     const days: Date[] = [];
     for (let i = 0; i < 14; i++) {
-      const d = new Date(sunday);
-      d.setDate(sunday.getDate() + i);
+      const d = new Date(today);
+      d.setDate(today.getDate() + i);
       days.push(d);
     }
     return { week1: days.slice(0, 7), week2: days.slice(7, 14) };
   }, []);
 
-  // Map every unpaid bill occurrence (respecting per-month edits) onto its exact calendar date.
+  // Map every UNPAID bill occurrence (respecting per-month edits) onto its exact
+  // calendar date. Paid bills are excluded entirely — that money already left
+  // your account and is already reflected in Current Balance, so showing (and
+  // subtracting) it again here would double-count it.
   const billsByDate = useMemo(() => {
-    const map: Record<string, { id: number; name: string; amount: number; paid: boolean }[]> = {};
+    const map: Record<string, { id: number; name: string; amount: number }[]> = {};
     const allDays = [...calendarWeeks.week1, ...calendarWeeks.week2];
     const monthsInView = new Set(allDays.map(d => `${d.getFullYear()}-${d.getMonth() + 1}`));
     bills.forEach(bill => {
@@ -371,13 +372,14 @@ export default function Wallet() {
       candidates.forEach(({ month, year }) => {
         const payment = payments.find(p => p.bill_id === bill.id && p.month === month && p.year === year);
         const paid = payment?.paid ?? false;
+        if (paid) return;
         const effectiveDueDay = bill.recurring ? (payment?.due_day ?? bill.due_day) : bill.due_day;
         const amount = bill.recurring ? (payment?.amount ?? bill.amount) : bill.amount;
         const name = bill.recurring ? (payment?.name ?? bill.name) : bill.name;
         const dueDate = new Date(year, month - 1, effectiveDueDay);
         const key = dateKey(dueDate);
         if (!map[key]) map[key] = [];
-        map[key].push({ id: bill.id, name, amount, paid });
+        map[key].push({ id: bill.id, name, amount });
       });
     });
     return map;
@@ -392,8 +394,9 @@ export default function Wallet() {
   const netHourlyWage = budget.hourly_wage > 0 ? budget.hourly_wage * (1 - taxRate / 100) : 0;
   const netOtWage = effectiveOtWage > 0 ? effectiveOtWage * (1 - taxRate / 100) : 0;
 
-  // Build each day's row: bills due, hours logged, earnings (with 40hr/week OT
-  // reset per real Sun–Sat week), and a running balance carried across both weeks.
+  // Build each day's row: bills due, hours logged, earnings (with a 40hr/7-day
+  // rolling OT reset starting today), and a running balance carried forward
+  // from your real Current Balance — today onward only, nothing replayed.
   function buildWeekRows(weekDays: Date[], startingHoursInWeek: number, startingBalance: number) {
     let runningHoursInWeek = startingHoursInWeek;
     let runningBalance = startingBalance;
@@ -775,7 +778,7 @@ export default function Wallet() {
               <div className="card-body">
                 <div className="section-label">📅 Money Calendar</div>
                 <div style={{ fontSize: 11, color: "var(--ink-muted)", marginBottom: 14 }}>
-                  Real dates. Log the hours you're working (or plan to work) each day and watch your running balance — see exactly when a bill hits and whether you'll have covered it by then.
+                  Runs from today forward — no past days, no already-paid bills cluttering it up. Log the hours you're working (or plan to work) each day and watch your running balance move.
                 </div>
 
                 <div style={{ marginBottom: 14 }}>
@@ -818,7 +821,7 @@ export default function Wallet() {
                 {budget.hourly_wage <= 0 ? (
                   <div style={{ fontSize: 12, color: "var(--ink-muted)" }}>Enter your hourly wage above to see your calendar.</div>
                 ) : (
-                  [{ title: "This Week", result: week1Result }, { title: "Next Week", result: week2Result }].map(({ title, result }) => (
+                  [{ title: "Next 7 Days", result: week1Result }, { title: "Following 7 Days", result: week2Result }].map(({ title, result }) => (
                     <div key={title} style={{ marginBottom: 18 }}>
                       <div style={{ fontSize: 12, fontWeight: 700, color: "var(--ink)", marginBottom: 8 }}>{title}</div>
                       <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
@@ -839,9 +842,9 @@ export default function Wallet() {
                               {row.billsToday.length > 0 && (
                                 <div style={{ marginBottom: 6 }}>
                                   {row.billsToday.map(b => (
-                                    <div key={b.id} style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: b.paid ? "var(--ink-muted)" : "var(--pink-dark)" }}>
-                                      <span style={{ textDecoration: b.paid ? "line-through" : "none" }}>{b.paid ? "✓" : "🏠"} {b.name}</span>
-                                      <span style={{ fontWeight: 700, textDecoration: b.paid ? "line-through" : "none" }}>-{fmt(b.amount)}</span>
+                                    <div key={b.id} style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: "var(--pink-dark)" }}>
+                                      <span>🏠 {b.name}</span>
+                                      <span style={{ fontWeight: 700 }}>-{fmt(b.amount)}</span>
                                     </div>
                                   ))}
                                 </div>
