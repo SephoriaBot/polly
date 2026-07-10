@@ -385,39 +385,40 @@ export default function Wallet() {
     return map;
   }, [bills, payments, calendarWeeks]);
 
-  const [dailyHours, setDailyHours] = useState<Record<string, string>>(() => {
+  const [dailyHours, setDailyHours] = useState<Record<string, { reg: string; ot: string }>>(() => {
     try { return JSON.parse(localStorage.getItem("daily_hours_log") || "{}"); } catch { return {}; }
   });
   useEffect(() => { localStorage.setItem("daily_hours_log", JSON.stringify(dailyHours)); }, [dailyHours]);
+
+  function setDailyHourField(key: string, field: "reg" | "ot", value: string) {
+    setDailyHours(prev => ({ ...prev, [key]: { reg: prev[key]?.reg || "", ot: prev[key]?.ot || "", [field]: value } }));
+  }
 
   const effectiveOtWage = parseFloat(otWageOverride) > 0 ? parseFloat(otWageOverride) : budget.hourly_wage * 1.5;
   const netHourlyWage = budget.hourly_wage > 0 ? budget.hourly_wage * (1 - taxRate / 100) : 0;
   const netOtWage = effectiveOtWage > 0 ? effectiveOtWage * (1 - taxRate / 100) : 0;
 
-  // Build each day's row: bills due, hours logged, earnings (with a 40hr/7-day
-  // rolling OT reset starting today), and a running balance carried forward
+  // Build each day's row: bills due, hours logged (regular + OT entered
+  // separately per day), earnings, and a running balance carried forward
   // from your real Current Balance — today onward only, nothing replayed.
-  function buildWeekRows(weekDays: Date[], startingHoursInWeek: number, startingBalance: number) {
-    let runningHoursInWeek = startingHoursInWeek;
+  function buildWeekRows(weekDays: Date[], startingBalance: number) {
     let runningBalance = startingBalance;
     const rows = weekDays.map(d => {
       const key = dateKey(d);
       const billsToday = billsByDate[key] || [];
       const billsTotal = billsToday.reduce((s, b) => s + b.amount, 0);
-      const hoursToday = parseFloat(dailyHours[key]) || 0;
-      const regHoursLeft = Math.max(0, 40 - runningHoursInWeek);
-      const regHoursToday = Math.min(hoursToday, regHoursLeft);
-      const otHoursToday = hoursToday - regHoursToday;
+      const regHoursToday = parseFloat(dailyHours[key]?.reg) || 0;
+      const otHoursToday = parseFloat(dailyHours[key]?.ot) || 0;
+      const hoursToday = regHoursToday + otHoursToday;
       const earnedToday = netHourlyWage > 0 ? regHoursToday * netHourlyWage + otHoursToday * netOtWage : 0;
-      runningHoursInWeek += hoursToday;
       runningBalance += earnedToday - billsTotal;
-      return { date: d, key, billsToday, billsTotal, hoursToday, earnedToday, balance: runningBalance };
+      return { date: d, key, billsToday, billsTotal, regHoursToday, otHoursToday, hoursToday, earnedToday, balance: runningBalance };
     });
-    return { rows, endingHoursInWeek: runningHoursInWeek, endingBalance: runningBalance };
+    return { rows, endingBalance: runningBalance };
   }
 
-  const week1Result = useMemo(() => buildWeekRows(calendarWeeks.week1, 0, parseFloat(currentBalanceInput) || 0), [calendarWeeks, billsByDate, dailyHours, netHourlyWage, netOtWage, currentBalanceInput]);
-  const week2Result = useMemo(() => buildWeekRows(calendarWeeks.week2, 0, week1Result.endingBalance), [calendarWeeks, billsByDate, dailyHours, netHourlyWage, netOtWage, week1Result.endingBalance]);
+  const week1Result = useMemo(() => buildWeekRows(calendarWeeks.week1, parseFloat(currentBalanceInput) || 0), [calendarWeeks, billsByDate, dailyHours, netHourlyWage, netOtWage, currentBalanceInput]);
+  const week2Result = useMemo(() => buildWeekRows(calendarWeeks.week2, week1Result.endingBalance), [calendarWeeks, billsByDate, dailyHours, netHourlyWage, netOtWage, week1Result.endingBalance]);
 
   const monthBills = useMemo(() => {
     const filtered = bills.filter(bill => {
@@ -850,14 +851,23 @@ export default function Wallet() {
                                 </div>
                               )}
 
-                              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                                <span style={{ fontSize: 10, color: "var(--ink-muted)", whiteSpace: "nowrap" }}>Hours</span>
+                              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                                <span style={{ fontSize: 10, color: "var(--ink-muted)", whiteSpace: "nowrap" }}>Reg</span>
                                 <input
                                   type="number"
                                   className="form-input"
                                   placeholder="0"
-                                  value={dailyHours[row.key] || ""}
-                                  onChange={e => setDailyHours(prev => ({ ...prev, [row.key]: e.target.value }))}
+                                  value={dailyHours[row.key]?.reg || ""}
+                                  onChange={e => setDailyHourField(row.key, "reg", e.target.value)}
+                                  style={{ flex: 1, fontSize: 12, padding: "4px 8px" }}
+                                />
+                                <span style={{ fontSize: 10, color: "var(--ink-muted)", whiteSpace: "nowrap" }}>OT</span>
+                                <input
+                                  type="number"
+                                  className="form-input"
+                                  placeholder="0"
+                                  value={dailyHours[row.key]?.ot || ""}
+                                  onChange={e => setDailyHourField(row.key, "ot", e.target.value)}
                                   style={{ flex: 1, fontSize: 12, padding: "4px 8px" }}
                                 />
                                 {row.hoursToday > 0 && (
