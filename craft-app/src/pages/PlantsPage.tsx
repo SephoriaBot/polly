@@ -73,13 +73,24 @@ export default function PlantsPage() {
     searchTimeout.current = setTimeout(() => searchPlants(val), 500)
   }
 
-  async function addPlant(result: SearchResult) {
+    async function addPlant(result: SearchResult) {
     const existing = plants.find(p => p.perenual_id === result.id)
     if (existing) {
       await updateQuantity(existing.id, existing.quantity + 1)
       setQuery('')
       setSearchResults([])
       return
+    }
+
+    let medicinalNote: string | null = null
+    try {
+      const detailRes = await fetch(`/api/plant-details?id=${result.id}`)
+      const detail = await detailRes.json()
+      if (detail.medicinal) {
+        medicinalNote = await fetchMedicinalBlurb(result.name)
+      }
+    } catch {
+      // silently skip — medicinal info is a nice-to-have, not critical
     }
 
     const { data } = await supabase
@@ -89,6 +100,7 @@ export default function PlantsPage() {
         scientific_name: result.scientific_name ?? null,
         perenual_id: result.id,
         quantity: 1,
+        medicinal_note: medicinalNote,
       })
       .select()
       .single()
@@ -97,6 +109,30 @@ export default function PlantsPage() {
     setQuery('')
     setSearchResults([])
   }
+
+  async function fetchMedicinalBlurb(plantName: string): Promise<string | null> {
+    const prompt = `In 1-2 short sentences, describe the traditional or folk medicinal uses of ${plantName}. Be factual and brief. Do not include disclaimers or safety warnings, just the traditional use itself. Respond with plain text only, no markdown.`
+
+    try {
+      const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${import.meta.env.VITE_GROQ_API_KEY}`,
+        },
+        body: JSON.stringify({
+          model: 'llama-3.3-70b-versatile',
+          max_tokens: 150,
+          messages: [{ role: 'user', content: prompt }],
+        }),
+      })
+      const data = await response.json()
+      return data.choices?.[0]?.message?.content?.trim() ?? null
+    } catch {
+      return null
+    }
+  }
+
 
   async function updateQuantity(id: string, newQty: number) {
     if (newQty < 1) {
