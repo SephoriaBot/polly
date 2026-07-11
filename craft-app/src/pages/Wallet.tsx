@@ -172,7 +172,7 @@ const PERIOD_LABELS: Record<string, string> = {
   monthly: "Monthly",
 };
 
-function EditableCell({ value, onChange, type = "number", style }: { value: string | number; onChange: (v: string) => void; type?: string; style?: CSSProperties }) {
+function EditableCell({ value, onChange, type = "number", style, className, placeholder }: { value: string | number; onChange: (v: string) => void; type?: string; style?: CSSProperties; className?: string; placeholder?: string }) {
   const [draft, setDraft] = useState(String(value));
 
   useEffect(() => { setDraft(String(value)); }, [value]);
@@ -181,14 +181,20 @@ function EditableCell({ value, onChange, type = "number", style }: { value: stri
     if (draft !== String(value)) onChange(draft);
   }
 
+  const defaultStyle: CSSProperties = className
+    ? {}
+    : { width: "100%", background: "transparent", border: "none", borderBottom: "1.5px dashed var(--border)", color: "var(--ink)", fontSize: 13, padding: "2px 4px", outline: "none", fontFamily: "inherit" };
+
   return (
     <input
       type={type}
+      className={className}
+      placeholder={placeholder}
       value={draft}
       onChange={e => setDraft(e.target.value)}
       onBlur={commit}
       onKeyDown={e => { if (e.key === "Enter") (e.target as HTMLInputElement).blur(); }}
-      style={{ width: "100%", background: "transparent", border: "none", borderBottom: "1.5px dashed var(--border)", color: "var(--ink)", fontSize: 13, padding: "2px 4px", outline: "none", fontFamily: "inherit", ...style }}
+      style={{ ...defaultStyle, ...style }}
     />
   );
 }
@@ -797,7 +803,7 @@ export default function Wallet() {
                   </div>
                   <div>
                     <div className="form-label">Hourly Wage</div>
-                    <input type="number" className="form-input" value={budget.hourly_wage || ""} placeholder="set in Budget Calculator" onChange={e => updateBudget("hourly_wage", parseFloat(e.target.value) || 0)} />
+                    <EditableCell type="number" className="form-input" value={budget.hourly_wage || ""} placeholder="set in Budget Calculator" onChange={v => updateBudget("hourly_wage", parseFloat(v) || 0)} />
                   </div>
                   <div>
                     <div className="form-label">OT Wage</div>
