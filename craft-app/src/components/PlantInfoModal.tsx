@@ -1,79 +1,51 @@
 import { useEffect, useState } from 'react'
-import type { GardenPlant } from '../types/legacy'
 import { supabase } from '../lib/supabase'
-
+import { fetchPlantProfile, type PlantProfile } from '../lib/plantAi'
+import type { GardenPlant } from '../types/legacy'
 
 interface Props {
   plant: GardenPlant
 }
 
-interface PlantDetails {
-  medicinal: boolean
-  poisonous_to_pets: boolean
-  poisonous_to_humans: boolean
-  watering: string | null
-  sunlight: string[]
-  cycle: string | null
-  care_level: string | null
-  edible_fruit: boolean
-  edible_leaf: boolean
-  description: string | null
-}
-
 export default function PlantInfoModal({ plant }: Props) {
-  const [details, setDetails] = useState<PlantDetails | null>(null)
+  const [details, setDetails] = useState<PlantProfile | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
-    useEffect(() => {
-    if (!plant.perenual_id) {
-      setError('No plant database record for this entry.')
+  useEffect(() => {
+    let cancelled = false
+
+    async function load() {
+      if (plant.perenual_details) {
+        setDetails(plant.perenual_details as unknown as PlantProfile)
+        setLoading(false)
+        return
+      }
+
+      const profile = await fetchPlantProfile(plant.name)
+      if (cancelled) return
+
+      if (!profile) {
+        setError('Could not generate plant info. Please try again.')
+        setLoading(false)
+        return
+      }
+
+      setDetails(profile)
       setLoading(false)
-      return
+
+      await supabase
+        .from('garden_plants')
+        .update({
+          perenual_details: profile,
+          medicinal_note: profile.medicinal_note,
+        })
+        .eq('id', plant.id)
     }
 
-    // Use cached details if we have them
-    if (plant.perenual_details) {
-      setDetails(plant.perenual_details as unknown as PlantDetails)
-      setLoading(false)
-      return
-    }
-
-    fetch(`/api/plant-details?id=${plant.perenual_id}`)
-      .then(async res => {
-        const text = await res.text()
-        let data
-        try {
-          data = JSON.parse(text)
-        } catch {
-          throw new Error(`Bad response (status ${res.status}): ${text.slice(0, 150)}`)
-        }
-        if (!res.ok || data.error) {
-          throw new Error(data.error ?? 'unknown error')
-        }
-        const parsed: PlantDetails = {
-          medicinal: data.medicinal === true,
-          poisonous_to_pets: data.poisonous_to_pets === true,
-          poisonous_to_humans: data.poisonous_to_humans === true,
-          watering: data.watering ?? null,
-          sunlight: Array.isArray(data.sunlight) ? data.sunlight : [],
-          cycle: data.cycle ?? null,
-          care_level: data.care_level ?? null,
-          edible_fruit: data.edible_fruit === true,
-          edible_leaf: data.edible_leaf === true,
-          description: data.description ?? null,
-        }
-        setDetails(parsed)
-
-        // Cache it so we don't burn API quota next time
-        await supabase
-          .from('garden_plants')
-          .update({ perenual_details: parsed, perenual_details_fetched_at: new Date().toISOString() })
-          .eq('id', plant.id)
-      })
-      .catch(err => setError(err.message || 'Could not load plant info.'))
-      .finally(() => setLoading(false))
-  }, [plant.perenual_id, plant.perenual_details, plant.id])
+    load()
+    return () => { cancelled = true }
+  }, [plant.id, plant.name, plant.perenual_details])
 
   return (
     <div style={{ fontSize: '0.9rem' }}>
@@ -90,21 +62,26 @@ export default function PlantInfoModal({ plant }: Props) {
       {details && !loading && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
 
-          {/* Cat safety — front and center */}
           <div style={{
             padding: '10px 14px', borderRadius: 10,
             background: details.poisonous_to_pets ? '#fff0f0' : '#f0fdf4',
             border: `1.5px solid ${details.poisonous_to_pets ? '#fecaca' : '#bbf7d0'}`,
           }}>
-            <div style={{ fontWeight: 700, fontSize: '0.85rem', color: details.poisonous_to_pets ? '#b91c1c' : '#15803d' }}>
-              {details.poisonous_to_pets ? '⚠️ Toxic to pets' : '✓ Safe for pets'}
+            <div style={{ fontWeight: 700, fontSize: '0.85rem', color: details.poisonous_to_pets ? '#b91c1c' : '#15803d', marginBottom: details.poisonous_to_pets_note ? 4 : 0 }}>
+              {details.poisonous_to_pets ? '⚠️ Toxic to pets' : '✓ Generally considered safe for pets'}
+            </div>
+            {details.poisonous_to_pets_note && (
+              <div style={{ fontSize: '0.78rem', color: 'var(--ink-soft)' }}>{details.poisonous_to_pets_note}</div>
+            )}
+            <div style={{ fontSize: '0.7rem', color: 'var(--ink-muted)', marginTop: 6, fontStyle: 'italic' }}>
+              AI-generated — for anything you're unsure about, double check against the ASPCA toxic/non-toxic plant list.
             </div>
           </div>
 
-          {details.medicinal && plant.medicinal_note && (
+          {details.medicinal && details.medicinal_note && (
             <div>
               <div style={{ fontWeight: 600, fontSize: '0.85rem', marginBottom: 4 }}>🌿 Traditional uses</div>
-              <p style={{ fontSize: '0.82rem', color: 'var(--ink-soft)', lineHeight: 1.5 }}>{plant.medicinal_note}</p>
+              <p style={{ fontSize: '0.82rem', color: 'var(--ink-soft)', lineHeight: 1.5 }}>{details.medicinal_note}</p>
             </div>
           )}
 
