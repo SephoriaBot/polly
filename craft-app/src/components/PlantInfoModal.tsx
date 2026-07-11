@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { GardenPlant } from '../types/legacy'
+import { supabase } from '../lib/supabase'
+
 
 interface Props {
   plant: GardenPlant
@@ -23,12 +25,20 @@ export default function PlantInfoModal({ plant }: Props) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
-  useEffect(() => {
+    useEffect(() => {
     if (!plant.perenual_id) {
       setError('No plant database record for this entry.')
       setLoading(false)
       return
     }
+
+    // Use cached details if we have them
+    if (plant.perenual_details) {
+      setDetails(plant.perenual_details as unknown as PlantDetails)
+      setLoading(false)
+      return
+    }
+
     fetch(`/api/plant-details?id=${plant.perenual_id}`)
       .then(async res => {
         const text = await res.text()
@@ -39,9 +49,9 @@ export default function PlantInfoModal({ plant }: Props) {
           throw new Error(`Bad response (status ${res.status}): ${text.slice(0, 150)}`)
         }
         if (!res.ok || data.error) {
-          throw new Error(`API error (status ${res.status}): ${data.error ?? 'unknown'}`)
+          throw new Error(data.error ?? 'unknown error')
         }
-        setDetails({
+        const parsed: PlantDetails = {
           medicinal: data.medicinal === true,
           poisonous_to_pets: data.poisonous_to_pets === true,
           poisonous_to_humans: data.poisonous_to_humans === true,
@@ -52,11 +62,18 @@ export default function PlantInfoModal({ plant }: Props) {
           edible_fruit: data.edible_fruit === true,
           edible_leaf: data.edible_leaf === true,
           description: data.description ?? null,
-        })
+        }
+        setDetails(parsed)
+
+        // Cache it so we don't burn API quota next time
+        await supabase
+          .from('garden_plants')
+          .update({ perenual_details: parsed, perenual_details_fetched_at: new Date().toISOString() })
+          .eq('id', plant.id)
       })
       .catch(err => setError(err.message || 'Could not load plant info.'))
       .finally(() => setLoading(false))
-  }, [plant.perenual_id])
+  }, [plant.perenual_id, plant.perenual_details, plant.id])
 
   return (
     <div style={{ fontSize: '0.9rem' }}>
