@@ -1,5 +1,5 @@
 import { useState, Suspense, lazy } from 'react';
-import Sidebar from './components/Sidebar';
+import TopNav from './components/TopNav';
 
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const PlantsPage = lazy(() => import('./pages/PlantsPage'));
@@ -30,7 +30,7 @@ export default function App() {
   return (
     <ToastProvider>
       <div className="app-shell">
-        <Sidebar currentPage={page} onNavigate={navigate} />
+        <TopNav currentPage={page} onNavigate={navigate} />
         <main className="main">
           <Suspense fallback={<div className="page-loading">Loading…</div>}>
             {page === 'dashboard'    && <Dashboard onNavigate={navigate} />}
