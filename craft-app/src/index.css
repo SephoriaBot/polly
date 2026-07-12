@@ -489,3 +489,126 @@ p {
     padding: 12px;
   }
 }
+
+/* ================= DASHBOARD — COZY DETAILS ================= */
+
+body {
+  background-image:
+    radial-gradient(circle, rgba(232,160,172,0.14) 1px, transparent 1.4px),
+    radial-gradient(circle at top, #fffdfc, #fff3ef);
+  background-size: 20px 20px, 100% 100%;
+  background-repeat: repeat, no-repeat;
+}
+
+.dash-greeting {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.dash-greeting h1 {
+  margin: 0 0 2px;
+}
+
+.dash-subdate {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.72rem;
+  color: var(--ink-muted);
+  letter-spacing: 0.03em;
+}
+
+.sprig {
+  flex-shrink: 0;
+  color: var(--pink-dark);
+  opacity: 0.55;
+  transform: rotate(8deg);
+  margin-top: 2px;
+}
+
+.washi {
+  position: absolute;
+  top: -8px;
+  left: 14px;
+  width: 42px;
+  height: 15px;
+  background: repeating-linear-gradient(
+    45deg,
+    var(--primary), var(--primary) 4px,
+    var(--secondary) 4px, var(--secondary) 8px
+  );
+  opacity: 0.9;
+  transform: rotate(-4deg);
+  border-radius: 2px;
+  box-shadow: 0 1px 2px rgba(90,30,40,0.15);
+}
+
+.glance-card {
+  cursor: pointer;
+  padding-top: 20px;
+}
+
+.glance-value {
+  font-family: 'Fraunces', serif;
+  font-size: 1.6rem;
+  font-weight: 600;
+  color: var(--ink);
+  line-height: 1;
+}
+
+.glance-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--ink-muted);
+  margin-top: 6px;
+}
+
+.stitch-divider {
+  display: flex;
+  align-items: center;
+  margin: 2px 0 4px;
+}
+
+.stitch-divider .line {
+  flex: 1;
+  border-top: 1px dashed var(--border);
+}
+
+.stitch-divider .mark {
+  width: 12px;
+  height: 12px;
+  margin: 0 10px;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.stitch-divider .mark::before,
+.stitch-divider .mark::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: var(--pink-dark);
+  border-radius: 1px;
+}
+
+.stitch-divider .mark::before { transform: translateY(-50%) rotate(45deg); }
+.stitch-divider .mark::after  { transform: translateY(-50%) rotate(-45deg); }
+
+.meals-empty {
+  background: var(--white);
+  border: 1.5px dashed var(--border);
+  border-radius: 18px;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 0.82rem;
+  color: var(--ink-muted);
+}
+
