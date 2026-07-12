@@ -141,27 +141,35 @@ export default function Dashboard({ onNavigate }: { onNavigate: (page: string) =
         <section>
           <div className="section-label">At a Glance</div>
           <div className="dashboard-grid">
-            <div className="card stat-card glance-card" onClick={() => onNavigate('plants')}>
-              <span className="washi" />
-              <div className="glance-value">{glance.plants}</div>
-              <div className="glance-label">Plants</div>
-            </div>
-            <div className="card stat-card glance-card" onClick={() => onNavigate('pets')}>
-              <span className="washi" />
-              <div className="glance-value">{glance.pets}</div>
-              <div className="glance-label">Pets</div>
-            </div>
-            <div className="card stat-card glance-card" onClick={() => onNavigate('recipes')}>
-              <span className="washi" />
-              <div className="glance-value">{glance.recipes}</div>
-              <div className="glance-label">Recipes</div>
-            </div>
-            <div className="card stat-card glance-card" onClick={() => onNavigate('grocery')}>
-              <span className="washi" />
-              <div className="glance-value">{glance.groceryItems}</div>
-              <div className="glance-label">On the List</div>
-            </div>
-          </div>
+  <div className="glance-wrap">
+    <span className="washi" />
+    <div className="card stat-card glance-card" onClick={() => onNavigate('plants')}>
+      <div className="glance-value">{glance.plants}</div>
+      <div className="glance-label">Plants</div>
+    </div>
+  </div>
+  <div className="glance-wrap">
+    <span className="washi" />
+    <div className="card stat-card glance-card" onClick={() => onNavigate('pets')}>
+      <div className="glance-value">{glance.pets}</div>
+      <div className="glance-label">Pets</div>
+    </div>
+  </div>
+  <div className="glance-wrap">
+    <span className="washi" />
+    <div className="card stat-card glance-card" onClick={() => onNavigate('recipes')}>
+      <div className="glance-value">{glance.recipes}</div>
+      <div className="glance-label">Recipes</div>
+    </div>
+  </div>
+  <div className="glance-wrap">
+    <span className="washi" />
+    <div className="card stat-card glance-card" onClick={() => onNavigate('grocery')}>
+      <div className="glance-value">{glance.groceryItems}</div>
+      <div className="glance-label">On the List</div>
+    </div>
+  </div>
+</div>
         </section>
 
         <StitchDivider />
