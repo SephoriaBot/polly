@@ -521,42 +521,33 @@ body {
 
 .glance-wrap {
   position: relative;
+  padding: 6px;
+  border-radius: calc(var(--radius-lg) + 6px);
+  box-shadow: var(--shadow);
+  background: repeating-linear-gradient(
+    45deg,
+    var(--primary) 0px, var(--primary) 6px,
+    var(--secondary) 6px, var(--secondary) 12px
+  );
+}
+
+.glance-wrap:nth-child(2) {
+  background: repeating-linear-gradient(45deg, var(--secondary) 0, var(--secondary) 6px, var(--accent) 6px, var(--accent) 12px);
+}
+.glance-wrap:nth-child(3) {
+  background: repeating-linear-gradient(45deg, var(--accent) 0, var(--accent) 6px, var(--pink-dark) 6px, var(--pink-dark) 12px);
+}
+.glance-wrap:nth-child(4) {
+  background: repeating-linear-gradient(45deg, var(--mint) 0, var(--mint) 6px, var(--secondary) 6px, var(--secondary) 12px);
 }
 
 .glance-card {
   cursor: pointer;
-  padding-top: 24px;
+  padding-top: 20px;
+  border: none;
+  box-shadow: none;
+  border-radius: var(--radius-lg);
 }
-
-.washi {
-  position: absolute;
-  top: -5.5px;
-  left: -15px;
-  width: 30px;
-  height: 11px;
-  transform: rotate(-45deg);
-  transform-origin: center;
-  background: repeating-linear-gradient(
-    45deg,
-    var(--primary), var(--primary) 4px,
-    var(--secondary) 4px, var(--secondary) 8px
-  );
-  opacity: 0.92;
-  border-radius: 1px;
-  box-shadow: 0 1px 2px rgba(90,30,40,0.15);
-  z-index: 2;
-}
-
-.glance-wrap:nth-child(2) .washi {
-  background: repeating-linear-gradient(45deg, var(--secondary), var(--secondary) 4px, var(--accent) 4px, var(--accent) 8px);
-}
-.glance-wrap:nth-child(3) .washi {
-  background: repeating-linear-gradient(45deg, var(--accent), var(--accent) 4px, var(--pink-dark) 4px, var(--pink-dark) 8px);
-}
-.glance-wrap:nth-child(4) .washi {
-  background: repeating-linear-gradient(45deg, var(--mint), var(--mint) 4px, var(--secondary) 4px, var(--secondary) 8px);
-}
-
 
 .glance-value {
   font-family: 'Fraunces', serif;
