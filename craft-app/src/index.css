@@ -5,9 +5,10 @@
   --surface: #fffbfa;
   --text: #3b2a2e;
 
-  --primary: #f7b89c;      /* apricot */
-  --secondary: #f6cfd6;    /* soft pink */
-  --accent: #ffe0d1;       /* pale apricot blush */
+
+  --primary: #f6cfd6;    /* soft pink */
+  --secondary: #f7b89c;      /* apricot */
+  --accent: #e8a0ac;       /* pale rose blush */
   --mint: #f9dde2;         /* swapped mint for a dusty rose, keeps the "soft accent" role */
 
   --border: rgba(215, 150, 150, 0.35);
