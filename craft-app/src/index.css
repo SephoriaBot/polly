@@ -526,27 +526,31 @@ body {
   margin-top: 2px;
 }
 
+.glance-card {
+  cursor: pointer;
+  padding-top: 20px;
+  overflow: visible; /* let the washi hang past the card edge to actually wrap it */
+}
+
 .washi {
   position: absolute;
-  top: -8px;
-  left: 14px;
-  width: 42px;
-  height: 15px;
+  top: -9px;
+  left: -9px;
+  width: 56px;
+  height: 16px;
   background: repeating-linear-gradient(
     45deg,
     var(--primary), var(--primary) 4px,
     var(--secondary) 4px, var(--secondary) 8px
   );
-  opacity: 0.9;
-  transform: rotate(-4deg);
+  opacity: 0.92;
+  transform: rotate(-45deg);
+  transform-origin: center;
   border-radius: 2px;
-  box-shadow: 0 1px 2px rgba(90,30,40,0.15);
+  box-shadow: 0 1px 3px rgba(90,30,40,0.18);
+  z-index: 2;
 }
 
-.glance-card {
-  cursor: pointer;
-  padding-top: 20px;
-}
 
 .glance-value {
   font-family: 'Fraunces', serif;
