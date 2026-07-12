@@ -57,6 +57,7 @@ function StitchDivider() {
 export default function Dashboard({ onNavigate }: { onNavigate: (page: string) => void }) {
   const [focuses, setFocuses] = useState<Focus[]>([]);
   const [todayMeals, setTodayMeals] = useState<MealEntry[]>([]);
+  const [todayBills, setTodayBills] = useState<Bill[]>([]);
   const [glance, setGlance] = useState<Glance>({ plants: 0, pets: 0, recipes: 0, groceryItems: 0 });
   const [newFocus, setNewFocus] = useState('');
   const [newFocusMins, setNewFocusMins] = useState('');
@@ -326,3 +327,32 @@ export default function Dashboard({ onNavigate }: { onNavigate: (page: string) =
     </div>
   );
 }
+
+{/* ── TODAY'S BILLS ── */}
+
+<div className="card">
+  <div className="card-body">
+    <div className="section-label">🏠 Bills Due Today</div>
+
+    {billsDueToday.length === 0 ? (
+      <div style={{ color: "var(--ink-muted)", fontSize: 13 }}>
+        No bills due today 🎉
+      </div>
+    ) : (
+      billsDueToday.map(bill => (
+        <div
+          key={bill.id}
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            padding: "8px 0",
+            borderBottom: "1px solid var(--border)",
+          }}
+        >
+          <span>{bill.name}</span>
+          <strong>{fmt(bill.amount)}</strong>
+        </div>
+      ))
+    )}
+  </div>
+</div>
