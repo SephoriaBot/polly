@@ -14,11 +14,49 @@ interface MealEntry {
   meal_name: string;
 }
 
+interface Glance {
+  plants: number;
+  pets: number;
+  recipes: number;
+  groceryItems: number;
+}
+
 const DAY_NAMES = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
 
-export default function Dashboard({ onNavigate: _onNavigate }: { onNavigate: (page: string) => void }) {
+function getGreeting() {
+  const h = new Date().getHours();
+  if (h < 5) return 'Still up?';
+  if (h < 12) return 'Good morning';
+  if (h < 17) return 'Good afternoon';
+  if (h < 21) return 'Good evening';
+  return 'Winding down';
+}
+
+function Sprig() {
+  return (
+    <svg className="sprig" width="30" height="30" viewBox="0 0 30 30" fill="none">
+      <path d="M15 27 C14 19 14 12 15 3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+      <path d="M15 18 C12 16 9 16 7 13" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+      <path d="M15 12 C18 10 20 10 22 7" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+      <circle cx="15" cy="4" r="2.2" fill="currentColor" />
+    </svg>
+  );
+}
+
+function StitchDivider() {
+  return (
+    <div className="stitch-divider">
+      <span className="line" />
+      <span className="mark" />
+      <span className="line" />
+    </div>
+  );
+}
+
+export default function Dashboard({ onNavigate }: { onNavigate: (page: string) => void }) {
   const [focuses, setFocuses] = useState<Focus[]>([]);
   const [todayMeals, setTodayMeals] = useState<MealEntry[]>([]);
+  const [glance, setGlance] = useState<Glance>({ plants: 0, pets: 0, recipes: 0, groceryItems: 0 });
   const [newFocus, setNewFocus] = useState('');
   const [newFocusMins, setNewFocusMins] = useState('');
   const [addingFocus, setAddingFocus] = useState(false);
@@ -31,13 +69,23 @@ export default function Dashboard({ onNavigate: _onNavigate }: { onNavigate: (pa
   }, []);
 
   async function loadAll() {
-    const [focusRes, mealsRes] = await Promise.all([
+    const [focusRes, mealsRes, plantsRes, petsRes, recipesRes, groceryRes] = await Promise.all([
       supabase.from('focuses').select('*').eq('date', todayStr).order('created_at'),
       supabase.from('week_plans').select('meal_type, meal_name').eq('day', todayName),
+      supabase.from('garden_plants').select('id', { count: 'exact', head: true }),
+      supabase.from('pets').select('id', { count: 'exact', head: true }),
+      supabase.from('recipes').select('id', { count: 'exact', head: true }),
+      supabase.from('grocery_items').select('id', { count: 'exact', head: true }).eq('checked', false),
     ]);
 
     setFocuses(focusRes.data || []);
     setTodayMeals(mealsRes.data || []);
+    setGlance({
+      plants: plantsRes.count || 0,
+      pets: petsRes.count || 0,
+      recipes: recipesRes.count || 0,
+      groceryItems: groceryRes.count || 0,
+    });
   }
 
   async function addFocus() {
@@ -76,13 +124,46 @@ export default function Dashboard({ onNavigate: _onNavigate }: { onNavigate: (pa
 
   return (
     <div>
-      <div className="page-header">
+      <div className="page-header dash-greeting">
         <div>
-          <h1>{todayName} · {new Date().toLocaleDateString(undefined, { month: 'long', day: 'numeric' })}</h1>
+          <h1>{getGreeting()}</h1>
+          <div className="dash-subdate">
+            {todayName}, {new Date().toLocaleDateString(undefined, { month: 'long', day: 'numeric' })}
+          </div>
         </div>
+        <Sprig />
       </div>
 
       <div className="page-body">
+
+        {/* ── AT A GLANCE ── */}
+        <section>
+          <div className="section-label">At a Glance</div>
+          <div className="dashboard-grid">
+            <div className="card stat-card glance-card" onClick={() => onNavigate('plants')}>
+              <span className="washi" />
+              <div className="glance-value">{glance.plants}</div>
+              <div className="glance-label">Plants</div>
+            </div>
+            <div className="card stat-card glance-card" onClick={() => onNavigate('pets')}>
+              <span className="washi" />
+              <div className="glance-value">{glance.pets}</div>
+              <div className="glance-label">Pets</div>
+            </div>
+            <div className="card stat-card glance-card" onClick={() => onNavigate('recipes')}>
+              <span className="washi" />
+              <div className="glance-value">{glance.recipes}</div>
+              <div className="glance-label">Recipes</div>
+            </div>
+            <div className="card stat-card glance-card" onClick={() => onNavigate('grocery')}>
+              <span className="washi" />
+              <div className="glance-value">{glance.groceryItems}</div>
+              <div className="glance-label">On the List</div>
+            </div>
+          </div>
+        </section>
+
+        <StitchDivider />
 
         {/* ── TODAY'S FOCUS ── */}
         <section>
@@ -199,10 +280,12 @@ export default function Dashboard({ onNavigate: _onNavigate }: { onNavigate: (pa
           )}
         </section>
 
+        <StitchDivider />
+
         {/* ── TODAY'S MEALS ── */}
-        {sortedMeals.length > 0 && (
-          <section>
-            <div className="section-label">Today's Meals</div>
+        <section>
+          <div className="section-label">Today's Meals</div>
+          {sortedMeals.length > 0 ? (
             <div style={{ display: 'flex', gap: 10, overflowX: 'auto', paddingBottom: 4 }}>
               {sortedMeals.map((m, i) => (
                 <div
@@ -222,8 +305,13 @@ export default function Dashboard({ onNavigate: _onNavigate }: { onNavigate: (pa
                 </div>
               ))}
             </div>
-          </section>
-        )}
+          ) : (
+            <div className="meals-empty">
+              <span>Nothing planned for today yet</span>
+              <button className="btn btn-secondary btn-sm" onClick={() => onNavigate('planner')}>Plan meals</button>
+            </div>
+          )}
+        </section>
 
       </div>
     </div>
