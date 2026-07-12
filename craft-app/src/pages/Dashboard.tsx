@@ -21,6 +21,13 @@ interface Glance {
   groceryItems: number;
 }
 
+interface Bill {
+  id: string;
+  name: string;
+  amount: number;
+  due_date: string;
+}
+
 const DAY_NAMES = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 
 
@@ -71,9 +78,10 @@ export default function Dashboard({ onNavigate }: { onNavigate: (page: string) =
   }, []);
 
   async function loadAll() {
-    const [focusRes, mealsRes, plantsRes, petsRes, recipesRes, groceryRes] = await Promise.all([
+    const [focusRes, mealsRes, billsRes, plantsRes, petsRes, recipesRes, groceryRes] = await Promise.all([
       supabase.from('focuses').select('*').eq('date', todayStr).order('created_at'),
       supabase.from('week_plans').select('meal_type, meal_name').eq('day', todayName),
+      supabase.from('bills').select('id, name, amount, due_date').eq('due_date', todayStr),
       supabase.from('garden_plants').select('id', { count: 'exact', head: true }),
       supabase.from('pets').select('id', { count: 'exact', head: true }),
       supabase.from('recipes').select('id', { count: 'exact', head: true }),
@@ -82,6 +90,7 @@ export default function Dashboard({ onNavigate }: { onNavigate: (page: string) =
 
     setFocuses(focusRes.data || []);
     setTodayMeals(mealsRes.data || []);
+    setTodayBills(billsRes.data || []);
     setGlance({
       plants: plantsRes.count || 0,
       pets: petsRes.count || 0,
@@ -321,38 +330,41 @@ export default function Dashboard({ onNavigate }: { onNavigate: (page: string) =
               <button className="btn btn-secondary btn-sm" onClick={() => onNavigate('planner')}>Plan meals</button>
             </div>
           )}
+                </section>
+
+        <StitchDivider />
+
+        {/* ── TODAY'S BILLS ── */}
+        <section>
+          <div className="section-label">🏠 Bills Due Today</div>
+
+          {todayBills.length === 0 ? (
+            <div className="meals-empty">
+              No bills due today 🎉
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {todayBills.map(bill => (
+                <div
+                  key={bill.id}
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    background: 'var(--white)',
+                    border: '1.5px solid var(--border)',
+                    borderRadius: 18,
+                    padding: '12px 14px',
+                  }}
+                >
+                  <span style={{ fontWeight: 600 }}>{bill.name}</span>
+                  <strong>${bill.amount.toFixed(2)}</strong>
+                </div>
+              ))}
+            </div>
+          )}
         </section>
 
       </div>
     </div>
   );
 }
-
-{/* ── TODAY'S BILLS ── */}
-
-<div className="card">
-  <div className="card-body">
-    <div className="section-label">🏠 Bills Due Today</div>
-
-    {billsDueToday.length === 0 ? (
-      <div style={{ color: "var(--ink-muted)", fontSize: 13 }}>
-        No bills due today 🎉
-      </div>
-    ) : (
-      billsDueToday.map(bill => (
-        <div
-          key={bill.id}
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            padding: "8px 0",
-            borderBottom: "1px solid var(--border)",
-          }}
-        >
-          <span>{bill.name}</span>
-          <strong>{fmt(bill.amount)}</strong>
-        </div>
-      ))
-    )}
-  </div>
-</div>
