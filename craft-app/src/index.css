@@ -348,13 +348,6 @@ a {
   gap: 16px;
 }
 
-.stat-card {
-  border-left: 6px solid var(--primary);
-}
-
-.stat-card:nth-child(2) { border-left-color: var(--secondary); }
-.stat-card:nth-child(3) { border-left-color: var(--accent); }
-.stat-card:nth-child(4) { border-left-color: var(--mint); }
 
 .stat-card:nth-child(odd) { transform: rotate(-0.4deg); }
 .stat-card:nth-child(even) { transform: rotate(0.4deg); }
@@ -526,29 +519,44 @@ body {
   margin-top: 2px;
 }
 
+.glance-wrap {
+  position: relative;
+}
+
 .glance-card {
   cursor: pointer;
-  padding-top: 20px;
-  overflow: visible;
+  padding-top: 24px;
 }
 
 .washi {
   position: absolute;
-  top: -8px;
-  left: 14px;
-  width: 42px;
-  height: 15px;
+  top: -5.5px;
+  left: -15px;
+  width: 30px;
+  height: 11px;
+  transform: rotate(-45deg);
+  transform-origin: center;
   background: repeating-linear-gradient(
     45deg,
     var(--primary), var(--primary) 4px,
     var(--secondary) 4px, var(--secondary) 8px
   );
-  opacity: 0.9;
-  transform: rotate(-4deg);
-  border-radius: 2px;
+  opacity: 0.92;
+  border-radius: 1px;
   box-shadow: 0 1px 2px rgba(90,30,40,0.15);
   z-index: 2;
 }
+
+.glance-wrap:nth-child(2) .washi {
+  background: repeating-linear-gradient(45deg, var(--secondary), var(--secondary) 4px, var(--accent) 4px, var(--accent) 8px);
+}
+.glance-wrap:nth-child(3) .washi {
+  background: repeating-linear-gradient(45deg, var(--accent), var(--accent) 4px, var(--pink-dark) 4px, var(--pink-dark) 8px);
+}
+.glance-wrap:nth-child(4) .washi {
+  background: repeating-linear-gradient(45deg, var(--mint), var(--mint) 4px, var(--secondary) 4px, var(--secondary) 8px);
+}
+
 
 .glance-value {
   font-family: 'Fraunces', serif;
