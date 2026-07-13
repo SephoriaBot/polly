@@ -454,7 +454,7 @@ useEffect(() => {
   const netHourlyWage = budget.hourly_wage > 0 ? budget.hourly_wage * (1 - taxRate / 100) : 0;
   const netOtWage = effectiveOtWage > 0 ? effectiveOtWage * (1 - taxRate / 100) : 0;
 
-  // Build the full 14-day array in one continuous pass so Anytime Pay ramp
+    // Build the full 14-day array in one continuous pass so Anytime Pay ramp
   // percentages apply against the CUMULATIVE pool of earnings for the
   // current pay period (Sun–Sat), not each day in isolation. Each day, the
   // withdrawable amount is (ramp% × cumulative earned so far) minus
@@ -530,6 +530,7 @@ useEffect(() => {
 
     return { rows, endingBalance: runningBalance };
   }
+
 
 
 
