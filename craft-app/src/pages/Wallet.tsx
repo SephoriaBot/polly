@@ -454,84 +454,86 @@ useEffect(() => {
   const netHourlyWage = budget.hourly_wage > 0 ? budget.hourly_wage * (1 - taxRate / 100) : 0;
   const netOtWage = effectiveOtWage > 0 ? effectiveOtWage * (1 - taxRate / 100) : 0;
 
-    // Build the full 14-day array in one continuous pass so Anytime Pay ramp
-  // percentages apply against the CUMULATIVE pool of earnings for the
-  // current pay period (Sun–Sat), not each day in isolation. Each day, the
-  // withdrawable amount is (ramp% × cumulative earned so far) minus
-  // whatever's already been pulled out earlier in the period. Whatever's
-  // left unwithdrawn when the period ends (Saturday) becomes a pending lump
-  // sum that lands on the following Wednesday — usually a small amount,
-  // since the 70% cap has already released most of it day by day.
-  function buildMoneyCalendarRows(allDays: Date[], startingBalance: number) {
-    let runningBalance = startingBalance;
-    let periodEarned = 0;
-    let periodWithdrawn = 0;
-    let pendingPayout = 0;
+function buildMoneyCalendarRows(allDays: Date[], startingBalance: number) {
+  let runningBalance = startingBalance;
 
-    const rows = allDays.map(d => {
-      const key = dateKey(d);
-      const dow = d.getDay(); // 0 = Sun ... 6 = Sat
+  let periodEarned = 0;
+  let periodWithdrawn = 0;
 
-      if (dow === 0) {
-        // New pay period starts fresh
-        periodEarned = 0;
-        periodWithdrawn = 0;
-      }
+  const rows = allDays.map(d => {
+    const key = dateKey(d);
+    const dow = d.getDay(); // 0 Sun ... 6 Sat
 
-      const extraToday = parseFloat(extraFunds[key]) || 0;
-      const billsToday = billsByDate[key] || [];
-      const billsTotal = billsToday.reduce((s, b) => s + b.amount, 0);
-      const regHoursToday = parseFloat(dailyHours[key]?.reg) || 0;
-      const otHoursToday = parseFloat(dailyHours[key]?.ot) || 0;
-      const hoursToday = regHoursToday + otHoursToday;
-      const fullEarnedToday = netHourlyWage > 0 ? regHoursToday * netHourlyWage + otHoursToday * netOtWage : 0;
+    const extraToday = parseFloat(extraFunds[key]) || 0;
+    const billsToday = billsByDate[key] || [];
+    const billsTotal = billsToday.reduce((s, b) => s + b.amount, 0);
 
-      periodEarned += fullEarnedToday;
+    const regHoursToday = parseFloat(dailyHours[key]?.reg) || 0;
+    const otHoursToday = parseFloat(dailyHours[key]?.ot) || 0;
 
-      const rampPct = rampPercentForDate(d);
-      const maxWithdrawableSoFar = periodEarned * rampPct;
-      const availableToday = Math.max(0, maxWithdrawableSoFar - periodWithdrawn);
-      periodWithdrawn += availableToday;
+    const hoursToday = regHoursToday + otHoursToday;
 
-      if (dow === 6) {
-  // Saturday closes the work week
-  pendingPayout = Math.max(0, periodEarned - periodWithdrawn);
+    const fullEarnedToday =
+      netHourlyWage > 0
+        ? regHoursToday * netHourlyWage + otHoursToday * netOtWage
+        : 0;
+
+    // Wednesday is payday.
+    // Reset AFTER paying out, so Thursday starts a fresh pay period.
+    let releasedToday = 0;
+
+    if (dow === 3) {
+      releasedToday = Math.max(0, periodEarned - periodWithdrawn);
+      periodEarned = 0;
+      periodWithdrawn = 0;
+    }
+
+    periodEarned += fullEarnedToday;
+
+    const rampPct = rampPercentForDate(d);
+    const maxWithdrawableSoFar = periodEarned * rampPct;
+
+    const availableToday = Math.max(
+      0,
+      maxWithdrawableSoFar - periodWithdrawn
+    );
+
+    periodWithdrawn += availableToday;
+
+    runningBalance +=
+      availableToday +
+      releasedToday +
+      extraToday -
+      billsTotal;
+
+    const heldInPool = Math.max(
+      0,
+      periodEarned - periodWithdrawn
+    );
+
+    return {
+      date: d,
+      key,
+      billsToday,
+      billsTotal,
+      regHoursToday,
+      otHoursToday,
+      hoursToday,
+      earnedToday: fullEarnedToday,
+      availableToday,
+      releasedToday,
+      rampPct,
+      heldInPool,
+      extraToday,
+      balance: runningBalance,
+    };
+  });
+
+  return {
+    rows,
+    endingBalance: runningBalance,
+  };
 }
-
-const isWednesday = dow === 3;
-let releasedToday = 0;
-
-if (isWednesday && pendingPayout > 0) {
-  releasedToday = pendingPayout;
-  pendingPayout = 0;
-}
-
-      runningBalance += availableToday + releasedToday + extraToday - billsTotal;
-
-      const heldInPool = Math.max(0, periodEarned - periodWithdrawn);
-
-      return {
-        date: d,
-        key,
-        billsToday,
-        billsTotal,
-        regHoursToday,
-        otHoursToday,
-        hoursToday,
-        earnedToday: fullEarnedToday,
-        availableToday,
-        releasedToday,
-        rampPct,
-        heldInPool,
-        extraToday,
-        balance: runningBalance,
-      };
-    });
-
-    return { rows, endingBalance: runningBalance };
-  }
-
-
 
 
       const moneyCalendarResult = useMemo(
