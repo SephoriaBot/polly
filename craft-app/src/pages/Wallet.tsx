@@ -504,7 +504,7 @@ let releasedToday = 0;
 if (isWednesday && pendingPayout > 0) {
   releasedToday = pendingPayout;
   pendingPayout = 0;
-}f
+}
 
       runningBalance += availableToday + releasedToday + extraToday - billsTotal;
 
