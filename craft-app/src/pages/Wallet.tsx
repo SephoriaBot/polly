@@ -466,6 +466,7 @@ useEffect(() => {
     let runningBalance = startingBalance;
     let periodEarned = 0;
     let periodWithdrawn = 0;
+    let pendingPayout = 0;
 
     const rows = allDays.map(d => {
       const key = dateKey(d);
@@ -492,14 +493,18 @@ useEffect(() => {
       const availableToday = Math.max(0, maxWithdrawableSoFar - periodWithdrawn);
       periodWithdrawn += availableToday;
 
-      const isWednesday = dow === 3;
+      if (dow === 6) {
+  // Saturday closes the work week
+  pendingPayout = Math.max(0, periodEarned - periodWithdrawn);
+}
+
+const isWednesday = dow === 3;
 let releasedToday = 0;
 
-if (isWednesday) {
-  releasedToday = Math.max(0, periodEarned - periodWithdrawn);
-  periodEarned = 0;
-  periodWithdrawn = 0;
-}
+if (isWednesday && pendingPayout > 0) {
+  releasedToday = pendingPayout;
+  pendingPayout = 0;
+}f
 
       runningBalance += availableToday + releasedToday + extraToday - billsTotal;
 
