@@ -18,6 +18,7 @@ interface Budget {
   take_home: number;
   fixed_expenses: number;
   hourly_wage: number;
+  current_balance: number;
 }
 
 interface Bill {
@@ -224,7 +225,7 @@ function EditableCell({ value, onChange, type = "number", style, className, plac
 
 export default function Wallet() {
   const [debts, setDebts] = useState<Debt[]>([]);
-  const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, hourly_wage: 0 });
+  const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, hourly_wage: 0, current_balance: 0 });
   const [bills, setBills] = useState<Bill[]>([]);
   const [payments, setPayments] = useState<BillPayment[]>([]);
   const [nextId, setNextId] = useState(20);
@@ -248,11 +249,9 @@ export default function Wallet() {
     return s ? parseFloat(s) : 20;
   });
   const [otWageOverride, setOtWageOverride] = useState<string>(() => localStorage.getItem("ot_wage_override") || "");
-  const [currentBalanceInput, setCurrentBalanceInput] = useState<string>(() => localStorage.getItem("current_balance") || "");
 
   useEffect(() => { localStorage.setItem("tax_withholding_rate", taxRate.toString()); }, [taxRate]);
   useEffect(() => { localStorage.setItem("ot_wage_override", otWageOverride); }, [otWageOverride]);
-  useEffect(() => { localStorage.setItem("current_balance", currentBalanceInput); }, [currentBalanceInput]);
 
   // Budget calculator (landing page) — starts blank
   const [calcRegWage, setCalcRegWage] = useState("");
@@ -459,8 +458,8 @@ useEffect(() => {
     });
     return { rows, endingBalance: runningBalance };
   }
-  
-  const week1Result = useMemo(() => buildWeekRows(calendarWeeks.week1, parseFloat(currentBalanceInput) || 0), [calendarWeeks, billsByDate, dailyHours, extraFunds, netHourlyWage, netOtWage, currentBalanceInput]);
+
+  const week1Result = useMemo(() => buildWeekRows(calendarWeeks.week1, budget.current_balance || 0), [calendarWeeks, billsByDate, dailyHours, extraFunds, netHourlyWage, netOtWage, budget.current_balance]);
   const week2Result = useMemo(() => buildWeekRows(calendarWeeks.week2, week1Result.endingBalance), [calendarWeeks, billsByDate, dailyHours, extraFunds, netHourlyWage, netOtWage, week1Result.endingBalance]);
 
   const monthBills = useMemo(() => {
@@ -834,9 +833,16 @@ useEffect(() => {
 
                 <div style={{ marginBottom: 14 }}>
                   <div className="form-label">Current Balance</div>
-                  <input type="number" className="form-input" placeholder="check your bank app, enter it here" value={currentBalanceInput} onChange={e => setCurrentBalanceInput(e.target.value)} style={{ fontSize: 18, fontWeight: 700 }} />
+                  <EditableCell
+                    type="number"
+                    className="form-input"
+                    placeholder="check your bank app, enter it here"
+                    value={budget.current_balance || ""}
+                    onChange={v => updateBudget("current_balance", parseFloat(v) || 0)}
+                    style={{ fontSize: 18, fontWeight: 700 }}
+                  />
                   <div style={{ fontSize: 10, color: "var(--ink-muted)", marginTop: 4 }}>
-                    The calendar's running balance starts from this number. Update it whenever you check your real balance for the most accurate picture — it won't drift correct on its own.
+                    The calendar's running balance starts from this number. Update it whenever you check your real balance for the most accurate picture — it won't drift correct on its own. Syncs across devices now.
                   </div>
                 </div>
 
