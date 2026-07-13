@@ -454,11 +454,30 @@ useEffect(() => {
   const netHourlyWage = budget.hourly_wage > 0 ? budget.hourly_wage * (1 - taxRate / 100) : 0;
   const netOtWage = effectiveOtWage > 0 ? effectiveOtWage * (1 - taxRate / 100) : 0;
 
-    function buildWeekRows(weekDays: Date[], startingBalance: number, initialHeld: number) {
+  // Build the full 14-day array in one continuous pass so Anytime Pay ramp
+  // percentages apply against the CUMULATIVE pool of earnings for the
+  // current pay period (Sun–Sat), not each day in isolation. Each day, the
+  // withdrawable amount is (ramp% × cumulative earned so far) minus
+  // whatever's already been pulled out earlier in the period. Whatever's
+  // left unwithdrawn when the period ends (Saturday) becomes a pending lump
+  // sum that lands on the following Wednesday — usually a small amount,
+  // since the 70% cap has already released most of it day by day.
+  function buildMoneyCalendarRows(allDays: Date[], startingBalance: number) {
     let runningBalance = startingBalance;
-    let heldBack = initialHeld;
-    const rows = weekDays.map(d => {
+    let periodEarned = 0;
+    let periodWithdrawn = 0;
+    let pendingPayout = 0;
+
+    const rows = allDays.map(d => {
       const key = dateKey(d);
+      const dow = d.getDay(); // 0 = Sun ... 6 = Sat
+
+      if (dow === 0) {
+        // New pay period starts fresh
+        periodEarned = 0;
+        periodWithdrawn = 0;
+      }
+
       const extraToday = parseFloat(extraFunds[key]) || 0;
       const billsToday = billsByDate[key] || [];
       const billsTotal = billsToday.reduce((s, b) => s + b.amount, 0);
@@ -467,19 +486,29 @@ useEffect(() => {
       const hoursToday = regHoursToday + otHoursToday;
       const fullEarnedToday = netHourlyWage > 0 ? regHoursToday * netHourlyWage + otHoursToday * netOtWage : 0;
 
-      const rampPct = rampPercentForDate(d);
-      const availableToday = fullEarnedToday * rampPct;
-      const heldToday = fullEarnedToday - availableToday;
-      heldBack += heldToday;
+      periodEarned += fullEarnedToday;
 
-      const isWednesday = d.getDay() === 3;
+      const rampPct = rampPercentForDate(d);
+      const maxWithdrawableSoFar = periodEarned * rampPct;
+      const availableToday = Math.max(0, maxWithdrawableSoFar - periodWithdrawn);
+      periodWithdrawn += availableToday;
+
+      if (dow === 6) {
+        // Saturday: period ends. Whatever's unwithdrawn becomes the pending
+        // lump sum that lands on the following Wednesday.
+        pendingPayout += Math.max(0, periodEarned - periodWithdrawn);
+      }
+
+      const isWednesday = dow === 3;
       let releasedToday = 0;
-      if (isWednesday) {
-        releasedToday = heldBack;
-        heldBack = 0;
+      if (isWednesday && pendingPayout > 0) {
+        releasedToday = pendingPayout;
+        pendingPayout = 0;
       }
 
       runningBalance += availableToday + releasedToday + extraToday - billsTotal;
+
+      const heldInPool = Math.max(0, periodEarned - periodWithdrawn);
 
       return {
         date: d,
@@ -491,19 +520,25 @@ useEffect(() => {
         hoursToday,
         earnedToday: fullEarnedToday,
         availableToday,
-        heldToday,
         releasedToday,
         rampPct,
+        heldInPool,
         extraToday,
         balance: runningBalance,
       };
     });
-    return { rows, endingBalance: runningBalance, endingHeld: heldBack };
+
+    return { rows, endingBalance: runningBalance };
   }
 
 
-    const week1Result = useMemo(() => buildWeekRows(calendarWeeks.week1, budget.current_balance || 0, 0), [calendarWeeks, billsByDate, dailyHours, extraFunds, netHourlyWage, netOtWage, budget.current_balance]);
-  const week2Result = useMemo(() => buildWeekRows(calendarWeeks.week2, week1Result.endingBalance, week1Result.endingHeld), [calendarWeeks, billsByDate, dailyHours, extraFunds, netHourlyWage, netOtWage, week1Result.endingBalance, week1Result.endingHeld]);
+
+      const moneyCalendarResult = useMemo(
+    () => buildMoneyCalendarRows([...calendarWeeks.week1, ...calendarWeeks.week2], budget.current_balance || 0),
+    [calendarWeeks, billsByDate, dailyHours, extraFunds, netHourlyWage, netOtWage, budget.current_balance]
+  );
+  const week1Result = { rows: moneyCalendarResult.rows.slice(0, 7) };
+  const week2Result = { rows: moneyCalendarResult.rows.slice(7, 14) };
 
   const monthBills = useMemo(() => {
     const filtered = bills.filter(bill => {
@@ -976,10 +1011,10 @@ useEffect(() => {
                                 )}
                               </div>
 
-                              {row.hoursToday > 0 && (
+                                                            {row.hoursToday > 0 && (
                                 <div style={{ fontSize: 9, color: "var(--ink-muted)", marginTop: 3 }}>
-                                  {Math.round(row.rampPct * 100)}% available today
-                                  {row.heldToday > 0.005 && ` · ${fmt(row.heldToday)} held until Wed`}
+                                  {Math.round(row.rampPct * 100)}% of period pool available
+                                  {row.heldInPool > 0.005 && ` · ${fmt(row.heldInPool)} still held this period`}
                                 </div>
                               )}
 
@@ -988,6 +1023,7 @@ useEffect(() => {
                                   💰 +{fmt(row.releasedToday)} payday catch-up
                                 </div>
                               )}
+
 
 
 <div style={{ marginTop: 8 }}>
