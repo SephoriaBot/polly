@@ -455,33 +455,15 @@ useEffect(() => {
   const netOtWage = effectiveOtWage > 0 ? effectiveOtWage * (1 - taxRate / 100) : 0;
 
 function buildMoneyCalendarRows(allDays: Date[], startingBalance: number) {
-  if (allDays.length === 0) return { rows: [], endingBalance: startingBalance };
-
-  // Simulate 13 hidden days before the visible window so any pay period
-  // that closed just before "today" still gets tracked and released on its
-  // correct Wednesday — this is what stops paydays from appearing to skip
-  // every other week. Only rows inside `allDays` are returned/rendered.
-  const LOOKBACK_DAYS = 13;
-  const simStart = new Date(allDays[0]);
-  simStart.setDate(simStart.getDate() - LOOKBACK_DAYS);
-  const totalSimDays = LOOKBACK_DAYS + allDays.length;
-  const visibleStart = allDays[0].getTime();
-
   let runningBalance = startingBalance;
   let periodEarned = 0;
   let periodWithdrawn = 0;
   let pendingPayout = 0;
 
-  const rows: any[] = [];
-
-  for (let i = 0; i < totalSimDays; i++) {
-    const d = new Date(simStart);
-    d.setDate(simStart.getDate() + i);
+  const rows = allDays.map(d => {
     const key = dateKey(d);
     const dow = d.getDay(); // 0 Sun ... 6 Sat
-    const isVisible = d.getTime() >= visibleStart;
 
-    // Sunday starts a brand new Anytime Pay pool.
     if (dow === 0) {
       periodEarned = 0;
       periodWithdrawn = 0;
@@ -500,8 +482,6 @@ function buildMoneyCalendarRows(allDays: Date[], startingBalance: number) {
         ? regHoursToday * netHourlyWage + otHoursToday * netOtWage
         : 0;
 
-    // Running total: today's earnings join the pool immediately, and the
-    // ramp % tomorrow applies against this same growing cumulative pool.
     periodEarned += fullEarnedToday;
 
     const rampPct = rampPercentForDate(d);
@@ -509,41 +489,25 @@ function buildMoneyCalendarRows(allDays: Date[], startingBalance: number) {
     const availableToday = Math.max(0, maxWithdrawableSoFar - periodWithdrawn);
     periodWithdrawn += availableToday;
 
-    // Saturday closes the pay period — whatever's still unwithdrawn becomes
-    // the pending payout for the following Wednesday, not this same week.
     if (dow === 6) {
       pendingPayout += Math.max(0, periodEarned - periodWithdrawn);
     }
 
-    // Wednesday releases whatever's pending from the Saturday close four
-    // days earlier.
     let releasedToday = 0;
     if (dow === 3 && pendingPayout > 0) {
       releasedToday = pendingPayout;
       pendingPayout = 0;
     }
 
-    if (isVisible) {
-      runningBalance += availableToday + releasedToday + extraToday - billsTotal;
-      const heldInPool = Math.max(0, periodEarned - periodWithdrawn);
-      rows.push({
-        date: d,
-        key,
-        billsToday,
-        billsTotal,
-        regHoursToday,
-        otHoursToday,
-        hoursToday,
-        earnedToday: fullEarnedToday,
-        availableToday,
-        releasedToday,
-        rampPct,
-        heldInPool,
-        extraToday,
-        balance: runningBalance,
-      });
-    }
-  }
+    runningBalance += availableToday + releasedToday + extraToday - billsTotal;
+    const heldInPool = Math.max(0, periodEarned - periodWithdrawn);
+
+    return {
+      date: d, key, billsToday, billsTotal, regHoursToday, otHoursToday,
+      hoursToday, earnedToday: fullEarnedToday, availableToday, releasedToday,
+      rampPct, heldInPool, extraToday, balance: runningBalance,
+    };
+  });
 
   return { rows, endingBalance: runningBalance };
 }
