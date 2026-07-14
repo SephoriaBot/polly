@@ -166,7 +166,7 @@ export default function DailyPlanner() {
 
       <div className="page-header">
         <div>
-          <h2>Daily Planner ✨</h2>
+          <h2>Planner</h2>
           <p style={{ color: allDone ? 'var(--pink-dark)' : 'var(--ink-muted)' }}>
             {allDone ? '🌸 All done! What a day~' : `${doneCount} of ${tasks.length} done today`}
           </p>
@@ -207,15 +207,14 @@ export default function DailyPlanner() {
           <div className="card">
             <div className="card-body">
               <div className="section-label" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span style={{ fontSize: '1.1rem' }}>🌿</span>
-                <span>My Dailies</span>
+                <span>Daily Tasks</span>
               </div>
 
               {loading ? (
                 <p style={{ fontSize: 13, color: 'var(--ink-muted)' }}>Loading…</p>
               ) : tasks.length === 0 ? (
                 <p style={{ fontSize: '0.85rem', color: 'var(--ink-muted)', marginBottom: 16, lineHeight: 1.6 }}>
-                  No tasks yet — add your first daily below 🌱
+                  No tasks yet — add your first one below
                 </p>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16 }}>
@@ -288,13 +287,12 @@ export default function DailyPlanner() {
           <div className="card">
             <div className="card-body">
               <div className="section-label" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span style={{ fontSize: '1.1rem' }}>🌸</span>
-                <span>Upcoming</span>
+                <span>Schedule & Appointments</span>
               </div>
 
               {appointments.length === 0 ? (
                 <p style={{ fontSize: '0.85rem', color: 'var(--ink-muted)', marginBottom: 16, lineHeight: 1.6 }}>
-                  Nothing scheduled yet 🍃
+                  Nothing scheduled yet!
                 </p>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16 }}>
