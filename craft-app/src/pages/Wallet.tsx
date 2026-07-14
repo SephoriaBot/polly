@@ -463,7 +463,6 @@ function buildMoneyCalendarRows(allDays: Date[], startingBalance: number) {
 
   let periodEarned = 0;
   let periodWithdrawn = 0;
-  let pendingPayout = 0;
 
   // Replay the current pay week before the visible calendar.
   for (let d = new Date(start); d < allDays[0]; d.setDate(d.getDate() + 1)) {
