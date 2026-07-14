@@ -463,6 +463,7 @@ function buildMoneyCalendarRows(allDays: Date[], startingBalance: number) {
 
   let periodEarned = 0;
   let periodWithdrawn = 0;
+  const payoutByDate: Record<string, number> = {};
 
   // Replay the current pay week before the visible calendar.
   for (let d = new Date(start); d < allDays[0]; d.setDate(d.getDate() + 1)) {
@@ -488,13 +489,16 @@ function buildMoneyCalendarRows(allDays: Date[], startingBalance: number) {
     periodWithdrawn += withdrawn;
 
     if (dow === 6) {
-      pendingPayout += Math.max(0, periodEarned - periodWithdrawn);
-    }
+  const nextWednesday = new Date(d);
+  nextWednesday.setDate(d.getDate() + 4);
 
-    if (dow === 3) {
-      pendingPayout = 0;
-    }
-  }
+  payoutByDate[dateKey(nextWednesday)] = Math.max(
+    0,
+    periodEarned - periodWithdrawn
+  );
+}
+
+const releasedToday = payoutByDate[key] || 0;
 
   const rows = allDays.map(d => {
     const key = dateKey(d);
