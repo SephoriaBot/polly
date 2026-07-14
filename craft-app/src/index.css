@@ -164,15 +164,15 @@ a {
   display: block;
   width: 100%;
   text-align: left;
-  background: none;
-  border: none;
+  background: var(--blush);
+  border: 1.5px solid var(--pink-light);
+  border-radius: var(--radius-md);
   font-family: 'Fraunces', serif;
-  font-size: 1.1rem;
+  font-size: 1.15rem;
   font-weight: 600;
   color: var(--ink);
-  padding: 10px 2px;
-  margin-bottom: 10px;
-  border-bottom: 1px dashed var(--border);
+  padding: 14px 16px;
+  margin-bottom: 16px;
   cursor: pointer;
 }
 
@@ -180,17 +180,24 @@ a {
   color: var(--pink-dark);
 }
 
+.nav-dashboard-link:hover {
+  background: var(--pink-light);
+}
+
 .nav-group {
-  margin-bottom: 16px;
+  margin-bottom: 20px;
 }
 
 .nav-group-label {
   font-family: 'IBM Plex Mono', monospace;
-  font-size: 0.65rem;
+  font-size: 0.7rem;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: var(--ink-muted);
-  margin-bottom: 6px;
+  letter-spacing: 0.12em;
+  color: var(--pink-dark);
+  padding-bottom: 6px;
+  margin-bottom: 8px;
+  border-bottom: 1.5px solid var(--pink-light);
 }
 
 .nav-group-items {
