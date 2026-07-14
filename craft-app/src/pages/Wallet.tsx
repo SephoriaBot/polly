@@ -459,10 +459,17 @@ function buildMoneyCalendarRows(allDays: Date[], startingBalance: number) {
 
   let periodEarned = 0;
   let periodWithdrawn = 0;
+  let pendingPayout = 0; // leftover from a completed Sun–Sat period, waiting for Wednesday
 
   const rows = allDays.map(d => {
     const key = dateKey(d);
     const dow = d.getDay(); // 0 Sun ... 6 Sat
+
+    // Sunday starts a brand new Anytime Pay period
+    if (dow === 0) {
+      periodEarned = 0;
+      periodWithdrawn = 0;
+    }
 
     const extraToday = parseFloat(extraFunds[key]) || 0;
     const billsToday = billsByDate[key] || [];
@@ -470,7 +477,6 @@ function buildMoneyCalendarRows(allDays: Date[], startingBalance: number) {
 
     const regHoursToday = parseFloat(dailyHours[key]?.reg) || 0;
     const otHoursToday = parseFloat(dailyHours[key]?.ot) || 0;
-
     const hoursToday = regHoursToday + otHoursToday;
 
     const fullEarnedToday =
@@ -478,38 +484,30 @@ function buildMoneyCalendarRows(allDays: Date[], startingBalance: number) {
         ? regHoursToday * netHourlyWage + otHoursToday * netOtWage
         : 0;
 
-    // Wednesday is payday.
-    // Reset AFTER paying out, so Thursday starts a fresh pay period.
-    let releasedToday = 0;
-
-    if (dow === 3) {
-      releasedToday = Math.max(0, periodEarned - periodWithdrawn);
-      periodEarned = 0;
-      periodWithdrawn = 0;
-    }
-
     periodEarned += fullEarnedToday;
 
     const rampPct = rampPercentForDate(d);
     const maxWithdrawableSoFar = periodEarned * rampPct;
-
-    const availableToday = Math.max(
-      0,
-      maxWithdrawableSoFar - periodWithdrawn
-    );
-
+    const availableToday = Math.max(0, maxWithdrawableSoFar - periodWithdrawn);
     periodWithdrawn += availableToday;
 
-    runningBalance +=
-      availableToday +
-      releasedToday +
-      extraToday -
-      billsTotal;
+    // Saturday closes out the period — whatever's still unwithdrawn becomes
+    // the pending lump sum that lands on the following Wednesday.
+    if (dow === 6) {
+      pendingPayout += Math.max(0, periodEarned - periodWithdrawn);
+    }
 
-    const heldInPool = Math.max(
-      0,
-      periodEarned - periodWithdrawn
-    );
+    // Wednesday is payday — release whatever's pending from the period(s)
+    // that closed since the last payday.
+    let releasedToday = 0;
+    if (dow === 3 && pendingPayout > 0) {
+      releasedToday = pendingPayout;
+      pendingPayout = 0;
+    }
+
+    runningBalance += availableToday + releasedToday + extraToday - billsTotal;
+
+    const heldInPool = Math.max(0, periodEarned - periodWithdrawn);
 
     return {
       date: d,
@@ -529,11 +527,9 @@ function buildMoneyCalendarRows(allDays: Date[], startingBalance: number) {
     };
   });
 
-  return {
-    rows,
-    endingBalance: runningBalance,
-  };
+  return { rows, endingBalance: runningBalance };
 }
+
 
 
       const moneyCalendarResult = useMemo(
