@@ -459,14 +459,12 @@ function buildMoneyCalendarRows(allDays: Date[], startingBalance: number) {
 
   let periodEarned = 0;
   let periodWithdrawn = 0;
-  let pendingPayout = 0; // leftover from a completed Sun–Sat period, waiting for Wednesday
 
   const rows = allDays.map(d => {
     const key = dateKey(d);
     const dow = d.getDay(); // 0 Sun ... 6 Sat
 
-    // Sunday starts a brand new Anytime Pay pool — this keeps the ramp %
-    // aligned to "how far into THIS pool's week am I", not just weekday name.
+    // Sunday starts a brand new Anytime Pay pool, matching the ramp cycle.
     if (dow === 0) {
       periodEarned = 0;
       periodWithdrawn = 0;
@@ -485,8 +483,7 @@ function buildMoneyCalendarRows(allDays: Date[], startingBalance: number) {
         ? regHoursToday * netHourlyWage + otHoursToday * netOtWage
         : 0;
 
-    // Add today's earnings into the running pool BEFORE calculating what's
-    // withdrawable — this is the cumulative running total you're asking for.
+    // Running total: today's earnings join the pool immediately.
     periodEarned += fullEarnedToday;
 
     const rampPct = rampPercentForDate(d);
@@ -494,17 +491,13 @@ function buildMoneyCalendarRows(allDays: Date[], startingBalance: number) {
     const availableToday = Math.max(0, maxWithdrawableSoFar - periodWithdrawn);
     periodWithdrawn += availableToday;
 
-    // Saturday closes the pool. Whatever's still sitting unwithdrawn becomes
-    // the pending lump sum for the following Wednesday.
-    if (dow === 6) {
-      pendingPayout += Math.max(0, periodEarned - periodWithdrawn);
-    }
-
-    // Wednesday releases whatever's pending from the most recently closed pool.
+    // Every Wednesday, whatever's still unwithdrawn in the pool gets fully
+    // released — no lag, no separate "closed period" bucket. This is what
+    // makes payday land every single Wednesday instead of every other one.
     let releasedToday = 0;
-    if (dow === 3 && pendingPayout > 0) {
-      releasedToday = pendingPayout;
-      pendingPayout = 0;
+    if (dow === 3) {
+      releasedToday = Math.max(0, periodEarned - periodWithdrawn);
+      periodWithdrawn = periodEarned; // fully caught up as of today
     }
 
     runningBalance += availableToday + releasedToday + extraToday - billsTotal;
@@ -531,6 +524,7 @@ function buildMoneyCalendarRows(allDays: Date[], startingBalance: number) {
 
   return { rows, endingBalance: runningBalance };
 }
+
 
 
 
