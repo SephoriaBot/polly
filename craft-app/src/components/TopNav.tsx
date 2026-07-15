@@ -37,15 +37,6 @@ const SECTIONS = [
       { id: 'grocery', label: 'Grocery List' },
     ],
   },
-  {
-    id: 'craft-table',
-    label: 'Craft Table',
-    items: [
-      { id: 'recipes', label: 'Recipe Library' },
-      { id: 'wizard', label: 'Recipe Wizard' },
-      { id: 'add-recipe', label: 'Add Recipe' },
-    ],
-  },
 ];
 
 const ALL_ITEMS = [DASHBOARD, ...SECTIONS.flatMap(s => s.items)];
