@@ -115,6 +115,7 @@ export default function Grocery() {
   const [saving, setSaving] = useState(false)
   const [cart, setCart] = useState<any[]>([])
   const [loadingCart, setLoadingCart] = useState(false)
+  const [cartError, setCartError] = useState<string | null>(null)
   const [prices, setPrices] = useState<PriceEntry[]>([])
   const [expandedItem, setExpandedItem] = useState<string | null>(null)
   const [priceForm, setPriceForm] = useState<{ store: string; price: string }>({ store: '', price: '' })
@@ -238,10 +239,12 @@ export default function Grocery() {
     const needItems = items.filter(i => !i.checked)
 
     setLoadingCart(true)
+    setCartError(null)
     setCart([])
 
     const results = []
     const cache = new Map()
+    let firstError: string | null = null
 
     try {
       for (let i = 0; i < needItems.length; i += 3) {
@@ -256,23 +259,26 @@ export default function Grocery() {
             const controller = new AbortController()
             const timeout = setTimeout(() => controller.abort(), 4000)
 
-            let data = []
+            let data: { results?: any[]; error?: string } = {}
 
             try {
               const res = await fetch(
-                `/api/product-search?q=${encodeURIComponent(item.name)}`,
+                `/api/product-search?q=${encodeURIComponent(item.name)}${location ? `&zip=${encodeURIComponent(location)}` : ''}`,
                 { signal: controller.signal }
               )
               data = await res.json()
+              if (data.error && !firstError) firstError = data.error
             } catch (e) {
-              data = []
+              data = { error: 'Could not reach the price search service' }
+              if (!firstError) firstError = data.error!
             } finally {
               clearTimeout(timeout)
             }
 
             const result = {
               item: item.name,
-              results: Array.isArray(data) ? data : []
+              results: Array.isArray(data.results) ? data.results : [],
+              error: data.error,
             }
 
             cache.set(item.name, result)
@@ -285,6 +291,7 @@ export default function Grocery() {
       }
     } finally {
       setLoadingCart(false)
+      if (firstError) setCartError(firstError)
     }
   }
 
@@ -294,6 +301,7 @@ export default function Grocery() {
 
   function clearSmartCart() {
     setCart([])
+    setCartError(null)
   }
 
   async function toggle(id: string, checked: boolean) {
@@ -677,6 +685,19 @@ export default function Grocery() {
           const tally = computeTally(cart)
           const totalTracked = cart.length
           if (cart.length === 0) return null
+          if (cartError) {
+            return (
+              <div className="card">
+                <div className="section-label">Best Store for Your Whole List</div>
+                <p style={{ fontSize: '0.8rem', color: 'var(--danger)', padding: '4px 0' }}>
+                  Price lookup is down right now: {cartError}
+                </p>
+                <p style={{ fontSize: '0.72rem', color: 'var(--ink-muted)' }}>
+                  This isn't "no products found" — the search service itself failed. Try again in a bit, or check the SerpAPI account/key if this keeps happening.
+                </p>
+              </div>
+            )
+          }
           if (tally.length === 0) {
             return (
               <div className="card">
@@ -883,6 +904,12 @@ export default function Grocery() {
                             </span>
                           )}
                         </>
+                      )}
+                      {!cheapest && c.error && (
+                        <span style={{ fontSize: '0.72rem', color: 'var(--danger)' }}>lookup failed</span>
+                      )}
+                      {!cheapest && !c.error && (
+                        <span style={{ fontSize: '0.72rem', color: 'var(--ink-muted)' }}>no matches found</span>
                       )}
                     </div>
                     {sorted.length > 1 && (
