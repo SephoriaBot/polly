@@ -166,7 +166,7 @@ function hoursOfWork(amount: number, wage: number) {
 // pool of earnings since Sunday, not each day's earnings in isolation.
 // Whatever's still unwithdrawn when Saturday closes becomes a single lump
 // "payday catch-up" that lands the following Wednesday.
-const ANYTIME_PAY_START_PCT = 0.45;
+const ANYTIME_PAY_START_PCT = 0.50;
 const ANYTIME_PAY_CAP_PCT = 0.70;
 
 function rampPercentForDate(d: Date) {
