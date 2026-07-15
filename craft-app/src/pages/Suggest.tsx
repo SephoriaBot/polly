@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { SlidersHorizontal, Sparkles, Search, AlertCircle, Database, Salad, Loader2, Check, Plus } from 'lucide-react'
+import DrDietGroq from '../components/suggest/DrDietGroq'
 
 const DIETS = ['vegetarian','vegan','gluten free','ketogenic','paleo','whole30']
 const INTOLERANCES = ['dairy','egg','gluten','peanut','soy','tree nut']
@@ -72,6 +73,7 @@ export default function Suggest() {
   const [saved, setSaved] = useState<Set<number>>(new Set())
   const [savingId, setSavingId] = useState<number | null>(null)
   const [error, setError] = useState('')
+  const [showDietModal, setShowDietModal] = useState(false)
 
   function toggleSet(setFn: React.Dispatch<React.SetStateAction<Set<string>>>, key: string) {
     setFn(prev => { const n = new Set(prev); n.has(key) ? n.delete(key) : n.add(key); return n })
@@ -175,6 +177,19 @@ export default function Suggest() {
   return (
     <div>
       <div className="page-body">
+
+        <div className="card" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <Salad size={20} style={{ color: 'var(--pink-dark)', flexShrink: 0 }} />
+            <div>
+              <div style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--ink)' }}>Not sure what to eat?</div>
+              <div style={{ fontSize: '0.76rem', color: 'var(--ink-muted)' }}>Take a quick diet check-in with Dr. Groq</div>
+            </div>
+          </div>
+          <button className="btn btn-primary" onClick={() => setShowDietModal(true)}>
+            <Sparkles size={14} /> Ask Dr. Groq
+          </button>
+        </div>
 
         <div className="card">
           <h2 style={{ fontSize: '1rem', display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
@@ -326,6 +341,8 @@ export default function Suggest() {
         )}
 
       </div>
+
+      {showDietModal && <DrDietGroq onClose={() => setShowDietModal(false)} />}
 
       <style>{`
         @keyframes suggestSpin { to { transform: rotate(360deg); } }
