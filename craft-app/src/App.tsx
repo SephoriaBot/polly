@@ -2,12 +2,10 @@ import { useState, Suspense, lazy } from 'react';
 import TopNav from './components/TopNav';
 
 const Dashboard = lazy(() => import('./pages/Dashboard'));
-const PlantsPage = lazy(() => import('./pages/PlantsPage'));
 const Cook = lazy(() => import('./pages/Cook'));
 const Grocery = lazy(() => import('./pages/Grocery'));
 const Planner = lazy(() => import('./pages/Planner'));
 const Suggest = lazy(() => import('./pages/Suggest'));
-const Pets = lazy(() => import('./pages/Pets'));
 const DailyPlanner = lazy(() => import('./pages/DailyPlanner'));
 const MaidWizard = lazy(() => import('./pages/MaidWizard'));
 const Wallet = lazy(() => import('./pages/Wallet'));
@@ -16,7 +14,7 @@ const DecisionTree = lazy(() => import('./pages/DecisionTree'));
 
 import { ToastProvider } from './hooks/useToast';
 
-type Page = 'dashboard' | 'plants' | 'cook' | 'grocery' | 'planner' | 'suggest' | 'pets' | 'dailyplanner' | 'maidwizard' | 'wallet' | 'trackers' | 'decisions';
+type Page = 'dashboard' | 'cook' | 'grocery' | 'planner' | 'suggest' | 'dailyplanner' | 'maidwizard' | 'wallet' | 'trackers' | 'decisions';
 
 export default function App() {
   const [page, setPage] = useState<Page>('dashboard');
@@ -31,12 +29,10 @@ export default function App() {
         <main className="main">
           <Suspense fallback={<div className="page-loading">Loading…</div>}>
             {page === 'dashboard'    && <Dashboard onNavigate={navigate} />}
-            {page === 'plants'       && <PlantsPage />}
             {page === 'cook'         && <Cook />}
             {page === 'grocery'      && <Grocery />}
             {page === 'planner'      && <Planner onNavigate={navigate} />}
             {page === 'suggest'      && <Suggest />}
-            {page === 'pets'         && <Pets />}
             {page === 'dailyplanner' && <DailyPlanner />}
             {page === 'maidwizard'   && <MaidWizard />}
             {page === 'wallet'       && <Wallet />}
