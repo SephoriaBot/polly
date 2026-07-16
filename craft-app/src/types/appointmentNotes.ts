@@ -11,7 +11,7 @@ export type AppointmentNoteStatus = 'open' | 'covered' | 'done';
 
 export interface AppointmentNoteItem {
   id: string;
-  appointment_id: string;
+  appointment_id: string | null;
   note_type: AppointmentNoteType;
   kind: AppointmentNoteKind;
   content: string;
