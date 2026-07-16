@@ -161,7 +161,7 @@ function hoursOfWork(amount: number, wage: number) {
 
 // ── ANYTIME PAY RAMP ──
 // Anytime Pay availability isn't a flat percentage — it climbs through the
-// work week. Week runs Sunday(0) → Saturday(6); ramps linearly from 50% on
+// work week. Week runs Sunday(0) → Saturday(6); ramps linearly from 40% on
 // Sunday to 70% by Saturday. The percentage applies against the CUMULATIVE
 // pool of earnings since Sunday, not each day's earnings in isolation.
 // Whatever's still unwithdrawn when Saturday closes becomes a single lump
@@ -172,6 +172,19 @@ const ANYTIME_PAY_CAP_PCT = 0.70;
 function rampPercentForDate(d: Date) {
   const dow = d.getDay(); // 0 = Sun ... 6 = Sat
   return ANYTIME_PAY_START_PCT + (ANYTIME_PAY_CAP_PCT - ANYTIME_PAY_START_PCT) * (dow / 6);
+}
+
+// Past a certain point in the week, availability stops climbing with the
+// day-of-week ramp and instead drops to a flat, lower percentage — meant to
+// model pulling back once you're deep into overtime territory for the week.
+const ANYTIME_PAY_OVERTIME_THRESHOLD_HOURS = 55;
+const ANYTIME_PAY_OVERTIME_CAP_PCT = 0.60;
+
+function effectiveRampPct(d: Date, cumulativeHoursThroughDay: number) {
+  if (cumulativeHoursThroughDay > ANYTIME_PAY_OVERTIME_THRESHOLD_HOURS) {
+    return ANYTIME_PAY_OVERTIME_CAP_PCT;
+  }
+  return rampPercentForDate(d);
 }
 
 const PERIOD_MULTIPLIERS: Record<string, number> = {
@@ -498,6 +511,7 @@ export default function Wallet() {
 
   let periodEarnedGross = 0;   // gross pool, untaxed, resets each Sunday
   let periodWithdrawnGross = 0; // gross cash advanced so far this period
+  let periodHoursSoFar = 0;     // cumulative hours this week, drives the overtime ramp cap
   let pendingPayout = 0;        // net amount owed, released the following Wednesday
 
   const grossHourlyWage = budget.hourly_wage || 0;
@@ -514,13 +528,15 @@ export default function Wallet() {
   if (allDays.length && allDays[0].getDay() !== 0 && priorWeekHours.weekStart === currentWeekStartKey()) {
     const priorReg = parseFloat(priorWeekHours.reg) || 0;
     const priorOt = parseFloat(priorWeekHours.ot) || 0;
+    const priorHours = priorReg + priorOt;
     const priorGross = priorReg * grossHourlyWage + priorOt * grossOtWage;
 
     const yesterday = new Date(allDays[0]);
     yesterday.setDate(yesterday.getDate() - 1);
 
     periodEarnedGross = priorGross;
-    periodWithdrawnGross = priorGross * rampPercentForDate(yesterday);
+    periodHoursSoFar = priorHours;
+    periodWithdrawnGross = priorGross * effectiveRampPct(yesterday, priorHours);
   }
 
   const rows = allDays.map(d => {
@@ -530,6 +546,7 @@ export default function Wallet() {
     if (dow === 0) {
       periodEarnedGross = 0;
       periodWithdrawnGross = 0;
+      periodHoursSoFar = 0;
     }
 
     const extraToday = parseFloat(extraFunds[key]) || 0;
@@ -547,8 +564,9 @@ export default function Wallet() {
         : 0;
 
     periodEarnedGross += fullEarnedToday;
+    periodHoursSoFar += hoursToday;
 
-    const rampPct = rampPercentForDate(d);
+    const rampPct = effectiveRampPct(d, periodHoursSoFar);
     const maxWithdrawableGrossSoFar = periodEarnedGross * rampPct;
     const availableToday = Math.max(0, maxWithdrawableGrossSoFar - periodWithdrawnGross);
     periodWithdrawnGross += availableToday;
@@ -955,7 +973,7 @@ export default function Wallet() {
               <div className="card-body">
                 <div className="section-label">📅 Money Calendar</div>
                 <div style={{ fontSize: 11, color: "var(--ink-muted)", marginBottom: 14 }}>
-                  Runs from today forward. Log the hours you're working (or plan to work) each day. Anytime Pay availability ramps from 50% on Sunday to 70% by Saturday, applied against your cumulative pool for the week — whatever's unclaimed by Saturday night lands as a lump catch-up the following Wednesday.
+                  Runs from today forward. Log the hours you're working (or plan to work) each day. Anytime Pay availability ramps from 40% on Sunday to 70% by Saturday, applied against your cumulative pool for the week — whatever's unclaimed by Saturday night lands as a lump catch-up the following Wednesday. Past {ANYTIME_PAY_OVERTIME_THRESHOLD_HOURS} hours in a week, the ramp stops climbing and drops to a flat {Math.round(ANYTIME_PAY_OVERTIME_CAP_PCT * 100)}% instead.
                 </div>
 
                 {new Date().getDay() !== 0 && (
