@@ -15,12 +15,6 @@ import { ToastProvider } from './hooks/useToast';
 
 type Page = 'dashboard' | 'meals' | 'grocery' | 'dailyplanner' | 'maidwizard' | 'wallet' | 'trackers' | 'decisions';
 
-export default function App() {
-  const [page, setPage] = useState<Page>('dashboard');
-  function navigate(p: string) {
-    setPage(p as Page);
-    window.scrollTo(0, 0);
-  }
   export default function App() {
   const [page, setPage] = useState<Page>('dashboard');
   function navigate(p: string) {
