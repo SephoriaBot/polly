@@ -1,19 +1,18 @@
 # Polly
 
-A full-stack household management application for organizing home, finances, meals, pets, plants, and daily routines in one place. Housekeepers Club combines multiple household tools into a single responsive web app with cloud sync through Supabase.
+A full-stack household management application for organizing finances, meals, and daily routines in one place. Polly combines multiple household tools into a single responsive web app with cloud sync through Supabase.
 
 **Live demo:** [polly-demo.vercel.app](https://polly-demo.vercel.app)
 
 ## Features
 
 - 📊 Dashboard with household statistics and quick actions
-- 💰 Personal finance and budgeting tools
-- 🛒 Grocery list and shopping management
-- 🍽️ Pantry inventory and meal planning
-- 📖 Recipe collection and cooking tools
-- 🌱 Plant care tracking
-- 🐾 Pet care management
-- 📅 Daily habit and wellness trackers
+- 💰 Personal finance and budgeting tools, including Anytime Pay ramp modeling and a day-by-day money calendar
+- 🛒 Grocery list management with live price comparison and search caching
+- 🍽️ Unified meal planning — plan, get AI suggestions, and cook, all in one place
+- 📅 Daily planner with appointment notes
+- 📈 Personal trackers (sleep, weight, period) with correlation analysis
+- 🌳 Decision tree tool for expected-value based choices
 - ☁️ Cloud-synced data persistence via Supabase
 - 📱 Responsive design for desktop and mobile
 
@@ -25,30 +24,7 @@ A full-stack household management application for organizing home, finances, mea
 - Supabase (PostgreSQL)
 - Recharts
 - Lucide React
-- Vercel
-
-## Screenshots
-
-### Dashboard
-![Dashboard](craft-app/docs/images/IMG_2936.jpeg)
-
-### Wallet
-![Wallet](craft-app/docs/images/Wallet.png)
-
-### Grocery & Meal Planner
-![Grocery](craft-app/docs/images/IMG_2938.jpeg)
-![Grocery](craft-app/docs/images/IMG_2939.jpeg)
-![Grocery](craft-app/docs/images/IMG_2940.jpeg)
-![Grocery](craft-app/docs/images/IMG_2941.jpeg)
-
-### Plant Tracker
-![Plants](craft-app/docs/images/IMG_2943.jpeg)
-
-### Pet Tracker
-![Pets](craft-app/docs/images/Pets.png)
-
-### Personal Tracker
-![Tracker](craft-app/docs/images/IMG_2945.jpeg)
+- Groq AI
 
 ## Getting Started
 
@@ -84,6 +60,7 @@ npm run dev
 - Modular React component architecture
 - TypeScript for type safety
 - Interactive dashboards and data visualization with Recharts
+- AI-assisted features via Groq (meal suggestions, cleaning wizard)
 - Real-time data persistence
 - Deployed with Vercel
 
