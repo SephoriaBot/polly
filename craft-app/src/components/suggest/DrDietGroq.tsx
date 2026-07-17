@@ -343,7 +343,7 @@ Never mention calories, macros, or specific weight numbers. If the goal involves
 
           {wizardState === 'loading' && (
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '50px 20px', gap: 16 }}>
-              <div style={{
+              <div className="shape-heart" style={{
                 width: 52, height: 52, borderRadius: '50%',
                 background: 'var(--blush)', display: 'flex', alignItems: 'center', justifyContent: 'center',
                 animation: 'dietPulse 1.4s ease-in-out infinite',
