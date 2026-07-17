@@ -29,7 +29,7 @@
   --sage-dark: #5f7a5c;
   --sage-light: #e8efe6;
   --pink: #eab8c8;
-  --pink-dark: #c96f89;       /* kept legible — this is used as text/border in Wallet & focus checkboxes */
+  --pink-dark: #c96f89;       /* kept legible — used as text/border in Wallet & focus checkboxes */
   --pink-light: #fce3ec;
   --sky: #6BBFD4;
   --gold: #d4a94f;            /* slightly warmer/more metallic for sparkle */
@@ -39,8 +39,6 @@
   --danger-bg: #FDE8E8;
 }
 
-
-
 [data-theme='dark'] {
   --bg: #241b2f;
   --surface: #322640;
@@ -48,7 +46,7 @@
 
   --primary: #6b4d5c;
   --secondary: #8a5f3f;
---accent: #3a2a38;   /* dark muted rose, was acting as a light patch on dark bg */
+  --accent: #3a2a38;   /* dark muted rose, was acting as a light patch on dark bg */
   --mint: #3c2f4d;
 
   --border: rgba(217, 139, 163, 0.25);
@@ -77,21 +75,7 @@
   --danger-bg: #4a2426;
 }
 
-/* Find this block from before: */
-[data-theme='light'] .card:hover,
-[data-theme='light'] .stat-card:hover,
-[data-theme='light'] .pet-card:hover,
-[data-theme='light'] .plant-card:hover,
-[data-theme='light'] .wizard-box:hover {
-  box-shadow: 0 8px 24px rgba(242, 115, 154, 0.35);
-}
-
-[data-theme='light'] .btn:hover,
-[data-theme='light'] .btn-primary:hover {
-  box-shadow: 0 6px 18px rgba(242, 115, 154, 0.4);
-}
-
-/* Replace with: */
+/* Light mode: soft gold-tinted glow on hover */
 [data-theme='light'] .card:hover,
 [data-theme='light'] .stat-card:hover,
 [data-theme='light'] .pet-card:hover,
@@ -105,14 +89,12 @@
   box-shadow: 0 6px 18px rgba(212, 169, 79, 0.3);
 }
 
-
 /* keep the radius tokens outside — they don't change by theme */
 :root {
   --radius-sm: 16px;
   --radius-md: 24px;
   --radius-lg: 30px;
 }
-
 
 /* ================= BASE RESET ================= */
 
@@ -122,7 +104,7 @@
 
 body {
   margin: 0;
-  background: radial-gradient(circle at top, #fffdfc, #fff3ef);
+  background: radial-gradient(circle at top, var(--surface), var(--bg));
   color: var(--text);
   font-family: 'Nunito Sans', ui-sans-serif, system-ui, sans-serif;
   overflow-x: hidden;
@@ -162,7 +144,7 @@ a {
   justify-content: space-between;
   padding: 14px 20px;
   border-bottom: 1px solid var(--border);
-  background: linear-gradient(180deg, #fff1e6, #fff7e0);
+  background: linear-gradient(180deg, var(--primary), var(--mint));
 }
 
 .topbar-actions {
@@ -184,7 +166,7 @@ a {
   font-size: 0.68rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  background: rgba(255,255,255,0.6);
+  background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 999px;
   padding: 8px 14px;
@@ -194,7 +176,7 @@ a {
 }
 
 .topbar-trigger:hover {
-  background: rgba(255,255,255,0.9);
+  background: var(--primary);
 }
 
 .nav-sheet-backdrop {
@@ -325,8 +307,6 @@ a {
 }
 
 /* ================= PAGE STRUCTURE ================= */
-/* These were used throughout the app but never defined — pages have been
-   rendering with browser-default text this whole time. */
 
 .page-header {
   display: flex;
@@ -435,7 +415,6 @@ a {
   gap: 16px;
 }
 
-
 .stat-card:nth-child(odd) { transform: rotate(-0.4deg); }
 .stat-card:nth-child(even) { transform: rotate(0.4deg); }
 
@@ -481,7 +460,8 @@ input, textarea, select {
   padding: 10px;
   border-radius: var(--radius-sm);
   border: 1px solid var(--border);
-  background: #fffdfc;
+  background: var(--surface);
+  color: var(--text);
   outline: none;
   min-width: 0;
   font-family: 'Nunito Sans', sans-serif;
@@ -501,7 +481,7 @@ input:focus {
   font-weight: 600;
   cursor: pointer;
   background: linear-gradient(135deg, var(--primary), var(--secondary));
-  color: white;
+  color: var(--ink);
   box-shadow: 0 8px 18px rgba(0,0,0,0.08);
   transition: 0.15s ease;
   font-family: 'Nunito Sans', sans-serif;
@@ -574,8 +554,8 @@ p {
 
 body {
   background-image:
-    radial-gradient(circle, rgba(232,160,172,0.14) 1px, transparent 1.4px),
-    radial-gradient(circle at top, #fffdfc, #fff3ef);
+    radial-gradient(circle, var(--border) 1px, transparent 1.4px),
+    radial-gradient(circle at top, var(--surface), var(--bg));
   background-size: 20px 20px, 100% 100%;
   background-repeat: repeat, no-repeat;
 }
@@ -699,4 +679,3 @@ body {
   font-size: 0.82rem;
   color: var(--ink-muted);
 }
-
