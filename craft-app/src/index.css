@@ -94,6 +94,12 @@ a {
   background: linear-gradient(180deg, #fff1e6, #fff7e0);
 }
 
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
 .topbar-mark {
   font-family: 'Fraunces', serif;
   font-style: italic;
