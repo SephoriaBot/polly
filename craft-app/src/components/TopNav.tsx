@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import ThemeToggle from './ThemeToggle';
 
 interface TopNavProps {
   currentPage: string;
