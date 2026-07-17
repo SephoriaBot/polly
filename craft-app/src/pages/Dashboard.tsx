@@ -312,6 +312,7 @@ export default function Dashboard({ onNavigate }: { onNavigate: (page: string) =
                   <button
                     onClick={() => toggleFocus(f)}
                     aria-label={f.completed ? 'Mark not done' : 'Mark done'}
+                    className="shape-heart"
                     style={{
                       width: 20, height: 20, borderRadius: '50%',
                       border: `2px solid ${f.completed ? 'var(--pink-dark)' : 'var(--border)'}`,
