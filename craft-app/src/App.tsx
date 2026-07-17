@@ -21,23 +21,32 @@ export default function App() {
     setPage(p as Page);
     window.scrollTo(0, 0);
   }
+  export default function App() {
+  const [page, setPage] = useState<Page>('dashboard');
+  function navigate(p: string) {
+    setPage(p as Page);
+    window.scrollTo(0, 0);
+  }
   return (
-    <ToastProvider>
-      <div className="app-shell">
-        <TopNav currentPage={page} onNavigate={navigate} />
-        <main className="main">
-          <Suspense fallback={<div className="page-loading">Loading…</div>}>
-            {page === 'dashboard'    && <Dashboard onNavigate={navigate} />}
-            {page === 'meals'        && <Meals />}
-            {page === 'grocery'      && <Grocery />}
-            {page === 'dailyplanner' && <DailyPlanner />}
-            {page === 'maidwizard'   && <MaidWizard />}
-            {page === 'wallet'       && <Wallet />}
-            {page === 'trackers'     && <TrackerPage />}
-            {page === 'decisions'    && <DecisionTree />}
-          </Suspense>
-        </main>
-      </div>
-    </ToastProvider>
+    <ThemeProvider>
+      <ShapeDefs />
+      <ToastProvider>
+        <div className="app-shell">
+          <TopNav currentPage={page} onNavigate={navigate} />
+          <main className="main">
+            <Suspense fallback={<div className="page-loading">Loading…</div>}>
+              {page === 'dashboard'    && <Dashboard onNavigate={navigate} />}
+              {page === 'meals'        && <Meals />}
+              {page === 'grocery'      && <Grocery />}
+              {page === 'dailyplanner' && <DailyPlanner />}
+              {page === 'maidwizard'   && <MaidWizard />}
+              {page === 'wallet'       && <Wallet />}
+              {page === 'trackers'     && <TrackerPage />}
+              {page === 'decisions'    && <DecisionTree />}
+            </Suspense>
+          </main>
+        </div>
+      </ToastProvider>
+    </ThemeProvider>
   );
 }
