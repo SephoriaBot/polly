@@ -6,7 +6,8 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "../lib/supabase"; // match your actual client path
-import { Hamster, rollRandomHamster } from "./hamsters";
+import { rollRandomHamster } from "./hamsters";
+import type { Hamster } from "./hamsters";
 
 const POINTS = {
   bill_paid_on_time: 10,
