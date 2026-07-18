@@ -390,9 +390,10 @@ export default function Grocery() {
             const key = item.name.toLowerCase().trim()
             const cachedResults = persistedCache.get(key)
             if (cachedResults) {
-              // Cache rows may predate the chain whitelist, so filter on
-              // the way out too — not just on the way in.
-              const result = { item: item.name, results: filterToAllowedStores(cachedResults), cached: true }
+              // Cache stores the RAW (unfiltered) result set on purpose —
+              // see note below on why filtering happens at display/tally
+              // time instead of before caching.
+              const result = { item: item.name, results: cachedResults, cached: true }
               cache.set(item.name, result)
               return result
             }
@@ -416,18 +417,22 @@ export default function Grocery() {
               clearTimeout(timeout)
             }
 
-            const rawResultsArr = Array.isArray(data.results) ? data.results : []
-            // Whitelist filter applied right here, before anything else
-            // touches the results — both the cache write below and the
-            // cart/tally end up chain-restricted as a result.
-            const resultsArr = filterToAllowedStores(rawResultsArr)
+            const resultsArr = Array.isArray(data.results) ? data.results : []
+            // NOTE: results are intentionally kept RAW (unfiltered) here —
+            // whitelist filtering happens later, at display/tally time via
+            // filterToAllowedStores(). Filtering this early was tried and
+            // caused a regression: if a whitelisted store had zero results
+            // for even one item, the median-fill estimator had nothing left
+            // to estimate that item from (since non-whitelisted sellers had
+            // already been discarded), which knocked every store out of the
+            // "missingCount === 0" ranking in computeTally. Keeping the raw
+            // set around means the estimator always has the broadest
+            // possible pool to fill gaps from, while the UI still only ever
+            // *shows* whitelisted stores.
 
             // Only persist successful lookups. A real API failure shouldn't
             // get cached as if it were a confirmed "nothing found" — that
             // would hide the failure behind a 24h cache hit next time.
-            // We cache the filtered (whitelist-only) results, so a cache
-            // hit later doesn't need to re-filter raw data that's no
-            // longer around.
             if (!data.error) {
               supabase.from('product_search_cache')
                 .upsert({ item_name: key, results: resultsArr, fetched_at: new Date().toISOString() })
@@ -560,30 +565,39 @@ export default function Grocery() {
   // other stores charged for that same item in this cart. Every store that
   // shows up anywhere then gets a complete, comparable total across the
   // whole list — part real prices, part reasonable estimate — rather than
-  // being excluded or only partially totaled. This doesn't touch which
-  // stores/results come back from the search itself, only how they're
-  // combined into a per-store total. Because results are already filtered
-  // to ALLOWED_STORES upstream, "allStores" here can only ever be
-  // whitelisted chains.
+  // being excluded or only partially totaled.
+  //
+  // Two different pools are used on purpose:
+  // - "allStores" (what gets ranked/shown) comes from the WHITELISTED
+  //   results only — only ALLOWED_STORES chains ever appear in the
+  //   leaderboard.
+  // - "perItemMedian" (what fills gaps) is computed from the RAW/unfiltered
+  //   results — every seller SerpAPI returned, whitelisted or not. This is
+  //   what keeps the estimator working even when a whitelisted store has no
+  //   direct result for a given item; if it only drew from the whitelisted
+  //   subset, one item with zero whitelisted hits would have no median to
+  //   fall back on and would knock every store out of the ranking.
   function computeTally(cartData: any[]) {
     const totalTracked = cartData.length
     if (totalTracked === 0) return []
 
     const allStores = new Set<string>()
     cartData.forEach(c => {
-      c.results?.forEach((r: any) => {
+      filterToAllowedStores(c.results ?? []).forEach((r: any) => {
         if (r.store && r.price != null) allStores.add(r.store)
       })
     })
 
-    // item -> (store -> cheapest real price at that store)
+    // item -> (whitelisted store -> cheapest real price at that store)
     const perItemStorePrice = new Map<string, Map<string, number>>()
-    // item -> median price across whatever stores did have a result
+    // item -> median price across the FULL raw seller pool (any store)
     const perItemMedian = new Map<string, number>()
 
     cartData.forEach(c => {
+      // Real prices: only from whitelisted stores, since that's all we rank
+      const whitelisted = filterToAllowedStores(c.results ?? [])
       const byStore = new Map<string, number>()
-      c.results?.forEach((r: any) => {
+      whitelisted.forEach((r: any) => {
         if (!r.store || r.price == null) return
         if (!byStore.has(r.store) || r.price < byStore.get(r.store)!) {
           byStore.set(r.store, r.price)
@@ -591,7 +605,16 @@ export default function Grocery() {
       })
       perItemStorePrice.set(c.item, byStore)
 
-      const prices = Array.from(byStore.values()).sort((a, b) => a - b)
+      // Median: from the full raw pool (every seller, not just whitelisted)
+      // so there's always the broadest possible basis for an estimate.
+      const rawByStore = new Map<string, number>()
+      ;(c.results ?? []).forEach((r: any) => {
+        if (!r.store || r.price == null) return
+        if (!rawByStore.has(r.store) || r.price < rawByStore.get(r.store)!) {
+          rawByStore.set(r.store, r.price)
+        }
+      })
+      const prices = Array.from(rawByStore.values()).sort((a, b) => a - b)
       if (prices.length > 0) {
         const mid = Math.floor(prices.length / 2)
         const median = prices.length % 2 !== 0 ? prices[mid] : (prices[mid - 1] + prices[mid]) / 2
@@ -859,7 +882,7 @@ export default function Grocery() {
               <div className="card">
                 <div className="section-label">Best Store for Your Whole List</div>
                 <p style={{ fontSize: '0.8rem', color: 'var(--ink-muted)', padding: '4px 0' }}>
-                  None of your whitelisted stores (see ALLOWED_STORES) had results for every item on your list, so no store total could be estimated yet.
+                  At least one item on your list had zero search results anywhere (not just at whitelisted stores), so no store total could be estimated yet.
                 </p>
               </div>
             )
@@ -1041,7 +1064,12 @@ export default function Grocery() {
           {!loadingCart && cart.length > 0 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
               {cart.map((c, i) => {
-                const sorted = [...(c.results ?? [])].sort((a: any, b: any) => Number(a.price ?? 9999) - Number(b.price ?? 9999))
+                // c.results is the raw/unfiltered seller list (kept that way
+                // for the median estimator) — filter to whitelisted stores
+                // here so the visible per-item list only shows chains from
+                // ALLOWED_STORES, same as the leaderboard above.
+                const sorted = filterToAllowedStores(c.results ?? [])
+                  .sort((a: any, b: any) => Number(a.price ?? 9999) - Number(b.price ?? 9999))
                 const cheapest = sorted[0]
                 const priciest = sorted[sorted.length - 1]
                 const bigDiff = cheapest && priciest && (priciest.price - cheapest.price) >= 1
