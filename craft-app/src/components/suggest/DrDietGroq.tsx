@@ -27,6 +27,16 @@ const PATTERNS: QuizOption[] = [
 
 const AVOID_OPTIONS = ['dairy', 'egg', 'gluten', 'peanut', 'tree nut', 'soy', 'shellfish', 'red meat']
 
+const CHALLENGES: QuizOption[] = [
+  { value: 'sensory_texture', label: 'Texture / sensory sensitivities' },
+  { value: 'adhd_autism', label: 'ADHD / autism-related eating patterns' },
+  { value: 'picky_safe_foods', label: 'Picky eating / small list of "safe" foods' },
+  { value: 'food_anxiety', label: 'Anxiety or stress around food' },
+  { value: 'low_appetite', label: 'Low appetite / forget to eat' },
+  { value: 'binge_overeating', label: 'Tendency to binge or overeat' },
+  { value: 'routine_dependent', label: 'Need a lot of routine / sameness' },
+]
+
 const ACTIVITY: QuizOption[] = [
   { value: 'sedentary', label: 'Sedentary — little exercise' },
   { value: 'light', label: 'Lightly active' },
@@ -44,6 +54,7 @@ const COOKING: QuizOption[] = [
 interface FocusArea { title: string; tips: string[] }
 interface DietAssessment {
   summary: string
+  notesAcknowledgment: string
   focusAreas: FocusArea[]
   foodsToEmphasize: string[]
   foodsToLimit: string[]
@@ -64,13 +75,14 @@ function chipStyle(active: boolean): React.CSSProperties {
 }
 
 export default function DrDietGroq({ onClose }: { onClose: () => void }) {
-  const STEP_COUNT = 6
+  const STEP_COUNT = 7
   const [wizardState, setWizardState] = useState<WizardState>('quiz')
   const [step, setStep] = useState(0)
 
   const [goal, setGoal] = useState<string>('')
   const [pattern, setPattern] = useState<string>('')
   const [avoid, setAvoid] = useState<Set<string>>(new Set())
+  const [challenges, setChallenges] = useState<Set<string>>(new Set())
   const [activity, setActivity] = useState<string>('')
   const [cooking, setCooking] = useState<string>('')
   const [notes, setNotes] = useState('')
@@ -90,11 +102,19 @@ export default function DrDietGroq({ onClose }: { onClose: () => void }) {
     })
   }
 
+  function toggleChallenge(v: string) {
+    setChallenges(prev => {
+      const next = new Set(prev)
+      next.has(v) ? next.delete(v) : next.add(v)
+      return next
+    })
+  }
+
   function canAdvance() {
     if (step === 0) return Boolean(goal)
     if (step === 1) return Boolean(pattern)
-    if (step === 3) return Boolean(activity)
-    if (step === 4) return Boolean(cooking)
+    if (step === 4) return Boolean(activity)
+    if (step === 5) return Boolean(cooking)
     return true
   }
 
@@ -104,6 +124,7 @@ export default function DrDietGroq({ onClose }: { onClose: () => void }) {
     setGoal('')
     setPattern('')
     setAvoid(new Set())
+    setChallenges(new Set())
     setActivity('')
     setCooking('')
     setNotes('')
@@ -122,25 +143,42 @@ export default function DrDietGroq({ onClose }: { onClose: () => void }) {
     const patternLabel = PATTERNS.find(p => p.value === pattern)?.label
     const activityLabel = ACTIVITY.find(a => a.value === activity)?.label
     const cookingLabel = COOKING.find(c => c.value === cooking)?.label
+    const challengeLabels = [...challenges].map(c => CHALLENGES.find(ch => ch.value === c)?.label).filter(Boolean) as string[]
+
+    const CHALLENGE_GUIDANCE: Record<string, string> = {
+      sensory_texture: 'They have texture/sensory sensitivities. Call out the texture of anything you suggest, stick to textures similar to foods they already tolerate, and avoid mixed/mushy/slimy textures unless the notes say those are fine.',
+      adhd_autism: 'Their eating patterns are shaped by ADHD and/or autism. Favor low-effort, low-decision meals, eating the same safe foods often without judgment, and structure/reminders over willpower-based tips. Do not suggest plans that require lots of new foods or complex prep at once.',
+      picky_safe_foods: 'They are a picky eater with a short list of "safe" foods. Build foodsToEmphasize mostly around safe foods and close variations of them, suggest small "food chaining" steps (a new food similar to a safe one) instead of big variety jumps, and never frame their eating as a problem to fix.',
+      food_anxiety: 'They experience anxiety or stress around food. Keep every suggestion low-pressure and optional, never urgent or guilt-based.',
+      low_appetite: 'They have low appetite or forget to eat. Favor easy, low-barrier, gently calorie-dense foods and snack-sized ideas over full meals, plus simple reminders/routines to eat regularly.',
+      binge_overeating: 'They have a tendency to binge or overeat. Avoid restrictive or scarcity-based language; emphasize consistent, satisfying regular eating rather than limiting foods.',
+      routine_dependent: 'They rely heavily on routine and sameness. Favor a small rotation of consistent go-to meals over variety for its own sake.',
+    }
+    const challengeGuidanceText = [...challenges].map(c => CHALLENGE_GUIDANCE[c]).filter(Boolean).join('\n')
 
     const prompt = `You are a warm, supportive dietitian-style assistant helping someone get general, everyday nutrition direction. You are NOT a doctor or licensed dietitian and must never give medical advice, calorie targets, macro numbers, or restrictive plans — only gentle, sustainable, food-based guidance.
 
 Main goal: ${goalLabel}.
 Current way of eating: ${patternLabel}.
 Foods to avoid: ${avoid.size > 0 ? [...avoid].join(', ') : 'none specified'}.
+Eating challenges they identified: ${challengeLabels.length > 0 ? challengeLabels.join(', ') : 'none specified'}.
 Activity level: ${activityLabel}.
 Cooking style: ${cookingLabel}.
-Anything else they shared: ${notes.trim() || 'nothing else provided'}.
+
+${challengeGuidanceText ? `How to handle their eating challenges — follow this closely:\n${challengeGuidanceText}\n` : ''}
+Notes in their own words — THIS IS THE MOST IMPORTANT INPUT. Read it carefully and make sure every specific thing mentioned here (foods, struggles, a diagnosis, a texture, a routine, a fear, anything) is directly and visibly reflected somewhere in your response, not just generically acknowledged:
+"${notes.trim() || 'nothing else provided'}"
 
 Respond ONLY with a valid JSON object, no markdown, no backticks, no explanation. Use this exact shape:
 {
   "summary": "2-3 sentence warm, plain-language overview of a sensible direction for this person",
+  "notesAcknowledgment": "If notes were provided, 1-2 sentences that explicitly name what they wrote and how it specifically shaped the guidance below (e.g. 'Since you mentioned dairy upsets your stomach and you tend to stick to a few safe foods, I focused on...'). If no notes were provided, use an empty string.",
   "focusAreas": [
     { "title": "short focus area name, e.g. Building balanced plates", "tips": ["specific, practical tip 1", "tip 2", "tip 3"] },
     { "title": "focus area 2", "tips": ["tip 1", "tip 2"] },
     { "title": "focus area 3", "tips": ["tip 1", "tip 2"] }
   ],
-  "foodsToEmphasize": ["8 to 12 specific whole foods or food groups to eat more of, respecting their diet pattern and avoid list"],
+  "foodsToEmphasize": ["8 to 12 specific whole foods or food groups to eat more of, respecting their diet pattern, avoid list, and eating challenges"],
   "foodsToLimit": ["4 to 6 food or food categories to eat less often, phrased gently, never 'never eat' or absolute language"],
   "groceryPicks": ["10 to 15 concrete, plain grocery item names (no quantities) pulled from foodsToEmphasize, ready to drop onto a shopping list"]
 }
@@ -281,6 +319,18 @@ Never mention calories, macros, or specific weight numbers. If the goal involves
 
               {step === 3 && (
                 <div>
+                  <h3 style={{ margin: '0 0 6px', fontSize: '1.05rem' }}>Any eating challenges we should know about?</h3>
+                  <p style={{ fontSize: '0.78rem', color: 'var(--ink-muted)', marginBottom: 14 }}>Optional — select any that apply, this shapes how the suggestions are framed</p>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                    {CHALLENGES.map(c => (
+                      <button key={c.value} style={chipStyle(challenges.has(c.value))} onClick={() => toggleChallenge(c.value)}>{c.label}</button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {step === 4 && (
+                <div>
                   <h3 style={{ margin: '0 0 14px', fontSize: '1.05rem' }}>How active are you day-to-day?</h3>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                     {ACTIVITY.map(a => (
@@ -290,7 +340,7 @@ Never mention calories, macros, or specific weight numbers. If the goal involves
                 </div>
               )}
 
-              {step === 4 && (
+              {step === 5 && (
                 <div>
                   <h3 style={{ margin: '0 0 14px', fontSize: '1.05rem' }}>What's realistic for your cooking time?</h3>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -301,15 +351,15 @@ Never mention calories, macros, or specific weight numbers. If the goal involves
                 </div>
               )}
 
-              {step === 5 && (
+              {step === 6 && (
                 <div>
                   <h3 style={{ margin: '0 0 6px', fontSize: '1.05rem' }}>Anything else worth knowing?</h3>
-                  <p style={{ fontSize: '0.78rem', color: 'var(--ink-muted)', marginBottom: 14 }}>Optional — foods you dislike, a condition you're managing, past struggles, etc.</p>
+                  <p style={{ fontSize: '0.78rem', color: 'var(--ink-muted)', marginBottom: 14 }}>Optional — but this box is read closely and will directly shape your check-in. Specific foods, a diagnosis, a texture issue, past struggles, whatever's relevant.</p>
                   <textarea
                     className="form-textarea"
                     value={notes}
                     onChange={e => setNotes(e.target.value)}
-                    placeholder="e.g. I skip breakfast most days, not a fan of most vegetables, trying to eat more protein..."
+                    placeholder="e.g. I'm dairy intolerant and it took me forever to figure that out, I have ADHD so I forget to eat until I'm starving, I only really trust like 6 foods..."
                   />
                 </div>
               )}
@@ -362,6 +412,15 @@ Never mention calories, macros, or specific weight numbers. If the goal involves
               }}>
                 <p style={{ fontSize: '0.88rem', color: 'var(--ink)', lineHeight: 1.6, margin: 0 }}>{assessment.summary}</p>
               </div>
+
+              {assessment.notesAcknowledgment && (
+                <div style={{
+                  padding: '10px 14px', borderRadius: 'var(--radius-sm)', marginBottom: 18,
+                  background: '#fdf7ff', border: '1.5px solid #ecdcfb',
+                }}>
+                  <p style={{ fontSize: '0.8rem', color: 'var(--ink-soft)', lineHeight: 1.55, margin: 0, fontStyle: 'italic' }}>{assessment.notesAcknowledgment}</p>
+                </div>
+              )}
 
               <div className="section-label" style={{ marginBottom: 10 }}>Focus Areas</div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 18 }}>

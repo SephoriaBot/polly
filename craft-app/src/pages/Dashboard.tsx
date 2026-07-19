@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
+import HamsterNest from "../hamsters/HamsterNest";
+import HamsterHabitat from "../hamsters/HamsterHabitat";
 
 interface Focus {
   id: string;
@@ -9,36 +11,13 @@ interface Focus {
   date: string;
 }
 
-interface MealEntry {
-  meal_type: string;
-  meal_name: string;
-}
-
 interface Glance {
   appointmentsToday: number;
   trackerLogsToday: number;
   groceryItems: number;
 }
 
-interface Bill {
-  id: string;
-  name: string;
-  amount: number;
-  due_day: number;
-  bill_month: number;
-  bill_year: number;
-  recurring: boolean;
-}
 
-interface BillPaymentRow {
-  bill_id: string;
-  month: number;
-  year: number;
-  paid: boolean;
-  name?: string;
-  amount?: number;
-  due_day?: number;
-}
 const DAY_NAMES = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 
 
@@ -79,8 +58,6 @@ function StitchDivider() {
 
 export default function Dashboard({ onNavigate }: { onNavigate: (page: string) => void }) {
   const [focuses, setFocuses] = useState<Focus[]>([]);
-  const [todayMeals, setTodayMeals] = useState<MealEntry[]>([]);
-  const [todayBills, setTodayBills] = useState<Bill[]>([]);
   const [glance, setGlance] = useState<Glance>({ appointmentsToday: 0, trackerLogsToday: 0, groceryItems: 0 });
   const [currentBalance, setCurrentBalance] = useState<number>(0);
   const [newFocus, setNewFocus] = useState('');
@@ -102,12 +79,8 @@ export default function Dashboard({ onNavigate }: { onNavigate: (page: string) =
     const currentYear = now.getFullYear();
     const currentDay = now.getDate();
 
-    const [focusRes, mealsRes, billsRes, paymentsRes, plannerRes, trackerRes, groceryRes, budgetRes] = await Promise.all([
+    const [focusRes, plannerRes, trackerRes, groceryRes, budgetRes] = await Promise.all([
       supabase.from('focuses').select('*').eq('date', todayStr).order('created_at'),
-      supabase.from('week_plans').select('meal_type, meal_name').eq('day', todayName),
-      supabase.from('bills').select('id, name, amount, due_day, bill_month, bill_year, recurring'),
-      supabase.from('bill_payments').select('bill_id, month, year, paid, name, amount, due_day')
-        .eq('month', currentMonth).eq('year', currentYear),
       supabase.from('appointments').select('id', { count: 'exact', head: true })
         .gte('date_time', startOfDay).lte('date_time', endOfDay),
       supabase.from('tracker_logs').select('id', { count: 'exact', head: true }).eq('log_date', todayStr),
@@ -115,36 +88,7 @@ export default function Dashboard({ onNavigate }: { onNavigate: (page: string) =
       supabase.from('budget').select('current_balance').eq('id', 1).maybeSingle(),
     ]);
 
-    // A bill only counts as "due today" if it's actually in play this month
-    // (recurring, or a one-off scheduled for this exact month/year), its
-    // effective due day (respecting any per-month edit) lands on today, and
-    // it hasn't already been marked paid for this month.
-    const payments: BillPaymentRow[] = paymentsRes.data || [];
-    const paymentByBillId = new Map(payments.map(p => [p.bill_id, p]));
-
-    const dueToday = (billsRes.data || [])
-      .filter((bill: Bill) => {
-        const inPlayThisMonth = bill.recurring || (bill.bill_month === currentMonth && bill.bill_year === currentYear);
-        if (!inPlayThisMonth) return false;
-
-        const payment = paymentByBillId.get(bill.id);
-        if (payment?.paid) return false;
-
-        const effectiveDueDay = bill.recurring ? (payment?.due_day ?? bill.due_day) : bill.due_day;
-        return effectiveDueDay === currentDay;
-      })
-      .map((bill: Bill) => {
-        const payment = paymentByBillId.get(bill.id);
-        return {
-          ...bill,
-          name: bill.recurring ? (payment?.name ?? bill.name) : bill.name,
-          amount: bill.recurring ? (payment?.amount ?? bill.amount) : bill.amount,
-        };
-      });
-
     setFocuses(focusRes.data || []);
-    setTodayMeals(mealsRes.data || []);
-    setTodayBills(dueToday);
     setGlance({
       appointmentsToday: plannerRes.count || 0,
       trackerLogsToday: trackerRes.count || 0,
@@ -179,11 +123,6 @@ export default function Dashboard({ onNavigate }: { onNavigate: (page: string) =
     await supabase.from('focuses').delete().eq('id', id);
     setFocuses(prev => prev.filter(f => f.id !== id));
   }
-
-  const MEAL_ORDER = ['breakfast', 'lunch', 'dinner', 'snack'];
-  const sortedMeals = [...todayMeals].sort(
-    (a, b) => MEAL_ORDER.indexOf(a.meal_type.toLowerCase()) - MEAL_ORDER.indexOf(b.meal_type.toLowerCase())
-  );
 
   const completedFocuses = focuses.filter(f => f.completed).length;
 
@@ -231,6 +170,17 @@ export default function Dashboard({ onNavigate }: { onNavigate: (page: string) =
   </div>
 </div>
 
+        </section>
+
+        <StitchDivider />
+
+        {/* ── HAMSTER NEST ── */}
+        <section>
+          <div className="section-label">Hamster Nest</div>
+          <HamsterNest />
+          <div style={{ marginTop: 12 }}>
+            <HamsterHabitat />
+          </div>
         </section>
 
         <StitchDivider />
@@ -352,73 +302,6 @@ export default function Dashboard({ onNavigate }: { onNavigate: (page: string) =
         </section>
 
         <StitchDivider />
-
-        {/* ── TODAY'S MEALS ── */}
-        <section>
-          <div className="section-label">Today's Meals</div>
-          {sortedMeals.length > 0 ? (
-            <div style={{ display: 'flex', gap: 10, overflowX: 'auto', paddingBottom: 4 }}>
-              {sortedMeals.map((m, i) => (
-  <div
-    key={i}
-    onClick={() => onNavigate('meals')}
-    style={{
-      flexShrink: 0,
-      background: 'var(--white)', border: '1.5px solid var(--border)',
-      borderRadius: 18, padding: '10px 14px', minWidth: 120,
-      cursor: 'pointer',
-    }}
-  >
-    <div style={{ fontSize: '0.6rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--ink-muted)', marginBottom: 4, fontFamily: 'IBM Plex Mono, monospace' }}>
-      {m.meal_type}
-    </div>
-    <div style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--ink)', lineHeight: 1.3 }}>
-      {m.meal_name}
-    </div>
-  </div>
-))}
-
-            </div>
-          ) : (
-            <div className="meals-empty">
-              <span>Nothing planned for today yet</span>
-              <button className="btn btn-secondary btn-sm" onClick={() => onNavigate('meals')}>Plan meals</button>
-            </div>
-          )}
-                </section>
-
-        <StitchDivider />
-
-        {/* ── TODAY'S BILLS ── */}
-        <section>
-          <div className="section-label">Bills Due Today</div>
-
-          {todayBills.length === 0 ? (
-            <div className="meals-empty">
-              No bills due today 🎉
-            </div>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {todayBills.map(bill => (
-                <div
-                  key={bill.id}
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    background: 'var(--white)',
-                    border: '1.5px solid var(--border)',
-                    borderRadius: 18,
-                    padding: '12px 14px',
-                  }}
-                >
-                  <span style={{ fontWeight: 600 }}>{bill.name}</span>
-                  <strong>${bill.amount.toFixed(2)}</strong>
-                </div>
-              ))}
-            </div>
-          )}
-        </section>
-
       </div>
     </div>
   );

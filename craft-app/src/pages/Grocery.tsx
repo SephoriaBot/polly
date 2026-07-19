@@ -102,6 +102,117 @@ const BASICS_PRESETS: Record<string, BasicsPreset> = {
       { name: 'Canned tuna', qty: '3 cans' },
     ],
   },
+  baking: {
+    label: 'Baking Basics',
+    emoji: '🧁',
+    items: [
+      { name: 'All-purpose flour', qty: '5 lb bag' },
+      { name: 'Granulated sugar', qty: '4 lb bag' },
+      { name: 'Brown sugar', qty: '1 lb bag' },
+      { name: 'Powdered sugar', qty: '1 lb bag' },
+      { name: 'Baking powder', qty: '1 can' },
+      { name: 'Baking soda', qty: '1 box' },
+      { name: 'Salt', qty: '1 container' },
+      { name: 'Vanilla extract', qty: '1 bottle' },
+      { name: 'Unsalted butter', qty: '1 lb' },
+      { name: 'Eggs', qty: '1 dozen' },
+      { name: 'Milk', qty: '1 carton' },
+      { name: 'Vegetable oil', qty: '1 bottle' },
+      { name: 'Cocoa powder', qty: '1 container' },
+      { name: 'Chocolate chips', qty: '1 bag' },
+      { name: 'Ground cinnamon', qty: '1 jar' },
+      { name: 'Cornstarch', qty: '1 box' },
+      { name: 'Yeast', qty: '1 packet' },
+      { name: 'Parchment paper', qty: '1 roll' },
+    ],
+  },
+  breakfast: {
+    label: 'Breakfast Basics',
+    emoji: '🥞',
+    items: [
+      { name: 'Eggs', qty: '1 dozen' },
+      { name: 'Bread', qty: '1 loaf' },
+      { name: 'Rolled oats', qty: '1 container' },
+      { name: 'Milk', qty: '1 gallon' },
+      { name: 'Greek yogurt', qty: '1 tub' },
+      { name: 'Butter', qty: '1 stick pack' },
+      { name: 'Bananas', qty: '1 bunch' },
+      { name: 'Berries', qty: '1 pack' },
+      { name: 'Orange juice', qty: '1 carton' },
+      { name: 'Coffee', qty: '1 bag' },
+      { name: 'Maple syrup', qty: '1 bottle' },
+      { name: 'Pancake mix', qty: '1 box' },
+      { name: 'Peanut butter', qty: '1 jar' },
+      { name: 'Honey', qty: '1 jar' },
+      { name: 'Granola', qty: '1 bag' },
+    ],
+  },
+  spice_rack: {
+    label: 'Spice Rack Starter',
+    emoji: '🧂',
+    items: [
+      { name: 'Table salt', qty: '1 container' },
+      { name: 'Black pepper', qty: '1 grinder' },
+      { name: 'Garlic powder', qty: '1 jar' },
+      { name: 'Onion powder', qty: '1 jar' },
+      { name: 'Paprika', qty: '1 jar' },
+      { name: 'Chili powder', qty: '1 jar' },
+      { name: 'Ground cumin', qty: '1 jar' },
+      { name: 'Dried oregano', qty: '1 jar' },
+      { name: 'Dried basil', qty: '1 jar' },
+      { name: 'Ground cinnamon', qty: '1 jar' },
+      { name: 'Red pepper flakes', qty: '1 jar' },
+      { name: 'Bay leaves', qty: '1 jar' },
+      { name: 'Italian seasoning blend', qty: '1 jar' },
+      { name: 'Cayenne pepper', qty: '1 jar' },
+    ],
+  },
+}
+
+// Smart Cart chain whitelist — only results whose seller name matches one of
+// these aliases get kept. This filtering happens AFTER the SerpAPI search
+// comes back, not by trying to scope the search query itself — restricting
+// at the query level is what caused the old "Walmart or nothing" behavior,
+// since Google Shopping doesn't reliably narrow to one retailer that way.
+// Key = the canonical name shown in the UI/tally. Value = lowercase
+// substrings that identify that chain in a raw seller string (SerpAPI
+// results show things like "Walmart.com", "Walmart Supercenter", etc, so
+// aliases need to be loose substrings, not exact matches).
+const ALLOWED_STORES: Record<string, string[]> = {
+  'Walmart': ['walmart'],
+  'Kroger': ['kroger'],
+  'Target': ['target'],
+  'Food Lion': ['food lion'],
+  'Publix': ['publix'],
+  'Harris Teeter': ['harris teeter'],
+  'Whole Foods': ['whole foods'],
+  "Trader Joe's": ['trader joe'],
+  'Aldi': ['aldi'],
+}
+
+// Matches a raw seller/store string against ALLOWED_STORES and returns the
+// canonical chain name, or null if it's not on the whitelist. Normalizing
+// to the canonical name (rather than just filtering) means "Walmart" and
+// "Walmart.com" get grouped together in the tally instead of counted as
+// two different stores.
+function normalizeStoreName(raw: string | undefined | null): string | null {
+  if (!raw) return null
+  const lower = raw.toLowerCase()
+  for (const [canonical, aliases] of Object.entries(ALLOWED_STORES)) {
+    if (aliases.some(alias => lower.includes(alias))) return canonical
+  }
+  return null
+}
+
+// Applies the whitelist to a raw results array from the product-search API
+// (or from cache). Anything that doesn't match a known chain is dropped
+// entirely rather than shown under its raw name — this is what keeps
+// random marketplace sellers / instacart-only listings out of the cart.
+function filterToAllowedStores(results: any[]): any[] {
+  if (!Array.isArray(results)) return []
+  return results
+    .map(r => ({ ...r, store: normalizeStoreName(r.store) }))
+    .filter(r => r.store !== null)
 }
 
 export default function Grocery() {
@@ -279,6 +390,9 @@ export default function Grocery() {
             const key = item.name.toLowerCase().trim()
             const cachedResults = persistedCache.get(key)
             if (cachedResults) {
+              // Cache stores the RAW (unfiltered) result set on purpose —
+              // see note below on why filtering happens at display/tally
+              // time instead of before caching.
               const result = { item: item.name, results: cachedResults, cached: true }
               cache.set(item.name, result)
               return result
@@ -304,6 +418,17 @@ export default function Grocery() {
             }
 
             const resultsArr = Array.isArray(data.results) ? data.results : []
+            // NOTE: results are intentionally kept RAW (unfiltered) here —
+            // whitelist filtering happens later, at display/tally time via
+            // filterToAllowedStores(). Filtering this early was tried and
+            // caused a regression: if a whitelisted store had zero results
+            // for even one item, the median-fill estimator had nothing left
+            // to estimate that item from (since non-whitelisted sellers had
+            // already been discarded), which knocked every store out of the
+            // "missingCount === 0" ranking in computeTally. Keeping the raw
+            // set around means the estimator always has the broadest
+            // possible pool to fill gaps from, while the UI still only ever
+            // *shows* whitelisted stores.
 
             // Only persist successful lookups. A real API failure shouldn't
             // get cached as if it were a confirmed "nothing found" — that
@@ -440,28 +565,39 @@ export default function Grocery() {
   // other stores charged for that same item in this cart. Every store that
   // shows up anywhere then gets a complete, comparable total across the
   // whole list — part real prices, part reasonable estimate — rather than
-  // being excluded or only partially totaled. This doesn't touch which
-  // stores/results come back from the search itself, only how they're
-  // combined into a per-store total.
+  // being excluded or only partially totaled.
+  //
+  // Two different pools are used on purpose:
+  // - "allStores" (what gets ranked/shown) comes from the WHITELISTED
+  //   results only — only ALLOWED_STORES chains ever appear in the
+  //   leaderboard.
+  // - "perItemMedian" (what fills gaps) is computed from the RAW/unfiltered
+  //   results — every seller SerpAPI returned, whitelisted or not. This is
+  //   what keeps the estimator working even when a whitelisted store has no
+  //   direct result for a given item; if it only drew from the whitelisted
+  //   subset, one item with zero whitelisted hits would have no median to
+  //   fall back on and would knock every store out of the ranking.
   function computeTally(cartData: any[]) {
     const totalTracked = cartData.length
     if (totalTracked === 0) return []
 
     const allStores = new Set<string>()
     cartData.forEach(c => {
-      c.results?.forEach((r: any) => {
+      filterToAllowedStores(c.results ?? []).forEach((r: any) => {
         if (r.store && r.price != null) allStores.add(r.store)
       })
     })
 
-    // item -> (store -> cheapest real price at that store)
+    // item -> (whitelisted store -> cheapest real price at that store)
     const perItemStorePrice = new Map<string, Map<string, number>>()
-    // item -> median price across whatever stores did have a result
+    // item -> median price across the FULL raw seller pool (any store)
     const perItemMedian = new Map<string, number>()
 
     cartData.forEach(c => {
+      // Real prices: only from whitelisted stores, since that's all we rank
+      const whitelisted = filterToAllowedStores(c.results ?? [])
       const byStore = new Map<string, number>()
-      c.results?.forEach((r: any) => {
+      whitelisted.forEach((r: any) => {
         if (!r.store || r.price == null) return
         if (!byStore.has(r.store) || r.price < byStore.get(r.store)!) {
           byStore.set(r.store, r.price)
@@ -469,7 +605,16 @@ export default function Grocery() {
       })
       perItemStorePrice.set(c.item, byStore)
 
-      const prices = Array.from(byStore.values()).sort((a, b) => a - b)
+      // Median: from the full raw pool (every seller, not just whitelisted)
+      // so there's always the broadest possible basis for an estimate.
+      const rawByStore = new Map<string, number>()
+      ;(c.results ?? []).forEach((r: any) => {
+        if (!r.store || r.price == null) return
+        if (!rawByStore.has(r.store) || r.price < rawByStore.get(r.store)!) {
+          rawByStore.set(r.store, r.price)
+        }
+      })
+      const prices = Array.from(rawByStore.values()).sort((a, b) => a - b)
       if (prices.length > 0) {
         const mid = Math.floor(prices.length / 2)
         const median = prices.length % 2 !== 0 ? prices[mid] : (prices[mid - 1] + prices[mid]) / 2
@@ -737,7 +882,7 @@ export default function Grocery() {
               <div className="card">
                 <div className="section-label">Best Store for Your Whole List</div>
                 <p style={{ fontSize: '0.8rem', color: 'var(--ink-muted)', padding: '4px 0' }}>
-                  At least one item on your list had zero search results anywhere, so no store total could be estimated yet.
+                  At least one item on your list had zero search results anywhere (not just at whitelisted stores), so no store total could be estimated yet.
                 </p>
               </div>
             )
@@ -919,7 +1064,12 @@ export default function Grocery() {
           {!loadingCart && cart.length > 0 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
               {cart.map((c, i) => {
-                const sorted = [...(c.results ?? [])].sort((a: any, b: any) => Number(a.price ?? 9999) - Number(b.price ?? 9999))
+                // c.results is the raw/unfiltered seller list (kept that way
+                // for the median estimator) — filter to whitelisted stores
+                // here so the visible per-item list only shows chains from
+                // ALLOWED_STORES, same as the leaderboard above.
+                const sorted = filterToAllowedStores(c.results ?? [])
+                  .sort((a: any, b: any) => Number(a.price ?? 9999) - Number(b.price ?? 9999))
                 const cheapest = sorted[0]
                 const priciest = sorted[sorted.length - 1]
                 const bigDiff = cheapest && priciest && (priciest.price - cheapest.price) >= 1
@@ -946,7 +1096,7 @@ export default function Grocery() {
                         <span style={{ fontSize: '0.72rem', color: 'var(--danger)' }}>lookup failed</span>
                       )}
                       {!cheapest && !c.error && (
-                        <span style={{ fontSize: '0.72rem', color: 'var(--ink-muted)' }}>no matches found</span>
+                        <span style={{ fontSize: '0.72rem', color: 'var(--ink-muted)' }}>no matches at whitelisted stores</span>
                       )}
                     </div>
                     {sorted.length > 1 && (
