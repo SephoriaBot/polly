@@ -20,6 +20,8 @@ interface Budget {
   hourly_wage: number;
   current_balance: number;
   health_deduction: number;
+  net_to_gross_ratio: number;
+  flat_deductions_prev: number;
 }
 
 interface Bill {
@@ -148,32 +150,31 @@ function hoursOfWork(amount: number, wage: number) {
   return (amount / wage).toFixed(1);
 }
 
-// ── ANYTIME PAY RAMP ──
-// Anytime Pay availability isn't a flat percentage — it climbs through the
-// work week. Week runs Sunday(0) → Saturday(6); ramps linearly from 40% on
-// Sunday to 70% by Saturday. The percentage applies against the CUMULATIVE
-// pool of earnings since Sunday, not each day's earnings in isolation.
-// Whatever's still unwithdrawn when Saturday closes becomes a single lump
-// "payday catch-up" that lands the following Wednesday.
-const ANYTIME_PAY_START_PCT = 0.50;
-const ANYTIME_PAY_CAP_PCT = 0.70;
+// ── ANYTIME PAY ELIGIBLE PERCENTAGE (Amazon's real formula) ──
+// Ported from payroll.amazon.work's actual calculation, not a made-up ramp.
+// Amazon's real math is a snapshot, not a day-of-week curve:
+//   1. netToGrossRatio = previous paycheck's (post-tax earnings / pre-tax earnings)
+//      — held static all pay period, only updates when you refresh it after
+//      a real paycheck lands.
+//   2. availableAnytimePay = pre-tax earnings so far this period × netToGrossRatio
+//   3. subtract flat deductions from the PREVIOUS paycheck, then subtract
+//      garnishments from the CURRENT period (we don't track garnishments —
+//      Amazon shows $0 for most people, so it's hardcoded here)
+//   4. divide back by pre-tax earnings so far to get a percentage, then
+//      subtract Amazon's fixed 2% safety buffer
+// This naturally still moves a little day to day (the flat-dollar deduction
+// is a shrinking share of a growing pre-tax pool), but there's no ramp curve
+// and no overtime cutoff — it's just real math against real earnings.
+const ANYTIME_PAY_GARNISHMENTS = 0; // not tracked in Polly; Amazon shows $0 for most people
+const ANYTIME_PAY_SAFETY_BUFFER = 0.02; // Amazon's fixed 2% cushion
 
-function rampPercentForDate(d: Date) {
-  const dow = d.getDay(); // 0 = Sun ... 6 = Sat
-  return ANYTIME_PAY_START_PCT + (ANYTIME_PAY_CAP_PCT - ANYTIME_PAY_START_PCT) * (dow / 6);
-}
-
-// Past a certain point in the week, availability stops climbing with the
-// day-of-week ramp and instead drops to a flat, lower percentage — meant to
-// model pulling back once you're deep into overtime territory for the week.
-const ANYTIME_PAY_OVERTIME_THRESHOLD_HOURS = 55;
-const ANYTIME_PAY_OVERTIME_CAP_PCT = 0.60;
-
-function effectiveRampPct(d: Date, cumulativeHoursThroughDay: number) {
-  if (cumulativeHoursThroughDay > ANYTIME_PAY_OVERTIME_THRESHOLD_HOURS) {
-    return ANYTIME_PAY_OVERTIME_CAP_PCT;
-  }
-  return rampPercentForDate(d);
+function eligiblePercent(preTaxEarnedSoFar: number, netToGrossRatio: number, flatDeductionsPrev: number) {
+  if (preTaxEarnedSoFar <= 0 || netToGrossRatio <= 0) return 0;
+  const availableAnytimePay = preTaxEarnedSoFar * netToGrossRatio;
+  const afterFlatDeductions = availableAnytimePay - flatDeductionsPrev;
+  const afterGarnishments = afterFlatDeductions - ANYTIME_PAY_GARNISHMENTS;
+  const rawPct = afterGarnishments / preTaxEarnedSoFar;
+  return Math.max(0, rawPct - ANYTIME_PAY_SAFETY_BUFFER);
 }
 
 const PERIOD_MULTIPLIERS: Record<string, number> = {
@@ -242,7 +243,7 @@ function EditableCell({ value, onChange, type = "number", style, className, plac
 
 export default function Wallet() {
   const [debts, setDebts] = useState<Debt[]>([]);
-  const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, hourly_wage: 0, current_balance: 0, health_deduction: 0 });
+  const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, hourly_wage: 0, current_balance: 0, health_deduction: 0, net_to_gross_ratio: 0, flat_deductions_prev: 0 });
   const [bills, setBills] = useState<Bill[]>([]);
   const [payments, setPayments] = useState<BillPayment[]>([]);
   const [nextId, setNextId] = useState(20);
@@ -494,7 +495,6 @@ export default function Wallet() {
 
   let periodEarnedGross = 0;   // gross pool, untaxed, resets each Sunday
   let periodWithdrawnGross = 0; // gross cash advanced so far this period
-  let periodHoursSoFar = 0;     // cumulative hours this week, drives the overtime ramp cap
   let pendingPayout = 0;        // net amount owed, released the following Wednesday
 
   const grossHourlyWage = budget.hourly_wage || 0;
@@ -502,24 +502,19 @@ export default function Wallet() {
 
   // If the visible window starts mid-week (today isn't Sunday), the pool
   // is missing whatever was earned Sun–yesterday since those days are never
-  // shown/logged. Seed it here so the ramp is applied against the true
-  // cumulative pool, not just what's been logged since today. This has to
-  // seed BOTH the earned total and what would already have been withdrawn
-  // against it (same "max withdrawn every day" assumption the rest of this
-  // function uses) — seeding earned alone makes today think none of that
-  // prior gross was ever claimed, and dumps the whole thing onto today.
+  // shown/logged. Seed it here so the eligible percentage is applied against
+  // the true cumulative pool, not just what's been logged since today. This
+  // has to seed BOTH the earned total and what would already have been
+  // withdrawn against it (same "max withdrawn every day" assumption the rest
+  // of this function uses) — seeding earned alone makes today think none of
+  // that prior gross was ever claimed, and dumps the whole thing onto today.
   if (allDays.length && allDays[0].getDay() !== 0 && priorWeekHours.weekStart === currentWeekStartKey()) {
     const priorReg = parseFloat(priorWeekHours.reg) || 0;
     const priorOt = parseFloat(priorWeekHours.ot) || 0;
-    const priorHours = priorReg + priorOt;
     const priorGross = priorReg * grossHourlyWage + priorOt * grossOtWage;
 
-    const yesterday = new Date(allDays[0]);
-    yesterday.setDate(yesterday.getDate() - 1);
-
     periodEarnedGross = priorGross;
-    periodHoursSoFar = priorHours;
-    periodWithdrawnGross = priorGross * effectiveRampPct(yesterday, priorHours);
+    periodWithdrawnGross = priorGross * eligiblePercent(priorGross, budget.net_to_gross_ratio, budget.flat_deductions_prev);
   }
 
   const rows = allDays.map(d => {
@@ -529,7 +524,6 @@ export default function Wallet() {
     if (dow === 0) {
       periodEarnedGross = 0;
       periodWithdrawnGross = 0;
-      periodHoursSoFar = 0;
     }
 
     const extraToday = parseFloat(extraFunds[key]) || 0;
@@ -547,10 +541,9 @@ export default function Wallet() {
         : 0;
 
     periodEarnedGross += fullEarnedToday;
-    periodHoursSoFar += hoursToday;
 
-    const rampPct = effectiveRampPct(d, periodHoursSoFar);
-    const maxWithdrawableGrossSoFar = periodEarnedGross * rampPct;
+    const eligiblePct = eligiblePercent(periodEarnedGross, budget.net_to_gross_ratio, budget.flat_deductions_prev);
+    const maxWithdrawableGrossSoFar = periodEarnedGross * eligiblePct;
     const availableToday = Math.max(0, maxWithdrawableGrossSoFar - periodWithdrawnGross);
     periodWithdrawnGross += availableToday;
 
@@ -575,7 +568,7 @@ export default function Wallet() {
     return {
       date: d, key, billsToday, billsTotal, regHoursToday, otHoursToday,
       hoursToday, earnedToday: fullEarnedToday, availableToday, releasedToday,
-      rampPct, heldInPool, extraToday, balance: runningBalance,
+      eligiblePct, heldInPool, extraToday, balance: runningBalance,
     };
   });
 
@@ -585,7 +578,7 @@ export default function Wallet() {
 
   const moneyCalendarResult = useMemo(
     () => buildMoneyCalendarRows([...calendarWeeks.week1, ...calendarWeeks.week2], budget.current_balance || 0),
-    [calendarWeeks, billsByDate, dailyHours, extraFunds, netHourlyWage, netOtWage, budget.current_balance, priorWeekHours]
+    [calendarWeeks, billsByDate, dailyHours, extraFunds, netHourlyWage, netOtWage, budget.current_balance, budget.net_to_gross_ratio, budget.flat_deductions_prev, priorWeekHours]
   );
   const week1Result = { rows: moneyCalendarResult.rows.slice(0, 7) };
   const week2Result = { rows: moneyCalendarResult.rows.slice(7, 14) };
@@ -956,7 +949,7 @@ export default function Wallet() {
               <div className="card-body">
                 <div className="section-label">📅 Money Calendar</div>
                 <div style={{ fontSize: 11, color: "var(--ink-muted)", marginBottom: 14 }}>
-                  Runs from today forward. Log the hours you're working (or plan to work) each day. Anytime Pay availability ramps from 40% on Sunday to 70% by Saturday, applied against your cumulative pool for the week — whatever's unclaimed by Saturday night lands as a lump catch-up the following Wednesday. Past {ANYTIME_PAY_OVERTIME_THRESHOLD_HOURS} hours in a week, the ramp stops climbing and drops to a flat {Math.round(ANYTIME_PAY_OVERTIME_CAP_PCT * 100)}% instead.
+                  Runs from today forward. Log the hours you're working (or plan to work) each day. Anytime Pay availability uses the same math as the real Amazon app: your eligible percentage comes from your last paycheck's net-to-gross ratio (post-tax ÷ pre-tax), applied against your cumulative pool for the week, minus that check's flat deductions and a 2% safety buffer — whatever's unclaimed by Saturday night lands as a lump catch-up the following Wednesday.
                 </div>
 
                 {new Date().getDay() !== 0 && (
@@ -1032,6 +1025,23 @@ export default function Wallet() {
                   </div>
                 </div>
 
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 10 }}>
+                  <div>
+                    <div className="form-label">Net-to-Gross Ratio</div>
+                    <EditableCell type="number" className="form-input" value={budget.net_to_gross_ratio || ""} placeholder="e.g. 0.77" onChange={v => updateBudget("net_to_gross_ratio", parseFloat(v) || 0)} />
+                    <div style={{ fontSize: 10, color: "var(--ink-muted)", marginTop: 4 }}>
+                      From payroll.amazon.work: previous paycheck's post-tax ÷ pre-tax earnings. Update it each payday.
+                    </div>
+                  </div>
+                  <div>
+                    <div className="form-label">Flat Deductions ($)</div>
+                    <EditableCell type="number" className="form-input" value={budget.flat_deductions_prev || ""} placeholder="e.g. 62.84" onChange={v => updateBudget("flat_deductions_prev", parseFloat(v) || 0)} />
+                    <div style={{ fontSize: 10, color: "var(--ink-muted)", marginTop: 4 }}>
+                      Flat deductions from your previous paycheck (per the Amazon app).
+                    </div>
+                  </div>
+                </div>
+
                 <details style={{ marginBottom: 16 }}>
                   <summary style={{ fontSize: 11, color: "var(--pink-dark)", fontWeight: 600, cursor: "pointer" }}>Not sure what % to enter for tax withholding?</summary>
                   <div style={{ fontSize: 11, color: "var(--ink-muted)", marginTop: 8, lineHeight: 1.6 }}>
@@ -1102,7 +1112,7 @@ export default function Wallet() {
 
                               {row.hoursToday > 0 && (
                                 <div style={{ fontSize: 9, color: "var(--ink-muted)", marginTop: 3 }}>
-                                  {Math.round(row.rampPct * 100)}% of period pool available
+                                  {Math.round(row.eligiblePct * 100)}% of period pool available
                                   {row.heldInPool > 0.005 && ` · ${fmt(row.heldInPool)} still held this period`}
                                 </div>
                               )}
