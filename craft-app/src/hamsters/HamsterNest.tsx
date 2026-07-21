@@ -1,5 +1,6 @@
 import { useEffect } from "react";
-import { useHamsterGrowth, SOURCE_LABELS } from "./useHamsterGrowth";
+import { useHamsterGrowth } from "./HamsterGrowthContext";
+import { SOURCE_LABELS } from "./useHamsterGrowth";
 
 function NestEgg({ progressPct }: { progressPct: number }) {
   const showSmallCrack = progressPct >= 35;
