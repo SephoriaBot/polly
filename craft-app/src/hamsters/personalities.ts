@@ -56,3 +56,40 @@ export function rollPersonality(): Personality {
   const [quirk] = pickRandom(QUIRKY_TRAITS, 1);
   return { good: [g1, g2], quirk };
 }
+
+// --- Combat abilities --------------------------------------------------
+// Rolled when a hamster evolves. Old traits/abilities are never removed —
+// evolving only adds more on top. Teen abilities lean scrappy/defensive;
+// final abilities lean bigger and more offensive, matching the jump in
+// form size on the teen -> final art.
+
+export const TEEN_ABILITIES: string[] = [
+  "Bristle Charge — lowers head and rushes a rival",
+  "Cheek Pouch Slam — bops foes with fully-stuffed cheeks",
+  "Burrow Dodge — vanishes underground to dodge a hit",
+  "Static Fur — small shock on contact",
+  "Piercing Squeak — a shriek that rattles nearby foes",
+  "Claw Flurry — quick scrappy scratching combo",
+  "Thorn Nibble — gnaws through an opponent's guard",
+  "Warning Stomp — tiny feet, surprisingly loud thud",
+  "Sticky Paws — grapples and holds an opponent briefly",
+  "Adrenaline Sprint — a burst of reckless speed",
+];
+
+export const FINAL_ABILITIES: string[] = [
+  "Seed Cannon — launches hardened seeds at range",
+  "Overgrowth Roots — traps a foe in sudden vines",
+  "Sonic Whisker Boom — a shockwave squeak that stuns",
+  "Molten Cheek Pouch — superheated projectile bite",
+  "Guardian's Bulwark — hunkers down, nearly unmovable",
+  "Frenzied Rampage — relentless multi-hit assault",
+  "Venom Nibble — a bite that saps a rival's strength",
+  "Storm Caller — summons wind to batter opponents",
+  "Void Burrow — phases through attacks entirely",
+  "Apex Roar — a commanding cry that breaks enemy morale",
+];
+
+export function rollAbilities(pool: string[], count: number, exclude: string[] = []): string[] {
+  const available = pool.filter((a) => !exclude.includes(a));
+  return pickRandom(available, Math.min(count, available.length));
+}
