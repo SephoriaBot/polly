@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useHamsterGrowth } from "./useHamsterGrowth";
+import { useHamsterGrowth } from "./HamsterGrowthContext";
 import { HAMSTERS, imageForForm } from "./hamsters";
 
 function imageFor(hamsterId: string) {
