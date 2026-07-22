@@ -95,14 +95,6 @@ async function handleDelete() {
         {saving ? 'Saving…' : 'Save'}
       </button>
 
-<button
-  className="btn-secondary"
-  onClick={handleDelete}
-  disabled={saving}
-  style={{ marginTop: '0.75rem', marginLeft: '0.5rem' }}
->
-  🗑️ Delete
-</button>
 
     </div>
   );
