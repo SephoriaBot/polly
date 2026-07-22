@@ -109,19 +109,6 @@ export default function Dashboard() {
 
         <StitchDivider />
 
-        {/* ── HAMSTER NEST ── */}
-        <section>
-  <div className="section-label">Hamster Nest</div>
-  <HamsterGrowthProvider>
-    <HamsterNest />
-    <div style={{ marginTop: 12 }}>
-      <HamsterHabitat />
-    </div>
-  </HamsterGrowthProvider>
-</section>
-
-
-        <StitchDivider />
 
         {/* ── TODAY'S FOCUS ── */}
         <section>
@@ -238,6 +225,21 @@ export default function Dashboard() {
             </div>
           )}
         </section>
+
+        <StitchDivider />
+
+        
+        {/* ── HAMSTER NEST ── */}
+        <section>
+  <div className="section-label">Hamster Nest</div>
+  <HamsterGrowthProvider>
+    <HamsterNest />
+    <div style={{ marginTop: 12 }}>
+      <HamsterHabitat />
+    </div>
+  </HamsterGrowthProvider>
+</section>
+
 
         <StitchDivider />
       </div>
