@@ -22,15 +22,13 @@ interface BasicItem { name: string; qty: string }
 
 interface BasicsPreset {
   label: string
-  emoji: string
-  icon?: IconName
+  icon: IconName
   items: BasicItem[]
 }
 
 const BASICS_PRESETS: Record<string, BasicsPreset> = {
   vegan: {
     label: 'Vegan Basics',
-    emoji: '🌱',
     icon: 'apple-carrot',
     items: [
       { name: 'Tofu', qty: '1 block' },
@@ -57,7 +55,6 @@ const BASICS_PRESETS: Record<string, BasicsPreset> = {
   },
   vegetarian: {
     label: 'Vegetarian Basics',
-    emoji: '🥦',
     icon: 'potted-plant',
     items: [
       { name: 'Eggs', qty: '1 dozen' },
@@ -84,7 +81,6 @@ const BASICS_PRESETS: Record<string, BasicsPreset> = {
   },
   budget: {
     label: 'Budget Basics',
-    emoji: '💵',
     icon: 'money-bag',
     items: [
       { name: 'Eggs', qty: '1 dozen' },
@@ -109,7 +105,7 @@ const BASICS_PRESETS: Record<string, BasicsPreset> = {
   },
   baking: {
     label: 'Baking Basics',
-    emoji: '🧁',
+    icon: 'cookbook',
     items: [
       { name: 'All-purpose flour', qty: '5 lb bag' },
       { name: 'Granulated sugar', qty: '4 lb bag' },
@@ -133,7 +129,7 @@ const BASICS_PRESETS: Record<string, BasicsPreset> = {
   },
   breakfast: {
     label: 'Breakfast Basics',
-    emoji: '🥞',
+    icon: 'cooking-pot',
     items: [
       { name: 'Eggs', qty: '1 dozen' },
       { name: 'Bread', qty: '1 loaf' },
@@ -154,7 +150,7 @@ const BASICS_PRESETS: Record<string, BasicsPreset> = {
   },
   spice_rack: {
     label: 'Spice Rack Starter',
-    emoji: '🧂',
+    icon: 'basket',
     items: [
       { name: 'Table salt', qty: '1 container' },
       { name: 'Black pepper', qty: '1 grinder' },
@@ -720,9 +716,7 @@ export default function Grocery() {
               <div className="modal-header">
                 <h3>
                   {basicsPreset
-                    ? <>{BASICS_PRESETS[basicsPreset].icon
-                        ? <Icon name={BASICS_PRESETS[basicsPreset].icon!} size={18} />
-                        : BASICS_PRESETS[basicsPreset].emoji} {BASICS_PRESETS[basicsPreset].label}</>
+                    ? <><Icon name={BASICS_PRESETS[basicsPreset].icon} size={18} /> {BASICS_PRESETS[basicsPreset].label}</>
                     : 'Build a Basics List'}
                 </h3>
                 <button className="close-btn" onClick={() => setShowBasicsModal(false)}><X size={16} /></button>
@@ -746,7 +740,7 @@ export default function Grocery() {
                           }}
                         >
                           <span style={{ fontSize: '1.4rem' }}>
-                            {preset.icon ? <Icon name={preset.icon} size={24} /> : preset.emoji}
+                            <Icon name={preset.icon} size={24} />
                           </span>
                           <div>
                             <div style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--ink)' }}>{preset.label}</div>
