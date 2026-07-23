@@ -1,15 +1,16 @@
 import { useState, useEffect } from 'react';
 import { upsertTrackerLog, getTrackerLog } from '../../lib/trackerApi';
+import Icon, { type IconName } from '../Icon';
 import type { PeriodValue } from '../../types/tracker';
 interface Props {
   date: string;
   onSaved?: () => void;
 }
 
-const MOODS: { value: PeriodValue['mood']; label: string }[] = [
-  { value: 'good', label: '🙂 Good' },
-  { value: 'ok', label: '😐 Ok' },
-  { value: 'bad', label: '🙁 Bad' },
+const MOODS: { value: PeriodValue['mood']; label: string; icon: IconName }[] = [
+  { value: 'good', label: 'Good', icon: 'mood-happy' },
+  { value: 'ok', label: 'Ok', icon: 'mood-neutral' },
+  { value: 'bad', label: 'Bad', icon: 'mood-sad' },
 ];
 
 export default function PeriodLogForm({ date, onSaved }: Props) {
@@ -62,7 +63,7 @@ export default function PeriodLogForm({ date, onSaved }: Props) {
             className={mood === m.value ? 'btn-primary' : 'btn-secondary'}
             onClick={() => setMood(m.value)}
           >
-            {m.label}
+            <Icon name={m.icon} size={16} /> {m.label}
           </button>
         ))}
       </div>
@@ -85,14 +86,14 @@ export default function PeriodLogForm({ date, onSaved }: Props) {
           className={bleedingStart ? 'btn-primary' : 'btn-secondary'}
           onClick={() => setBleedingStart((v) => !v)}
         >
-          🩸 Period started today
+          <Icon name="heart-medical" size={16} /> Period started today
         </button>
         <button
           type="button"
           className={bleedingEnd ? 'btn-primary' : 'btn-secondary'}
           onClick={() => setBleedingEnd((v) => !v)}
         >
-          ✅ Period ended today
+          <Icon name="clipboard-check" size={16} /> Period ended today
         </button>
       </div>
 
