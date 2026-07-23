@@ -115,8 +115,8 @@ Include 4–8 supplies, a realistic time estimate, and 6–10 steps in logical c
             {error && (
               <div style={{
                 marginBottom: 16, padding: '10px 14px', borderRadius: 12,
-                background: 'var(--white)', border: '1.5px solid #fecaca',
-                fontSize: '0.85rem', color: '#b91c1c'
+                background: 'var(--white)', border: '1.5px solid #E6A8C8',
+                fontSize: '0.85rem', color: '#DAD0F7'
               }}>
                 {error}
               </div>
@@ -285,7 +285,7 @@ Include 4–8 supplies, a realistic time estimate, and 6–10 steps in logical c
                         <div key={i} style={{
                           display: 'flex', alignItems: 'center', gap: 10,
                           padding: '8px 10px', borderRadius: 10,
-                          background: 'linear-gradient(135deg, var(--cream), var(--blush))',
+                          background: 'linear-gradient(135deg, var(--cream), var(--pink-dark))',
                           border: '1px solid #f6cfd6',
                           fontSize: '0.84rem', color: 'var(--ink)',
                         }}>
@@ -303,7 +303,7 @@ Include 4–8 supplies, a realistic time estimate, and 6–10 steps in logical c
             {allDone && (
               <div style={{
                 marginTop: 24, padding: '16px 20px', borderRadius: 16, textAlign: 'center',
-                background: 'linear-gradient(135deg, var(--cream), var(--blush))',
+                background: 'linear-gradient(135deg, var(--cream), var(--pink-dark))',
                 border: '1.5px solid #e8a0ac',
               }}>
                 <div style={{ fontSize: '1.5rem', marginBottom: 6 }}><Icon name="sparkles-cluster" size={28} /></div>
