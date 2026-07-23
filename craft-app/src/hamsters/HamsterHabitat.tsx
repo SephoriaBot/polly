@@ -156,8 +156,8 @@ export default function HamsterHabitat() {
 
                 {selected.personality ? (
                   <div style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: 12, marginBottom: 8 }}>
-                    <div style={{ color: "var(--green-dark)", fontWeight: 600 }}>✓ {selected.personality.good[0]}</div>
-                    <div style={{ color: "var(--green-dark)", fontWeight: 600 }}>✓ {selected.personality.good[1]}</div>
+                    <div style={{ color: "var(--green-dark)", fontWeight: 600 }}><Icon name="clipboard-check" size={14} /> {selected.personality.good[0]}</div>
+                    <div style={{ color: "var(--green-dark)", fontWeight: 600 }}><Icon name="clipboard-check" size={14} /> {selected.personality.good[1]}</div>
                     <div style={{ color: "var(--pink-dark)", fontWeight: 600 }}><Icon name="lightning" size={14} /> {selected.personality.quirk}</div>
                   </div>
                 ) : (
