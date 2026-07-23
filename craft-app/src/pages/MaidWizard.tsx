@@ -278,7 +278,7 @@ Include 4–8 supplies, a realistic time estimate, and 6–10 steps in logical c
                 <div style={{ fontWeight: 700, fontSize: '0.8rem', color: 'var(--ink-soft)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 12 }}>
                   <Icon name="cleaning-spray" size={14} /> Supplies
                 </div>
-                <div className="card" style={{ borderRadius: 16, border: '1.5px solid #f6cfd6' }}>
+                <div className="card" style={{ borderRadius: 16, border: '1.5px solid #FFF8DE' }}>
                   <div className="card-body">
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                       {plan.supplies.map((supply, i) => (
