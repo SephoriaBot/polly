@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { supabase } from '../../lib/supabase'
+import Icon from '../Icon'
 import {
   Salad, X, RotateCcw, Sparkles, ChevronLeft, ChevronRight,
   CheckCircle2, ShoppingCart, Check,
@@ -260,7 +261,7 @@ Never mention calories, macros, or specific weight numbers. If the goal involves
             background: '#fdf7ff', border: '1.5px solid #ecdcfb',
             fontSize: '0.76rem', color: 'var(--ink-muted)', lineHeight: 1.5,
           }}>
-            🥗 General guidance only — not medical or clinical advice. For a health condition, pregnancy, or anything more specific, please check with a doctor or registered dietitian.
+            <Icon name="apple-carrot" size={16} /> General guidance only — not medical or clinical advice. For a health condition, pregnancy, or anything more specific, please check with a doctor or registered dietitian.
           </div>
 
           {wizardState === 'quiz' && (
