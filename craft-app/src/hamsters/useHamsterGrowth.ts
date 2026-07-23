@@ -13,6 +13,7 @@
 
 import { useEffect, useState, useCallback, useRef } from "react";
 import { supabase } from "../lib/supabase"; // match your actual client path
+import type { IconName } from "../components/Icon";
 import { rollRandomHamster, rollTeenForm, rollFinalForm } from "./hamsters";
 import type { Hamster, EvolutionStage } from "./hamsters";
 import { rollPersonality, rollAbilities, TEEN_ABILITIES, FINAL_ABILITIES } from "./personalities";
@@ -63,13 +64,13 @@ export interface PointsLogEntry {
   createdAt: string;
 }
 
-export const SOURCE_LABELS: Record<string, string> = {
-  bill_paid_on_time: "🏠 Bill paid on time",
-  debt_payment_logged: "💳 Debt payment",
-  debt_paid_off: "🎉 Debt paid off",
-  savings_contribution: "🏦 Savings contribution",
-  tracker_log_entry: "📓 Tracker log",
-  daily_task_list_complete: "✅ Full task list",
+export const SOURCE_LABELS: Record<string, { text: string; icon: IconName }> = {
+  bill_paid_on_time: { text: "Bill paid on time", icon: "house" },
+  debt_payment_logged: { text: "Debt payment", icon: "calculator-hearts" },
+  debt_paid_off: { text: "Debt paid off", icon: "trophy" },
+  savings_contribution: { text: "Savings contribution", icon: "piggy-bank" },
+  tracker_log_entry: { text: "Tracker log", icon: "notebook-pen" },
+  daily_task_list_complete: { text: "Full task list", icon: "clipboard-check" },
 };
 
 export function useHamsterGrowthState() {
