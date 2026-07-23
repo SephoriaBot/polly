@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import Icon from '../components/Icon';
 import SleepLogForm from '../components/tracker/SleepLogForm';
 import PeriodLogForm from '../components/tracker/PeriodLogForm';
 import WeightLogForm from '../components/tracker/WeightLogForm';
@@ -63,7 +64,7 @@ export default function TrackerPage() {
 
       {cycleDay !== null && (
         <div className="card" style={{ background: 'var(--blush)' }}>
-          🌸 Day {cycleDay} of your cycle{periodEnded ? ' · period ended' : ''}
+          <Icon name="flower" size={16} /> Day {cycleDay} of your cycle{periodEnded ? ' · period ended' : ''}
         </div>
       )}
 
@@ -74,7 +75,9 @@ export default function TrackerPage() {
             className={activeType === type ? 'btn-primary' : 'btn-secondary'}
             onClick={() => setActiveType(type)}
           >
-            {TRACKER_CONFIG[type].emoji} {TRACKER_CONFIG[type].label}
+            {TRACKER_CONFIG[type].icon
+              ? <Icon name={TRACKER_CONFIG[type].icon!} size={16} />
+              : TRACKER_CONFIG[type].emoji} {TRACKER_CONFIG[type].label}
           </button>
         ))}
         <button
