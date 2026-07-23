@@ -8,7 +8,7 @@
 .tracker-page {
   --tp-cream: var(--color-cream, #fbf5ec);
   --tp-sage: var(--color-sage, #97a97c);
-  --tp-peach: var(--color-peach, #f3c6a5);
+  --tp-peach: var(--color-gold-light, #FFF8DE);
   --tp-lavender: var(--color-lavender, #c9b6db);
   --tp-ink: var(--color-ink, #4a3f35);
   --tp-line: var(--color-border, #e4d9c8);
