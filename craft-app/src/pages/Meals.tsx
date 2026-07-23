@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import Icon from '../components/Icon'
 import type { WeekPlan } from '../types/legacy'
 import { supabase } from '../lib/supabase'
 import {
@@ -209,7 +210,7 @@ export default function Meals() {
   return (
     <div>
       <div className="page-header">
-        <h2>Meals 🍽️</h2>
+        <h2>Meals <Icon name="cookbook" size={22} /></h2>
       </div>
 
       <div className="page-body">
