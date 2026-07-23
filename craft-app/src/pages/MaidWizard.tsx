@@ -135,11 +135,11 @@ Include 4–8 supplies, a realistic time estimate, and 6–10 steps in logical c
                     background: 'var(--surface)',
                     transition: 'all 0.15s ease',
                     textAlign: 'left',
-                    color: 'var(--ink-soft)',
+                    color: 'var(--pink-dark)',
                     boxShadow: '0 1px 4px rgba(232,160,172,0.08)',
                   }}
                   onMouseEnter={e => {
-                    e.currentTarget.style.borderColor = '#e8a0ac'
+                    e.currentTarget.style.borderColor = '#DAD0F7'
                     e.currentTarget.style.boxShadow = '0 2px 10px rgba(232,160,172,0.2)'
                     e.currentTarget.style.transform = 'translateY(-1px)'
                   }}
@@ -172,7 +172,7 @@ Include 4–8 supplies, a realistic time estimate, and 6–10 steps in logical c
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               animation: 'gentlePulse 1.4s ease-in-out infinite',
             }}>
-              <Sparkles size={24} style={{ color: '#b56575' }} />
+              <Sparkles size={24} style={{ color: '#DAD0F7' }} />
             </div>
             <p style={{ fontSize: '0.9rem', color: 'var(--ink-muted)', fontStyle: 'italic' }}>
               Building your {room?.label.toLowerCase()} cleaning plan…
@@ -192,8 +192,8 @@ Include 4–8 supplies, a realistic time estimate, and 6–10 steps in logical c
 
             <div style={{
               padding: '16px 20px', borderRadius: 16, marginBottom: 20,
-              background: 'linear-gradient(135deg, #fbe1e5, #ffe0d1)',
-              border: '1.5px solid #f6cfd6',
+              background: 'linear-gradient(135deg, --white, --gold-light)',
+              border: '1.5px solid --gold-light',
               display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -202,12 +202,12 @@ Include 4–8 supplies, a realistic time estimate, and 6–10 steps in logical c
                   <div style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--ink)' }}>
                     {room?.label} Deep Clean
                   </div>
-                  <div style={{ fontSize: '0.78rem', color: '#b56575' }}>
+                  <div style={{ fontSize: '0.78rem', color: '#DAD0F7' }}>
                     {allDone ? <><Icon name="flower" size={14} /> All done! Amazing work~</> : `${doneCount} of ${totalSteps} steps done`}
                   </div>
                 </div>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#b56575', fontWeight: 600, fontSize: '0.88rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#DAD0F7', fontWeight: 600, fontSize: '0.88rem' }}>
                 <Clock size={15} />
                 ~{plan.estimatedMinutes} min
               </div>
@@ -250,14 +250,14 @@ Include 4–8 supplies, a realistic time estimate, and 6–10 steps in logical c
                     >
                       <div style={{ flexShrink: 0, marginTop: 1 }}>
                         {done
-                          ? <CheckCircle2 size={17} style={{ color: '#b56575' }} />
+                          ? <CheckCircle2 size={17} style={{ color: '#DAD0F7' }} />
                           : <Circle size={17} style={{ color: 'var(--border)' }} />
                         }
                       </div>
                       <div>
                         <div style={{
                           fontWeight: 600, fontSize: '0.86rem',
-                          color: done ? '#b56575' : 'var(--ink)',
+                          color: done ? '#DAD0F7' : 'var(--ink)',
                           textDecoration: done ? 'line-through' : 'none',
                           transition: 'all 0.2s ease',
                         }}>
@@ -289,7 +289,7 @@ Include 4–8 supplies, a realistic time estimate, and 6–10 steps in logical c
                           border: '1px solid #f6cfd6',
                           fontSize: '0.84rem', color: 'var(--ink)',
                         }}>
-                          <Package size={13} style={{ color: '#b56575', flexShrink: 0 }} />
+                          <Package size={13} style={{ color: '#DAD0F7', flexShrink: 0 }} />
                           {supply}
                         </div>
                       ))}
@@ -307,7 +307,7 @@ Include 4–8 supplies, a realistic time estimate, and 6–10 steps in logical c
                 border: '1.5px solid #e8a0ac',
               }}>
                 <div style={{ fontSize: '1.5rem', marginBottom: 6 }}><Icon name="sparkles-cluster" size={28} /></div>
-                <div style={{ fontWeight: 700, color: '#b56575', marginBottom: 4 }}>Spotless! You did it!</div>
+                <div style={{ fontWeight: 700, color: '#DAD0F7', marginBottom: 4 }}>Spotless! You did it!</div>
                 <div style={{ fontSize: '0.82rem', color: 'var(--ink-muted)' }}>Your {room?.label.toLowerCase()} is sparkling clean.</div>
                 <button
                   onClick={reset}
