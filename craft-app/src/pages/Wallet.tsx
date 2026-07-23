@@ -1422,9 +1422,10 @@ export default function Wallet() {
                           {b.paid
                             ? <span className="badge badge-green">PAID</span>
                             : b.late ? <span className="badge" style={{ background: "var(--danger-bg)", color: "var(--danger)" }}>LATE</span>
+                            : b.days === 0 ? <span className="badge badge-lavender">DUE TODAY</span>
                             : b.days <= 3 ? <span className="badge badge-lavender">DUE SOON</span>
                             : <span className="badge badge-pink">{b.days}d away</span>}
-                        </td>
+                            </td>
                         <td style={{ padding: "9px 8px" }}>
                           <button className="btn btn-danger btn-sm" onClick={() => removeBill(b.id)}><Icon name="trash-can" size={13} /></button>
                         </td>
