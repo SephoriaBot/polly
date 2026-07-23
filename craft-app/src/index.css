@@ -4,75 +4,85 @@
 
 [data-theme='light'],
 :root {
-  --bg: #fdf3f6;              /* soft pastel pink wash, not flooded */
-  --surface: #fffdfb;         /* creamy white for cards */
-  --text: #5c3a42;
+  --bg: #F8F6FD;
+  --surface: #FFFFFF;
+  --text: #3F3A5C;
 
-  --primary: #f6cddb;         /* pastel pink, dialed back */
-  --secondary: #faf3e3;       /* cream, replaces strawberry/peach */
-  --accent: #f0dfc0;          /* pale gold-cream wash for fills/highlights */
-  --mint: #00674F;            /* emerald green accent */
+  --primary: #DAD0F7;
+  --secondary: #EDD0F7;
+  --accent: #D0DAF7;
+  --mint: #A38AEF;
 
-  --border: rgba(230, 180, 195, 0.35);
-  --shadow: 0 14px 30px rgba(200, 140, 160, 0.12);
+  --border: rgba(218,208,247,.55);
+  --shadow: 0 14px 30px rgba(126,58,219,.10);
 
-  --ink: #5c3a42;
-  --ink-soft: #8a5c68;
-  --ink-muted: #bfa0a8;
+  --ink: #3F3A5C;
+  --ink-soft: #6E6893;
+  --ink-muted: #AAA5C4;
 
-  --white: #ffffff;
-  --cream: #fdf6ec;
-  --blush: #fce3ec;
-  --green-dark: #2f6b4f;
-  --citrus-blue: #3b82c4;
-  --sage: #8ba888;
-  --sage-dark: #5f7a5c;
-  --sage-light: #e8efe6;
-  --pink: #eab8c8;
-  --pink-dark: #c96f89;       /* kept legible — used as text/border in Wallet & focus checkboxes */
-  --pink-light: #fce3ec;
-  --sky: #6BBFD4;
-  --gold: #d4a94f;            /* slightly warmer/more metallic for sparkle */
-  --gold-dark: #8B6000;
-  --gold-light: #FEFBE8;
-  --danger: #C0404A;
-  --danger-bg: #FDE8E8;
+  --white: #FFFFFF;
+  --cream: #F8F6FD;
+  --blush: #F3EEFC;
+
+  --green-dark: #5F6FB8;
+  --citrus-blue: #7D8EF2;
+  --sage: #C8D4F8;
+  --sage-dark: #8A95D6;
+  --sage-light: #EFF3FF;
+
+  --pink: #D5B9F7;
+  --pink-dark: #8B5CF6;
+  --pink-light: #F5EEFF;
+
+  --sky: #B9C8FF;
+
+  --gold: #DCCFFF;
+  --gold-dark: #B8A4F5;
+  --gold-light: #F8F4FF;
+
+  --danger: #D45C7D;
+  --danger-bg: #FCEAF1;
 }
 
 [data-theme='dark'] {
-  --bg: #241b2f;
-  --surface: #322640;
-  --text: #f0e6d2;
+  --bg: #181635;
+  --surface: #24214B;
+  --text: #F2F1FF;
 
-  --primary: #6b4d5c;
-  --secondary: #8a5f3f;
-  --accent: #3a2a38;   /* dark muted rose, was acting as a light patch on dark bg */
-  --mint: #3c2f4d;
+  --primary: #31125B;
+  --secondary: #7E3ADB;
+  --accent: #5F63F3;
+  --mint: #9B8EFF;
 
-  --border: rgba(217, 139, 163, 0.25);
-  --shadow: 0 14px 30px rgba(0, 0, 0, 0.45);
+  --border: rgba(140,132,220,.28);
+  --shadow: 0 14px 30px rgba(0,0,0,.45);
 
-  --ink: #f0e6d2;
-  --ink-soft: #d9c9b8;
-  --ink-muted: #9a8a94;
+  --ink: #F2F1FF;
+  --ink-soft: #C7C2E8;
+  --ink-muted: #9E99C5;
 
-  --white: #322640;
-  --cream: #3c2f4d;
-  --blush: #4a3b5c;
-  --green-dark: #6fae8a;
-  --citrus-blue: #6ba8d8;
-  --sage: #a3c4a0;
-  --sage-dark: #7fa07c;
-  --sage-light: #2f3a2d;
-  --pink: #d98ba3;
-  --pink-dark: #e8a8bc;
-  --pink-light: #4a3547;
-  --sky: #8fd4e8;
-  --gold: #e0a85c;
-  --gold-dark: #f0c078;
-  --gold-light: #3d3222;
-  --danger: #e0707a;
-  --danger-bg: #4a2426;
+  --white: #24214B;
+  --cream: #2D2958;
+  --blush: #383367;
+
+  --green-dark: #8E97F2;
+  --citrus-blue: #8093FF;
+  --sage: #7D86E8;
+  --sage-dark: #5F68C2;
+  --sage-light: #34306A;
+
+  --pink: #9E7AFF;
+  --pink-dark: #C8B7FF;
+  --pink-light: #4A457F;
+
+  --sky: #AAB8FF;
+
+  --gold: #8E7AFF;
+  --gold-dark: #B39CFF;
+  --gold-light: #3A3560;
+
+  --danger: #F07E99;
+  --danger-bg: #4A2536;
 }
 
 /* Light mode: soft gold-tinted glow on hover */
