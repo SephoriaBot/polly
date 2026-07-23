@@ -6,12 +6,12 @@
    ============================================================ */
 
 .tracker-page {
-  --tp-cream: var(--color-cream, #fbf5ec);
-  --tp-sage: var(--color-sage, #97a97c);
-  --tp-peach: var(--color-gold-light, #FFF8DE);
-  --tp-lavender: var(--color-lavender, #c9b6db);
-  --tp-ink: var(--color-ink, #4a3f35);
-  --tp-line: var(--color-border, #e4d9c8);
+  --tp-cream: var(--cream);
+  --tp-sage: var(--sage-dark);
+  --tp-peach: var(--gold-light);
+  --tp-lavender: var(--primary);
+  --tp-ink: var(--text);
+  --tp-line: var(--border);
 
   max-width: 640px;
   margin: 0 auto;
@@ -35,7 +35,7 @@
 
 .tracker-page__manage-btn {
   border: 1px solid var(--tp-line);
-  background: #fff;
+  background: var(--surface);
   border-radius: 999px;
   padding: 6px 14px;
   font-size: 0.85rem;
@@ -74,7 +74,7 @@
   padding: 14px 8px;
   border-radius: 14px;
   border: 2px solid var(--tp-line);
-  background: #fff;
+  background: var(--surface);
   cursor: pointer;
   transition: transform 0.12s ease, border-color 0.12s ease;
 }
@@ -85,7 +85,7 @@
 
 .tracker-option--selected {
   border-color: var(--tp-sage);
-  background: #f4f8ef;
+  background: var(--sage-light);
 }
 
 .tracker-option__emoji {
@@ -116,7 +116,7 @@
 
 .tracker-card {
   position: relative;
-  background: #fff;
+  background: var(--surface);
   border: 1px solid var(--tp-line);
   border-radius: 14px;
   margin-bottom: 14px;
@@ -197,7 +197,7 @@
   border-radius: 8px;
   padding: 6px 8px;
   font-size: 0.9rem;
-  background: #fff;
+  background: var(--surface);
   color: var(--tp-ink);
   min-width: 0;
 }
@@ -222,7 +222,7 @@
   gap: 8px;
   border: 1px solid var(--tp-line);
   border-radius: 8px;
-  background: #fff;
+  background: var(--surface);
   padding: 4px 8px;
   font-size: 0.85rem;
 }
@@ -268,7 +268,7 @@
   padding: 5px 12px;
   border-radius: 999px;
   border: 1px solid var(--tp-line);
-  background: #fff;
+  background: var(--surface);
   color: var(--tp-ink);
   cursor: pointer;
   opacity: 0.75;
@@ -288,7 +288,7 @@
   padding: 8px 10px;
   font-size: 0.85rem;
   font-family: inherit;
-  background: #fff;
+  background: var(--surface);
   color: var(--tp-ink);
   resize: vertical;
   min-height: 40px;
@@ -382,7 +382,7 @@
 }
 
 .tracker-entry-row__tag {
-  background: #fff;
+  background: var(--surface);
   border: 1px solid var(--tp-line);
   border-radius: 999px;
   padding: 2px 8px;
@@ -409,7 +409,7 @@
 }
 
 .correlation-card {
-  background: #fff;
+  background: var(--surface);
   border: 1px solid var(--tp-line);
   border-radius: 14px;
   padding: 14px 16px 6px;

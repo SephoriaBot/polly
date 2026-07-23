@@ -30,12 +30,12 @@ interface Spark {
 // (pink-light / primary / secondary / accent / mint / gold-light)
 // instead of a one-off hex set, so the celebration matches the theme.
 const SPARK_COLORS = [
-  '#fbe1e5', // pink-light
-  '#f6cfd6', // primary (soft pink)
-  '#f7b89c', // secondary (apricot)
-  '#e8a0ac', // accent (pale rose)
-  '#f9dde2', // mint (dusty rose accent)
-  '#FEFBE8', // gold-light
+  'var(--pink-light)',
+  'var(--primary)',
+  'var(--secondary)',
+  'var(--pink-dark)',
+  'var(--mint)',
+  'var(--gold-light)',
 ];
 
 function StitchDivider() {

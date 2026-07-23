@@ -11,14 +11,14 @@
 }
 
 .headerIcon {
-  color: var(--an-apricot, #f3a26d);
+  color: var(--an-apricot, #DAD0F7);
 }
 
 .headerLabel {
   font-family: 'Fraunces', serif;
   font-weight: 600;
   font-size: 22px;
-  color: var(--an-ink, #4a3f35);
+  color: var(--an-ink, #3F3A5C);
 }
 
 .actionRow {
@@ -36,9 +36,9 @@
   font-size: 12px;
   padding: 8px 14px;
   border-radius: 999px;
-  border: 1px dashed var(--an-apricot, #f3a26d);
-  background: var(--an-apricot-soft, #fbe3d0);
-  color: var(--an-ink, #4a3f35);
+  border: 1px dashed var(--an-apricot, #DAD0F7);
+  background: var(--an-apricot-soft, #F3EEFC);
+  color: var(--an-ink, #3F3A5C);
   cursor: pointer;
 }
 
@@ -50,8 +50,8 @@
   font-size: 12px;
   padding: 8px 14px;
   border-radius: 999px;
-  border: 1px dashed var(--an-ink-soft, #8c7c6e);
-  background: var(--an-cream, #fbf6ef);
-  color: var(--an-ink, #4a3f35);
+  border: 1px dashed var(--an-ink-soft, #6E6893);
+  background: var(--an-cream, #F8F6FD);
+  color: var(--an-ink, #3F3A5C);
   cursor: pointer;
 }

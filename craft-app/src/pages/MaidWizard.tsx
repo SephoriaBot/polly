@@ -115,7 +115,7 @@ Include 4–8 supplies, a realistic time estimate, and 6–10 steps in logical c
             {error && (
               <div style={{
                 marginBottom: 16, padding: '10px 14px', borderRadius: 12,
-                background: 'var(--white)', border: '1.5px solid #FFF8DE',
+                background: 'var(--white)', border: '1.5px solid var(--gold-light)',
                 fontSize: '0.85rem', color: 'var(--pink-dark)'
               }}>
                 {error}
@@ -139,7 +139,7 @@ Include 4–8 supplies, a realistic time estimate, and 6–10 steps in logical c
                     boxShadow: '0 1px 4px rgba(232,160,172,0.08)',
                   }}
                   onMouseEnter={e => {
-                    e.currentTarget.style.borderColor = '#DAD0F7'
+                    e.currentTarget.style.borderColor = 'var(--primary)'
                     e.currentTarget.style.boxShadow = '0 2px 10px rgba(232,160,172,0.2)'
                     e.currentTarget.style.transform = 'translateY(-1px)'
                   }}
@@ -168,11 +168,11 @@ Include 4–8 supplies, a realistic time estimate, and 6–10 steps in logical c
           }}>
             <div className="shape-teddy" style={{
               width: 56, height: 56, borderRadius: '50%',
-              background: 'linear-gradient(135deg, #DAD0F7, #FCEEF5)',
+              background: 'linear-gradient(135deg, var(--primary), var(--pink-light))',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               animation: 'gentlePulse 1.4s ease-in-out infinite',
             }}>
-              <Sparkles size={24} style={{ color: '#FFF8DE' }} />
+              <Sparkles size={24} style={{ color: 'var(--gold-light)' }} />
             </div>
             <p style={{ fontSize: '0.9rem', color: 'var(--ink-muted)', fontStyle: 'italic' }}>
               Building your {room?.label.toLowerCase()} cleaning plan…
@@ -192,7 +192,7 @@ Include 4–8 supplies, a realistic time estimate, and 6–10 steps in logical c
 
             <div style={{
               padding: '16px 20px', borderRadius: 16, marginBottom: 20,
-              background: 'linear-gradient(135deg, #DAD0F7, #FCEEF5)',
+              background: 'linear-gradient(135deg, var(--primary), var(--pink-light))',
               border: '1.5px solid var(--gold-light)',
               display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12
             }}>
@@ -202,12 +202,12 @@ Include 4–8 supplies, a realistic time estimate, and 6–10 steps in logical c
                   <div style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--ink)' }}>
                     {room?.label} Deep Clean
                   </div>
-                  <div style={{ fontSize: '0.78rem', color: '#FFF8DE' }}>
+                  <div style={{ fontSize: '0.78rem', color: 'var(--ink-soft)' }}>
                     {allDone ? <><Icon name="flower" size={14} /> All done! Amazing work~</> : `${doneCount} of ${totalSteps} steps done`}
                   </div>
                 </div>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#DAD0F7', fontWeight: 600, fontSize: '0.88rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--pink-dark)', fontWeight: 600, fontSize: '0.88rem' }}>
                 <Clock size={15} />
                 ~{plan.estimatedMinutes} min
               </div>
@@ -219,8 +219,8 @@ Include 4–8 supplies, a realistic time estimate, and 6–10 steps in logical c
                   height: '100%',
                   width: `${totalSteps > 0 ? (doneCount / totalSteps) * 100 : 0}%`,
                   background: allDone
-                    ? 'linear-gradient(90deg, #DAD0F7, #FCEEF5)'
-                    : 'linear-gradient(90deg, #DAD0F7, #FCEEF5)',
+                    ? 'linear-gradient(90deg, var(--primary), var(--pink-light))'
+                    : 'linear-gradient(90deg, var(--primary), var(--pink-light))',
                   borderRadius: 99,
                   transition: 'width 0.4s ease',
                 }} />
@@ -242,22 +242,22 @@ Include 4–8 supplies, a realistic time estimate, and 6–10 steps in logical c
                       style={{
                         display: 'flex', alignItems: 'flex-start', gap: 10,
                         padding: '12px 14px', borderRadius: 14, cursor: 'pointer',
-                        background: done ? 'linear-gradient(135deg, #DAD0F7, #FCEEF5)' : 'var(--cream)',
-                        border: `1.5px solid ${done ? '#e8a0ac' : 'var(--border)'}`,
+                        background: done ? 'linear-gradient(135deg, var(--primary), var(--pink-light))' : 'var(--cream)',
+                        border: `1.5px solid ${done ? 'var(--pink-dark)' : 'var(--border)'}`,
                         transition: 'all 0.2s ease',
                         boxShadow: done ? '0 1px 6px rgba(232,160,172,0.15)' : 'none',
                       }}
                     >
                       <div style={{ flexShrink: 0, marginTop: 1 }}>
                         {done
-                          ? <CheckCircle2 size={17} style={{ color: '#FFF8DE' }} />
+                          ? <CheckCircle2 size={17} style={{ color: 'var(--pink-dark)' }} />
                           : <Circle size={17} style={{ color: 'var(--border)' }} />
                         }
                       </div>
                       <div>
                         <div style={{
                           fontWeight: 600, fontSize: '0.86rem',
-                          color: done ? '#FFF8DE' : 'var(--ink)',
+                          color: done ? 'var(--ink-soft)' : 'var(--ink)',
                           textDecoration: done ? 'line-through' : 'none',
                           transition: 'all 0.2s ease',
                         }}>
@@ -278,18 +278,18 @@ Include 4–8 supplies, a realistic time estimate, and 6–10 steps in logical c
                 <div style={{ fontWeight: 700, fontSize: '0.8rem', color: 'var(--ink-soft)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 12 }}>
                   <Icon name="cleaning-spray" size={14} /> Supplies
                 </div>
-                <div className="card" style={{ borderRadius: 16, border: '1.5px solid #FFF8DE' }}>
+                <div className="card" style={{ borderRadius: 16, border: '1.5px solid var(--gold-light)' }}>
                   <div className="card-body">
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                       {plan.supplies.map((supply, i) => (
                         <div key={i} style={{
                           display: 'flex', alignItems: 'center', gap: 10,
                           padding: '8px 10px', borderRadius: 10,
-                          background: 'linear-gradient(135deg, #DAD0F7, #FCEEF5)',
-                          border: '1px solid #FFF8DE',
+                          background: 'linear-gradient(135deg, var(--primary), var(--pink-light))',
+                          border: '1px solid var(--gold-light)',
                           fontSize: '0.84rem', color: 'var(--ink)',
                         }}>
-                          <Package size={13} style={{ color: '#DAD0F7', flexShrink: 0 }} />
+                          <Package size={13} style={{ color: 'var(--pink-dark)', flexShrink: 0 }} />
                           {supply}
                         </div>
                       ))}
@@ -303,17 +303,17 @@ Include 4–8 supplies, a realistic time estimate, and 6–10 steps in logical c
             {allDone && (
               <div style={{
                 marginTop: 24, padding: '16px 20px', borderRadius: 16, textAlign: 'center',
-                background: 'linear-gradient(135deg, #DAD0F7, #FCEEF5)',
-                border: '1.5px solid #FFF8DE',
+                background: 'linear-gradient(135deg, var(--primary), var(--pink-light))',
+                border: '1.5px solid var(--gold-light)',
               }}>
                 <div style={{ fontSize: '1.5rem', marginBottom: 6 }}><Icon name="sparkles-cluster" size={28} /></div>
-                <div style={{ fontWeight: 700, color: '#DAD0F7', marginBottom: 4 }}>Spotless! Great job.</div>
+                <div style={{ fontWeight: 700, color: 'var(--ink)', marginBottom: 4 }}>Spotless! Great job.</div>
                 <div style={{ fontSize: '0.82rem', color: 'var(--ink-muted)' }}>Your {room?.label.toLowerCase()} is sparkling clean.</div>
                 <button
                   onClick={reset}
                   style={{
                     marginTop: 12, padding: '8px 20px', borderRadius: 12, cursor: 'pointer',
-                    background: 'linear-gradient(135deg, #DAD0F7, #FCEEF5)',
+                    background: 'linear-gradient(135deg, var(--primary), var(--pink-light))',
                     border: 'none', color: 'var(--white)', fontWeight: 600, fontSize: '0.85rem',
                   }}
                 >

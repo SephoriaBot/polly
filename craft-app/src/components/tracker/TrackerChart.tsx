@@ -132,7 +132,7 @@ export default function TrackerChart({ type, startDate, endDate, refreshKey }: P
               <XAxis dataKey="date" fontSize={12} />
               <YAxis fontSize={12} />
               <Tooltip />
-              <Bar dataKey="hours" fill="#2f6b4f" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="hours" fill="var(--green-dark)" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
 
@@ -143,7 +143,7 @@ export default function TrackerChart({ type, startDate, endDate, refreshKey }: P
               <XAxis dataKey="date" fontSize={12} />
               <YAxis domain={[1, 5]} fontSize={12} />
               <Tooltip />
-              <Line type="monotone" dataKey="quality" stroke="#5f7a5c" strokeWidth={2} dot={{ r: 4 }} />
+              <Line type="monotone" dataKey="quality" stroke="var(--sage-dark)" strokeWidth={2} dot={{ r: 4 }} />
             </LineChart>
           </ResponsiveContainer>
         </div>
@@ -179,12 +179,12 @@ export default function TrackerChart({ type, startDate, endDate, refreshKey }: P
               <XAxis dataKey="date" fontSize={12} />
               <YAxis domain={[1, 3]} ticks={[1, 2, 3]} fontSize={12} />
               <Tooltip />
-              <Line type="monotone" dataKey="mood" stroke="#e0789a" strokeWidth={2} dot={{ r: 4 }} />
+              <Line type="monotone" dataKey="mood" stroke="var(--pink-dark)" strokeWidth={2} dot={{ r: 4 }} />
               {markers.map((m, i) => (
                 <ReferenceLine
                   key={i}
                   x={m.date}
-                  stroke={m.kind === 'start' ? '#e0789a' : '#8ba888'}
+                  stroke={m.kind === 'start' ? 'var(--pink-dark)' : 'var(--sage-dark)'}
                   strokeDasharray="4 4"
                   label={iconRefLabel(m.kind === 'start' ? 'heart-medical' : 'clipboard-check')}
                 />
@@ -212,7 +212,7 @@ export default function TrackerChart({ type, startDate, endDate, refreshKey }: P
             <XAxis dataKey="date" fontSize={12} />
             <YAxis fontSize={12} />
             <Tooltip />
-            <Line type="monotone" dataKey="weight" stroke="#3b2f2a" strokeWidth={2} dot={{ r: 4 }} />
+            <Line type="monotone" dataKey="weight" stroke="var(--ink)" strokeWidth={2} dot={{ r: 4 }} />
           </LineChart>
         </ResponsiveContainer>
       </div>

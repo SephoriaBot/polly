@@ -8,18 +8,18 @@
   --an-cream: #F8F6FD;
   --an-card: #FFFFFF;
 
-  --an-apricot: #DAD0F7;       /* lavender primary */
-  --an-apricot-soft: #F3EEFC;  /* soft lavender */
+  --an-apricot: var(--primary, #DAD0F7);
+  --an-apricot-soft: var(--blush, #F3EEFC);
 
-  --an-rose: #E6A8C8;          /* new soft pink */
-  --an-rose-soft: #FCEEF5;     /* pale pink */
+  --an-rose: var(--pink-dark, #D98FB5);
+  --an-rose-soft: var(--pink-light, #F5EEFF);
 
-  --an-ink: #3F3A5C;
-  --an-ink-soft: #706A93;
+  --an-ink: var(--text, #3F3A5C);
+  --an-ink-soft: var(--ink-soft, #6E6893);
 
-  --an-line: #E7E2F7;
+  --an-line: var(--border, #E7E2F7);
 
-  --an-covered-green: #A7B8E8; /* soft periwinkle accent */
+  --an-covered-green: var(--sky, #B9C8FF);
 }
 
 .wrapper {
@@ -147,7 +147,7 @@
   font-family: 'IBM Plex Mono', monospace;
   font-size: 10.5px;
   color: var(--an-ink);
-  background: #fff;
+  background: var(--an-card, #FFFFFF);
   border: 1px solid var(--an-line);
   border-radius: 8px;
   padding: 4px 8px;
@@ -170,7 +170,7 @@
   font-size: 14px;
   color: var(--an-ink);
   outline: none;
-  background: #fff;
+  background: var(--an-card, #FFFFFF);
 }
 
 .homeworkInput {

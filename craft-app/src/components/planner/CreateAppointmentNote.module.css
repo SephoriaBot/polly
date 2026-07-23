@@ -1,11 +1,11 @@
 .panel {
-  background: var(--an-apricot-soft, #fbe3d0);
-  border: 1px solid var(--an-apricot, #f3a26d);
+  background: var(--an-apricot-soft, #F3EEFC);
+  border: 1px solid var(--an-apricot, #DAD0F7);
   border-radius: 18px;
   padding: 18px 20px;
   margin-bottom: 16px;
   font-family: 'Nunito Sans', sans-serif;
-  color: var(--an-ink, #4a3f35);
+  color: var(--an-ink, #3F3A5C);
 }
 
 .sectionLabel {
@@ -31,18 +31,18 @@
   gap: 4px;
   padding: 8px 12px;
   border-radius: 10px;
-  border: 1px solid var(--an-line, #efe4d6);
+  border: 1px solid var(--an-line, #E7E2F7);
   background: transparent;
   font-family: 'Nunito Sans', sans-serif;
   font-size: 13px;
-  color: var(--an-ink, #4a3f35);
+  color: var(--an-ink, #3F3A5C);
   cursor: pointer;
   text-transform: capitalize;
 }
 
 .typeChipActive {
-  border: 1.5px solid var(--an-ink, #4a3f35);
-  background: #fff;
+  border: 1.5px solid var(--an-ink, #3F3A5C);
+  background: var(--an-card, #FFFFFF);
 }
 
 .typeChipAdd {
@@ -51,11 +51,11 @@
   gap: 4px;
   padding: 8px 12px;
   border-radius: 10px;
-  border: 1px dashed var(--an-ink-soft, #8c7c6e);
+  border: 1px dashed var(--an-ink-soft, #6E6893);
   background: transparent;
   font-family: 'IBM Plex Mono', monospace;
   font-size: 12px;
-  color: var(--an-ink, #4a3f35);
+  color: var(--an-ink, #3F3A5C);
   cursor: pointer;
 }
 
@@ -67,21 +67,21 @@
 
 .customTypeInput {
   flex: 1;
-  border: 1px solid var(--an-line, #efe4d6);
+  border: 1px solid var(--an-line, #E7E2F7);
   border-radius: 10px;
   padding: 8px 10px;
   font-family: 'Nunito Sans', sans-serif;
   font-size: 13px;
-  color: var(--an-ink, #4a3f35);
+  color: var(--an-ink, #3F3A5C);
   outline: none;
-  background: #fff;
+  background: var(--an-card, #FFFFFF);
 }
 
 .smallConfirmButton {
   font-family: 'IBM Plex Mono', monospace;
   font-size: 11px;
-  color: #fff;
-  background: var(--an-ink, #4a3f35);
+  color: var(--an-card, #FFFFFF);
+  background: var(--an-ink, #3F3A5C);
   border: none;
   border-radius: 10px;
   padding: 0 12px;
@@ -96,11 +96,11 @@
   width: 100%;
   padding: 10px 32px 10px 12px;
   border-radius: 12px;
-  border: 1px solid var(--an-line, #efe4d6);
+  border: 1px solid var(--an-line, #E7E2F7);
   font-family: 'Nunito Sans', sans-serif;
   font-size: 14px;
-  color: var(--an-ink, #4a3f35);
-  background: #fff;
+  color: var(--an-ink, #3F3A5C);
+  background: var(--an-card, #FFFFFF);
   appearance: none;
   box-sizing: border-box;
 }
@@ -110,12 +110,12 @@
   right: 12px;
   top: 12px;
   pointer-events: none;
-  color: var(--an-ink-soft, #8c7c6e);
+  color: var(--an-ink-soft, #6E6893);
 }
 
 .helperText {
   font-size: 13px;
-  color: var(--an-ink-soft, #8c7c6e);
+  color: var(--an-ink-soft, #6E6893);
   margin: 4px 0 0;
 }
 
@@ -135,9 +135,9 @@
   flex: 1;
   padding: 9px 0;
   border-radius: 10px;
-  border: 1px solid var(--an-line, #efe4d6);
-  background: #fff;
-  color: var(--an-ink, #4a3f35);
+  border: 1px solid var(--an-line, #E7E2F7);
+  background: var(--an-card, #FFFFFF);
+  color: var(--an-ink, #3F3A5C);
   font-family: 'Nunito Sans', sans-serif;
   font-size: 13px;
   cursor: pointer;
@@ -148,8 +148,8 @@
   padding: 9px 0;
   border-radius: 10px;
   border: none;
-  background: var(--an-ink, #4a3f35);
-  color: #fff;
+  background: var(--an-ink, #3F3A5C);
+  color: var(--an-card, #FFFFFF);
   font-family: 'Nunito Sans', sans-serif;
   font-weight: 700;
   font-size: 13px;
@@ -157,6 +157,6 @@
 }
 
 .confirmButton:disabled {
-  background: var(--an-ink-soft, #8c7c6e);
+  background: var(--an-ink-soft, #6E6893);
   cursor: not-allowed;
 }
