@@ -499,26 +499,27 @@ export default function Grocery() {
     setSavedLists(prev => prev.filter(l => l.id !== id))
   }
 
-  function openShoppingList() {
-    const needItems = items.filter(i => !i.checked)
-    if (!needItems.length) return
-    const listText = needItems.map(i => `${i.qty ? i.qty + ' ' : ''}${i.name}`).join('\n')
-    navigator.clipboard?.writeText(listText).then(() => {
-      window.location.href = 'mobilenotes://'
-      setTimeout(() => {
-        alert('Your list has been copied!\n\nOpen Notes and paste (long-press → Paste) to create your shopping list.')
-      }, 500)
-    }).catch(() => {
-      alert(`Copy failed — here's your list:\n\n${listText}`)
-    })
-  }
+  function openDoorDashList() {
+  const needItems = items.filter(i => !i.checked)
+  if (!needItems.length) return
 
-  function searchOnInstacart(itemId: string, itemName: string) {
-    const query = encodeURIComponent(itemName)
-    window.open(`https://www.instacart.com/store/s?k=${query}`, '_blank')
-    setPriceForm({ store: 'Instacart', price: '' })
-    setExpandedItem(itemId)
-  }
+  const listText = needItems
+    .map(i => `${i.qty ? i.qty + ' ' : ''}${i.name}`)
+    .join('\n')
+
+  navigator.clipboard?.writeText(listText).then(() => {
+    // Open the DoorDash app if installed
+    window.location.href = 'doordash://'
+
+    setTimeout(() => {
+      alert(
+        'Your grocery list has been copied!\n\nOpen DoorDash and paste it into the search or shopping list.'
+      )
+    }, 500)
+  }).catch(() => {
+    alert(`Copy failed — here's your list:\n\n${listText}`)
+  })
+}
 
   function saveLocation(val: string) {
     setLocation(val)
@@ -701,8 +702,8 @@ export default function Grocery() {
           <button className="btn btn-secondary" onClick={() => setShowSaved(!showSaved)}>
             <History size={14} /> Saved Lists {savedLists.length > 0 && `(${savedLists.length})`}
           </button>
-          <button className="btn btn-primary" onClick={openShoppingList} disabled={!needs.length}>
-            <ClipboardList size={14} /> Copy List &amp; Open Notes
+          <button className="btn btn-primary" onClick={openDoorDashList} disabled={!needs.length}>
+          <ClipboardList size={14} /> Copy List &amp; Open DoorDash
           </button>
         </div>
       </div>
