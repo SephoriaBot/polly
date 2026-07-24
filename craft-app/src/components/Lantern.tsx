@@ -1,5 +1,5 @@
 import React from "react";
-import lanternImg from "../docs/images/Lantern.png";
+import lanternImg from "craft-app/docs/images/Lantern.png";
 
 type LanternProps = {
   size?: number;

@@ -61,9 +61,9 @@ export default function TrackerPage() {
 
   return (
     <div>
-      <Lantern size {60} />
+      <Lantern />
       <h1>Tracker</h1>
-      <Lantern size {100} />
+      <Lantern />
 
       {cycleDay !== null && (
         <div className="card" style={{ background: 'var(--blush)' }}>
