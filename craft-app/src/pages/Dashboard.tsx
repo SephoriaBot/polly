@@ -251,6 +251,14 @@ export default function Dashboard() {
   </HamsterGrowthProvider>
 </section>
 
+{/* ── HAMSTER BATTLE ── */}
+        <section>
+  <div className="section-label">Wild Encounter</div>
+    <div style={{ marginTop: 12 }}>
+      <WildEncounter />
+    </div>
+</section>
+
       </div>
     </div>
   );
