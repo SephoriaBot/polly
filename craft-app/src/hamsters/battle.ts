@@ -109,6 +109,19 @@ export function rollWildHamster(playerMaxStage: EvolutionStage = "baby"): WildHa
   };
 }
 
+// A wild encounter persisted to wild_encounter_pending only stores the raw
+// fields (id, stage, form, personality, abilities) — image and stats are
+// derived, not stored, so they're recomputed here when loading it back in.
+export function hydrateWildHamster(w: WildHamster): WildHamster {
+  const forms = w.stage === "final" ? FINAL_FORMS : TEEN_FORMS;
+  const form = forms.find((f) => f.id === w.formId);
+  return {
+    ...w,
+    image: form?.image || w.image,
+    stats: deriveBattleStats(w.stage, w.abilities),
+  };
+}
+
 // --- Battle resolution ------------------------------------------------------
 
 export interface BattleTurn {

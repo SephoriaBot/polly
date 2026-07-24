@@ -11,10 +11,11 @@ const MaidWizard = lazy(() => import('./pages/MaidWizard'));
 const Wallet = lazy(() => import('./pages/Wallet'));
 const TrackerPage = lazy(() => import('./pages/TrackerPage'));
 const DecisionTree = lazy(() => import('./pages/DecisionTree'));
+const Habitat = lazy(() => import('./pages/Habitat'));
 
 import { ToastProvider } from './hooks/useToast';
 
-type Page = 'dashboard' | 'meals' | 'grocery' | 'dailyplanner' | 'maidwizard' | 'wallet' | 'trackers' | 'decisions';
+type Page = 'dashboard' | 'meals' | 'grocery' | 'dailyplanner' | 'maidwizard' | 'wallet' | 'trackers' | 'decisions' | 'habitat';
 
   export default function App() {
   const [page, setPage] = useState<Page>('dashboard');
@@ -43,6 +44,7 @@ type Page = 'dashboard' | 'meals' | 'grocery' | 'dailyplanner' | 'maidwizard' | 
               {page === 'wallet'       && <Wallet />}
               {page === 'trackers'     && <TrackerPage />}
               {page === 'decisions'    && <DecisionTree />}
+              {page === 'habitat'      && <Habitat />}
             </Suspense>
           </main>
           <BottomNav currentPage={page} onNavigate={navigate} />

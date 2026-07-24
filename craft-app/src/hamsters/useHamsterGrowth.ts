@@ -18,6 +18,8 @@ import { rollRandomHamster, rollTeenForm, rollFinalForm } from "./hamsters";
 import type { Hamster, EvolutionStage } from "./hamsters";
 import { rollPersonality, rollAbilities, TEEN_ABILITIES, FINAL_ABILITIES } from "./personalities";
 import type { Personality } from "./personalities";
+import { rollWildHamster } from "./battle";
+import type { WildHamster } from "./battle";
 
 // NOTE: this hook does real Supabase reads/writes and hatches/evolves
 // hamsters as a side effect. It must only ever be instantiated ONCE in the
@@ -35,6 +37,11 @@ const POINTS = {
   tracker_log_entry: 6,
   daily_task_list_complete: 20,
 } as const;
+
+// Chance, per point-earning event, that a wild hamster shows up. Only rolls
+// at all if you already have a teen/final hamster capable of fighting, and
+// never stacks a second encounter on top of one you haven't dealt with yet.
+const WILD_ENCOUNTER_CHANCE = 0.18;
 
 interface HamsterCollectionEntry {
   id: number;
@@ -81,6 +88,7 @@ export function useHamsterGrowthState() {
   const [loading, setLoading] = useState(true);
   const [justHatched, setJustHatched] = useState<Hamster | null>(null);
   const [justEvolved, setJustEvolved] = useState<JustEvolved | null>(null);
+  const [wildEncounter, setWildEncounter] = useState<WildHamster | null>(null);
 
   const refreshRecentPoints = useCallback(async () => {
     const { data } = await supabase
@@ -177,6 +185,61 @@ export function useHamsterGrowthState() {
     [threshold]
   );
 
+  // Rolls a chance to spawn a wild hamster whenever an accomplishment is
+  // earned — same trigger points as nest/evolution growth, so it feels like
+  // part of the same loop instead of a separate grind. Only spawns if you
+  // have at least one teen/final hamster to fight with, and never stacks a
+  // second encounter on top of one that's still sitting unresolved.
+  const checkWildEncounterSpawn = useCallback(async () => {
+    const { data: pending } = await supabase
+      .from("wild_encounter_pending")
+      .select("hamster_id, stage, form_id, personality, abilities")
+      .eq("id", 1)
+      .maybeSingle();
+
+    if (pending?.hamster_id) {
+      // Already have one waiting — surface it locally if it's not already
+      // in state (e.g. this is a fresh mount picking up where a previous
+      // session left off) and stop, don't roll another.
+      if (!wildEncounter) {
+        setWildEncounter({
+          hamsterId: pending.hamster_id,
+          stage: pending.stage,
+          formId: pending.form_id,
+          image: "",
+          personality: pending.personality,
+          abilities: pending.abilities || [],
+          stats: { hp: 0, attack: 0, defense: 0, speed: 0 }, // recomputed by battle.ts on use
+        } as WildHamster);
+      }
+      return;
+    }
+
+    const { data: fighters } = await supabase
+      .from("hamster_collection")
+      .select("stage")
+      .neq("stage", "baby")
+      .limit(1);
+    if (!fighters || fighters.length === 0) return;
+
+    if (Math.random() >= WILD_ENCOUNTER_CHANCE) return;
+
+    const { data: allNonBaby } = await supabase.from("hamster_collection").select("stage").neq("stage", "baby");
+    const playerMaxStage: EvolutionStage = (allNonBaby || []).some((r) => r.stage === "final") ? "final" : "teen";
+
+    const wild = rollWildHamster(playerMaxStage);
+    await supabase.from("wild_encounter_pending").upsert({
+      id: 1,
+      hamster_id: wild.hamsterId,
+      stage: wild.stage,
+      form_id: wild.formId,
+      personality: wild.personality,
+      abilities: wild.abilities,
+      spawned_at: new Date().toISOString(),
+    });
+    setWildEncounter(wild);
+  }, [wildEncounter]);
+
   // Adds points, hatching as many times as needed if a jump crosses the
   // threshold more than once, and persists everything. Also grows every
   // existing hamster toward its next evolution at the same rate.
@@ -197,13 +260,14 @@ export function useHamsterGrowthState() {
       }
 
       const evolved = await growCollection(amount);
+      await checkWildEncounterSpawn();
 
       await supabase.from("hamster_growth").upsert({ id: 1, points: newPoints, threshold });
       if (hatched || evolved) await refreshCollection();
       await refreshRecentPoints();
       return newPoints;
     },
-    [threshold, growCollection, refreshCollection, refreshRecentPoints]
+    [threshold, growCollection, refreshCollection, refreshRecentPoints, checkWildEncounterSpawn]
   );
 
   // The core check — call this whenever the app loads. It looks at what's
@@ -373,6 +437,24 @@ export function useHamsterGrowthState() {
       }
       await refreshCollection();
       await refreshRecentPoints();
+
+      const { data: pending } = await supabase
+        .from("wild_encounter_pending")
+        .select("hamster_id, stage, form_id, personality, abilities")
+        .eq("id", 1)
+        .maybeSingle();
+      if (pending?.hamster_id) {
+        setWildEncounter({
+          hamsterId: pending.hamster_id,
+          stage: pending.stage,
+          formId: pending.form_id,
+          image: "",
+          personality: pending.personality,
+          abilities: pending.abilities || [],
+          stats: { hp: 0, attack: 0, defense: 0, speed: 0 },
+        } as WildHamster);
+      }
+
       setLoading(false);
     })();
   }, [refreshCollection, refreshRecentPoints]);
@@ -385,6 +467,21 @@ export function useHamsterGrowthState() {
   const clearJustHatched = useCallback(() => setJustHatched(null), []);
   const clearJustEvolved = useCallback(() => setJustEvolved(null), []);
 
+  // Call once a wild encounter has been fought (win, loss, or tamed) so a
+  // new one can spawn later instead of the same one sitting there forever.
+  const clearWildEncounter = useCallback(async () => {
+    await supabase.from("wild_encounter_pending").upsert({
+      id: 1,
+      hamster_id: null,
+      stage: null,
+      form_id: null,
+      personality: null,
+      abilities: null,
+      spawned_at: null,
+    });
+    setWildEncounter(null);
+  }, []);
+
   return {
     loading,
     points,
@@ -396,5 +493,7 @@ export function useHamsterGrowthState() {
     clearJustHatched,
     justEvolved,
     clearJustEvolved,
+    wildEncounter,
+    clearWildEncounter,
   };
 }

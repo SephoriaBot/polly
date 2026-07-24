@@ -175,12 +175,15 @@ a {
 
 /* ================= BOTTOM NAV ================= */
 
-.bottombar {
+.bottombar-wrap {
   position: fixed;
   bottom: 0;
   left: 0;
   right: 0;
   z-index: 30;
+}
+
+.bottombar {
   display: flex;
   justify-content: space-around;
   align-items: stretch;
@@ -223,108 +226,18 @@ a {
   stroke: var(--pink-dark);
 }
 
-/* ---- overflow "More" sheet, anchored above the bottom bar ---- */
+/* ---- expandable row, slides open directly above the primary bar ---- */
 
-.more-sheet-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(59, 42, 46, 0.28);
-  z-index: 40;
-  animation: navFadeIn 0.18s ease;
-}
-
-.more-sheet {
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  max-height: 78vh;
-  overflow-y: auto;
+.bottombar-expand {
+  display: flex;
+  justify-content: space-around;
+  align-items: stretch;
+  padding: 8px 6px;
   background: var(--cream);
-  border-top-left-radius: var(--radius-lg);
-  border-top-right-radius: var(--radius-lg);
-  box-shadow: var(--shadow);
-  z-index: 41;
-  padding: 8px 20px calc(24px + env(safe-area-inset-bottom));
-  animation: navSlideUp 0.2s ease;
+  border-top: 1px solid var(--border);
+  animation: navSlideUp 0.18s ease;
 }
 
-.more-sheet-handle {
-  width: 40px;
-  height: 4px;
-  border-radius: 999px;
-  background: var(--border);
-  margin: 8px auto 14px;
-}
-
-.more-sheet-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 14px;
-}
-
-.nav-close {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 0.7rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  background: none;
-  border: none;
-  color: var(--ink-muted);
-  cursor: pointer;
-  padding: 6px 4px;
-}
-
-.nav-group {
-  margin-bottom: 20px;
-}
-
-.nav-group-label {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 0.7rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  color: var(--pink-dark);
-  padding-bottom: 6px;
-  margin-bottom: 8px;
-  border-bottom: 1.5px solid var(--pink-light);
-}
-
-.nav-group-items {
-  display: flex;
-  flex-direction: column;
-}
-
-.nav-link {
-  text-align: left;
-  background: none;
-  border: none;
-  padding: 9px 2px;
-  font-family: 'Nunito Sans', sans-serif;
-  font-size: 0.92rem;
-  color: var(--ink-soft);
-  cursor: pointer;
-  border-bottom: 1px dashed rgba(215, 150, 150, 0.22);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.nav-link.active {
-  color: var(--pink-dark);
-  font-weight: 700;
-}
-
-.nav-link.active::after {
-  content: '';
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--pink-dark);
-  flex-shrink: 0;
-}
 
 @keyframes navFadeIn {
   from { opacity: 0; }

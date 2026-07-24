@@ -10,10 +10,12 @@ import Icon from "../components/Icon";
 import { HAMSTERS, imageForForm } from "./hamsters";
 import type { EvolutionStage } from "./hamsters";
 import type { Personality } from "./personalities";
+import { useHamsterGrowth } from "./HamsterGrowthContext";
 import {
   canBattle,
   deriveBattleStats,
   rollWildHamster,
+  hydrateWildHamster,
   resolveBattle,
   abilityShortName,
 } from "./battle";
@@ -39,15 +41,27 @@ function HpBar({ current, max, color }: { current: number; max: number; color: s
 }
 
 export default function WildEncounter() {
+  const { wildEncounter, clearWildEncounter } = useHamsterGrowth();
   const [loading, setLoading] = useState(true);
   const [fighters, setFighters] = useState<FighterEntry[]>([]);
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [phase, setPhase] = useState<Phase>("pick");
   const [wild, setWild] = useState<WildHamster | null>(null);
+  const [isAutoSpawned, setIsAutoSpawned] = useState(false);
   const [visibleTurns, setVisibleTurns] = useState<BattleTurn[]>([]);
   const [allTurns, setAllTurns] = useState<BattleTurn[]>([]);
   const [winner, setWinner] = useState<"player" | "opponent" | null>(null);
   const [tamed, setTamed] = useState(false);
+
+  // A wild hamster spawned automatically from an accomplishment (see
+  // useHamsterGrowth.ts) shows up here immediately instead of requiring the
+  // manual "go find one" button.
+  useEffect(() => {
+    if (wildEncounter && phase === "pick" && !wild) {
+      setWild(hydrateWildHamster(wildEncounter));
+      setIsAutoSpawned(true);
+    }
+  }, [wildEncounter, phase, wild]);
 
   const loadFighters = useCallback(async () => {
     setLoading(true);
@@ -87,8 +101,13 @@ export default function WildEncounter() {
   }, [fighters]);
 
   const goScout = () => {
-    setPhase("scouting");
     setTamed(false);
+    if (isAutoSpawned && wild) {
+      // Already rolled — just move to the reveal, no need to fake a delay.
+      setPhase("found");
+      return;
+    }
+    setPhase("scouting");
     setTimeout(() => {
       setWild(rollWildHamster(playerMaxStage));
       setPhase("found");
@@ -150,6 +169,7 @@ export default function WildEncounter() {
   useEffect(() => {
     if (phase === "result" && winner) {
       logBattle(false);
+      if (isAutoSpawned) clearWildEncounter();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase]);
@@ -174,6 +194,7 @@ export default function WildEncounter() {
   const reset = () => {
     setPhase("pick");
     setWild(null);
+    setIsAutoSpawned(false);
     setAllTurns([]);
     setVisibleTurns([]);
     setWinner(null);
@@ -227,6 +248,20 @@ export default function WildEncounter() {
               </>
             )}
 
+            {phase === "pick" && isAutoSpawned && (
+              <div
+                style={{
+                  fontSize: 11,
+                  color: "var(--pink-dark)",
+                  fontWeight: 700,
+                  textAlign: "center",
+                  marginBottom: 8,
+                }}
+              >
+                A wild hamster appeared while you were busy! 🐹
+              </div>
+            )}
+
             {phase === "pick" && (
               <button
                 className="btn-primary"
@@ -234,7 +269,8 @@ export default function WildEncounter() {
                 onClick={goScout}
                 style={{ width: "100%", opacity: selected ? 1 : 0.5 }}
               >
-                <Icon name="map-pin" size={14} /> Go find a wild hamster
+                <Icon name="lightning" size={14} />{" "}
+                {isAutoSpawned ? "Face it!" : "Go find a wild hamster"}
               </button>
             )}
 
