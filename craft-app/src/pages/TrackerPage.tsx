@@ -61,9 +61,10 @@ export default function TrackerPage() {
 
   return (
     <div>
-      <Lantern />
-      <h1>Tracker</h1>
-      <Lantern />
+      <div className="page-header">
+        <h1>Tracker</h1>
+        <Lantern />
+      </div>
 
       {cycleDay !== null && (
         <div className="card" style={{ background: 'var(--blush)' }}>

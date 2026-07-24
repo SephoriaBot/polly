@@ -209,13 +209,29 @@ export function useHamsterGrowthState() {
   // The core check — call this whenever the app loads. It looks at what's
   // changed in your real tables since the last check and awards growth.
   const runGrowthCheck = useCallback(async () => {
-    const { data: lastCheck } = await supabase
+    let { data: lastCheck } = await supabase
       .from("hamster_last_check")
       .select("last_bill_check, last_log_check, last_tracker_check, debt_snapshot, tasks_all_done_awarded")
       .eq("id", 1)
       .maybeSingle();
 
-    if (!lastCheck) return;
+    // If this row has never been created, every check silently no-ops
+    // forever (bills, debts, savings, trackers — nothing ever gets
+    // credited). Seed it with an old timestamp so already-paid-on-time
+    // bills/logs since day one are picked up on this first run, instead
+    // of only starting to count from whenever the row happens to exist.
+    if (!lastCheck) {
+      const seed = {
+        id: 1,
+        last_bill_check: "2000-01-01T00:00:00.000Z",
+        last_log_check: "2000-01-01T00:00:00.000Z",
+        last_tracker_check: "2000-01-01T00:00:00.000Z",
+        debt_snapshot: {},
+        tasks_all_done_awarded: false,
+      };
+      await supabase.from("hamster_last_check").upsert(seed);
+      lastCheck = seed;
+    }
 
     let runningPoints = points;
     const now = new Date().toISOString();

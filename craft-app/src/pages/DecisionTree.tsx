@@ -364,9 +364,10 @@ const DecisionTreeList: FC<{ onSelect: (id: string) => void; onNew: () => void; 
   return (
     <div style={styles.page}>
       <div style={styles.listHeaderRow}>
-        <Lantern />
-        <h2 style={styles.pageTitle}>Decisions</h2>
-        <Lantern />
+        <div className="title-row">
+          <h2 style={styles.pageTitle}>Decisions</h2>
+          <Lantern />
+        </div>
         <button style={styles.newBtn} onClick={onNew}>+ New decision</button>
       </div>
       {status === 'loading' && <p>Loading saved decisions...</p>}

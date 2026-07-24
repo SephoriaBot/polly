@@ -510,6 +510,25 @@ input:focus {
 }
 .btn-secondary:hover { transform: translateY(-2px); background: var(--sage-light); }
 
+.btn-danger {
+  border: 1px solid var(--danger);
+  border-radius: 999px;
+  padding: 10px 14px;
+  font-weight: 600;
+  cursor: pointer;
+  background: var(--danger-bg);
+  color: var(--danger);
+  transition: 0.15s ease;
+  font-family: 'Nunito Sans', sans-serif;
+}
+.btn-danger:hover { transform: translateY(-2px); background: var(--danger); }
+.btn-danger img { filter: brightness(0); opacity: 0.75; }
+.btn-danger:hover img { filter: brightness(0) invert(1); opacity: 1; }
+
+.btn-sm {
+  padding: 5px 9px;
+}
+
 /* ================= TYPOGRAPHY ================= */
 
 h1, h2, h3 {
@@ -634,6 +653,12 @@ body {
 .lantern-divider .line {
   flex: 1;
   border-top: 1px dashed var(--border);
+}
+
+.title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .meals-empty {

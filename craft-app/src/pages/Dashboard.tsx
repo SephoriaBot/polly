@@ -98,9 +98,10 @@ export default function Dashboard() {
     <div>
       <div className="page-header dash-greeting">
         <div>
-          <Lantern />
-          <h1>{getGreeting()}</h1>
-          <Lantern />
+          <div className="title-row">
+            <h1>{getGreeting()}</h1>
+            <Lantern />
+          </div>
           <div className="dash-subdate">
             {todayName}, {new Date().toLocaleDateString(undefined, { month: 'long', day: 'numeric' })}
           </div>
