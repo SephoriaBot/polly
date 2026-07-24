@@ -209,23 +209,50 @@ export function useHamsterGrowthState() {
   // The core check — call this whenever the app loads. It looks at what's
   // changed in your real tables since the last check and awards growth.
   const runGrowthCheck = useCallback(async () => {
-    const { data: lastCheck } = await supabase
+    let { data: lastCheck } = await supabase
       .from("hamster_last_check")
       .select("last_bill_check, last_log_check, last_tracker_check, debt_snapshot, tasks_all_done_awarded")
       .eq("id", 1)
       .maybeSingle();
 
-    if (!lastCheck) return;
+    // If this row has never been created, every check silently no-ops
+    // forever (bills, debts, savings, trackers — nothing ever gets
+    // credited). Seed it with an old timestamp so already-paid-on-time
+    // bills/logs since day one are picked up on this first run, instead
+    // of only starting to count from whenever the row happens to exist.
+    if (!lastCheck) {
+      const seed = {
+        id: 1,
+        last_bill_check: "2000-01-01T00:00:00.000Z",
+        last_log_check: "2000-01-01T00:00:00.000Z",
+        last_tracker_check: "2000-01-01T00:00:00.000Z",
+        debt_snapshot: {},
+        tasks_all_done_awarded: false,
+      };
+      await supabase.from("hamster_last_check").upsert(seed);
+      lastCheck = seed;
+    }
 
     let runningPoints = points;
     const now = new Date().toISOString();
 
-    // 1. Bills paid on time since last check
+    // 1. Bills paid on time — tracked with a per-payment "hamster_credited"
+    // flag instead of a timestamp cursor. A timestamp cursor (paid_at >
+    // last_bill_check) means that once a payment is checked once, editing
+    // its due date afterward can never trigger a re-check — paid_at never
+    // changes, so it stays permanently behind the cursor. That's why fixing
+    // a due date silently did nothing unless you deleted and re-added the
+    // bill (which produces a brand new payment row with a fresh paid_at).
+    //
+    // Instead: only stop looking at a payment once it's actually been
+    // credited with on-time points. If it currently reads as late, it stays
+    // eligible, so correcting the due date later will pick it up on the
+    // very next check using whatever due_day is current at that point.
     const { data: newPayments } = await supabase
       .from("bill_payments")
-      .select("paid, paid_at, due_day, month, year, bill_id")
+      .select("id, paid, paid_at, due_day, month, year, bill_id, hamster_credited")
       .eq("paid", true)
-      .gt("paid_at", lastCheck.last_bill_check);
+      .or("hamster_credited.is.null,hamster_credited.eq.false");
 
     for (const p of newPayments || []) {
       if (!p.paid_at) continue;
@@ -235,9 +262,14 @@ export function useHamsterGrowthState() {
         dueDay = bill?.due_day;
       }
       if (dueDay != null) {
-        const dueDate = new Date(p.year, p.month - 1, dueDay);
+        // End of the due day, not the start — otherwise anything paid
+        // after midnight on the actual due date (i.e. any normal payment
+        // made during the day) reads as late.
+        const dueDate = new Date(p.year, p.month - 1, dueDay, 23, 59, 59, 999);
         if (new Date(p.paid_at) <= dueDate) {
           runningPoints = await addPoints(POINTS.bill_paid_on_time, "bill_paid_on_time", runningPoints);
+          // Lock in credit so this exact payment can never be double-counted.
+          await supabase.from("bill_payments").update({ hamster_credited: true }).eq("id", p.id);
         }
       }
     }

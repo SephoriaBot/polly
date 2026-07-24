@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import type { FC } from 'react';
 import { supabase } from '../lib/supabase'; // adjust path to your existing client
 import Icon from '../components/Icon';
+import Lantern from "../components/Lantern";
 
 type NodeType = 'root' | 'choice' | 'outcome';
 
@@ -76,29 +77,29 @@ function expectedValue(node: TreeNode): number | null {
 // --- Inline style objects (no external CSS dependency, nothing can override or hide these) ---
 const styles = {
   page: { padding: 16, display: 'flex', flexDirection: 'column' as const, gap: 12, minHeight: 200 },
-  titleInput: { fontSize: '1.1rem', fontWeight: 600, padding: '10px 14px', borderRadius: 12, border: '2px solid #f3c9d4', background: '#fdf6ee', color: '#4a3b3b' },
-  container: { background: '#fdf6ee', border: '2px solid #f3c9d4', borderRadius: 16, padding: 14, minHeight: 60 },
+  titleInput: { fontSize: '1.1rem', fontWeight: 600, padding: '10px 14px', borderRadius: 12, border: '2px solid var(--pink)', background: 'var(--cream)', color: 'var(--text)' },
+  container: { background: 'var(--cream)', border: '2px solid var(--pink)', borderRadius: 16, padding: 14, minHeight: 60 },
   nodeRow: { display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 },
   labelInput: { flex: 1, padding: '8px 12px', borderRadius: 10, border: '1px solid var(--border)', background: 'var(--surface)', fontSize: '0.95rem' },
-  smallInput: { width: 60, padding: '8px 6px', borderRadius: 10, border: '1px solid #f3c9d4', textAlign: 'center' as const },
-  addBtn: { background: '#f3c9d4', color: '#6b3f4b', border: 'none', borderRadius: 10, padding: '6px 12px', fontSize: '0.8rem' },
-  saveBtn: { background: '#f4a988', color: '#5a3521', border: 'none', borderRadius: 12, padding: '10px 20px', fontWeight: 600, alignSelf: 'flex-start' as const },
-  evBadge: { fontSize: '0.75rem', fontWeight: 700, color: '#6b3f2b', background: '#f4a988', padding: '3px 8px', borderRadius: 10 },
-  removeBtn: { background: 'none', border: 'none', color: '#c98b8b', fontSize: '0.85rem' },
-  errorText: { color: '#b85c5c', fontWeight: 600 },
+  smallInput: { width: 60, padding: '8px 6px', borderRadius: 10, border: '1px solid var(--pink)', textAlign: 'center' as const },
+  addBtn: { background: 'var(--pink)', color: 'var(--ink)', border: 'none', borderRadius: 10, padding: '6px 12px', fontSize: '0.8rem' },
+  saveBtn: { background: 'var(--pink-dark)', color: 'var(--white)', border: 'none', borderRadius: 12, padding: '10px 20px', fontWeight: 600, alignSelf: 'flex-start' as const },
+  evBadge: { fontSize: '0.75rem', fontWeight: 700, color: 'var(--pink-dark)', background: 'var(--pink-light)', padding: '3px 8px', borderRadius: 10 },
+  removeBtn: { background: 'none', border: 'none', color: 'var(--danger)', fontSize: '0.85rem' },
+  errorText: { color: 'var(--danger)', fontWeight: 600 },
   // list view styles
   listHeaderRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
-  pageTitle: { fontSize: '1.2rem', fontWeight: 700, color: '#4a3b3b', margin: 0 },
-  newBtn: { background: '#f4a988', color: '#5a3521', border: 'none', borderRadius: 12, padding: '10px 16px', fontWeight: 600 },
-  treeCard: { background: '#fdf6ee', border: '2px solid #f3c9d4', borderRadius: 16, padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 8 },
+  pageTitle: { fontSize: '1.2rem', fontWeight: 700, color: 'var(--text)', margin: 0 },
+  newBtn: { background: 'var(--pink-dark)', color: 'var(--white)', border: 'none', borderRadius: 12, padding: '10px 16px', fontWeight: 600 },
+  treeCard: { background: 'var(--cream)', border: '2px solid var(--pink)', borderRadius: 16, padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 8 },
   treeCardMain: { flex: 1, display: 'flex', flexDirection: 'column' as const, gap: 4, textAlign: 'left' as const, background: 'none', border: 'none', cursor: 'pointer', padding: 0 },
-  treeCardTitle: { fontWeight: 600, color: '#4a3b3b', fontSize: '1rem' },
-  treeCardMeta: { fontSize: '0.75rem', color: '#a98a8a' },
-  deleteBtn: { background: 'none', border: 'none', color: '#c98b8b', fontSize: '0.85rem', padding: '6px 8px', flexShrink: 0 },
+  treeCardTitle: { fontWeight: 600, color: 'var(--text)', fontSize: '1rem' },
+  treeCardMeta: { fontSize: '0.75rem', color: 'var(--ink-muted)' },
+  deleteBtn: { background: 'none', border: 'none', color: 'var(--danger)', fontSize: '0.85rem', padding: '6px 8px', flexShrink: 0 },
   deleteConfirmBtn: { background: 'var(--danger)', color: 'var(--white)', border: 'none', borderRadius: 10, padding: '6px 10px', fontSize: '0.75rem', flexShrink: 0 },
-  deleteCancelBtn: { background: 'none', border: 'none', color: '#a98a8a', fontSize: '0.75rem', padding: '6px 8px', flexShrink: 0 },
-  backBtn: { background: 'none', border: 'none', color: '#6b3f4b', fontSize: '0.85rem', alignSelf: 'flex-start' as const, padding: 0 },
-  emptyText: { color: '#a98a8a', fontStyle: 'italic' as const },
+  deleteCancelBtn: { background: 'none', border: 'none', color: 'var(--ink-muted)', fontSize: '0.75rem', padding: '6px 8px', flexShrink: 0 },
+  backBtn: { background: 'none', border: 'none', color: 'var(--ink-soft)', fontSize: '0.85rem', alignSelf: 'flex-start' as const, padding: 0 },
+  emptyText: { color: 'var(--ink-muted)', fontStyle: 'italic' as const },
 };
 
 const TreeNodeView: FC<{
@@ -113,7 +114,7 @@ const TreeNodeView: FC<{
   const ev = node.type !== 'outcome' ? expectedValue(node) : null;
 
   return (
-    <div style={{ marginLeft: depth === 0 ? 0 : 20, borderLeft: depth > 0 ? '2px dotted #f3c9d4' : 'none', paddingLeft: depth > 0 ? 10 : 0 }}>
+    <div style={{ marginLeft: depth === 0 ? 0 : 20, borderLeft: depth > 0 ? '2px dotted var(--pink)' : 'none', paddingLeft: depth > 0 ? 10 : 0 }}>
       <div style={styles.nodeRow}>
         <input
           style={styles.labelInput}
@@ -363,7 +364,10 @@ const DecisionTreeList: FC<{ onSelect: (id: string) => void; onNew: () => void; 
   return (
     <div style={styles.page}>
       <div style={styles.listHeaderRow}>
-        <h2 style={styles.pageTitle}>Decisions</h2>
+        <div className="title-row">
+          <h2 style={styles.pageTitle}>Decisions</h2>
+          <Lantern />
+        </div>
         <button style={styles.newBtn} onClick={onNew}>+ New decision</button>
       </div>
       {status === 'loading' && <p>Loading saved decisions...</p>}

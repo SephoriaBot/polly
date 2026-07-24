@@ -4,6 +4,7 @@ import HamsterNest from "../hamsters/HamsterNest";
 import HamsterHabitat from "../hamsters/HamsterHabitat";
 import { HamsterGrowthProvider } from "../hamsters/HamsterGrowthContext";
 import { Heart } from 'lucide-react';
+import Lantern from "../components/Lantern";
 
 interface Focus {
   id: string;
@@ -97,12 +98,14 @@ export default function Dashboard() {
     <div>
       <div className="page-header dash-greeting">
         <div>
-          <h1>{getGreeting()}</h1>
+          <div className="title-row">
+            <h1>{getGreeting()}</h1>
+            <Lantern />
+          </div>
           <div className="dash-subdate">
             {todayName}, {new Date().toLocaleDateString(undefined, { month: 'long', day: 'numeric' })}
           </div>
         </div>
-        <Sprig />
       </div>
 
       <div className="page-body">
@@ -234,9 +237,8 @@ export default function Dashboard() {
           )}
         </section>
 
-        <StitchDivider />
+        <Lantern variant="divider" />
 
-        
         {/* ── HAMSTER NEST ── */}
         <section>
   <div className="section-label">Hamster Nest</div>

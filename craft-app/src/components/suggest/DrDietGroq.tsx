@@ -258,7 +258,7 @@ Never mention calories, macros, or specific weight numbers. If the goal involves
           {/* Disclaimer */}
           <div style={{
             marginBottom: 16, padding: '10px 14px', borderRadius: 'var(--radius-sm)',
-            background: '#fdf7ff', border: '1.5px solid #ecdcfb',
+            background: 'var(--blush)', border: '1.5px solid var(--border)',
             fontSize: '0.76rem', color: 'var(--ink-muted)', lineHeight: 1.5,
           }}>
             <Icon name="apple-carrot" size={16} /> General guidance only — not medical or clinical advice. For a health condition, pregnancy, or anything more specific, please check with a doctor or registered dietitian.
@@ -417,7 +417,7 @@ Never mention calories, macros, or specific weight numbers. If the goal involves
               {assessment.notesAcknowledgment && (
                 <div style={{
                   padding: '10px 14px', borderRadius: 'var(--radius-sm)', marginBottom: 18,
-                  background: '#fdf7ff', border: '1.5px solid #ecdcfb',
+                  background: 'var(--blush)', border: '1.5px solid var(--border)',
                 }}>
                   <p style={{ fontSize: '0.8rem', color: 'var(--ink-soft)', lineHeight: 1.55, margin: 0, fontStyle: 'italic' }}>{assessment.notesAcknowledgment}</p>
                 </div>

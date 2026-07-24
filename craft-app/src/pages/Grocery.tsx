@@ -1,12 +1,13 @@
-import { useState, useEffect } from 'react'
-import type { GroceryItem } from '../types/legacy'
-import { supabase } from '../lib/supabase'
-import Icon, { type IconName } from '../components/Icon'
+import { useState, useEffect } from 'react';
+import type { GroceryItem } from '../types/legacy';
+import { supabase } from '../lib/supabase';
+import Icon, { type IconName } from '../components/Icon';
 import {
   ShoppingCart, ListChecks, RotateCcw, X, History, ClipboardList,
   MapPin, Save, Trash2, ArrowLeft, CheckCircle2,
   ChevronUp, ChevronDown, ExternalLink, Plus,
-} from 'lucide-react'
+} from 'lucide-react';
+import Lantern from "../components/Lantern";
 
 interface SavedList { id: string; name: string; items: string[]; created_at: string }
 
@@ -499,26 +500,27 @@ export default function Grocery() {
     setSavedLists(prev => prev.filter(l => l.id !== id))
   }
 
-  function openShoppingList() {
-    const needItems = items.filter(i => !i.checked)
-    if (!needItems.length) return
-    const listText = needItems.map(i => `${i.qty ? i.qty + ' ' : ''}${i.name}`).join('\n')
-    navigator.clipboard?.writeText(listText).then(() => {
-      window.location.href = 'mobilenotes://'
-      setTimeout(() => {
-        alert('Your list has been copied!\n\nOpen Notes and paste (long-press → Paste) to create your shopping list.')
-      }, 500)
-    }).catch(() => {
-      alert(`Copy failed — here's your list:\n\n${listText}`)
-    })
-  }
+  function openDoorDashList() {
+  const needItems = items.filter(i => !i.checked)
+  if (!needItems.length) return
 
-  function searchOnInstacart(itemId: string, itemName: string) {
-    const query = encodeURIComponent(itemName)
-    window.open(`https://www.instacart.com/store/s?k=${query}`, '_blank')
-    setPriceForm({ store: 'Instacart', price: '' })
-    setExpandedItem(itemId)
-  }
+  const listText = needItems
+    .map(i => `${i.qty ? i.qty + ' ' : ''}${i.name}`)
+    .join('\n')
+
+  navigator.clipboard?.writeText(listText).then(() => {
+    // Open the DoorDash app if installed
+    window.location.href = 'doordash://'
+
+    setTimeout(() => {
+      alert(
+        'Your grocery list has been copied!\n\nOpen DoorDash and paste it into the search or shopping list.'
+      )
+    }, 500)
+  }).catch(() => {
+    alert(`Copy failed — here's your list:\n\n${listText}`)
+  })
+}
 
   function saveLocation(val: string) {
     setLocation(val)
@@ -684,7 +686,10 @@ export default function Grocery() {
   return (
     <div>
       <div className="page-header">
-        <h2>Grocery List <Icon name="basket" size={22} /></h2>
+        <div className="title-row">
+          <h2>Grocery List <Icon name="basket" size={22} /></h2>
+          <Lantern size={24} />
+        </div>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           <button className="btn btn-primary" onClick={openBasicsModal}>
             <ListChecks size={14} /> Build Basics List
@@ -701,8 +706,8 @@ export default function Grocery() {
           <button className="btn btn-secondary" onClick={() => setShowSaved(!showSaved)}>
             <History size={14} /> Saved Lists {savedLists.length > 0 && `(${savedLists.length})`}
           </button>
-          <button className="btn btn-primary" onClick={openShoppingList} disabled={!needs.length}>
-            <ClipboardList size={14} /> Copy List &amp; Open Notes
+          <button className="btn btn-primary" onClick={openDoorDashList} disabled={!needs.length}>
+          <ClipboardList size={14} /> Copy List &amp; Open DoorDash
           </button>
         </div>
       </div>
@@ -952,10 +957,6 @@ export default function Grocery() {
                               ${cheapest.price.toFixed(2)} @ {cheapest.store}
                             </span>
                           )}
-                          <button onClick={() => searchOnInstacart(item.id, item.name)} title="Search on Instacart"
-                            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-muted)', display: 'flex', flexShrink: 0 }}>
-                            <ExternalLink size={13} />
-                          </button>
                           <button onClick={() => setExpandedItem(isOpen ? null : item.id)}
                             style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-muted)', display: 'flex', flexShrink: 0 }}>
                             {isOpen ? <ChevronUp size={13} /> : <ChevronDown size={13} />}

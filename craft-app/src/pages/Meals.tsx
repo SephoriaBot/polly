@@ -1,13 +1,14 @@
-import React, { useState, useEffect } from 'react'
-import Icon from '../components/Icon'
-import type { WeekPlan } from '../types/legacy'
-import { supabase } from '../lib/supabase'
+import React, { useState, useEffect } from 'react';
+import Icon from '../components/Icon';
+import type { WeekPlan } from '../types/legacy';
+import { supabase } from '../lib/supabase';
 import {
   SlidersHorizontal, Sparkles, Search, AlertCircle, Database, Salad,
   Loader2, Check, Plus, X, Heart, ChefHat, Trash2, ShoppingCart, CalendarDays,
-} from 'lucide-react'
-import DrDietGroq from '../components/suggest/DrDietGroq'
-import RecipeModal from '../components/meals/RecipeModal'
+} from 'lucide-react';
+import DrDietGroq from '../components/suggest/DrDietGroq';
+import RecipeModal from '../components/meals/RecipeModal';
+import Lantern from "../components/Lantern";
 
 const DAYS = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun']
 const MEAL_TYPES_WEEK = ['breakfast','lunch','dinner'] as const
@@ -210,7 +211,10 @@ export default function Meals() {
   return (
     <div>
       <div className="page-header">
-        <h2>Meals <Icon name="cookbook" size={22} /></h2>
+        <div className="title-row">
+          <h2>Meals <Icon name="cookbook" size={22} /></h2>
+          <Lantern />
+        </div>
       </div>
 
       <div className="page-body">

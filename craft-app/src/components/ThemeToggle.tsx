@@ -17,7 +17,7 @@ export default function ThemeToggle() {
         height: 30,
         borderRadius: 999,
         border: `1px solid var(--color-border)`,
-        background: isDark ? 'var(--color-surface-raised)' : 'var(--color-accent-pink)',
+        background: isDark ? 'var(--color-surface-raised)' : 'var(--gold-light)',
         cursor: 'pointer',
         transition: 'background-color 0.4s ease',
         padding: 0,
@@ -40,9 +40,9 @@ export default function ThemeToggle() {
         }}
       >
         {isDark ? (
-          <Moon size={14} color="var(--color-accent-apricot)" />
+          <Moon size={14} color="var(--gold)" />
         ) : (
-          <Flower2 size={14} color="var(--color-accent-strong)" />
+          <Flower2 size={14} color="var(--gold-dark)" />
         )}
       </span>
     </button>

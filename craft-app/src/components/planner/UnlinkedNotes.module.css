@@ -1,7 +1,7 @@
 .intro {
   font-family: 'Nunito Sans', sans-serif;
   font-size: 12.5px;
-  color: var(--an-ink-soft, #8c7c6e);
+  color: var(--an-ink-soft, #6E6893);
   margin-bottom: 16px;
   line-height: 1.5;
 }
@@ -15,10 +15,10 @@
   font-size: 11px;
   letter-spacing: 0.4px;
   text-transform: uppercase;
-  color: var(--an-apricot, #f3a26d);
+  color: var(--an-apricot, #DAD0F7);
   margin-bottom: 8px;
   padding-bottom: 6px;
-  border-bottom: 1px dashed var(--an-line, #efe4d6);
+  border-bottom: 1px dashed var(--an-line, #E7E2F7);
 }
 
 .emptyState {
@@ -30,10 +30,10 @@
   text-align: center;
   font-family: 'Nunito Sans', sans-serif;
   font-size: 13px;
-  color: var(--an-ink-soft, #8c7c6e);
+  color: var(--an-ink-soft, #6E6893);
 }
 
 .emptyIcon {
-  color: var(--an-apricot, #f3a26d);
+  color: var(--an-apricot, #DAD0F7);
   opacity: 0.7;
 }

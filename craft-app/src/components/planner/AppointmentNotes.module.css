@@ -5,16 +5,21 @@
   existing variables directly.
 */
 :root {
-  --an-cream: #fbf6ef;
-  --an-card: #ffffff;
-  --an-apricot: #f3a26d;
-  --an-apricot-soft: #fbe3d0;
-  --an-rose: #e8a6a6;
-  --an-rose-soft: #f6dede;
-  --an-ink: #4a3f35;
-  --an-ink-soft: #8c7c6e;
-  --an-line: #efe4d6;
-  --an-covered-green: #8fae7b;
+  --an-cream: #F8F6FD;
+  --an-card: #FFFFFF;
+
+  --an-apricot: var(--primary, #DAD0F7);
+  --an-apricot-soft: var(--blush, #F3EEFC);
+
+  --an-rose: var(--pink-dark, #D98FB5);
+  --an-rose-soft: var(--pink-light, #F5EEFF);
+
+  --an-ink: var(--text, #3F3A5C);
+  --an-ink-soft: var(--ink-soft, #6E6893);
+
+  --an-line: var(--border, #E7E2F7);
+
+  --an-covered-green: var(--sky, #B9C8FF);
 }
 
 .wrapper {
@@ -142,7 +147,7 @@
   font-family: 'IBM Plex Mono', monospace;
   font-size: 10.5px;
   color: var(--an-ink);
-  background: #fff;
+  background: var(--an-card, #FFFFFF);
   border: 1px solid var(--an-line);
   border-radius: 8px;
   padding: 4px 8px;
@@ -165,7 +170,7 @@
   font-size: 14px;
   color: var(--an-ink);
   outline: none;
-  background: #fff;
+  background: var(--an-card, #FFFFFF);
 }
 
 .homeworkInput {

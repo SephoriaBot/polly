@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase';
 import AppointmentNotesPanel from '../components/planner/AppointmentNotesPanel';
 import type { AppointmentNoteSelection } from '../components/planner/AppointmentNotesPanel';
 import { useAppointmentNoteMap } from '../hooks/useAppointmentNoteMap';
+import Lantern from "../components/Lantern";
 
 interface DailyTask {
   id: string;
@@ -30,12 +31,12 @@ interface Spark {
 // (pink-light / primary / secondary / accent / mint / gold-light)
 // instead of a one-off hex set, so the celebration matches the theme.
 const SPARK_COLORS = [
-  '#fbe1e5', // pink-light
-  '#f6cfd6', // primary (soft pink)
-  '#f7b89c', // secondary (apricot)
-  '#e8a0ac', // accent (pale rose)
-  '#f9dde2', // mint (dusty rose accent)
-  '#FEFBE8', // gold-light
+  'var(--pink-light)',
+  'var(--primary)',
+  'var(--secondary)',
+  'var(--pink-dark)',
+  'var(--mint)',
+  'var(--gold-light)',
 ];
 
 function StitchDivider() {
@@ -170,7 +171,10 @@ export default function DailyPlanner() {
 
       <div className="page-header">
         <div>
-          <h2>Planner</h2>
+          <div className="title-row">
+            <h2>Planner</h2>
+            <Lantern />
+          </div>
           <p style={{ color: allDone ? 'var(--pink-dark)' : 'var(--ink-muted)' }}>
             {allDone ? 'All done! Good job.' : `${doneCount} of ${tasks.length} done today`}
           </p>

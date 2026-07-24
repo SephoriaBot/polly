@@ -1,5 +1,8 @@
 /* ============================================
-   POLLY THEME TOKENS — Light (Cottagecore) / Dark (Moonlit Garden)
+   POLLY THEME TOKENS — mirrors index.css palette
+   (kept as a thin alias layer so ThemeToggle.tsx
+   and any --color-* references stay in sync with
+   the single source of truth in index.css)
    ============================================ */
 
 :root {
@@ -7,39 +10,35 @@
   --font-body: 'Nunito Sans', sans-serif;
   --font-mono: 'IBM Plex Mono', monospace;
 
-  --radius-sm: 8px;
-  --radius-md: 16px;
-  --radius-lg: 24px;
-
   --transition-theme: background-color 0.4s ease, color 0.4s ease,
     border-color 0.4s ease, box-shadow 0.4s ease;
 }
 
-/* ---------- LIGHT: Cottagecore ---------- */
+/* ---------- LIGHT ---------- */
 [data-theme='light'] {
-  --color-bg: #fff8f0;
-  --color-surface: #ffffff;
-  --color-surface-raised: #fffaf3;
-  --color-text: #4a3b32;
-  --color-text-muted: #8a7364;
-  --color-border: #e8d5c4;
-  --color-accent-pink: #f4b6c2;
-  --color-accent-apricot: #f5c99b;
-  --color-accent-strong: #e8879b;
-  --color-shadow: rgba(196, 154, 120, 0.18);
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-raised: var(--blush);
+  --color-text: var(--text);
+  --color-text-muted: var(--ink-soft);
+  --color-border: var(--border);
+  --color-accent-pink: var(--pink);
+  --color-accent-apricot: var(--secondary);
+  --color-accent-strong: var(--pink-dark);
+  --color-shadow: rgba(126, 58, 219, 0.18);
 }
 
-/* ---------- DARK: Moonlit Garden ---------- */
+/* ---------- DARK ---------- */
 [data-theme='dark'] {
-  --color-bg: #241b2f;
-  --color-surface: #322640;
-  --color-surface-raised: #3c2f4d;
-  --color-text: #f0e6d2;
-  --color-text-muted: #c2b3a8;
-  --color-border: #4a3b5c;
-  --color-accent-pink: #d98ba3;
-  --color-accent-apricot: #e0a85c;
-  --color-accent-strong: #f0a8bd;
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-raised: var(--blush);
+  --color-text: var(--text);
+  --color-text-muted: var(--ink-soft);
+  --color-border: var(--border);
+  --color-accent-pink: var(--pink);
+  --color-accent-apricot: var(--secondary);
+  --color-accent-strong: var(--pink-dark);
   --color-shadow: rgba(0, 0, 0, 0.45);
 }
 

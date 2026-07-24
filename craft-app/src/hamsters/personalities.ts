@@ -64,30 +64,41 @@ export function rollPersonality(): Personality {
 // form size on the teen -> final art.
 
 export const TEEN_ABILITIES: string[] = [
-  "Bristle Charge — lowers head and rushes a rival",
-  "Cheek Pouch Slam — bops foes with fully-stuffed cheeks",
-  "Burrow Dodge — vanishes underground to dodge a hit",
-  "Static Fur — small shock on contact",
-  "Piercing Squeak — a shriek that rattles nearby foes",
-  "Claw Flurry — quick scrappy scratching combo",
-  "Thorn Nibble — gnaws through an opponent's guard",
-  "Warning Stomp — tiny feet, surprisingly loud thud",
-  "Sticky Paws — grapples and holds an opponent briefly",
-  "Adrenaline Sprint — a burst of reckless speed",
+  "Bristle Charge — lowers a head that turns too far to rush a rival",
+  "Cheek Pouch Slam — the impact sounds wetter than it should",
+  "Burrow Dodge — vanishes underground; something else surfaces where it left",
+  "Static Fur — a shock on contact, and for a second its shadow doesn't match it",
+  "Piercing Squeak — a shriek pitched wrong, like it's coming from behind you",
+  "Claw Flurry — a scratching combo too fast to count the hands",
+  "Thorn Nibble — gnaws clean through an opponent's guard without slowing down",
+  "Warning Stomp — tiny feet, a thud that comes from directly underneath you",
+  "Sticky Paws — grapples and holds; it does not let go, does not tire, does not blink",
+  "Adrenaline Sprint — a burst of speed, eyes gone fully black, smile a little too wide",
+  "Hollow Stare — locks eyes and the rival simply forgets how to move",
+  "Molt Shed — sheds fur that keeps twitching, keeps crawling, long after",
+  "Second Mouth — a seam along the cheek opens where no mouth should be",
+  "Wrong Number of Legs — for one frame there are more of them than there should be",
 ];
 
 export const FINAL_ABILITIES: string[] = [
-  "Seed Cannon — launches hardened seeds at range",
-  "Overgrowth Roots — traps a foe in sudden vines",
-  "Sonic Whisker Boom — a shockwave squeak that stuns",
-  "Molten Cheek Pouch — superheated projectile bite",
-  "Guardian's Bulwark — hunkers down, nearly unmovable",
-  "Frenzied Rampage — relentless multi-hit assault",
-  "Venom Nibble — a bite that saps a rival's strength",
-  "Storm Caller — summons wind to batter opponents",
-  "Void Burrow — phases through attacks entirely",
-  "Apex Roar — a commanding cry that breaks enemy morale",
+  "Seed Cannon — launches hardened seeds hard enough to go clean through bark and bone",
+  "Overgrowth Roots — vines erupt from beneath and drag a foe down into the dark",
+  "Sonic Whisker Boom — a shockwave squeak that cracks stone and stops hearts for a beat",
+  "Molten Cheek Pouch — the bite that follows smells like it shouldn't still be alive",
+  "Guardian's Bulwark — hunkers down, and the ground around it stops obeying physics",
+  "Frenzied Rampage — a relentless assault with too many limbs moving out of sync",
+  "Venom Nibble — a bite that spreads numbness, then silence, then nothing at all",
+  "Storm Caller — the sky answers something that isn't quite a hamster anymore",
+  "Void Burrow — the tunnel it opens has no bottom, and something breathes up from it",
+  "Apex Roar — a cry too big for something this small, in a voice that isn't its own",
+  "Maw Beneath the Fur — the cheek pouches split open onto rows of teeth that don't fit",
+  "Thousand-Eye Nest — every shadow in the room opens an eye and turns to watch",
+  "Undying Gnaw — jaws lock on and keep working long after the rest of it stops moving",
+  "Warren of the Lost — the burrow opens onto somewhere that was never the yard",
+  "Skin It Wears — for a moment the fur is not fur, and it is not alone in there",
+  "Nest of Small Hungers — a hundred tiny mouths answer from beneath the bedding",
 ];
+
 
 export function rollAbilities(pool: string[], count: number, exclude: string[] = []): string[] {
   const available = pool.filter((a) => !exclude.includes(a));
