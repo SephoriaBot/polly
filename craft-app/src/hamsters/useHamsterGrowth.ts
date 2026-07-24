@@ -236,12 +236,23 @@ export function useHamsterGrowthState() {
     let runningPoints = points;
     const now = new Date().toISOString();
 
-    // 1. Bills paid on time since last check
+    // 1. Bills paid on time — tracked with a per-payment "hamster_credited"
+    // flag instead of a timestamp cursor. A timestamp cursor (paid_at >
+    // last_bill_check) means that once a payment is checked once, editing
+    // its due date afterward can never trigger a re-check — paid_at never
+    // changes, so it stays permanently behind the cursor. That's why fixing
+    // a due date silently did nothing unless you deleted and re-added the
+    // bill (which produces a brand new payment row with a fresh paid_at).
+    //
+    // Instead: only stop looking at a payment once it's actually been
+    // credited with on-time points. If it currently reads as late, it stays
+    // eligible, so correcting the due date later will pick it up on the
+    // very next check using whatever due_day is current at that point.
     const { data: newPayments } = await supabase
       .from("bill_payments")
-      .select("paid, paid_at, due_day, month, year, bill_id")
+      .select("id, paid, paid_at, due_day, month, year, bill_id, hamster_credited")
       .eq("paid", true)
-      .gt("paid_at", lastCheck.last_bill_check);
+      .or("hamster_credited.is.null,hamster_credited.eq.false");
 
     for (const p of newPayments || []) {
       if (!p.paid_at) continue;
@@ -257,6 +268,8 @@ export function useHamsterGrowthState() {
         const dueDate = new Date(p.year, p.month - 1, dueDay, 23, 59, 59, 999);
         if (new Date(p.paid_at) <= dueDate) {
           runningPoints = await addPoints(POINTS.bill_paid_on_time, "bill_paid_on_time", runningPoints);
+          // Lock in credit so this exact payment can never be double-counted.
+          await supabase.from("bill_payments").update({ hamster_credited: true }).eq("id", p.id);
         }
       }
     }
