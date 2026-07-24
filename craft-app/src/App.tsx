@@ -11,7 +11,7 @@ const MaidWizard = lazy(() => import('./pages/MaidWizard'));
 const Wallet = lazy(() => import('./pages/Wallet'));
 const TrackerPage = lazy(() => import('./pages/TrackerPage'));
 const DecisionTree = lazy(() => import('./pages/DecisionTree'));
-const Habitat = lazy(() => import('./pages/Habitat'));
+const Habitat = lazy(() => import('./hamsters/Habitat'));
 
 import { ToastProvider } from './hooks/useToast';
 
