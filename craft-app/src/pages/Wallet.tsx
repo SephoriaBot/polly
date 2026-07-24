@@ -797,7 +797,7 @@ export default function Wallet() {
         if (data) setPayments(prev => [...prev, data]);
       }
     } else {
-      const { error } = await supabase.from("bills").update({ [field]: value }).eq("id", bill.id);
+      const { error } = await supabase.from("bill_payments").update({ [field]: value }).eq("id", bill.id);
       if (error) { console.error("updateMonthBill (bills) failed:", error); return; }
       setBills(prev => prev.map(b => b.id === bill.id ? { ...b, [field]: value } : b));
     }
