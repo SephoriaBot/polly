@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import HamsterNest from "../hamsters/HamsterNest";
 import HamsterHabitat from "../hamsters/HamsterHabitat";
+import WildEncounter from "../hamsters/WildEncounter";
 import { HamsterGrowthProvider } from "../hamsters/HamsterGrowthContext";
 import { Heart } from 'lucide-react';
 import Lantern from "../components/Lantern";
