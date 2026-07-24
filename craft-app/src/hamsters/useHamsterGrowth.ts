@@ -251,7 +251,10 @@ export function useHamsterGrowthState() {
         dueDay = bill?.due_day;
       }
       if (dueDay != null) {
-        const dueDate = new Date(p.year, p.month - 1, dueDay);
+        // End of the due day, not the start — otherwise anything paid
+        // after midnight on the actual due date (i.e. any normal payment
+        // made during the day) reads as late.
+        const dueDate = new Date(p.year, p.month - 1, dueDay, 23, 59, 59, 999);
         if (new Date(p.paid_at) <= dueDate) {
           runningPoints = await addPoints(POINTS.bill_paid_on_time, "bill_paid_on_time", runningPoints);
         }
