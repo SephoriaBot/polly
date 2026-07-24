@@ -959,9 +959,9 @@ export default function Wallet() {
           {view !== "home" && (
             <button className="btn btn-ghost btn-sm" onClick={() => setView("home")}>← Back</button>
           )}
-          <Lantern />
+          <Lantern size={24} />
           <h2>{VIEW_TITLES[view].icon && <Icon name={VIEW_TITLES[view].icon!} size={20} />} {VIEW_TITLES[view].text}</h2>
-          <Lantern />
+          <Lantern size={24} />
         </div>
         {savedMsg && <span className="badge badge-green">Saved!</span>}
       </div>

@@ -236,9 +236,8 @@ export default function Dashboard() {
           )}
         </section>
 
-        <Lantern />
+        <Lantern variant="divider" />
 
-        
         {/* ── HAMSTER NEST ── */}
         <section>
   <div className="section-label">Hamster Nest</div>

@@ -613,6 +613,29 @@ body {
 .stitch-divider .mark::before { transform: translateY(-50%) rotate(45deg); }
 .stitch-divider .mark::after  { transform: translateY(-50%) rotate(-45deg); }
 
+.lantern-img {
+  filter: drop-shadow(0 2px 6px rgba(184, 164, 245, 0.35));
+  animation: lantern-sway 4s ease-in-out infinite;
+  transform-origin: top center;
+}
+
+@keyframes lantern-sway {
+  0%, 100% { transform: rotate(-3deg); }
+  50%      { transform: rotate(3deg); }
+}
+
+.lantern-divider {
+  display: flex;
+  align-items: center;
+  margin: 2px 0 4px;
+  gap: 10px;
+}
+
+.lantern-divider .line {
+  flex: 1;
+  border-top: 1px dashed var(--border);
+}
+
 .meals-empty {
   background: var(--white);
   border: 1.5px dashed var(--border);

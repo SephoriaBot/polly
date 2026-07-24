@@ -3,19 +3,35 @@ import React from "react";
 type LanternProps = {
   size?: number;
   className?: string;
+  /** "accent" = flanks a title (small, sits inline). "divider" = replaces a StitchDivider (line + lantern + line). */
+  variant?: "accent" | "divider";
 };
 
-export default function Lantern({ size = 80, className = "" }: LanternProps) {
-  return (
+export default function Lantern({ size, className = "", variant = "accent" }: LanternProps) {
+  const resolvedSize = size ?? (variant === "divider" ? 26 : 32);
+
+  const img = (
     <img
       src="/assets/Lantern.png"
       alt="Lantern decoration"
-      className={className}
+      className={`lantern-img ${className}`}
       style={{
-        width: size,
+        width: resolvedSize,
         height: "auto",
         pointerEvents: "none",
       }}
     />
   );
+
+  if (variant === "divider") {
+    return (
+      <div className="lantern-divider">
+        <span className="line" />
+        {img}
+        <span className="line" />
+      </div>
+    );
+  }
+
+  return img;
 }
