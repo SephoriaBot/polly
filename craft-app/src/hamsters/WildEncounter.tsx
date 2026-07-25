@@ -3,23 +3,33 @@
 // your own teen/final hamsters. Fully self-contained — does its own
 // Supabase reads/writes, doesn't touch useHamsterGrowth.ts or any other
 // hamster file. Requires the hamster_battle_log table (see migration).
+//
+// Combat is move-by-move: each round, whichever side is faster acts first
+// (opponent's move auto-resolves), then the player picks one of their
+// hamster's abilities. Every ability has a hidden power/accuracy trade-off
+// (see moveStats in battle.ts) — always throwing the flashiest move is a
+// real way to lose, since the biggest hits are also the least likely to
+// land. There is no auto-resolve-the-whole-fight path anymore; the outcome
+// depends on what you pick each round, not just stats + one RNG roll.
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { supabase } from "../lib/supabase"; // match your actual client path
 import Icon from "../components/Icon";
 import { HAMSTERS, imageForForm } from "./hamsters";
 import type { EvolutionStage } from "./hamsters";
-import type { Personality } from "./personalities";
 import { useHamsterGrowth } from "./HamsterGrowthContext";
 import {
   canBattle,
   deriveBattleStats,
   rollWildHamster,
   hydrateWildHamster,
-  resolveBattle,
   abilityShortName,
+  moveFlavor,
+  resolveAttack,
+  pickOpponentMove,
+  rollsFirst,
 } from "./battle";
-import type { WildHamster, BattleTurn } from "./battle";
+import type { WildHamster, AttackOutcome } from "./battle";
 
 interface FighterEntry {
   id: number;
@@ -29,7 +39,7 @@ interface FighterEntry {
   image: string;
 }
 
-type Phase = "pick" | "scouting" | "found" | "fighting" | "result";
+type Phase = "pick" | "scouting" | "found" | "battling" | "result";
 
 function HpBar({ current, max, color }: { current: number; max: number; color: string }) {
   const pct = Math.max(0, Math.round((current / max) * 100));
@@ -48,10 +58,16 @@ export default function WildEncounter() {
   const [phase, setPhase] = useState<Phase>("pick");
   const [wild, setWild] = useState<WildHamster | null>(null);
   const [isAutoSpawned, setIsAutoSpawned] = useState(false);
-  const [visibleTurns, setVisibleTurns] = useState<BattleTurn[]>([]);
-  const [allTurns, setAllTurns] = useState<BattleTurn[]>([]);
   const [winner, setWinner] = useState<"player" | "opponent" | null>(null);
   const [tamed, setTamed] = useState(false);
+
+  // Live battle state
+  const [playerHp, setPlayerHp] = useState(0);
+  const [opponentHp, setOpponentHp] = useState(0);
+  const [log, setLog] = useState<AttackOutcome[]>([]);
+  const [roundQueue, setRoundQueue] = useState<Array<"player" | "opponent">>([]);
+  const [busy, setBusy] = useState(false); // true while an auto/animated move is resolving
+  const opponentActingRef = useRef(false);
 
   // A wild hamster spawned automatically from an accomplishment (see
   // useHamsterGrowth.ts) shows up here immediately instead of requiring the
@@ -100,6 +116,11 @@ export default function WildEncounter() {
     return "baby";
   }, [fighters]);
 
+  const playerStats = useMemo(
+    () => (selected ? deriveBattleStats(selected.stage, selected.abilities) : null),
+    [selected]
+  );
+
   const goScout = () => {
     setTamed(false);
     if (isAutoSpawned && wild) {
@@ -115,38 +136,77 @@ export default function WildEncounter() {
   };
 
   const startFight = () => {
-    if (!selected || !wild) return;
-    const playerStats = deriveBattleStats(selected.stage, selected.abilities);
-    const result = resolveBattle(playerStats, selected.abilities, wild.stats, wild.abilities);
-    setAllTurns(result.turns);
-    setVisibleTurns([]);
-    setWinner(result.winner);
-    setPhase("fighting");
+    if (!selected || !playerStats || !wild) return;
+    setPlayerHp(playerStats.hp);
+    setOpponentHp(wild.stats.hp);
+    setLog([]);
+    setWinner(null);
+    setPhase("battling");
+    const order: Array<"player" | "opponent"> = rollsFirst(playerStats, wild.stats)
+      ? ["player", "opponent"]
+      : ["opponent", "player"];
+    setRoundQueue(order);
   };
 
-  // Reveal turns one at a time for a bit of drama instead of dumping the
-  // whole log at once.
+  // Auto-resolves the opponent's move whenever it's next in the queue.
   useEffect(() => {
-    if (phase !== "fighting") return;
-    if (visibleTurns.length >= allTurns.length) {
-      const t = setTimeout(() => setPhase("result"), 400);
-      return () => clearTimeout(t);
-    }
-    const t = setTimeout(() => {
-      setVisibleTurns((prev) => [...prev, allTurns[prev.length]]);
-    }, 550);
-    return () => clearTimeout(t);
-  }, [phase, visibleTurns, allTurns]);
+    if (phase !== "battling") return;
+    if (roundQueue[0] !== "opponent") return;
+    if (playerHp <= 0 || opponentHp <= 0) return;
+    if (opponentActingRef.current) return;
+    if (!wild || !playerStats) return;
 
-  const playerStats = selected ? deriveBattleStats(selected.stage, selected.abilities) : null;
-  const playerHpNow =
-    playerStats && visibleTurns.length
-      ? [...visibleTurns].reverse().find((t) => t.side === "opponent")?.hpAfter ?? playerStats.hp
-      : playerStats?.hp ?? 0;
-  const opponentHpNow =
-    wild && visibleTurns.length
-      ? [...visibleTurns].reverse().find((t) => t.side === "player")?.hpAfter ?? wild.stats.hp
-      : wild?.stats.hp ?? 0;
+    opponentActingRef.current = true;
+    setBusy(true);
+    const move = pickOpponentMove(wild.abilities);
+    const t = setTimeout(() => {
+      const outcome = resolveAttack("opponent", move, wild.stats, playerStats, playerHp);
+      setLog((prev) => [...prev, outcome]);
+      setPlayerHp(outcome.hpAfter);
+      setRoundQueue((q) => q.slice(1));
+      setBusy(false);
+      opponentActingRef.current = false;
+    }, 700);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase, roundQueue, playerHp, opponentHp, wild, playerStats]);
+
+  // Once a round's two moves are both spent (and nobody's fainted), roll a
+  // fresh order for the next round.
+  useEffect(() => {
+    if (phase !== "battling") return;
+    if (roundQueue.length > 0) return;
+    if (playerHp <= 0 || opponentHp <= 0) return;
+    if (!wild || !playerStats) return;
+    const order: Array<"player" | "opponent"> = rollsFirst(playerStats, wild.stats)
+      ? ["player", "opponent"]
+      : ["opponent", "player"];
+    setRoundQueue(order);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase, roundQueue.length, playerHp, opponentHp, wild, playerStats]);
+
+  // Whenever either side's HP hits 0, end the fight.
+  useEffect(() => {
+    if (phase !== "battling") return;
+    if (playerHp <= 0) {
+      setWinner("opponent");
+      setPhase("result");
+    } else if (opponentHp <= 0) {
+      setWinner("player");
+      setPhase("result");
+    }
+  }, [phase, playerHp, opponentHp]);
+
+  const useMove = (ability: string) => {
+    if (!selected || !playerStats || !wild || busy) return;
+    if (roundQueue[0] !== "player") return;
+    setBusy(true);
+    const outcome = resolveAttack("player", ability, playerStats, wild.stats, opponentHp);
+    setLog((prev) => [...prev, outcome]);
+    setOpponentHp(outcome.hpAfter);
+    setRoundQueue((q) => q.slice(1));
+    setBusy(false);
+  };
 
   const logBattle = useCallback(
     async (didTame: boolean) => {
@@ -159,11 +219,11 @@ export default function WildEncounter() {
         opponent_personality: wild.personality,
         opponent_abilities: wild.abilities,
         result: winner === "player" ? "win" : "loss",
-        turns: allTurns,
+        turns: log,
         tamed: didTame,
       });
     },
-    [selected, wild, winner, allTurns]
+    [selected, wild, winner, log]
   );
 
   useEffect(() => {
@@ -195,10 +255,14 @@ export default function WildEncounter() {
     setPhase("pick");
     setWild(null);
     setIsAutoSpawned(false);
-    setAllTurns([]);
-    setVisibleTurns([]);
     setWinner(null);
     setTamed(false);
+    setLog([]);
+    setRoundQueue([]);
+    setPlayerHp(0);
+    setOpponentHp(0);
+    setBusy(false);
+    opponentActingRef.current = false;
   };
 
   if (loading) {
@@ -210,6 +274,9 @@ export default function WildEncounter() {
       </div>
     );
   }
+
+  const playersTurn = phase === "battling" && roundQueue[0] === "player" && !busy;
+  const lastEntry = log.length ? log[log.length - 1] : null;
 
   return (
     <div className="card">
@@ -280,15 +347,19 @@ export default function WildEncounter() {
               </div>
             )}
 
-            {(phase === "found" || phase === "fighting" || phase === "result") && wild && selected && (
+            {(phase === "found" || phase === "battling" || phase === "result") && wild && selected && playerStats && (
               <div style={{ marginTop: 8 }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
                   <div style={{ flex: 1, textAlign: "center" }}>
                     <img src={selected.image} alt="your hamster" style={{ width: 64, height: 64, objectFit: "contain" }} />
                     <div style={{ fontSize: 11, fontWeight: 700, color: "var(--pink-dark)" }}>Your hamster</div>
-                    {playerStats && <HpBar current={playerHpNow} max={playerStats.hp} color="var(--pink-dark)" />}
+                    <HpBar
+                      current={phase === "found" ? playerStats.hp : playerHp}
+                      max={playerStats.hp}
+                      color="var(--pink-dark)"
+                    />
                     <div style={{ fontSize: 10, color: "var(--ink-muted)" }}>
-                      {playerHpNow} / {playerStats?.hp} HP
+                      {phase === "found" ? playerStats.hp : playerHp} / {playerStats.hp} HP
                     </div>
                   </div>
                   <div style={{ fontSize: 16, fontWeight: 800, color: "var(--ink-muted)" }}>vs</div>
@@ -297,9 +368,13 @@ export default function WildEncounter() {
                     <div style={{ fontSize: 11, fontWeight: 700, color: "var(--pink-dark)" }}>
                       Wild {wild.stage} hamster
                     </div>
-                    <HpBar current={opponentHpNow} max={wild.stats.hp} color="#B85C5C" />
+                    <HpBar
+                      current={phase === "found" ? wild.stats.hp : opponentHp}
+                      max={wild.stats.hp}
+                      color="#B85C5C"
+                    />
                     <div style={{ fontSize: 10, color: "var(--ink-muted)" }}>
-                      {opponentHpNow} / {wild.stats.hp} HP
+                      {phase === "found" ? wild.stats.hp : opponentHp} / {wild.stats.hp} HP
                     </div>
                   </div>
                 </div>
@@ -318,24 +393,84 @@ export default function WildEncounter() {
                   </>
                 )}
 
-                {(phase === "fighting" || phase === "result") && (
-                  <div
-                    style={{
-                      marginTop: 12,
-                      maxHeight: 120,
-                      overflowY: "auto",
-                      fontSize: 11,
-                      color: "var(--ink-muted)",
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: 3,
-                    }}
-                  >
-                    {visibleTurns.map((t, i) => (
-                      <div key={i}>
-                        {t.side === "player" ? "Yours" : "Wild hamster"} used <strong>{t.move}</strong> — {t.damage} dmg
+                {(phase === "battling" || phase === "result") && (
+                  <>
+                    {lastEntry && (
+                      <div style={{ fontSize: 12, textAlign: "center", marginTop: 12, minHeight: 18 }}>
+                        {lastEntry.hit ? (
+                          <span style={{ color: "var(--ink)" }}>
+                            {lastEntry.side === "player" ? "Yours" : "Wild hamster"} used{" "}
+                            <strong>{lastEntry.move}</strong> — {lastEntry.damage} dmg
+                          </span>
+                        ) : (
+                          <span style={{ color: "var(--ink-muted)" }}>
+                            {lastEntry.side === "player" ? "Yours" : "Wild hamster"} used{" "}
+                            <strong>{lastEntry.move}</strong> — missed!
+                          </span>
+                        )}
                       </div>
-                    ))}
+                    )}
+
+                    {log.length > 1 && (
+                      <div
+                        style={{
+                          marginTop: 6,
+                          maxHeight: 90,
+                          overflowY: "auto",
+                          fontSize: 10,
+                          color: "var(--ink-muted)",
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: 2,
+                        }}
+                      >
+                        {log.slice(0, -1).map((t, i) => (
+                          <div key={i}>
+                            {t.side === "player" ? "Yours" : "Wild hamster"} used {t.move}
+                            {t.hit ? ` — ${t.damage} dmg` : " — missed"}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </>
+                )}
+
+                {phase === "battling" && (
+                  <div style={{ marginTop: 14 }}>
+                    {playersTurn ? (
+                      <>
+                        <div style={{ fontSize: 11, color: "var(--ink-muted)", marginBottom: 6, textAlign: "center" }}>
+                          Pick a move
+                        </div>
+                        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                          {(selected.abilities.length ? selected.abilities : ["Nibble"]).map((a) => (
+                            <button
+                              key={a}
+                              onClick={() => useMove(a)}
+                              style={{
+                                display: "flex",
+                                justifyContent: "space-between",
+                                alignItems: "center",
+                                border: "2px solid var(--border)",
+                                background: "transparent",
+                                borderRadius: 10,
+                                padding: "8px 10px",
+                                cursor: "pointer",
+                                fontSize: 12,
+                                textAlign: "left",
+                              }}
+                            >
+                              <span>{abilityShortName(a)}</span>
+                              <span style={{ fontSize: 10, color: "var(--ink-muted)" }}>{moveFlavor(a)}</span>
+                            </button>
+                          ))}
+                        </div>
+                      </>
+                    ) : (
+                      <div style={{ textAlign: "center", fontSize: 11, color: "var(--ink-muted)", padding: "8px 0" }}>
+                        {busy ? "..." : "waiting..."}
+                      </div>
+                    )}
                   </div>
                 )}
 
