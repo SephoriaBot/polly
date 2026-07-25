@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase'; // adjust path to your existing clie
 import Icon from '../components/Icon';
 import Lantern from "../components/Lantern";
 import EmptyState from '../components/EmptyState';
-import emptyStateImg from '../../assets/illustrations/empty-state.PNG';
+import emptyStateImg from '../assets/illustrations/empty-state.PNG';
 
 
 
