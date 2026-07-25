@@ -14,6 +14,8 @@ const DecisionTree = lazy(() => import('./pages/DecisionTree'));
 const Habitat = lazy(() => import('./hamsters/Habitat'));
 
 import { ToastProvider } from './hooks/useToast';
+import { HamsterGrowthProvider } from './hamsters/HamsterGrowthContext';
+import WildEncounterAlert from './hamsters/WildEncounterAlert';
 
 type Page = 'dashboard' | 'meals' | 'grocery' | 'dailyplanner' | 'maidwizard' | 'wallet' | 'trackers' | 'decisions' | 'habitat';
 
@@ -27,28 +29,35 @@ type Page = 'dashboard' | 'meals' | 'grocery' | 'dailyplanner' | 'maidwizard' | 
     <ThemeProvider>
       <ShapeDefs />
       <ToastProvider>
-        <div className="app-shell">
-          <header className="topbar">
-            <span className="topbar-mark">Polly</span>
-            <div className="topbar-actions">
-              <ThemeToggle />
-            </div>
-          </header>
-          <main className="main">
-            <Suspense fallback={<div className="page-loading">Loading…</div>}>
-              {page === 'dashboard'    && <Dashboard />}
-              {page === 'meals'        && <Meals />}
-              {page === 'grocery'      && <Grocery />}
-              {page === 'dailyplanner' && <DailyPlanner />}
-              {page === 'maidwizard'   && <MaidWizard />}
-              {page === 'wallet'       && <Wallet />}
-              {page === 'trackers'     && <TrackerPage />}
-              {page === 'decisions'    && <DecisionTree />}
-              {page === 'habitat'      && <Habitat />}
-            </Suspense>
-          </main>
-          <BottomNav currentPage={page} onNavigate={navigate} />
-        </div>
+        {/* Lives at the app root (not just on the Habitat page) so the
+            growth check runs on every app load regardless of which page you
+            land on, and so a pending wild encounter can pop up no matter
+            where you are. */}
+        <HamsterGrowthProvider>
+          <WildEncounterAlert currentPage={page} onNavigate={navigate} />
+          <div className="app-shell">
+            <header className="topbar">
+              <span className="topbar-mark">Polly</span>
+              <div className="topbar-actions">
+                <ThemeToggle />
+              </div>
+            </header>
+            <main className="main">
+              <Suspense fallback={<div className="page-loading">Loading…</div>}>
+                {page === 'dashboard'    && <Dashboard />}
+                {page === 'meals'        && <Meals />}
+                {page === 'grocery'      && <Grocery />}
+                {page === 'dailyplanner' && <DailyPlanner />}
+                {page === 'maidwizard'   && <MaidWizard />}
+                {page === 'wallet'       && <Wallet />}
+                {page === 'trackers'     && <TrackerPage />}
+                {page === 'decisions'    && <DecisionTree />}
+                {page === 'habitat'      && <Habitat />}
+              </Suspense>
+            </main>
+            <BottomNav currentPage={page} onNavigate={navigate} />
+          </div>
+        </HamsterGrowthProvider>
       </ToastProvider>
     </ThemeProvider>
   );
