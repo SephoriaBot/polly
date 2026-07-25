@@ -8,6 +8,7 @@ import TrackerOverlap from '../components/tracker/TrackerOverlap';
 import { TRACKER_CONFIG } from '../data/trackerConfig';
 import type { TrackerType, PeriodValue } from '../types/tracker';
 import { getTrackerLogsInRange } from '../lib/trackerApi';
+import { getMoonPhase, type MoonPhase } from '../lib/almanac';
 import Lantern from "../components/Lantern";
 
 function todayISO() {
@@ -27,6 +28,10 @@ export default function TrackerPage() {
   const [refreshKey, setRefreshKey] = useState(0);
   const [cycleDay, setCycleDay] = useState<number | null>(null);
   const [periodEnded, setPeriodEnded] = useState(false);
+  const [cycleMoon, setCycleMoon] = useState<{ start: MoonPhase | null; end: MoonPhase | null }>({
+    start: null,
+    end: null,
+  });
 
   useEffect(() => {
     getTrackerLogsInRange('period', daysAgoISO(90), todayISO()).then((logs) => {
@@ -39,6 +44,7 @@ export default function TrackerPage() {
       if (starts.length === 0) {
         setCycleDay(null);
         setPeriodEnded(false);
+        setCycleMoon({ start: null, end: null });
         return;
       }
 
@@ -48,10 +54,16 @@ export default function TrackerPage() {
         Math.floor((Date.now() - lastStart.getTime()) / (1000 * 60 * 60 * 24)) + 1;
       setCycleDay(diff);
 
-      const ended = logs.some(
-        (l) => (l.value as PeriodValue).bleeding_end && l.log_date >= lastStartDate
-      );
-      setPeriodEnded(ended);
+      const endLog = logs
+        .filter((l) => (l.value as PeriodValue).bleeding_end && l.log_date >= lastStartDate)
+        .map((l) => l.log_date)
+        .sort()[0];
+
+      setPeriodEnded(!!endLog);
+      setCycleMoon({
+        start: getMoonPhase(new Date(`${lastStartDate}T12:00:00Z`)),
+        end: endLog ? getMoonPhase(new Date(`${endLog}T12:00:00Z`)) : null,
+      });
     });
   }, [refreshKey]);
 
@@ -70,7 +82,15 @@ export default function TrackerPage() {
 
       {cycleDay !== null && (
         <div className="card" style={{ background: 'var(--blush)' }}>
-          <Icon name="flower" size={16} /> Day {cycleDay} of your cycle{periodEnded ? ' · period ended' : ''}
+          <div>
+            <Icon name="flower" size={16} /> Day {cycleDay} of your cycle{periodEnded ? ' · period ended' : ''}
+          </div>
+          {(cycleMoon.start || cycleMoon.end) && (
+            <div style={{ fontSize: 12, color: 'var(--ink-muted)', marginTop: '0.25rem' }}>
+              {cycleMoon.start && `🌙 Started under ${cycleMoon.start.phaseName} (${cycleMoon.start.illuminationPct}%)`}
+              {cycleMoon.end && ` · Ended under ${cycleMoon.end.phaseName} (${cycleMoon.end.illuminationPct}%)`}
+            </div>
+          )}
         </div>
       )}
 
