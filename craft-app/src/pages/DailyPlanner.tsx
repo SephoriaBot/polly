@@ -6,7 +6,7 @@ import type { AppointmentNoteSelection } from '../components/planner/Appointment
 import { useAppointmentNoteMap } from '../hooks/useAppointmentNoteMap';
 import Lantern from "../components/Lantern";
 import EmptyState from '../components/EmptyState';
-import emptyStateImg from '../../assets/illustrations/empty-state.PNG';
+import emptyStateImg from '../assets/illustrations/empty-state.PNG';
 
 
 interface DailyTask {
