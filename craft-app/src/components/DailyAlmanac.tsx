@@ -123,7 +123,7 @@ export default function DailyAlmanac() {
           <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
             <Icon
               name={(MOON_ICON_BY_PHASE[entry.moon_phase] ?? "moon-cloud") as any}
-              size={40}
+              size={60}
               alt={entry.moon_phase}
             />
             <div>
