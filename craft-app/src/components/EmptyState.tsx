@@ -5,7 +5,7 @@ interface EmptyStateProps {
   subMessage?: string;
 }
 
-export function EmptyState({ image, message, subMessage }: EmptyStateProps) {
+export default function EmptyState({ image, message, subMessage }: EmptyStateProps) {
   return (
     <div style={{
       display: 'flex',
