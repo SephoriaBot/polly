@@ -1,8 +1,7 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useHamsterGrowth } from "./HamsterGrowthContext";
 import { SOURCE_LABELS } from "./useHamsterGrowth";
 import Icon from "../components/Icon";
-import { useEffect, useState } from "react";
 import hamsterHatchCrack from "../assets/illustrations/hamster-hatch-crack.PNG";
 
 
