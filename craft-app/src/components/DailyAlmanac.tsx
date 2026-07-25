@@ -130,7 +130,7 @@ export default function DailyAlmanac() {
       {entry.moon_phase} · {entry.moon_illumination}%
     </div>
   </div>
-</div>
+
 
           <div>
             <div style={{ fontSize: 10, color: "var(--ink-muted)", textTransform: "uppercase", letterSpacing: "0.06em" }}>
