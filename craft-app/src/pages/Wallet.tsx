@@ -595,8 +595,9 @@ export default function Wallet() {
 
     periodEarnedGross += fullEarnedToday;
 
-    const eligiblePct = eligiblePercent(periodEarnedGross, budget.net_to_gross_ratio, budget.flat_deductions_prev);
+        const eligiblePct = eligiblePercent(periodEarnedGross, budget.net_to_gross_ratio, budget.flat_deductions_prev);
     const maxWithdrawableGrossSoFar = periodEarnedGross * eligiblePct;
+    const withdrawnBeforeToday = periodWithdrawnGross; // snapshot before today's pull is added
     const availableToday = Math.max(0, maxWithdrawableGrossSoFar - periodWithdrawnGross);
     periodWithdrawnGross += availableToday;
 
@@ -618,11 +619,13 @@ export default function Wallet() {
     runningBalance += availableToday + releasedToday + extraToday - billsTotal;
     const heldInPool = Math.max(0, periodEarnedGross - periodWithdrawnGross);
 
-    return {
+        return {
       date: d, key, billsToday, billsTotal, regHoursToday, otHoursToday,
       hoursToday, earnedToday: fullEarnedToday, availableToday, releasedToday,
       eligiblePct, heldInPool, extraToday, balance: runningBalance,
+      ceilingToday: maxWithdrawableGrossSoFar, withdrawnBeforeToday,
     };
+
   });
 
   return { rows, endingBalance: runningBalance };
@@ -1214,12 +1217,18 @@ export default function Wallet() {
                                 )}
                               </div>
 
-                              {row.hoursToday > 0 && (
+                                                            {row.hoursToday > 0 && (
                                 <div style={{ fontSize: 9, color: "var(--ink-muted)", marginTop: 3 }}>
                                   {Math.round(row.eligiblePct * 100)}% of period pool available
                                   {row.heldInPool > 0.005 && ` · ${fmt(row.heldInPool)} still held this period`}
+                                  {row.withdrawnBeforeToday > 0.005 && (
+                                    <div style={{ marginTop: 1 }}>
+                                      {fmt(row.ceilingToday)} ceiling · {fmt(row.withdrawnBeforeToday)} already pulled
+                                    </div>
+                                  )}
                                 </div>
                               )}
+
 
                               {row.releasedToday > 0.005 && (
                                 <div style={{ fontSize: 11, color: "var(--gold)", fontWeight: 700, marginTop: 4 }}>
