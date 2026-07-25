@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { Heart } from 'lucide-react';
 import Lantern from "../components/Lantern";
+import DailyAlmanac from "../components/DailyAlmanac";
 
 interface Focus {
   id: string;
@@ -107,8 +108,12 @@ export default function Dashboard() {
 
       <div className="page-body">
 
-        
+        {/* ── DAILY ALMANAC ── */}
+        <section>
+          <DailyAlmanac />
+        </section>
 
+        <Lantern variant="divider" />
 
         {/* ── TODAY'S FOCUS ── */}
         <section>
