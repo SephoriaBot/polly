@@ -3,7 +3,7 @@ import { useHamsterGrowth } from "./HamsterGrowthContext";
 import { SOURCE_LABELS } from "./useHamsterGrowth";
 import Icon from "../components/Icon";
 import { useEffect, useState } from "react";
-import hamsterHatchCrack from "../assets/illustrations/hamster-hatch-crack.png";
+import hamsterHatchCrack from "../assets/illustrations/hamster-hatch-crack.PNG";
 
 
 function NestEgg({ progressPct }: { progressPct: number }) {
