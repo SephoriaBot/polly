@@ -186,3 +186,102 @@ export function resolveBattle(
     opponentFinalHp: opponentHp,
   };
 }
+
+// --- Interactive move-by-move combat ----------------------------------------
+//
+// resolveBattle() above simulates a whole fight in one shot with randomly
+// picked moves on both sides — there's no player decision in it, so a loss
+// only ever comes from raw stat/RNG bad luck, not from choosing badly. The
+// functions below let the UI ask the player which ability to use each turn,
+// and make that choice actually matter: every ability has its own hidden
+// power/accuracy trade-off (big hits are less likely to land), so "always
+// pick the flashiest move" is a real way to lose.
+
+export interface MoveStats {
+  power: number; // damage multiplier applied to attack stat
+  accuracy: number; // 0-100, chance the move connects at all
+}
+
+// Deterministic per-ability, same trick as abilityBonus (hash of the text)
+// but salted differently so a move's power/accuracy can't be reverse-
+// guessed from its stat bonus. Every ability trades something: the
+// highest-power moves land in the 65-75% accuracy range, the safest moves
+// cap out around 1.0x power, so there's no single "always correct" pick.
+export function moveStats(ability: string): MoveStats {
+  const h = hashString("move::" + ability);
+  const power = Math.round((0.7 + ((h % 9) / 10)) * 100) / 100; // 0.70 - 1.50
+  const accuracy = 65 + ((h >> 4) % 31); // 65 - 95
+  return { power, accuracy };
+}
+
+// Loose flavor label so the fighter screen can hint at a move's risk
+// profile without printing raw numbers (keeps it a gut-feel choice, not a
+// spreadsheet).
+export function moveFlavor(ability: string): string {
+  const { power, accuracy } = moveStats(ability);
+  if (power >= 1.25) return accuracy >= 80 ? "Strong" : "Strong, risky";
+  if (accuracy >= 88) return "Reliable";
+  if (power <= 0.85) return "Weak, safe";
+  return "Balanced";
+}
+
+export interface AttackOutcome {
+  side: "player" | "opponent";
+  move: string;
+  hit: boolean;
+  damage: number;
+  hpAfter: number;
+}
+
+// Resolves one single attack (one ability, one side) against the
+// defender's current HP. Call this once per move instead of simulating the
+// whole fight — the caller decides whose turn it is and which ability they
+// used.
+export function resolveAttack(
+  side: "player" | "opponent",
+  ability: string,
+  attackerStats: BattleStats,
+  defenderStats: BattleStats,
+  defenderHpBefore: number
+): AttackOutcome {
+  const move = abilityShortName(ability);
+  const { power, accuracy } = moveStats(ability);
+  const hit = Math.random() * 100 < accuracy;
+
+  if (!hit) {
+    return { side, move, hit: false, damage: 0, hpAfter: defenderHpBefore };
+  }
+
+  const raw = attackerStats.attack * power - defenderStats.defense / 2 + (1 + Math.floor(Math.random() * 6));
+  const damage = Math.max(1, Math.round(raw));
+  const hpAfter = Math.max(0, defenderHpBefore - damage);
+  return { side, move, hit: true, damage, hpAfter };
+}
+
+// Simple opponent "AI": mostly picks whichever of its abilities has the
+// best expected value (power * accuracy), but goes off-script sometimes so
+// it's not perfectly readable turn to turn.
+export function pickOpponentMove(abilities: string[]): string {
+  if (abilities.length === 0) return "Nibble";
+  if (Math.random() < 0.25) {
+    return abilities[Math.floor(Math.random() * abilities.length)];
+  }
+  let best = abilities[0];
+  let bestEv = -Infinity;
+  for (const a of abilities) {
+    const { power, accuracy } = moveStats(a);
+    const ev = power * accuracy;
+    if (ev > bestEv) {
+      bestEv = ev;
+      best = a;
+    }
+  }
+  return best;
+}
+
+// Speed decides who acts first each round, same formula as resolveBattle's
+// one-shot version, just callable per-round instead of once for the whole
+// fight.
+export function rollsFirst(sideStats: BattleStats, otherStats: BattleStats): boolean {
+  return sideStats.speed + Math.random() * 2 >= otherStats.speed + Math.random() * 2;
+}
