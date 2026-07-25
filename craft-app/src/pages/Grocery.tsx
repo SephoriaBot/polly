@@ -10,6 +10,7 @@ import {
 import Lantern from "../components/Lantern";
 import EmptyState from '../components/EmptyState';
 import emptyStateImg from '../assets/illustrations/empty-state.PNG';
+import hamsterThinkingImg from '../assets/illustrations/hamster-thinking.PNG';
 
 
 
@@ -949,11 +950,7 @@ export default function Grocery() {
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 420, overflowY: 'auto', marginBottom: 12 }}>
                 {needs.length === 0
-                  ? <EmptyState
-                      image={emptyStateImg}
-                      message="List is clear!"
-                      subMessage="Add something below to get started"
-                    />
+                  ? <p style={{ textAlign: 'center', fontSize: '0.78rem', color: 'var(--ink-muted)', padding: '1rem' }}>List is clear!</p>
                   : needs.map(item => {
                     const cheapest = cheapestFor(item.name)
                     const itemPrices = pricesFor(item.name)
@@ -1073,7 +1070,18 @@ export default function Grocery() {
             <span style={{ fontWeight: 500 }}>{cart.length} items</span>
           </div>
 
-          {loadingCart && <p style={{ fontSize: '0.8rem', color: 'var(--ink-muted)', padding: '1rem 0' }}>Finding prices…</p>}
+          {loadingCart && (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '20px 0', gap: 10 }}>
+              <img src={hamsterThinkingImg} alt="" style={{ width: 120, animation: 'groceryHamsterPulse 1.4s ease-in-out infinite' }} />
+              <p style={{ fontSize: '0.8rem', color: 'var(--ink-muted)' }}>Finding prices…</p>
+              <style>{`
+                @keyframes groceryHamsterPulse {
+                  0%, 100% { transform: scale(1); opacity: 1; }
+                  50% { transform: scale(1.08); opacity: 0.8; }
+                }
+              `}</style>
+            </div>
+          )}
 
           {!loadingCart && cart.length === 0 && (
             <p style={{ textAlign: 'center', fontSize: '0.78rem', color: 'var(--ink-muted)', padding: '1rem' }}>
