@@ -168,15 +168,23 @@ function hoursOfWork(amount: number, wage: number) {
 // is a shrinking share of a growing pre-tax pool), but there's no ramp curve
 // and no overtime cutoff — it's just real math against real earnings.
 const ANYTIME_PAY_GARNISHMENTS = 0; // not tracked in Polly; Amazon shows $0 for most people
-const ANYTIME_PAY_SAFETY_BUFFER = 0.02; // Amazon's fixed 2% cushion
+const ANYTIME_PAY_SAFETY_BUFFER_NORMAL = 0.02; // Amazon's baseline 2% cushion
+const ANYTIME_PAY_SAFETY_BUFFER_HIGH_HOURS = 0.08; // cushion jumps once weekly hours cross the threshold
+const ANYTIME_PAY_HIGH_HOURS_THRESHOLD = 55; // hours this period where the buffer steps up
 
-function eligiblePercent(preTaxEarnedSoFar: number, netToGrossRatio: number, flatDeductionsPrev: number) {
+function getSafetyBuffer(hoursSoFar: number) {
+  return hoursSoFar >= ANYTIME_PAY_HIGH_HOURS_THRESHOLD
+    ? ANYTIME_PAY_SAFETY_BUFFER_HIGH_HOURS
+    : ANYTIME_PAY_SAFETY_BUFFER_NORMAL;
+}
+
+function eligiblePercent(preTaxEarnedSoFar: number, netToGrossRatio: number, flatDeductionsPrev: number, hoursSoFar: number) {
   if (preTaxEarnedSoFar <= 0 || netToGrossRatio <= 0) return 0;
   const availableAnytimePay = preTaxEarnedSoFar * netToGrossRatio;
   const afterFlatDeductions = availableAnytimePay - flatDeductionsPrev;
   const afterGarnishments = afterFlatDeductions - ANYTIME_PAY_GARNISHMENTS;
   const rawPct = afterGarnishments / preTaxEarnedSoFar;
-  return Math.max(0, rawPct - ANYTIME_PAY_SAFETY_BUFFER);
+  return Math.max(0, rawPct - getSafetyBuffer(hoursSoFar));
 }
 
 const PERIOD_MULTIPLIERS: Record<string, number> = {
@@ -520,6 +528,7 @@ export default function Wallet() {
   let runningBalance = startingBalance;
 
   let periodEarnedGross = 0;   // gross pool, untaxed, resets each Sunday
+  let periodHoursSoFar = 0;    // cumulative hours this period, resets each Sunday — drives the safety buffer step
   let periodWithdrawnGross = 0; // gross cash advanced so far this period
   let pendingPayout = 0;        // net amount owed, released the following Wednesday
 
@@ -539,8 +548,10 @@ export default function Wallet() {
     const priorOt = parseFloat(priorWeekHours.ot) || 0;
     const priorGross = priorReg * grossHourlyWage + priorOt * grossOtWage;
 
+    const priorHours = priorReg + priorOt;
     periodEarnedGross = priorGross;
-    periodWithdrawnGross = priorGross * eligiblePercent(priorGross, budget.net_to_gross_ratio, budget.flat_deductions_prev);
+    periodHoursSoFar = priorHours;
+    periodWithdrawnGross = priorGross * eligiblePercent(priorGross, budget.net_to_gross_ratio, budget.flat_deductions_prev, priorHours);
   }
 
   // Seed pendingPayout: if the window's first Wednesday's release would
@@ -563,7 +574,8 @@ export default function Wallet() {
       const closedReg = parseFloat(closedWeekHours.reg) || 0;
       const closedOt = parseFloat(closedWeekHours.ot) || 0;
       const closedEarnedGross = closedReg * grossHourlyWage + closedOt * grossOtWage;
-      const closedWithdrawnGross = closedEarnedGross * eligiblePercent(closedEarnedGross, budget.net_to_gross_ratio, budget.flat_deductions_prev);
+      const closedHours = closedReg + closedOt;
+      const closedWithdrawnGross = closedEarnedGross * eligiblePercent(closedEarnedGross, budget.net_to_gross_ratio, budget.flat_deductions_prev, closedHours);
       const closedTaxableGross = Math.max(0, closedEarnedGross - budget.flat_deductions_prev);
       const closedNetOwed = closedTaxableGross * (1 - taxRate / 100);
       pendingPayout = Math.max(0, closedNetOwed - closedWithdrawnGross);
@@ -576,6 +588,7 @@ export default function Wallet() {
 
     if (dow === 0) {
       periodEarnedGross = 0;
+      periodHoursSoFar = 0;
       periodWithdrawnGross = 0;
     }
 
@@ -594,8 +607,9 @@ export default function Wallet() {
         : 0;
 
     periodEarnedGross += fullEarnedToday;
+    periodHoursSoFar += hoursToday;
 
-        const eligiblePct = eligiblePercent(periodEarnedGross, budget.net_to_gross_ratio, budget.flat_deductions_prev);
+    const eligiblePct = eligiblePercent(periodEarnedGross, budget.net_to_gross_ratio, budget.flat_deductions_prev, periodHoursSoFar);
     const maxWithdrawableGrossSoFar = periodEarnedGross * eligiblePct;
     const withdrawnBeforeToday = periodWithdrawnGross; // snapshot before today's pull is added
     const availableToday = Math.max(0, maxWithdrawableGrossSoFar - periodWithdrawnGross);
@@ -619,13 +633,12 @@ export default function Wallet() {
     runningBalance += availableToday + releasedToday + extraToday - billsTotal;
     const heldInPool = Math.max(0, periodEarnedGross - periodWithdrawnGross);
 
-        return {
+    return {
       date: d, key, billsToday, billsTotal, regHoursToday, otHoursToday,
       hoursToday, earnedToday: fullEarnedToday, availableToday, releasedToday,
       eligiblePct, heldInPool, extraToday, balance: runningBalance,
       ceilingToday: maxWithdrawableGrossSoFar, withdrawnBeforeToday,
     };
-
   });
 
   return { rows, endingBalance: runningBalance };
@@ -1217,7 +1230,7 @@ export default function Wallet() {
                                 )}
                               </div>
 
-                                                            {row.hoursToday > 0 && (
+                              {row.hoursToday > 0 && (
                                 <div style={{ fontSize: 9, color: "var(--ink-muted)", marginTop: 3 }}>
                                   {Math.round(row.eligiblePct * 100)}% of period pool available
                                   {row.heldInPool > 0.005 && ` · ${fmt(row.heldInPool)} still held this period`}
@@ -1228,7 +1241,6 @@ export default function Wallet() {
                                   )}
                                 </div>
                               )}
-
 
                               {row.releasedToday > 0.005 && (
                                 <div style={{ fontSize: 11, color: "var(--gold)", fontWeight: 700, marginTop: 4 }}>
