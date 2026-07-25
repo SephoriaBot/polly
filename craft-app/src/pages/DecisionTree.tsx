@@ -3,6 +3,10 @@ import type { FC } from 'react';
 import { supabase } from '../lib/supabase'; // adjust path to your existing client
 import Icon from '../components/Icon';
 import Lantern from "../components/Lantern";
+import EmptyState from '../components/EmptyState';
+import emptyStateImg from '../assets/illustrations/empty-state.PNG';
+
+
 
 type NodeType = 'root' | 'choice' | 'outcome';
 
