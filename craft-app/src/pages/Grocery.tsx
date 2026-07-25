@@ -8,6 +8,10 @@ import {
   ChevronUp, ChevronDown, ExternalLink, Plus,
 } from 'lucide-react';
 import Lantern from "../components/Lantern";
+import EmptyState from '../components/EmptyState';
+import emptyStateImg from '../assets/illustrations/empty-state.PNG';
+
+
 
 interface SavedList { id: string; name: string; items: string[]; created_at: string }
 
