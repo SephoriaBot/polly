@@ -15,18 +15,6 @@ import {
   generateAlmanacNote,
 } from "../lib/almanac";
 
-const MOON_ICON_BY_PHASE: Record<string, string> = {
-  "New Moon": "moon-new",
-  "Waxing Crescent": "moon-waxing-crescent",
-  "First Quarter": "moon-first-quarter",
-  "Waxing Gibbous": "moon-waxing-gibbous",
-  "Full Moon": "moon-full",
-  "Waning Gibbous": "moon-waning-gibbous",
-  "Last Quarter": "moon-last-quarter",
-  "Waning Crescent": "moon-waning-crescent",
-};
-
-
 interface AlmanacRow {
   almanac_date: string;
   moon_phase: string;
@@ -38,6 +26,19 @@ interface AlmanacRow {
   holiday: string | null;
   almanac_note: string;
 }
+
+// Maps the phase names produced by getMoonPhase() to the filenames uploaded
+// into public/icons/ (moon-new.png, moon-waxing-crescent.png, etc).
+const MOON_ICON_BY_PHASE: Record<string, string> = {
+  "New Moon": "moon-new",
+  "Waxing Crescent": "moon-waxing-crescent",
+  "First Quarter": "moon-first-quarter",
+  "Waxing Gibbous": "moon-waxing-gibbous",
+  "Full Moon": "moon-full",
+  "Waning Gibbous": "moon-waning-gibbous",
+  "Last Quarter": "moon-last-quarter",
+  "Waning Crescent": "moon-waning-crescent",
+};
 
 function todayISO(): string {
   const d = new Date();
@@ -119,19 +120,21 @@ export default function DailyAlmanac() {
         </div>
 
         <div style={{ display: "flex", gap: 16, marginBottom: 10, flexWrap: "wrap" }}>
-          <div>
-            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-  <Icon name={MOON_ICON_BY_PHASE[entry.moon_phase] as any} size={28} alt={entry.moon_phase} />
-  <div>
-    <div style={{ fontSize: 10, color: "var(--ink-muted)", textTransform: "uppercase", letterSpacing: "0.06em" }}>
-      Moon
-    </div>
-    <div style={{ fontSize: 13, fontWeight: 700, color: "var(--pink-dark)" }}>
-      {entry.moon_phase} · {entry.moon_illumination}%
-    </div>
-  </div>
-
-
+          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <Icon
+              name={(MOON_ICON_BY_PHASE[entry.moon_phase] ?? "moon-cloud") as any}
+              size={28}
+              alt={entry.moon_phase}
+            />
+            <div>
+              <div style={{ fontSize: 10, color: "var(--ink-muted)", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                Moon
+              </div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: "var(--pink-dark)" }}>
+                {entry.moon_phase} · {entry.moon_illumination}%
+              </div>
+            </div>
+          </div>
           <div>
             <div style={{ fontSize: 10, color: "var(--ink-muted)", textTransform: "uppercase", letterSpacing: "0.06em" }}>
               Moon in
