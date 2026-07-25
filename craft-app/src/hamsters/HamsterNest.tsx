@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useHamsterGrowth } from "./HamsterGrowthContext";
 import { SOURCE_LABELS } from "./useHamsterGrowth";
 import Icon from "../components/Icon";
@@ -67,11 +67,17 @@ function NestEgg({ progressPct }: { progressPct: number }) {
 
 export default function HamsterNest() {
   const { loading, points, threshold, progressPct, recentPoints, justHatched, clearJustHatched } = useHamsterGrowth();
+  const [showReveal, setShowReveal] = useState(false);
 
   useEffect(() => {
     if (justHatched) {
-      const t = setTimeout(clearJustHatched, 3000);
-      return () => clearTimeout(t);
+      setShowReveal(false);
+      const revealTimer = setTimeout(() => setShowReveal(true), 900);
+      const clearTimer = setTimeout(clearJustHatched, 3000);
+      return () => {
+        clearTimeout(revealTimer);
+        clearTimeout(clearTimer);
+      };
     }
   }, [justHatched, clearJustHatched]);
 
@@ -85,23 +91,25 @@ export default function HamsterNest() {
     );
   }
 
+
   return (
     <div className="card">
       <div className="card-body">
         <div className="section-label" style={{ marginBottom: 10 }}><Icon name="egg-nest" size={16} /> The Nest</div>
 
         {justHatched ? (
-          <div style={{ textAlign: "center", padding: "10px 0" }}>
-            <img
-              src={justHatched.image}
-              alt="a new hamster hatched"
-              style={{ width: 96, height: 96, objectFit: "contain", animation: "hatchPop 0.7s ease" }}
-            />
-            <div style={{ fontSize: 14, fontWeight: 800, color: "var(--pink-dark)", marginTop: 6 }}>
-              A new hamster hatched! <Icon name="sparkles-cluster" size={16} />
-            </div>
-          </div>
-        ) : (
+  <div style={{ textAlign: "center", padding: "10px 0" }}>
+    <img
+      src={showReveal ? justHatched.image : "/assets/illustrations/hamster-hatch-crack.PNG"}
+      alt={showReveal ? "a new hamster hatched" : "the egg is cracking"}
+      style={{ width: 96, height: 96, objectFit: "contain", animation: "hatchPop 0.7s ease" }}
+    />
+    <div style={{ fontSize: 14, fontWeight: 800, color: "var(--pink-dark)", marginTop: 6 }}>
+      {showReveal ? <>A new hamster hatched! <Icon name="sparkles-cluster" size={16} /></> : "Something's happening..."}
+    </div>
+  </div>
+) : (
+
           <>
             <div style={{ display: "flex", justifyContent: "center", marginBottom: 10 }}>
               <NestEgg progressPct={progressPct} />

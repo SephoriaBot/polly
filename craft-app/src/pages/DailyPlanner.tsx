@@ -5,6 +5,9 @@ import AppointmentNotesPanel from '../components/planner/AppointmentNotesPanel';
 import type { AppointmentNoteSelection } from '../components/planner/AppointmentNotesPanel';
 import { useAppointmentNoteMap } from '../hooks/useAppointmentNoteMap';
 import Lantern from "../components/Lantern";
+import EmptyState from '../components/EmptyState';
+import emptyStateImg from '../assets/illustrations/empty-state.PNG';
+
 
 interface DailyTask {
   id: string;
@@ -313,10 +316,13 @@ export default function DailyPlanner() {
               </div>
 
               {appointments.length === 0 ? (
-                <p style={{ fontSize: '0.85rem', color: 'var(--ink-muted)', marginBottom: 16, lineHeight: 1.6 }}>
-                  Nothing scheduled yet!
-                </p>
-              ) : (
+  <EmptyState
+    image={emptyStateImg}
+    message="Nothing scheduled yet"
+    subMessage="Add your first appointment below"
+  />
+) : (
+
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16 }}>
                   {appointments.map(appt => {
                     const hasNote = Boolean(noteMap[appt.id]);

@@ -1,10 +1,8 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
-import HamsterNest from "../hamsters/HamsterNest";
-import HamsterHabitat from "../hamsters/HamsterHabitat";
-import { HamsterGrowthProvider } from "../hamsters/HamsterGrowthContext";
 import { Heart } from 'lucide-react';
 import Lantern from "../components/Lantern";
+import DailyAlmanac from "../components/DailyAlmanac";
 
 interface Focus {
   id: string;
@@ -110,8 +108,12 @@ export default function Dashboard() {
 
       <div className="page-body">
 
-        
+        {/* ── DAILY ALMANAC ── */}
+        <section>
+          <DailyAlmanac />
+        </section>
 
+        <Lantern variant="divider" />
 
         {/* ── TODAY'S FOCUS ── */}
         <section>
@@ -236,19 +238,6 @@ export default function Dashboard() {
             </div>
           )}
         </section>
-
-        <Lantern variant="divider" />
-
-        {/* ── HAMSTER NEST ── */}
-        <section>
-  <div className="section-label">Hamster Nest</div>
-  <HamsterGrowthProvider>
-    <HamsterNest />
-    <div style={{ marginTop: 12 }}>
-      <HamsterHabitat />
-    </div>
-  </HamsterGrowthProvider>
-</section>
 
       </div>
     </div>

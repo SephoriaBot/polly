@@ -8,6 +8,10 @@ import {
   ChevronUp, ChevronDown, ExternalLink, Plus,
 } from 'lucide-react';
 import Lantern from "../components/Lantern";
+import EmptyState from '../components/EmptyState';
+import emptyStateImg from '../assets/illustrations/empty-state.PNG';
+
+
 
 interface SavedList { id: string; name: string; items: string[]; created_at: string }
 
@@ -847,7 +851,11 @@ export default function Grocery() {
           <div className="card">
             <div className="section-label">Saved Lists</div>
             {savedLists.length === 0
-              ? <p style={{ fontSize: '0.8rem', color: 'var(--ink-muted)', padding: '4px 0' }}>No saved lists yet.</p>
+              ? <EmptyState
+    image={emptyStateImg}
+    message="No saved lists yet."
+    subMessage="Add your first list below"
+  />
               : savedLists.map(list => (
                 <div key={list.id} style={{
                   display: 'flex', alignItems: 'center', justifyContent: 'space-between',

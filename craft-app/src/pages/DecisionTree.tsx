@@ -3,6 +3,10 @@ import type { FC } from 'react';
 import { supabase } from '../lib/supabase'; // adjust path to your existing client
 import Icon from '../components/Icon';
 import Lantern from "../components/Lantern";
+import EmptyState from '../components/EmptyState';
+import emptyStateImg from '../assets/illustrations/empty-state.PNG';
+
+
 
 type NodeType = 'root' | 'choice' | 'outcome';
 
@@ -374,7 +378,11 @@ const DecisionTreeList: FC<{ onSelect: (id: string) => void; onNew: () => void; 
       {status === 'error' && <p style={styles.errorText}>Couldn't load decisions: {error}</p>}
       {deleteError && <p style={styles.errorText}>Couldn't delete: {deleteError}</p>}
       {status === 'ready' && trees.length === 0 && (
-        <p style={styles.emptyText}>No saved decisions yet. Start a new one above.</p>
+        <EmptyState
+        image={emptyStateImg}
+        message="Nothing decided yet"
+    subMessage="Add your first decision below"
+  />
       )}
       {status === 'ready' && trees.map((t) => (
         <DecisionTreeCard key={t.id} tree={t} onSelect={onSelect} onDelete={handleDelete} />
