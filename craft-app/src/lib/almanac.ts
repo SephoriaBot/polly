@@ -133,32 +133,32 @@ export function getMoonSign(date: Date): MoonSign {
 // it's the same for everyone on a given date and repeats on a ~26-day cycle.
 
 export const HERB_LORE: { name: string; lore: string }[] = [
-  { name: "Yarrow", lore: "Long carried by travelers and soldiers for staunching wounds; old herbals called it 'nosebleed' for the same reason. Also gathered for divination on Midsummer's Eve." },
-  { name: "Mugwort", lore: "Tucked under pillows by travelers to ward off fatigue, and burned in old smoke-cleansing bundles. Said to sharpen dreams when kept near the bed." },
-  { name: "Rue", lore: "Called the 'herb of grace' in old England, once strewn in courtrooms and sickrooms alike. Considered protective, though handled with care — the sap can irritate skin in sunlight." },
-  { name: "Vervain", lore: "Sacred to Druids and Romans alike, gathered at dawn without being seen by the sun. Woven into charms for safe travel." },
-  { name: "Elderflower", lore: "The elder tree was thought to house a protective spirit; old custom held you should ask its permission before cutting any branch." },
-  { name: "Chamomile", lore: "Called 'the plant's physician' by old gardeners, who believed it revived any sickly plant growing near it." },
-  { name: "Lavender", lore: "Strewn on floors in place of rushes for its scent, and tucked into linens to keep moths away — a habit still worth keeping." },
-  { name: "Calendula", lore: "Marigold petals were once dried and added to broths and stews through winter, both for color and for their keeping medicine." },
-  { name: "Feverfew", lore: "Planted near the door in old cottage gardens, believed to purify the air around the home." },
-  { name: "Comfrey", lore: "Old bonesetters swore by it, calling it 'knitbone' for its use in poultices for breaks and bruises." },
-  { name: "Nettle", lore: "Scorned as a weed and prized as a tonic in the same breath — old country wisdom held that the first nettle soup of spring cleared the winter from the blood." },
-  { name: "Dandelion", lore: "Every part was once put to use — root roasted for a bitter coffee, leaves for salad, flowers for wine. Nothing about it was ever truly a weed to the old cottage gardener." },
-  { name: "Plantain", lore: "Called 'white man's foot' by some Indigenous peoples of North America, for how it sprang up wherever settlers walked. Long used as a poultice for stings and cuts." },
-  { name: "Chickweed", lore: "One of the first greens up in late winter, gathered by cottagers as a sign the growing season was near." },
-  { name: "Self-Heal", lore: "Its very name is its old reputation — a dooryard herb kept close at hand for cuts and small hurts." },
-  { name: "Wormwood", lore: "Grown along garden borders in old cottage plots, believed to keep pests from wandering in among the vegetables." },
-  { name: "Angelica", lore: "Said to bloom near Michaelmas and once thought to ward off plague; candied stalks were a treat in old English kitchens." },
-  { name: "Valerian", lore: "Cats are drawn to it nearly as much as catnip — old apothecaries kept it under lock for its strong scent alone." },
-  { name: "St. John's Wort", lore: "Traditionally gathered at midsummer, when its yellow flowers were thought to be at their most potent, and hung over doorways for protection." },
-  { name: "Horehound", lore: "Boiled down into old-fashioned cough drops and candies long before the pharmacy took over the job." },
-  { name: "Tansy", lore: "Once strewn among stored linens and grains as a natural moth and pest deterrent in the pantry." },
-  { name: "Betony", lore: "An old saying held 'sell your coat and buy betony' — it was once considered a cure-all worth any price." },
-  { name: "Sage", lore: "An old proverb asks, 'why should a man die while sage grows in his garden?' — it was long considered one of the great keeping herbs." },
-  { name: "Rosemary", lore: "Planted by the garden gate in old custom, said to grow best where the woman of the house 'wore the britches.'" },
-  { name: "Borage", lore: "Old herbals claimed it 'driveth away sorrow' when steeped into wine — a cottage-garden staple for both bees and spirits." },
-  { name: "Thyme", lore: "A bed of wild thyme was once thought to be a favorite resting place of fairies, best left a little untidy." },
+  { name: "Yarrow", lore: "Its Latin name, Achillea, comes from Achilles, who was said to use it to treat his soldiers' wounds. It was a standard part of field medicine kits well into the 19th century." },
+  { name: "Mugwort", lore: "Related to wormwood, it grows as a common roadside weed across Europe and Asia. It's been burned as incense and used in folk medicine for centuries, and is a traditional ingredient in some East Asian foods and moxibustion therapy." },
+  { name: "Rue", lore: "A bitter, blue-green shrub once grown in nearly every European herb garden. Its sap can cause skin irritation in sunlight (phytophotodermatitis), so it's handled with gloves even today." },
+  { name: "Vervain", lore: "A tall, slender plant with small purple flowers, historically associated with Celtic and Roman ritual. It's still used in some herbal teas today, often blended with other calming herbs." },
+  { name: "Elderflower", lore: "The small white flower clusters of the elder tree are used to make cordial, tea, and the French liqueur St-Germain. The berries need to be cooked before eating — raw elderberries can cause stomach upset." },
+  { name: "Chamomile", lore: "One of the most common herbal teas worldwide. Gardeners have long claimed it helps neighboring plants recover from disease, though there's not strong scientific evidence for that specific effect." },
+  { name: "Lavender", lore: "Native to the Mediterranean, its name likely comes from the Latin lavare, 'to wash' — it was commonly added to bathwater and laundry. Moths genuinely do avoid its scent, so it's still used as a natural repellent in closets." },
+  { name: "Calendula", lore: "Also called pot marigold, its bright orange-yellow petals are edible and were historically used to color butter and cheese when saffron was too expensive." },
+  { name: "Feverfew", lore: "A relative of the daisy, traditionally used to try to prevent migraines. Some modern studies suggest a modest effect, though results are mixed." },
+  { name: "Comfrey", lore: "Its old nickname 'knitbone' comes from centuries of use in poultices for bruises and fractures. It contains compounds that are toxic if ingested in quantity, so modern use is topical only." },
+  { name: "Nettle", lore: "The sting comes from tiny hollow hairs that inject formic acid on contact, but cooking or drying completely neutralizes it. Nettle soup is a genuine early-spring dish in several European culinary traditions." },
+  { name: "Dandelion", lore: "Every part is edible — root, leaves, and flower. The root has been roasted and ground as a caffeine-free coffee substitute since at least the 19th century." },
+  { name: "Plantain", lore: "Not related to the banana-like fruit of the same name — this is a low, broad-leafed lawn plant. It earned the nickname 'white man's foot' from Indigenous peoples in North America because it sprang up wherever European settlers traveled." },
+  { name: "Chickweed", lore: "A small, fast-growing plant that's edible raw, often the first fresh green available after winter in temperate climates. It's mild and slightly grassy in flavor." },
+  { name: "Self-Heal", lore: "A low-growing member of the mint family with small purple flowers, found on lawns worldwide. Its name reflects centuries of use as a wound-treatment herb." },
+  { name: "Wormwood", lore: "Best known as the source of the compound thujone and a key flavoring in absinthe and vermouth (vermouth is even named after the German word for wormwood, Wermut)." },
+  { name: "Angelica", lore: "A tall plant with large umbrella-shaped flower clusters. Its candied stalks were a popular decorative treat in old European baking, and it's still used to flavor gin and some liqueurs." },
+  { name: "Valerian", lore: "Its root has a strong, distinctive smell that many cats respond to almost like catnip. It's a common ingredient in over-the-counter sleep aids, though clinical evidence for effectiveness is mixed." },
+  { name: "St. John's Wort", lore: "Named for blooming around the feast of St. John the Baptist in late June. It's one of the more studied herbal supplements for mood support, but it interacts with many prescription medications, including birth control." },
+  { name: "Horehound", lore: "A bitter mint-family plant long used to flavor cough drops and old-fashioned hard candy — horehound candy is still sold today, mostly as a nostalgia item." },
+  { name: "Tansy", lore: "A yellow-flowered plant with a strong, camphor-like scent. It was historically used as an insect repellent in stored grain and linens, though it's toxic in large doses and rarely used internally today." },
+  { name: "Betony", lore: "A member of the mint family once considered an all-purpose remedy in medieval Europe, prescribed for everything from headaches to nightmares." },
+  { name: "Sage", lore: "Its genus name Salvia comes from the Latin salvere, 'to be saved' or 'to heal,' reflecting its long history as a medicinal herb as well as a culinary one." },
+  { name: "Rosemary", lore: "Traditionally associated with memory — students in ancient Greece reportedly wore rosemary sprigs while studying for exams. Modern research has found some evidence its scent may modestly aid memory recall." },
+  { name: "Borage", lore: "A fuzzy-leafed plant with star-shaped blue flowers and a mild cucumber flavor, often floated in drinks or added to salads. It's also a favorite of bees and other pollinators." },
+  { name: "Thyme", lore: "One of the most widely used culinary herbs, native to the Mediterranean. Ancient Greeks burned it as incense, and its essential oil (thymol) is still used today as a natural antiseptic in some mouthwashes." },
 ];
 
 export function getHerbOfDay(date: Date): { name: string; lore: string } {
@@ -197,14 +197,14 @@ export function buildAlmanacPrompt(input: {
   holiday: string | null;
 }): string {
   const { dateLabel, moon, moonSign, herb, holiday } = input;
-  return `You are writing a single short entry in the style of an old-fashioned farmer's almanac — plainspoken, a little wry, rooted in old country/cottage tradition, never modern-wellness or corporate in tone.
+  return `You are writing a short daily almanac entry. Plain, modern, conversational English — like a knowledgeable friend giving you the day's facts, NOT old-fashioned or archaic language (no "thee/thou," no faux-medieval phrasing, no invented quotes in old English).
 
 Today is ${dateLabel}.
 Moon: ${moon.phaseName}, ${moon.illuminationPct}% illuminated, in ${moonSign.sign} (${moonSign.gardenDayType} — ${moonSign.gardenDayNote}).
 Herb of the day: ${herb.name} — ${herb.lore}
 ${holiday ? `Also notable: today is ${holiday}.` : ""}
 
-Write 2-3 sentences that weave these facts together into one flowing almanac entry, in that old voice. Do NOT invent any new factual claims, dates, weather predictions, or numbers beyond what's given above — only use the facts provided. Respond with ONLY the entry text, no preamble, no quotation marks, no markdown.`;
+Write 2-3 sentences that weave these facts together into one flowing entry, in plain modern voice. Do NOT invent any new factual claims, dates, weather predictions, or numbers beyond what's given above — only use the facts provided. Respond with ONLY the entry text, no preamble, no quotation marks, no markdown.`;
 }
 
 export async function generateAlmanacNote(prompt: string): Promise<string> {
