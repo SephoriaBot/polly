@@ -4,6 +4,8 @@ import { Heart } from 'lucide-react';
 import Lantern from "../components/Lantern";
 import DailyAlmanac from "../components/DailyAlmanac";
 import sleepingNestImg from '../assets/illustrations/sleeping_nest.png';
+import WeatherBadge from '../components/WeatherBadge';
+
 
 interface Focus {
   id: string;
@@ -104,6 +106,7 @@ export default function Dashboard() {
           <div className="dash-subdate">
             {todayName}, {new Date().toLocaleDateString(undefined, { month: 'long', day: 'numeric' })}
           </div>
+<WeatherBadge />
         </div>
       </div>
 
