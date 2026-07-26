@@ -33,6 +33,20 @@ const PHASE_NAMES = [
   "Waning Crescent",
 ];
 
+// Maps the phase names produced by getMoonPhase() to the illustrated icon
+// filenames in public/icons/ (moon-new.png, moon-waxing-crescent.png, etc).
+// Shared so every page that shows a moon phase points at the same art.
+export const MOON_ICON_BY_PHASE: Record<string, string> = {
+  "New Moon": "moon-new",
+  "Waxing Crescent": "moon-waxing-crescent",
+  "First Quarter": "moon-first-quarter",
+  "Waxing Gibbous": "moon-waxing-gibbous",
+  "Full Moon": "moon-full",
+  "Waning Gibbous": "moon-waning-gibbous",
+  "Last Quarter": "moon-last-quarter",
+  "Waning Crescent": "moon-waning-crescent",
+};
+
 export function getMoonPhase(date: Date): MoonPhase {
   const dayMs = Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate(), 12, 0, 0);
   const age = (((dayMs - KNOWN_NEW_MOON_UTC) / 86400000) % SYNODIC_MONTH + SYNODIC_MONTH) % SYNODIC_MONTH;

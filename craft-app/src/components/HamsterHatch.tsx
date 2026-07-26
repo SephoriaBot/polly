@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import hamsterHatchCrack from '../assets/illustrations/hamster-hatch-crack.png';
-import hamsterHatchRibbon from '../assets/illustrations/hamster-hatch-ribbon.png';
+import hamsterHatchCrack from '../assets/illustrations/hamster-hatch-crack.PNG';
+import hamsterHatchRibbon from '../assets/illustrations/hamster-hatch-ribbon.PNG';
 
 interface HamsterHatchProps {
   onDismiss: () => void;

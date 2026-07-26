@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import Icon from '../components/Icon';
+import type { IconName } from '../components/Icon';
 import SleepLogForm from '../components/tracker/SleepLogForm';
 import PeriodLogForm from '../components/tracker/PeriodLogForm';
 import WeightLogForm from '../components/tracker/WeightLogForm';
@@ -8,7 +9,7 @@ import TrackerOverlap from '../components/tracker/TrackerOverlap';
 import { TRACKER_CONFIG } from '../data/trackerConfig';
 import type { TrackerType, PeriodValue } from '../types/tracker';
 import { getTrackerLogsInRange } from '../lib/trackerApi';
-import { getMoonPhase, type MoonPhase } from '../lib/almanac';
+import { getMoonPhase, MOON_ICON_BY_PHASE, type MoonPhase } from '../lib/almanac';
 import Lantern from "../components/Lantern";
 
 function todayISO() {
@@ -86,9 +87,19 @@ export default function TrackerPage() {
             <Icon name="flower" size={16} /> Day {cycleDay} of your cycle{periodEnded ? ' · period ended' : ''}
           </div>
           {(cycleMoon.start || cycleMoon.end) && (
-            <div style={{ fontSize: 12, color: 'var(--ink-muted)', marginTop: '0.25rem' }}>
-              {cycleMoon.start && `🌙 Started under ${cycleMoon.start.phaseName} (${cycleMoon.start.illuminationPct}%)`}
-              {cycleMoon.end && ` · Ended under ${cycleMoon.end.phaseName} (${cycleMoon.end.illuminationPct}%)`}
+            <div style={{ fontSize: 12, color: 'var(--ink-muted)', marginTop: '0.25rem', display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+              {cycleMoon.start && (
+                <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <Icon name={(MOON_ICON_BY_PHASE[cycleMoon.start.phaseName] ?? 'moon-cloud') as IconName} size={14} />
+                  Started under {cycleMoon.start.phaseName} ({cycleMoon.start.illuminationPct}%)
+                </span>
+              )}
+              {cycleMoon.end && (
+                <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <Icon name={(MOON_ICON_BY_PHASE[cycleMoon.end.phaseName] ?? 'moon-cloud') as IconName} size={14} />
+                  Ended under {cycleMoon.end.phaseName} ({cycleMoon.end.illuminationPct}%)
+                </span>
+              )}
             </div>
           )}
         </div>

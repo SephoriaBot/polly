@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { upsertTrackerLog, getTrackerLog } from '../../lib/trackerApi';
-import { getMoonPhase } from '../../lib/almanac';
+import { getMoonPhase, MOON_ICON_BY_PHASE } from '../../lib/almanac';
 import Icon, { type IconName } from '../Icon';
 import type { PeriodValue } from '../../types/tracker';
 interface Props {
@@ -101,8 +101,9 @@ export default function PeriodLogForm({ date, onSaved }: Props) {
       </div>
 
       {(bleedingStart || bleedingEnd) && (
-        <div style={{ fontSize: 12, color: 'var(--ink-muted)', marginTop: '0.4rem' }}>
-          🌙 {moon.phaseName} · {moon.illuminationPct}% illuminated
+        <div style={{ fontSize: 12, color: 'var(--ink-muted)', marginTop: '0.4rem', display: 'flex', alignItems: 'center', gap: 4 }}>
+          <Icon name={(MOON_ICON_BY_PHASE[moon.phaseName] ?? 'moon-cloud') as IconName} size={16} />
+          {moon.phaseName} · {moon.illuminationPct}% illuminated
         </div>
       )}
 
