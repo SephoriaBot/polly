@@ -5,13 +5,16 @@ export type IconName =
   | 'alarm-clock' | 'apple-carrot' | 'basket' | 'calculator' | 'calculator-hearts'
   | 'calendar' | 'camera' | 'cleaning-spray' | 'clipboard-check' | 'clipboard-list'
   | 'cookbook' | 'cooking-pot' | 'dog-face' | 'dress-hanger' | 'egg' | 'egg-nest'
-  | 'envelope-heart' | 'flower' | 'hamster-gray' | 'hamster-tan' | 'heart-medical'
+  | 'envelope-heart' | 'flower' | 'hamster-gray' | 'hamster-tan' | 'hamster-wild' | 'heart-medical'
   | 'house' | 'lavender' | 'lightning' | 'lock-heart' | 'map-pin' | 'medal-wings'
   | 'money-bag' | 'mood-anxious' | 'mood-happy' | 'mood-laughing' | 'mood-neutral'
-  | 'mood-sad' | 'mood-tired' | 'moon-cloud' | 'music-note' | 'notebook-pen'
+  | 'mood-sad' | 'mood-tired' | 'moon-cloud' | 'moon-new' | 'moon-waxing-crescent'
+  | 'moon-first-quarter' | 'moon-waxing-gibbous' | 'moon-full' | 'moon-waning-gibbous'
+  | 'moon-last-quarter' | 'moon-waning-crescent' | 'music-note' | 'notebook-pen'
   | 'notepad-pencil' | 'piggy-bank' | 'potion' | 'potted-plant' | 'settings-gear'
   | 'sparkle-single' | 'sparkles-cluster' | 'spellbook' | 'sun-cloud' | 'trash-can'
-  | 'trophy' | 'washing-machine';
+  | 'trophy' | 'washing-machine' | 'aries' | 'taurus' | 'gemini' | 'cancer' | 'leo' | 'virgo' | 'libra' | 'scorpio' 
+  | 'sagittarius' | 'capricorn' | 'aquarius' | 'pisces';
 
 interface IconProps {
   name: IconName;

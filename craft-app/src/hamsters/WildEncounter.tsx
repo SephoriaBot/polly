@@ -323,9 +323,14 @@ export default function WildEncounter() {
                   fontWeight: 700,
                   textAlign: "center",
                   marginBottom: 8,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 6,
                 }}
               >
-                A wild hamster appeared while you were busy! 🐹
+                <Icon name="hamster-gray" size={18} />
+                A wild hamster appeared while you were busy!
               </div>
             )}
 

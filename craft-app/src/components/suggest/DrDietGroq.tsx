@@ -5,6 +5,7 @@ import {
   Salad, X, RotateCcw, Sparkles, ChevronLeft, ChevronRight,
   CheckCircle2, ShoppingCart, Check,
 } from 'lucide-react'
+import hamsterThinkingImg from '../../assets/illustrations/hamster-thinking.PNG'
 
 interface QuizOption { value: string; label: string }
 
@@ -393,14 +394,12 @@ Never mention calories, macros, or specific weight numbers. If the goal involves
           )}
 
           {wizardState === 'loading' && (
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '50px 20px', gap: 16 }}>
-              <div className="shape-heart" style={{
-                width: 52, height: 52, borderRadius: '50%',
-                background: 'var(--blush)', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                animation: 'dietPulse 1.4s ease-in-out infinite',
-              }}>
-                <Sparkles size={22} style={{ color: 'var(--pink-dark)' }} />
-              </div>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '30px 20px', gap: 12 }}>
+              <img
+                src={hamsterThinkingImg}
+                alt=""
+                style={{ width: 140, animation: 'dietPulse 1.4s ease-in-out infinite' }}
+              />
               <p style={{ fontSize: '0.88rem', color: 'var(--ink-muted)', fontStyle: 'italic' }}>Putting together your check-in…</p>
             </div>
           )}

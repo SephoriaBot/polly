@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Clock, Package, ChevronRight, RotateCcw, CheckCircle2, Circle, Sparkles } from 'lucide-react';
 import Icon, { type IconName } from '../components/Icon';
 import Lantern from "../components/Lantern";
+import hamsterThinkingImg from '../assets/illustrations/hamster-thinking.PNG';
 
 const ROOMS: { value: string; label: string; icon: IconName }[] = [
   { value: 'kitchen', label: 'Kitchen', icon: 'cooking-pot' },
@@ -168,16 +169,13 @@ Include 4–8 supplies, a realistic time estimate, and 6–10 steps in logical c
         {wizardState === 'loading' && (
           <div style={{
             display: 'flex', flexDirection: 'column', alignItems: 'center',
-            justifyContent: 'center', padding: '60px 20px', gap: 16
+            justifyContent: 'center', padding: '40px 20px', gap: 12
           }}>
-            <div className="shape-teddy" style={{
-              width: 56, height: 56, borderRadius: '50%',
-              background: 'linear-gradient(135deg, var(--primary), var(--pink-light))',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              animation: 'gentlePulse 1.4s ease-in-out infinite',
-            }}>
-              <Sparkles size={24} style={{ color: 'var(--gold-light)' }} />
-            </div>
+            <img
+              src={hamsterThinkingImg}
+              alt=""
+              style={{ width: 140, animation: 'gentlePulse 1.4s ease-in-out infinite' }}
+            />
             <p style={{ fontSize: '0.9rem', color: 'var(--ink-muted)', fontStyle: 'italic' }}>
               Building your {room?.label.toLowerCase()} cleaning plan…
             </p>

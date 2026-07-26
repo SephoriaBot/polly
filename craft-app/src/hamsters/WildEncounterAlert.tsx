@@ -69,7 +69,7 @@ export default function WildEncounterAlert({ currentPage, onNavigate }: Props) {
       <Icon name="hamster-tan" size={30} />
       <div style={{ flex: 1 }}>
         <div style={{ fontSize: 12, fontWeight: 800, color: "var(--pink-dark)" }}>
-          A wild hamster appeared! 🐹
+          A wild hamster appeared!
         </div>
         <div style={{ fontSize: 10, color: "var(--ink-muted)" }}>Tap to go fight it</div>
       </div>

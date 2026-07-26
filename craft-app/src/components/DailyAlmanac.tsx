@@ -13,6 +13,8 @@ import {
   fetchTodaysHolidayUS,
   buildAlmanacPrompt,
   generateAlmanacNote,
+  MOON_ICON_BY_PHASE,
+  ZODIAC_ICON_BY_SIGN,
 } from "../lib/almanac";
 
 interface AlmanacRow {
@@ -26,19 +28,6 @@ interface AlmanacRow {
   holiday: string | null;
   almanac_note: string;
 }
-
-// Maps the phase names produced by getMoonPhase() to the filenames uploaded
-// into public/icons/ (moon-new.png, moon-waxing-crescent.png, etc).
-const MOON_ICON_BY_PHASE: Record<string, string> = {
-  "New Moon": "moon-new",
-  "Waxing Crescent": "moon-waxing-crescent",
-  "First Quarter": "moon-first-quarter",
-  "Waxing Gibbous": "moon-waxing-gibbous",
-  "Full Moon": "moon-full",
-  "Waning Gibbous": "moon-waning-gibbous",
-  "Last Quarter": "moon-last-quarter",
-  "Waning Crescent": "moon-waning-crescent",
-};
 
 function todayISO(): string {
   const d = new Date();
@@ -122,7 +111,7 @@ export default function DailyAlmanac() {
         <div style={{ display: "flex", gap: 16, marginBottom: 10, flexWrap: "wrap" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
             <Icon
-              name={(MOON_ICON_BY_PHASE[entry.moon_phase] ?? "moon-cloud") as any}
+              name={(MOON_ICON_BY_PHASE[entry.moon_phase] ?? "moon-cloud") as import("./Icon").IconName}
               size={60}
               alt={entry.moon_phase}
             />
@@ -135,14 +124,48 @@ export default function DailyAlmanac() {
               </div>
             </div>
           </div>
-          <div>
-            <div style={{ fontSize: 10, color: "var(--ink-muted)", textTransform: "uppercase", letterSpacing: "0.06em" }}>
-              Moon in
-            </div>
-            <div style={{ fontSize: 13, fontWeight: 700, color: "var(--pink-dark)" }}>
-              {entry.moon_sign} — {entry.garden_day_type}
-            </div>
-          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+  <Icon
+    name={
+      (ZODIAC_ICON_BY_SIGN[entry.moon_sign] ??
+        "sparkle-single") as import("../components/Icon").IconName
+    }
+    size={60}
+    alt={entry.moon_sign}
+  />
+
+  <div>
+    <div
+      style={{
+        fontSize: 10,
+        color: "var(--ink-muted)",
+        textTransform: "uppercase",
+        letterSpacing: "0.06em",
+      }}
+    >
+      Moon in
+    </div>
+
+    <div
+      style={{
+        fontSize: 13,
+        fontWeight: 700,
+        color: "var(--pink-dark)",
+      }}
+    >
+      {entry.moon_sign}
+    </div>
+
+    <div
+      style={{
+        fontSize: 11,
+        color: "var(--ink-muted)",
+      }}
+    >
+      {entry.garden_day_type}
+    </div>
+  </div>
+</div>
         </div>
 
         <div style={{ fontSize: 13, lineHeight: 1.5, color: "var(--ink)", fontStyle: "italic", marginBottom: 10 }}>

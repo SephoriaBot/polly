@@ -10,6 +10,7 @@ import {
 import Lantern from "../components/Lantern";
 import EmptyState from '../components/EmptyState';
 import emptyStateImg from '../assets/illustrations/empty-state.PNG';
+import hamsterThinkingImg from '../assets/illustrations/hamster-thinking.PNG';
 
 
 
@@ -692,7 +693,7 @@ export default function Grocery() {
       <div className="page-header">
         <div className="title-row">
           <h2>Grocery List <Icon name="basket" size={22} /></h2>
-          <Lantern size={24} />
+          <Lantern size={50} />
         </div>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           <button className="btn btn-primary" onClick={openBasicsModal}>
@@ -1069,7 +1070,18 @@ export default function Grocery() {
             <span style={{ fontWeight: 500 }}>{cart.length} items</span>
           </div>
 
-          {loadingCart && <p style={{ fontSize: '0.8rem', color: 'var(--ink-muted)', padding: '1rem 0' }}>Finding prices…</p>}
+          {loadingCart && (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '20px 0', gap: 10 }}>
+              <img src={hamsterThinkingImg} alt="" style={{ width: 120, animation: 'groceryHamsterPulse 1.4s ease-in-out infinite' }} />
+              <p style={{ fontSize: '0.8rem', color: 'var(--ink-muted)' }}>Finding prices…</p>
+              <style>{`
+                @keyframes groceryHamsterPulse {
+                  0%, 100% { transform: scale(1); opacity: 1; }
+                  50% { transform: scale(1.08); opacity: 0.8; }
+                }
+              `}</style>
+            </div>
+          )}
 
           {!loadingCart && cart.length === 0 && (
             <p style={{ textAlign: 'center', fontSize: '0.78rem', color: 'var(--ink-muted)', padding: '1rem' }}>
