@@ -5,7 +5,7 @@ import {
   Salad, X, RotateCcw, Sparkles, ChevronLeft, ChevronRight,
   CheckCircle2, ShoppingCart, Check,
 } from 'lucide-react'
-import hamsterThinkingImg from '../../assets/illustrations/hamster-thinking.PNG'
+import hourglassImg from '../../assets/illustrations/hourglass.png'
 
 interface QuizOption { value: string; label: string }
 
@@ -396,7 +396,7 @@ Never mention calories, macros, or specific weight numbers. If the goal involves
           {wizardState === 'loading' && (
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '30px 20px', gap: 12 }}>
               <img
-                src={hamsterThinkingImg}
+                src={hourglassImg}
                 alt=""
                 style={{ width: 140, animation: 'dietPulse 1.4s ease-in-out infinite' }}
               />

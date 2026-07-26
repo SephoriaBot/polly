@@ -9,8 +9,9 @@ import {
 } from 'lucide-react';
 import Lantern from "../components/Lantern";
 import EmptyState from '../components/EmptyState';
-import emptyStateImg from '../assets/illustrations/empty-state.PNG';
-import hamsterThinkingImg from '../assets/illustrations/hamster-thinking.PNG';
+import emptyJarImg from '../assets/illustrations/empty_jar.png';
+import breadBasketImg from '../assets/illustrations/bread_basket.png';
+import hourglassImg from '../assets/illustrations/hourglass.png';
 
 
 
@@ -853,7 +854,7 @@ export default function Grocery() {
             <div className="section-label">Saved Lists</div>
             {savedLists.length === 0
               ? <EmptyState
-    image={emptyStateImg}
+    image={emptyJarImg}
     message="No saved lists yet."
     subMessage="Add your first list below"
   />
@@ -951,7 +952,7 @@ export default function Grocery() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 420, overflowY: 'auto', marginBottom: 12 }}>
                 {needs.length === 0
                   ? <EmptyState
-    image={emptyStateImg}
+    image={breadBasketImg}
     message="List is empty!"
     subMessage="Add an item to get started."
   />
@@ -1076,7 +1077,7 @@ export default function Grocery() {
 
           {loadingCart && (
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '20px 0', gap: 10 }}>
-              <img src={hamsterThinkingImg} alt="" style={{ width: 120, animation: 'groceryHamsterPulse 1.4s ease-in-out infinite' }} />
+              <img src={hourglassImg} alt="" style={{ width: 120, animation: 'groceryHamsterPulse 1.4s ease-in-out infinite' }} />
               <p style={{ fontSize: '0.8rem', color: 'var(--ink-muted)' }}>Finding prices…</p>
               <style>{`
                 @keyframes groceryHamsterPulse {
