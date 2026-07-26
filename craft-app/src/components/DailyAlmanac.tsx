@@ -14,6 +14,7 @@ import {
   buildAlmanacPrompt,
   generateAlmanacNote,
   MOON_ICON_BY_PHASE,
+  ZODIAC_ICON_BY_SIGN,
 } from "../lib/almanac";
 
 interface AlmanacRow {
@@ -123,14 +124,48 @@ export default function DailyAlmanac() {
               </div>
             </div>
           </div>
-          <div>
-            <div style={{ fontSize: 10, color: "var(--ink-muted)", textTransform: "uppercase", letterSpacing: "0.06em" }}>
-              Moon in
-            </div>
-            <div style={{ fontSize: 13, fontWeight: 700, color: "var(--pink-dark)" }}>
-              {entry.moon_sign} — {entry.garden_day_type}
-            </div>
-          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+  <Icon
+    name={
+      (ZODIAC_ICON_BY_SIGN[entry.moon_sign] ??
+        "sparkle-single") as import("../components/Icon").IconName
+    }
+    size={60}
+    alt={entry.moon_sign}
+  />
+
+  <div>
+    <div
+      style={{
+        fontSize: 10,
+        color: "var(--ink-muted)",
+        textTransform: "uppercase",
+        letterSpacing: "0.06em",
+      }}
+    >
+      Moon in
+    </div>
+
+    <div
+      style={{
+        fontSize: 13,
+        fontWeight: 700,
+        color: "var(--pink-dark)",
+      }}
+    >
+      {entry.moon_sign}
+    </div>
+
+    <div
+      style={{
+        fontSize: 11,
+        color: "var(--ink-muted)",
+      }}
+    >
+      {entry.garden_day_type}
+    </div>
+  </div>
+</div>
         </div>
 
         <div style={{ fontSize: 13, lineHeight: 1.5, color: "var(--ink)", fontStyle: "italic", marginBottom: 10 }}>

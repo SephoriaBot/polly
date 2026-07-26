@@ -72,6 +72,21 @@ const ZODIAC_SIGNS = [
   "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces",
 ];
 
+export const ZODIAC_ICON_BY_SIGN: Record<string, IconName> = {
+  Aries: "aries",
+  Taurus: "taurus",
+  Gemini: "gemini",
+  Cancer: "cancer",
+  Leo: "leo",
+  Virgo: "virgo",
+  Libra: "libra",
+  Scorpio: "scorpio",
+  Sagittarius: "sagittarius",
+  Capricorn: "capricorn",
+  Aquarius: "aquarius",
+  Pisces: "pisces",
+};
+
 const ELEMENT_BY_SIGN: Record<string, "fire" | "earth" | "air" | "water"> = {
   Aries: "fire", Leo: "fire", Sagittarius: "fire",
   Taurus: "earth", Virgo: "earth", Capricorn: "earth",

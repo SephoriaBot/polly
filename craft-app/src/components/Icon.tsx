@@ -13,7 +13,8 @@ export type IconName =
   | 'moon-last-quarter' | 'moon-waning-crescent' | 'music-note' | 'notebook-pen'
   | 'notepad-pencil' | 'piggy-bank' | 'potion' | 'potted-plant' | 'settings-gear'
   | 'sparkle-single' | 'sparkles-cluster' | 'spellbook' | 'sun-cloud' | 'trash-can'
-  | 'trophy' | 'washing-machine';
+  | 'trophy' | 'washing-machine' | 'aries' | 'taurus' | 'gemini' | 'cancer' | 'leo' | 'virgo' | 'libra' | 'scorpio' 
+  | 'sagittarius' | 'capricorn' | 'aquarius' | 'pisces';
 
 interface IconProps {
   name: IconName;
