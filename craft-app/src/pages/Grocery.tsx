@@ -693,7 +693,7 @@ export default function Grocery() {
       <div className="page-header">
         <div className="title-row">
           <h2>Grocery List <Icon name="basket" size={22} /></h2>
-          <Lantern size={60} />
+          <Lantern size={50} />
         </div>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           <button className="btn btn-primary" onClick={openBasicsModal}>
