@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react';
-import sunnyImg from '../assets/illustrations/weather/sunny.png';
-import clearNightImg from '../assets/illustrations/weather/clear_night.png';
-import rainyImg from '../assets/illustrations/weather/rainy.png';
-import stormyImg from '../assets/illustrations/weather/stormy.png';
-import coldSnowyScarfImg from '../assets/illustrations/weather/cold_snowy_scarf.png';
-import snowCloudImg from '../assets/illustrations/weather/snow_cloud.png';
-import autumnWindyImg from '../assets/illustrations/weather/autumn_windy.png';
-import iglooSnowImg from '../assets/illustrations/weather/igloo_snow.png';
+import sunnyImg from '../assets/illustrations/sunny.png';
+import clearNightImg from '../assets/illustrations/clear_night.png';
+import rainyImg from '../assets/illustrations/rainy.png';
+import stormyImg from '../assets/illustrations/stormy.png';
+import coldSnowyScarfImg from '../assets/illustrations/cold_snowy_scarf.png';
+import snowCloudImg from '../assets/illustrations/snow_cloud.png';
+import autumnWindyImg from '../assets/illustrations/autumn_windy.png';
+import iglooSnowImg from '../assets/illustrations/igloo_snow.png';
 
 interface WeatherState {
   tempF: number | null;
