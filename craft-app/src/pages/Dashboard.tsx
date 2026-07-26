@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase';
 import { Heart } from 'lucide-react';
 import Lantern from "../components/Lantern";
 import DailyAlmanac from "../components/DailyAlmanac";
+import sleepingNestImg from '../assets/illustrations/sleeping_nest.png';
 
 interface Focus {
   id: string;
@@ -173,7 +174,9 @@ export default function Dashboard() {
               background: 'var(--white)', border: '1.5px dashed var(--border)',
               borderRadius: 18, padding: '18px 16px', textAlign: 'center',
               color: 'var(--ink-muted)', fontSize: '0.82rem',
+              display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6,
             }}>
+              <img src={sleepingNestImg} alt="" style={{ width: 80 }} />
               No focuses set for today — add one to get started
             </div>
           ) : (
