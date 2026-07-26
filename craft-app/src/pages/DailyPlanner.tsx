@@ -6,7 +6,8 @@ import type { AppointmentNoteSelection } from '../components/planner/Appointment
 import { useAppointmentNoteMap } from '../hooks/useAppointmentNoteMap';
 import Lantern from "../components/Lantern";
 import EmptyState from '../components/EmptyState';
-import emptyStateImg from '../assets/illustrations/empty-state.PNG';
+import checklistImg from '../assets/illustrations/checklist.png';
+import celebrationImg from '../assets/illustrations/celebration.png';
 
 
 interface DailyTask {
@@ -61,6 +62,7 @@ export default function DailyPlanner() {
   const [newApptDate, setNewApptDate] = useState('');
   const [sparks, setSparks] = useState<Spark[]>([]);
   const [focusNote, setFocusNote] = useState<AppointmentNoteSelection | null>(null);
+  const [showAllDoneCelebration, setShowAllDoneCelebration] = useState(false);
 
   const noteMap = useAppointmentNoteMap(appointments.map(a => a.id));
 
@@ -108,6 +110,13 @@ export default function DailyPlanner() {
       }));
       setSparks(prev => [...prev, ...newSparks]);
       setTimeout(() => setSparks(prev => prev.filter(s => !newSparks.find(n => n.id === s.id))), 700);
+
+      // If checking this task off finishes the whole list, celebrate.
+      const willAllBeDone = tasks.length > 0 && tasks.every(t => t.id === task.id ? true : t.done);
+      if (willAllBeDone) {
+        setShowAllDoneCelebration(true);
+        setTimeout(() => setShowAllDoneCelebration(false), 3200);
+      }
     }
   }
 
@@ -171,6 +180,35 @@ export default function DailyPlanner() {
       {sparks.map(spark => (
         <SparkParticle key={spark.id} x={spark.x} y={spark.y} color={spark.color} />
       ))}
+
+      {showAllDoneCelebration && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          pointerEvents: 'none', zIndex: 9999,
+        }}>
+          <div style={{
+            display: 'flex', flexDirection: 'column', alignItems: 'center',
+            background: 'var(--white)', border: '2px solid var(--border)',
+            borderRadius: 32, padding: '20px 28px', textAlign: 'center',
+            animation: 'plannerCelebrationPop 0.4s ease-out',
+          }}>
+            <img src={celebrationImg} alt="" style={{ width: 140 }} />
+            <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--pink-dark)', marginTop: 4 }}>
+              All done for today!
+            </div>
+            <div style={{ fontSize: 13, color: 'var(--ink-muted)', marginTop: 2 }}>
+              Every task checked off. Nicely done.
+            </div>
+          </div>
+          <style>{`
+            @keyframes plannerCelebrationPop {
+              0% { transform: scale(0.7); opacity: 0; }
+              100% { transform: scale(1); opacity: 1; }
+            }
+          `}</style>
+        </div>
+      )}
 
       <div className="page-header">
         <div>
@@ -317,7 +355,7 @@ export default function DailyPlanner() {
 
               {appointments.length === 0 ? (
   <EmptyState
-    image={emptyStateImg}
+    image={checklistImg}
     message="Nothing scheduled yet"
     subMessage="Add your first appointment below"
   />

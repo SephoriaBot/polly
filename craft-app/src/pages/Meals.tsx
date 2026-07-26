@@ -8,6 +8,8 @@ import {
 } from 'lucide-react';
 import DrDietGroq from '../components/suggest/DrDietGroq';
 import RecipeModal from '../components/meals/RecipeModal';
+import teaCupImg from '../assets/illustrations/tea_cup.png';
+import errorDizzyImg from '../assets/illustrations/error_dizzy.png';
 import Lantern from "../components/Lantern";
 
 const DAYS = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun']
@@ -374,8 +376,8 @@ function WeekTab({
       )}
 
       {savedMeals.length === 0 && (
-        <div className="empty-state">
-          <Salad size={20} />
+        <div className="empty-state" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: 8, padding: '20px 12px' }}>
+          <img src={teaCupImg} alt="" style={{ width: 100 }} />
           No saved meals yet
           <button className="btn btn-secondary btn-sm" style={{ marginLeft: 8 }} onClick={onGoDiscover}>Find some</button>
         </div>
@@ -599,8 +601,8 @@ function DiscoverTab({ onOpenRecipe, onSaved }: { onOpenRecipe: (id: number) => 
       )}
 
       {error && (
-        <div className="empty-state">
-          <AlertCircle size={18} />
+        <div className="empty-state" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: 8, padding: '20px 12px' }}>
+          <img src={errorDizzyImg} alt="" style={{ width: 100 }} />
           {error}
         </div>
       )}

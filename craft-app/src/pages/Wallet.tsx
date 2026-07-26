@@ -4,6 +4,8 @@ import { supabase } from '../lib/supabase';
 import Icon, { type IconName } from '../components/Icon';
 import Lantern from "../components/Lantern";
 import { Trash2 } from "lucide-react";
+import walletPouchImg from '../assets/illustrations/wallet_pouch.png';
+import celebrationImg from '../assets/illustrations/celebration.png';
 
 interface Debt {
   id: number;
@@ -267,7 +269,7 @@ export default function Wallet() {
   const [showBillForm, setShowBillForm] = useState(false);
   const [newBill, setNewBill] = useState({ name: "", amount: "", due_day: "", recurring: true });
   const [showConfetti, setShowConfetti] = useState(false);
-  const [paidOffDebt, setPaidOffDebt] = useState<string>("");
+  const [celebration, setCelebration] = useState<{ title: string; subtitle: string }>({ title: "", subtitle: "" });
 
   const [plannerItems, setPlannerItems] = useState<PlannerItem[]>([]);
   const [newNeed, setNewNeed] = useState("");
@@ -794,6 +796,12 @@ export default function Wallet() {
       const { data } = await supabase.from("bill_payments").insert(newPayment).select().single();
       if (data) setPayments(prev => [...prev, data]);
     }
+
+    if (newPaid) {
+      setCelebration({ title: "BILL PAID!", subtitle: bill.name });
+      setShowConfetti(true);
+      setTimeout(() => setShowConfetti(false), 3200);
+    }
   }
 
   async function updateMonthBill(bill: typeof monthBills[0], field: "name" | "amount" | "due_day", value: string | number) {
@@ -909,7 +917,7 @@ export default function Wallet() {
   async function markDebtPaid(id: number, name: string) {
     setDebts(prev => prev.map(d => d.id === id ? { ...d, balance: 0, paid_off: true } : d));
     await supabase.from("debts").update({ balance: 0, paid_off: true }).eq("id", id);
-    setPaidOffDebt(name);
+    setCelebration({ title: "DEBT PAID OFF!", subtitle: name });
     setShowConfetti(true);
     setTimeout(() => setShowConfetti(false), 4000);
   }
@@ -950,9 +958,9 @@ export default function Wallet() {
         ))}
         <style>{`@keyframes fall { to { transform: translateY(100vh) rotate(720deg); opacity: 0; } }`}</style>
         <div style={{ position: "absolute", top: "35%", left: "50%", transform: "translateX(-50%)", textAlign: "center", background: "var(--white)", border: "2px solid var(--border)", borderRadius: 32, padding: "24px 32px", minWidth: 220 }}>
-          <div style={{ fontSize: 48 }}><Icon name="trophy" size={48} /></div>
-          <div style={{ fontSize: 20, fontWeight: 800, color: "var(--green-dark)", marginTop: 8 }}>DEBT PAID OFF!</div>
-          <div style={{ fontSize: 16, color: "var(--pink-dark)", marginTop: 4 }}>{paidOffDebt}</div>
+          <img src={celebrationImg} alt="" style={{ width: 120 }} />
+          <div style={{ fontSize: 20, fontWeight: 800, color: "var(--green-dark)", marginTop: 8 }}>{celebration.title}</div>
+          <div style={{ fontSize: 16, color: "var(--pink-dark)", marginTop: 4 }}>{celebration.subtitle}</div>
           <div style={{ fontSize: 13, color: "var(--ink-muted)", marginTop: 8 }}>Keep going — you are crushing it!</div>
         </div>
       </div>
@@ -1459,7 +1467,12 @@ export default function Wallet() {
                       </tr>
                     ))}
                     {monthBills.length === 0 && (
-                      <tr><td colSpan={6} style={{ padding: 24, textAlign: "center", color: "var(--ink-muted)" }}>No bills yet — click + Add Bill to get started.</td></tr>
+                      <tr><td colSpan={6} style={{ padding: 24, textAlign: "center", color: "var(--ink-muted)" }}>
+                        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
+                          <img src={walletPouchImg} alt="" style={{ width: 100 }} />
+                          No bills yet — click + Add Bill to get started.
+                        </div>
+                      </td></tr>
                     )}
                   </tbody>
                 </table>

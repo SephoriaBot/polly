@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Clock, Package, ChevronRight, RotateCcw, CheckCircle2, Circle, Sparkles } from 'lucide-react';
 import Icon, { type IconName } from '../components/Icon';
 import Lantern from "../components/Lantern";
-import hamsterThinkingImg from '../assets/illustrations/hamster-thinking.PNG';
+import hourglassImg from '../assets/illustrations/hourglass.png';
 
 const ROOMS: { value: string; label: string; icon: IconName }[] = [
   { value: 'kitchen', label: 'Kitchen', icon: 'cooking-pot' },
@@ -172,7 +172,7 @@ Include 4–8 supplies, a realistic time estimate, and 6–10 steps in logical c
             justifyContent: 'center', padding: '40px 20px', gap: 12
           }}>
             <img
-              src={hamsterThinkingImg}
+              src={hourglassImg}
               alt=""
               style={{ width: 140, animation: 'gentlePulse 1.4s ease-in-out infinite' }}
             />
