@@ -305,7 +305,7 @@ const [lists, setLists] = useState<string[]>(['Default'])
   qty: '',
   checked: false,
   list_name: currentList
-}))      const { data } = await supabase
+}))   ;   const { data } = await supabase
         .from('grocery_items')
         .insert(rows)
         .select()
