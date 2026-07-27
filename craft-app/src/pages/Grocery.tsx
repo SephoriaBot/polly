@@ -225,6 +225,8 @@ function filterToAllowedStores(results: any[]): any[] {
 
 export default function Grocery() {
   const [items, setItems] = useState<GroceryItem[]>([])
+const [currentList, setCurrentList] = useState('Default')
+const [lists, setLists] = useState<string[]>(['Default'])
   const [newItem, setNewItem] = useState('')
   const [newQty, setNewQty] = useState('')
   const [loading, setLoading] = useState(true)
@@ -246,18 +248,17 @@ export default function Grocery() {
   const [addingBasics, setAddingBasics] = useState(false)
 
   useEffect(() => {
-    fetchItems()
-    fetchSavedLists()
-    fetchPrices()
-  }, [])
+  fetchItems()
+  fetchPrices()
+}, [currentList])
 
   async function fetchItems() {
     setLoading(true)
     const { data } = await supabase
-      .from('grocery_items')
-      .select('*')
-      .order('created_at', { ascending: true })
-    setItems(data ?? [])
+  .from('grocery_items')
+  .select('*')
+  .eq('list_name', currentList)
+  .order('created_at', { ascending: true })    setItems(data ?? [])
     setLoading(false)
   }
 
@@ -288,14 +289,23 @@ export default function Grocery() {
       // single item — the qty field applies as normal
       const { data } = await supabase
         .from('grocery_items')
-        .insert({ name: names[0], qty: newQty.trim(), checked: false })
+        .insert({ 
+  name: names[0], 
+  qty: newQty.trim(), 
+  checked: false,
+  list_name: currentList
+})
         .select().single()
       if (data) setItems(prev => [...prev, data])
     } else {
       // multiple comma-separated items — one qty doesn't apply to all of
       // them, so each gets added blank and can be filled in individually
-      const rows = names.map(name => ({ name, qty: '', checked: false }))
-      const { data } = await supabase
+      const rows = names.map(name => ({
+  name,
+  qty: '',
+  checked: false,
+  list_name: currentList
+}))      const { data } = await supabase
         .from('grocery_items')
         .insert(rows)
         .select()
@@ -341,7 +351,7 @@ export default function Grocery() {
     const existingNames = new Set(items.map(i => i.name.toLowerCase()))
     const payload = toAdd
       .filter(i => !existingNames.has(i.name.toLowerCase()))
-      .map(i => ({ name: i.name, qty: i.qty, checked: false }))
+      .map(i => ({   name: i.name,   qty: i.qty,   checked: false,   list_name: currentList }))
 
     if (payload.length > 0) {
       const { data } = await supabase.from('grocery_items').insert(payload).select()
@@ -809,6 +819,16 @@ export default function Grocery() {
             </div>
           </div>
         )}
+
+<select
+  className="form-input"
+  value={currentList}
+  onChange={e => setCurrentList(e.target.value)}
+>
+  {lists.map(list => (
+    <option key={list}>{list}</option>
+  ))}
+</select>
 
         {/* location input */}
         <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
