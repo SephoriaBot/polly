@@ -258,7 +258,7 @@ const [lists, setLists] = useState<string[]>(['Default'])
   .from('grocery_items')
   .select('*')
   .eq('list_name', currentList)
-  .order('created_at', { ascending: true })    setItems(data ?? [])
+  .order('created_at', { ascending: true }); setItems(data ?? [])
     setLoading(false)
   }
 
