@@ -1021,7 +1021,7 @@ export default function Wallet() {
     Money Calendar
   </div>
 
-  <div style={{ fontSize: 11, color: "var(--ink-muted)" }}>
+  <div style={{ fontSize: 11, color: "var(--pink-dark)" }}>
     14 day forecast
   </div>
 </button>
@@ -1123,7 +1123,10 @@ export default function Wallet() {
             </>
             )}
 
-{/* ── MONEY CALENDAR VIEW ── */}
+{/* ══════════════════ MONEY CALENDAR ══════════════════ */}
+{view === "calendar" && (
+  <>
+    {/* ── MONEY CALENDAR VIEW ── */}
             <div className="card">
               <div className="card-body">
                 <div className="section-label"><Icon name="calendar" size={16} /> Money Calendar</div>
@@ -1391,6 +1394,10 @@ export default function Wallet() {
                 )}
               </div>
             </div>
+  </>
+)}
+
+
 
 
 
