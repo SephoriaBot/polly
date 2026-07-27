@@ -8,12 +8,14 @@ interface AppointmentNotesProps {
   appointmentId: string;
   appointmentLabel: string;
   noteType: AppointmentNoteType;
+  onNoteChanged?: () => void;
 }
 
 export default function AppointmentNotes({
   appointmentId,
   appointmentLabel,
   noteType,
+  onNoteChanged,
 }: AppointmentNotesProps) {
   const {
     items,
@@ -26,7 +28,7 @@ export default function AppointmentNotes({
     saveResolution,
     carryOverItem,
     removeItem,
-  } = useAppointmentNotes(appointmentId, noteType);
+  } = useAppointmentNotes(appointmentId, noteType, onNoteChanged);
 
   const [bringUpDraft, setBringUpDraft] = useState('');
   const [homeworkDraft, setHomeworkDraft] = useState('');
