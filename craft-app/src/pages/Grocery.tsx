@@ -264,7 +264,7 @@ const [lists, setLists] = useState<string[]>(['Default'])
 
   async function fetchSavedLists() {
     const { data } = await supabase
-      .from('saved_grocery_lists')
+      .from('grocery_items')
       .select('*')
       .order('created_at', { ascending: false })
     setSavedLists(data ?? [])
