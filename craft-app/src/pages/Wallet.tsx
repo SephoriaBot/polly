@@ -260,8 +260,7 @@ export default function Wallet() {
   const [payments, setPayments] = useState<BillPayment[]>([]);
   const [nextId, setNextId] = useState(20);
   const [nextBillId, setNextBillId] = useState(10);
-  const [view, setView] = useState<"home" | "bills" | "debts">("home");
-  const [showDeferred, setShowDeferred] = useState(false);
+  const [view, setView] = useState<"home" | "calendar" | "bills" | "debts">("home");  const [showDeferred, setShowDeferred] = useState(false);
   const [, setLoading] = useState(true);
   const [savedMsg, setSavedMsg] = useState(false);
   const [anytimePay, setAnytimePay] = useState("");
@@ -968,10 +967,11 @@ export default function Wallet() {
   };
 
   const VIEW_TITLES: Record<typeof view, { text: string; icon?: IconName }> = {
-    home: { text: "Wallet" },
-    bills: { text: "Bills", icon: "house" },
-    debts: { text: "Debts", icon: "calculator-hearts" },
-  };
+  home: { text: "Wallet" },
+  calendar: { text: "Money Calendar", icon: "calendar" },
+  bills: { text: "Bills", icon: "house" },
+  debts: { text: "Debts", icon: "calculator-hearts" },
+};
 
   return (
     <div>
@@ -996,7 +996,36 @@ export default function Wallet() {
         {view === "home" && (
           <>
             {/* ── NAV CARDS ── */}
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 10 }}>
+              
+<button
+  onClick={() => setView("calendar")}
+  style={{
+    textAlign: "left",
+    cursor: "pointer",
+    fontFamily: "inherit",
+    border: "1.5px dashed var(--border)",
+    borderRadius: 18,
+    background: "var(--white)",
+    padding: "14px 16px",
+    display: "flex",
+    flexDirection: "column",
+    gap: 6,
+  }}
+>
+  <div style={{ fontSize: 24 }}>
+    <Icon name="calendar" size={24} />
+  </div>
+
+  <div style={{ fontSize: 14, fontWeight: 800 }}>
+    Money Calendar
+  </div>
+
+  <div style={{ fontSize: 11, color: "var(--ink-muted)" }}>
+    14 day forecast
+  </div>
+</button>
+
               <button
                 onClick={() => setView("bills")}
                 style={{
@@ -1029,7 +1058,72 @@ export default function Wallet() {
               </button>
             </div>
 
-            {/* ── MONEY CALENDAR ── */}
+            
+
+            <Lantern variant="divider" />
+
+            {/* ── TODAY'S PAYCHECK CALCULATOR ── */}
+            {isCrisis && (
+              <div style={{ background: "var(--danger-bg)", border: "1.5px solid var(--danger)", borderRadius: 16, padding: "12px 16px", fontSize: 13, color: "var(--danger)", fontWeight: 700 }}>
+                Equity Mode Active — {crisisBills.length} bill(s) late or due within 3 days ({fmt(crisisTotal)} total). Fun money and general savings are zeroed until these are covered. Things you need are still protected.
+              </div>
+            )}
+            {!isCrisis && urgentBills.length > 0 && (
+              <div style={{ background: "var(--danger-bg)", border: "1.5px solid var(--danger)", borderRadius: 16, padding: "12px 16px", fontSize: 13, color: "var(--danger)", fontWeight: 600 }}>
+                Bills due within 7 days: {urgentBills.map(b => `${b.name} (${fmt(b.amount)}) in ${b.days}d`).join(" · ")}
+              </div>
+            )}
+
+            <div className="card">
+              <div className="card-body">
+                <div className="section-label">Today's Paycheck</div>
+                <input
+                  type="number"
+                  className="form-input"
+                  placeholder="e.g. 120"
+                  value={anytimePay}
+                  onChange={e => setAnytimePay(e.target.value)}
+                  style={{ fontSize: 22, fontWeight: 700, marginTop: 8, marginBottom: 6 }}
+                />
+                {inputAmount > 0 && hoursOfWork(inputAmount, budget.hourly_wage) && (
+                  <div style={{ fontSize: 11, color: "var(--ink-muted)", marginBottom: 14 }}>
+                    = {hoursOfWork(inputAmount, budget.hourly_wage)} hours of your life
+                  </div>
+                )}
+
+                {inputAmount > 0 && (
+                  <>
+                    <div style={{ display: "flex", height: 12, borderRadius: 99, overflow: "hidden", marginBottom: 16, gap: 2 }}>
+                      {allocations.map(a => (
+                        <div key={a.label} style={{ width: pct(a.amount, inputAmount), background: a.color, transition: "width 0.3s" }} />
+                      ))}
+                    </div>
+                    {allocations.map(a => (
+                      <div key={a.label} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "9px 0", borderBottom: "1px solid var(--border)" }}>
+                        <div>
+                          <div style={{ fontSize: 13, color: "var(--ink)", fontWeight: 600 }}><Icon name={a.icon} size={14} /> {a.label}</div>
+                          <div style={{ fontSize: 11, color: "var(--ink-muted)", marginTop: 2 }}>{a.noteIcon && <Icon name={a.noteIcon} size={12} />} {a.note}</div>
+                        </div>
+                        <div style={{ textAlign: "right" }}>
+                          <div style={{ fontSize: 15, fontWeight: 800, color: a.color }}>{fmt(a.amount)}</div>
+                          <div style={{ fontSize: 10, color: "var(--ink-muted)" }}>{pct(a.amount, inputAmount)}</div>
+                        </div>
+                      </div>
+                    ))}
+                    <div style={{ marginTop: 14, display: "flex", flexDirection: "column", gap: 8 }}>
+                      <input type="text" className="form-input" placeholder="Notes (optional)..." value={planNotes} onChange={e => setPlanNotes(e.target.value)} />
+                      <button className="btn btn-primary" style={{ width: "100%", justifyContent: "center" }} onClick={saveLog}>
+                        Save Plan
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+            </>
+            )}
+
+{/* ── MONEY CALENDAR VIEW ── */}
             <div className="card">
               <div className="card-body">
                 <div className="section-label"><Icon name="calendar" size={16} /> Money Calendar</div>
@@ -1298,68 +1392,7 @@ export default function Wallet() {
               </div>
             </div>
 
-            <Lantern variant="divider" />
 
-            {/* ── TODAY'S PAYCHECK CALCULATOR ── */}
-            {isCrisis && (
-              <div style={{ background: "var(--danger-bg)", border: "1.5px solid var(--danger)", borderRadius: 16, padding: "12px 16px", fontSize: 13, color: "var(--danger)", fontWeight: 700 }}>
-                Equity Mode Active — {crisisBills.length} bill(s) late or due within 3 days ({fmt(crisisTotal)} total). Fun money and general savings are zeroed until these are covered. Things you need are still protected.
-              </div>
-            )}
-            {!isCrisis && urgentBills.length > 0 && (
-              <div style={{ background: "var(--danger-bg)", border: "1.5px solid var(--danger)", borderRadius: 16, padding: "12px 16px", fontSize: 13, color: "var(--danger)", fontWeight: 600 }}>
-                Bills due within 7 days: {urgentBills.map(b => `${b.name} (${fmt(b.amount)}) in ${b.days}d`).join(" · ")}
-              </div>
-            )}
-
-            <div className="card">
-              <div className="card-body">
-                <div className="section-label">Today's Paycheck</div>
-                <input
-                  type="number"
-                  className="form-input"
-                  placeholder="e.g. 120"
-                  value={anytimePay}
-                  onChange={e => setAnytimePay(e.target.value)}
-                  style={{ fontSize: 22, fontWeight: 700, marginTop: 8, marginBottom: 6 }}
-                />
-                {inputAmount > 0 && hoursOfWork(inputAmount, budget.hourly_wage) && (
-                  <div style={{ fontSize: 11, color: "var(--ink-muted)", marginBottom: 14 }}>
-                    = {hoursOfWork(inputAmount, budget.hourly_wage)} hours of your life
-                  </div>
-                )}
-
-                {inputAmount > 0 && (
-                  <>
-                    <div style={{ display: "flex", height: 12, borderRadius: 99, overflow: "hidden", marginBottom: 16, gap: 2 }}>
-                      {allocations.map(a => (
-                        <div key={a.label} style={{ width: pct(a.amount, inputAmount), background: a.color, transition: "width 0.3s" }} />
-                      ))}
-                    </div>
-                    {allocations.map(a => (
-                      <div key={a.label} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "9px 0", borderBottom: "1px solid var(--border)" }}>
-                        <div>
-                          <div style={{ fontSize: 13, color: "var(--ink)", fontWeight: 600 }}><Icon name={a.icon} size={14} /> {a.label}</div>
-                          <div style={{ fontSize: 11, color: "var(--ink-muted)", marginTop: 2 }}>{a.noteIcon && <Icon name={a.noteIcon} size={12} />} {a.note}</div>
-                        </div>
-                        <div style={{ textAlign: "right" }}>
-                          <div style={{ fontSize: 15, fontWeight: 800, color: a.color }}>{fmt(a.amount)}</div>
-                          <div style={{ fontSize: 10, color: "var(--ink-muted)" }}>{pct(a.amount, inputAmount)}</div>
-                        </div>
-                      </div>
-                    ))}
-                    <div style={{ marginTop: 14, display: "flex", flexDirection: "column", gap: 8 }}>
-                      <input type="text" className="form-input" placeholder="Notes (optional)..." value={planNotes} onChange={e => setPlanNotes(e.target.value)} />
-                      <button className="btn btn-primary" style={{ width: "100%", justifyContent: "center" }} onClick={saveLog}>
-                        Save Plan
-                      </button>
-                    </div>
-                  </>
-                )}
-              </div>
-            </div>
-            </>
-            )}
 
 
         {/* ══════════════════ BILLS VIEW ══════════════════ */}
