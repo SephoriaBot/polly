@@ -459,10 +459,20 @@ export function useHamsterGrowthState() {
     })();
   }, [refreshCollection, refreshRecentPoints]);
 
-  useEffect(() => {
+    useEffect(() => {
     if (!loading) checkForNewGrowth();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loading]);
+
+  useEffect(() => {
+    const onFocus = () => { if (!loading) checkForNewGrowth(); };
+    document.addEventListener("visibilitychange", onFocus);
+    window.addEventListener("focus", onFocus);
+    return () => {
+      document.removeEventListener("visibilitychange", onFocus);
+      window.removeEventListener("focus", onFocus);
+    };
+  }, [loading, checkForNewGrowth]);
 
   const clearJustHatched = useCallback(() => setJustHatched(null), []);
   const clearJustEvolved = useCallback(() => setJustEvolved(null), []);
