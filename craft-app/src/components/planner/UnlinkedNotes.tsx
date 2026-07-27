@@ -33,21 +33,20 @@ export default function UnlinkedNotes({
   const [linkTarget, setLinkTarget] = useState('');
   const { appointments, loading: appointmentsLoading, error: appointmentsError } = useAppointments();
 
-  const openLinkPicker = (itemId: string) => {
-    setLinkingItemId(itemId);
-    setLinkTarget('');
-  };
+const openLinkPicker = () => {
+  setLinkTarget('');
+};
 
-  const closeLinkPicker = () => {
-    setLinkingItemId(null);
-    setLinkTarget('');
-  };
+const closeLinkPicker = () => {
+  setLinkTarget('');
+};
 
-  const confirmLink = async (itemId: string) => {
-    if (!linkTarget) return;
-    await linkToAppointment(selectedItemIds, linkTarget);
-    closeLinkPicker();
-  };
+const confirmLink = async () => {
+  if (!linkTarget || selectedItemIds.length === 0) return;
+
+  await linkToAppointment(selectedItemIds, linkTarget);
+  closeLinkPicker();
+};
 
   if (loading) {
     return <p className={notesStyles.loadingText}>Loading unlinked notes…</p>;
@@ -83,7 +82,7 @@ export default function UnlinkedNotes({
   const renderLinkButton = (item: AppointmentNoteItem) => (
     <button
       className={notesStyles.deleteButton}
-      onClick={() => openLinkPicker(item.id)}
+      onClick={openLinkPicker}
       aria-label="Link to an appointment"
       type="button"
     >
@@ -94,10 +93,8 @@ export default function UnlinkedNotes({
   // The picker itself, rendered as a block below the row once opened.
   // Includes a "back" option to bail out to the "write a new note" flow
   // instead, for when none of the existing appointments fit.
-  const renderLinkPicker = (item: AppointmentNoteItem) => {
-    if (linkingItemId !== item.id) return null;
-
-    return (
+  const renderLinkPicker = (_item: AppointmentNoteItem) => {
+  return (
       <div className={styles.linkPicker}>
         {appointmentsError && <p className={notesStyles.errorText}>{appointmentsError}</p>}
         <select
@@ -133,7 +130,7 @@ export default function UnlinkedNotes({
             type="button"
             className={styles.linkConfirmButton}
             disabled={!linkTarget}
-            onClick={() => confirmLink(item.id)}
+            onClick={confirmLink}
           >
             Link
           </button>
