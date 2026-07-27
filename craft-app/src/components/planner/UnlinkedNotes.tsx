@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { X, Circle, CheckCircle2, Inbox, Link2, ArrowLeft } from 'lucide-react';
+import { X, Circle, CheckCircle2, Inbox, Link2 } from 'lucide-react';
 import { useAppointments } from '../../hooks/useAppointments';
 import type { AppointmentNoteItem } from '../../types/appointmentNotes';
 import notesStyles from './AppointmentNotes.module.css';
@@ -14,7 +14,7 @@ interface UnlinkedNotesProps {
   saveResolution: (itemId: string, resolution: string) => Promise<void>;
   removeItem: (itemId: string) => Promise<void>;
   linkToAppointment: (itemIds: string[], appointmentId: string) => Promise<void>;
-  onWriteNewInstead: () => void;
+  onLinked?: () => void;
 }
 
 export default function UnlinkedNotes({
@@ -26,27 +26,32 @@ export default function UnlinkedNotes({
   saveResolution,
   removeItem,
   linkToAppointment,
-  onWriteNewInstead,
+  onLinked,
 }: UnlinkedNotesProps) {
   const [resolutionDrafts, setResolutionDrafts] = useState<Record<string, string>>({});
-  const [selectedItemIds, setSelectedItemIds] = useState<string[]>([]);
+  const [linkingGroup, setLinkingGroup] = useState<string | null>(null);
   const [linkTarget, setLinkTarget] = useState('');
   const { appointments, loading: appointmentsLoading, error: appointmentsError } = useAppointments();
 
-const openLinkPicker = () => {
-  setLinkTarget('');
-};
+  const openLinkPicker = (noteType: string) => {
+    setLinkingGroup(noteType);
+    setLinkTarget('');
+  };
 
-const closeLinkPicker = () => {
-  setLinkTarget('');
-};
+  const closeLinkPicker = () => {
+    setLinkingGroup(null);
+    setLinkTarget('');
+  };
 
-const confirmLink = async () => {
-  if (!linkTarget || selectedItemIds.length === 0) return;
-
-  await linkToAppointment(selectedItemIds, linkTarget);
-  closeLinkPicker();
-};
+  const confirmLink = async (groupItems: AppointmentNoteItem[]) => {
+    if (!linkTarget) return;
+    await linkToAppointment(
+      groupItems.map((i) => i.id),
+      linkTarget
+    );
+    closeLinkPicker();
+    onLinked?.();
+  };
 
   if (loading) {
     return <p className={notesStyles.loadingText}>Loading unlinked notes…</p>;
@@ -66,7 +71,9 @@ const confirmLink = async () => {
   }
 
   // Grouped by note_type since these no longer belong to any specific
-  // appointment — the appointment that created them was deleted.
+  // appointment — the appointment that created them was deleted. Linking
+  // happens at the group level: everything under a note_type came from the
+  // same orphaned thread, so it all gets re-homed to one appointment at once.
   const groups = items.reduce<Record<string, AppointmentNoteItem[]>>((acc, item) => {
     (acc[item.note_type] ??= []).push(item);
     return acc;
@@ -77,24 +84,10 @@ const confirmLink = async () => {
     await saveResolution(item.id, text);
   };
 
-  // Icon button rendered inside each item's row — opens the inline
-  // appointment picker for that specific item.
-  const renderLinkButton = (item: AppointmentNoteItem) => (
-    <button
-      className={notesStyles.deleteButton}
-      onClick={openLinkPicker}
-      aria-label="Link to an appointment"
-      type="button"
-    >
-      <Link2 size={15} />
-    </button>
-  );
+  const renderGroupLinkPicker = (noteType: string, groupItems: AppointmentNoteItem[]) => {
+    if (linkingGroup !== noteType) return null;
 
-  // The picker itself, rendered as a block below the row once opened.
-  // Includes a "back" option to bail out to the "write a new note" flow
-  // instead, for when none of the existing appointments fit.
-  const renderLinkPicker = (_item: AppointmentNoteItem) => {
-  return (
+    return (
       <div className={styles.linkPicker}>
         {appointmentsError && <p className={notesStyles.errorText}>{appointmentsError}</p>}
         <select
@@ -113,16 +106,6 @@ const confirmLink = async () => {
           ))}
         </select>
         <div className={styles.linkPickerActions}>
-          <button
-            type="button"
-            className={styles.backButton}
-            onClick={() => {
-              closeLinkPicker();
-              onWriteNewInstead();
-            }}
-          >
-            <ArrowLeft size={13} /> Back, write new instead
-          </button>
           <button type="button" className={styles.cancelLinkButton} onClick={closeLinkPicker}>
             Cancel
           </button>
@@ -130,9 +113,9 @@ const confirmLink = async () => {
             type="button"
             className={styles.linkConfirmButton}
             disabled={!linkTarget}
-            onClick={confirmLink}
+            onClick={() => confirmLink(groupItems)}
           >
-            Link
+            Link all {groupItems.length}
           </button>
         </div>
       </div>
@@ -142,7 +125,8 @@ const confirmLink = async () => {
   return (
     <div className={notesStyles.wrapper}>
       <p className={styles.intro}>
-        Notes left behind by deleted appointments. Wrap these up or clear them out.
+        Notes left behind by deleted appointments. Wrap these up, link the whole group back to
+        an appointment, or clear them out.
       </p>
 
       {Object.entries(groups).map(([noteType, groupItems]) => {
@@ -152,7 +136,18 @@ const confirmLink = async () => {
 
         return (
           <div key={noteType} className={styles.group}>
-            <div className={styles.groupHeader}>{noteType}</div>
+            <div className={styles.groupHeader}>
+              <span>{noteType}</span>
+              <button
+                type="button"
+                className={styles.groupLinkButton}
+                onClick={() => openLinkPicker(noteType)}
+              >
+                <Link2 size={13} /> Link to appointment
+              </button>
+            </div>
+
+            {renderGroupLinkPicker(noteType, groupItems)}
 
             {bringUpOpen.length > 0 && (
               <section className={notesStyles.section}>
@@ -160,28 +155,24 @@ const confirmLink = async () => {
                   <span>Want to bring up</span>
                 </div>
                 {bringUpOpen.map((item) => (
-                  <div key={item.id} className={styles.itemBlock}>
-                    <div className={notesStyles.row}>
-                      <button
-                        className={notesStyles.checkButton}
-                        onClick={() => toggleBringUpCovered(item)}
-                        aria-label="Mark covered"
-                        type="button"
-                      >
-                        <Circle size={18} />
-                      </button>
-                      <span className={notesStyles.itemText}>{item.content}</span>
-                      {renderLinkButton(item)}
-                      <button
-                        className={notesStyles.deleteButton}
-                        onClick={() => removeItem(item.id)}
-                        aria-label="Delete"
-                        type="button"
-                      >
-                        <X size={15} />
-                      </button>
-                    </div>
-                    {renderLinkPicker(item)}
+                  <div key={item.id} className={notesStyles.row}>
+                    <button
+                      className={notesStyles.checkButton}
+                      onClick={() => toggleBringUpCovered(item)}
+                      aria-label="Mark covered"
+                      type="button"
+                    >
+                      <Circle size={18} />
+                    </button>
+                    <span className={notesStyles.itemText}>{item.content}</span>
+                    <button
+                      className={notesStyles.deleteButton}
+                      onClick={() => removeItem(item.id)}
+                      aria-label="Delete"
+                      type="button"
+                    >
+                      <X size={15} />
+                    </button>
                   </div>
                 ))}
               </section>
@@ -206,7 +197,6 @@ const confirmLink = async () => {
                       <span className={`${notesStyles.itemText} ${notesStyles.strikethrough}`}>
                         {item.content}
                       </span>
-                      {renderLinkButton(item)}
                       <button
                         className={notesStyles.deleteButton}
                         onClick={() => removeItem(item.id)}
@@ -216,7 +206,6 @@ const confirmLink = async () => {
                         <X size={15} />
                       </button>
                     </div>
-                    {renderLinkPicker(item)}
                     <div className={notesStyles.resolutionRow}>
                       <input
                         className={notesStyles.resolutionInput}
@@ -246,36 +235,32 @@ const confirmLink = async () => {
                   <span>Homework</span>
                 </div>
                 {homework.map((item) => (
-                  <div key={item.id} className={styles.itemBlock}>
-                    <div className={notesStyles.row}>
-                      <button
-                        className={notesStyles.checkButton}
-                        onClick={() => toggleHomeworkDone(item)}
-                        aria-label="Toggle done"
-                        type="button"
-                      >
-                        {item.status === 'done' ? (
-                          <CheckCircle2 size={18} className={notesStyles.coveredIcon} />
-                        ) : (
-                          <Circle size={18} />
-                        )}
-                      </button>
-                      <span
-                        className={`${notesStyles.itemText} ${item.status === 'done' ? notesStyles.strikethrough : ''}`}
-                      >
-                        {item.content}
-                      </span>
-                      {renderLinkButton(item)}
-                      <button
-                        className={notesStyles.deleteButton}
-                        onClick={() => removeItem(item.id)}
-                        aria-label="Delete"
-                        type="button"
-                      >
-                        <X size={15} />
-                      </button>
-                    </div>
-                    {renderLinkPicker(item)}
+                  <div key={item.id} className={notesStyles.row}>
+                    <button
+                      className={notesStyles.checkButton}
+                      onClick={() => toggleHomeworkDone(item)}
+                      aria-label="Toggle done"
+                      type="button"
+                    >
+                      {item.status === 'done' ? (
+                        <CheckCircle2 size={18} className={notesStyles.coveredIcon} />
+                      ) : (
+                        <Circle size={18} />
+                      )}
+                    </button>
+                    <span
+                      className={`${notesStyles.itemText} ${item.status === 'done' ? notesStyles.strikethrough : ''}`}
+                    >
+                      {item.content}
+                    </span>
+                    <button
+                      className={notesStyles.deleteButton}
+                      onClick={() => removeItem(item.id)}
+                      aria-label="Delete"
+                      type="button"
+                    >
+                      <X size={15} />
+                    </button>
                   </div>
                 ))}
               </section>
