@@ -97,6 +97,11 @@ export default function AppointmentNotesPanel({
           toggleHomeworkDone={unlinked.toggleHomeworkDone}
           saveResolution={unlinked.saveResolution}
           removeItem={unlinked.removeItem}
+          linkToAppointment={unlinked.linkToAppointment}
+          onWriteNewInstead={() => {
+            setViewingUnlinked(false);
+            setCreating(true);
+          }}
         />
       )}
 

@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { X, Circle, CheckCircle2, Inbox } from 'lucide-react';
+import { X, Circle, CheckCircle2, Inbox, Link2, ArrowLeft } from 'lucide-react';
+import { useAppointments } from '../../hooks/useAppointments';
 import type { AppointmentNoteItem } from '../../types/appointmentNotes';
 import notesStyles from './AppointmentNotes.module.css';
 import styles from './UnlinkedNotes.module.css';
@@ -12,6 +13,8 @@ interface UnlinkedNotesProps {
   toggleHomeworkDone: (item: AppointmentNoteItem) => Promise<void>;
   saveResolution: (itemId: string, resolution: string) => Promise<void>;
   removeItem: (itemId: string) => Promise<void>;
+  linkToAppointment: (itemIds: string[], appointmentId: string) => Promise<void>;
+  onWriteNewInstead: () => void;
 }
 
 export default function UnlinkedNotes({
@@ -22,8 +25,29 @@ export default function UnlinkedNotes({
   toggleHomeworkDone,
   saveResolution,
   removeItem,
+  linkToAppointment,
+  onWriteNewInstead,
 }: UnlinkedNotesProps) {
   const [resolutionDrafts, setResolutionDrafts] = useState<Record<string, string>>({});
+  const [selectedItemIds, setSelectedItemIds] = useState<string[]>([]);
+  const [linkTarget, setLinkTarget] = useState('');
+  const { appointments, loading: appointmentsLoading, error: appointmentsError } = useAppointments();
+
+  const openLinkPicker = (itemId: string) => {
+    setLinkingItemId(itemId);
+    setLinkTarget('');
+  };
+
+  const closeLinkPicker = () => {
+    setLinkingItemId(null);
+    setLinkTarget('');
+  };
+
+  const confirmLink = async (itemId: string) => {
+    if (!linkTarget) return;
+    await linkToAppointment(selectedItemIds, linkTarget);
+    closeLinkPicker();
+  };
 
   if (loading) {
     return <p className={notesStyles.loadingText}>Loading unlinked notes…</p>;
@@ -54,6 +78,70 @@ export default function UnlinkedNotes({
     await saveResolution(item.id, text);
   };
 
+  // Icon button rendered inside each item's row — opens the inline
+  // appointment picker for that specific item.
+  const renderLinkButton = (item: AppointmentNoteItem) => (
+    <button
+      className={notesStyles.deleteButton}
+      onClick={() => openLinkPicker(item.id)}
+      aria-label="Link to an appointment"
+      type="button"
+    >
+      <Link2 size={15} />
+    </button>
+  );
+
+  // The picker itself, rendered as a block below the row once opened.
+  // Includes a "back" option to bail out to the "write a new note" flow
+  // instead, for when none of the existing appointments fit.
+  const renderLinkPicker = (item: AppointmentNoteItem) => {
+    if (linkingItemId !== item.id) return null;
+
+    return (
+      <div className={styles.linkPicker}>
+        {appointmentsError && <p className={notesStyles.errorText}>{appointmentsError}</p>}
+        <select
+          className={styles.linkSelect}
+          value={linkTarget}
+          onChange={(e) => setLinkTarget(e.target.value)}
+          disabled={appointmentsLoading}
+        >
+          <option value="">
+            {appointmentsLoading ? 'Loading appointments…' : 'Select an appointment…'}
+          </option>
+          {appointments.map((a) => (
+            <option key={a.id} value={a.id}>
+              {a.title} — {new Date(a.date_time).toLocaleDateString()}
+            </option>
+          ))}
+        </select>
+        <div className={styles.linkPickerActions}>
+          <button
+            type="button"
+            className={styles.backButton}
+            onClick={() => {
+              closeLinkPicker();
+              onWriteNewInstead();
+            }}
+          >
+            <ArrowLeft size={13} /> Back, write new instead
+          </button>
+          <button type="button" className={styles.cancelLinkButton} onClick={closeLinkPicker}>
+            Cancel
+          </button>
+          <button
+            type="button"
+            className={styles.linkConfirmButton}
+            disabled={!linkTarget}
+            onClick={() => confirmLink(item.id)}
+          >
+            Link
+          </button>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className={notesStyles.wrapper}>
       <p className={styles.intro}>
@@ -75,24 +163,28 @@ export default function UnlinkedNotes({
                   <span>Want to bring up</span>
                 </div>
                 {bringUpOpen.map((item) => (
-                  <div key={item.id} className={notesStyles.row}>
-                    <button
-                      className={notesStyles.checkButton}
-                      onClick={() => toggleBringUpCovered(item)}
-                      aria-label="Mark covered"
-                      type="button"
-                    >
-                      <Circle size={18} />
-                    </button>
-                    <span className={notesStyles.itemText}>{item.content}</span>
-                    <button
-                      className={notesStyles.deleteButton}
-                      onClick={() => removeItem(item.id)}
-                      aria-label="Delete"
-                      type="button"
-                    >
-                      <X size={15} />
-                    </button>
+                  <div key={item.id} className={styles.itemBlock}>
+                    <div className={notesStyles.row}>
+                      <button
+                        className={notesStyles.checkButton}
+                        onClick={() => toggleBringUpCovered(item)}
+                        aria-label="Mark covered"
+                        type="button"
+                      >
+                        <Circle size={18} />
+                      </button>
+                      <span className={notesStyles.itemText}>{item.content}</span>
+                      {renderLinkButton(item)}
+                      <button
+                        className={notesStyles.deleteButton}
+                        onClick={() => removeItem(item.id)}
+                        aria-label="Delete"
+                        type="button"
+                      >
+                        <X size={15} />
+                      </button>
+                    </div>
+                    {renderLinkPicker(item)}
                   </div>
                 ))}
               </section>
@@ -117,6 +209,7 @@ export default function UnlinkedNotes({
                       <span className={`${notesStyles.itemText} ${notesStyles.strikethrough}`}>
                         {item.content}
                       </span>
+                      {renderLinkButton(item)}
                       <button
                         className={notesStyles.deleteButton}
                         onClick={() => removeItem(item.id)}
@@ -126,6 +219,7 @@ export default function UnlinkedNotes({
                         <X size={15} />
                       </button>
                     </div>
+                    {renderLinkPicker(item)}
                     <div className={notesStyles.resolutionRow}>
                       <input
                         className={notesStyles.resolutionInput}
@@ -155,32 +249,36 @@ export default function UnlinkedNotes({
                   <span>Homework</span>
                 </div>
                 {homework.map((item) => (
-                  <div key={item.id} className={notesStyles.row}>
-                    <button
-                      className={notesStyles.checkButton}
-                      onClick={() => toggleHomeworkDone(item)}
-                      aria-label="Toggle done"
-                      type="button"
-                    >
-                      {item.status === 'done' ? (
-                        <CheckCircle2 size={18} className={notesStyles.coveredIcon} />
-                      ) : (
-                        <Circle size={18} />
-                      )}
-                    </button>
-                    <span
-                      className={`${notesStyles.itemText} ${item.status === 'done' ? notesStyles.strikethrough : ''}`}
-                    >
-                      {item.content}
-                    </span>
-                    <button
-                      className={notesStyles.deleteButton}
-                      onClick={() => removeItem(item.id)}
-                      aria-label="Delete"
-                      type="button"
-                    >
-                      <X size={15} />
-                    </button>
+                  <div key={item.id} className={styles.itemBlock}>
+                    <div className={notesStyles.row}>
+                      <button
+                        className={notesStyles.checkButton}
+                        onClick={() => toggleHomeworkDone(item)}
+                        aria-label="Toggle done"
+                        type="button"
+                      >
+                        {item.status === 'done' ? (
+                          <CheckCircle2 size={18} className={notesStyles.coveredIcon} />
+                        ) : (
+                          <Circle size={18} />
+                        )}
+                      </button>
+                      <span
+                        className={`${notesStyles.itemText} ${item.status === 'done' ? notesStyles.strikethrough : ''}`}
+                      >
+                        {item.content}
+                      </span>
+                      {renderLinkButton(item)}
+                      <button
+                        className={notesStyles.deleteButton}
+                        onClick={() => removeItem(item.id)}
+                        aria-label="Delete"
+                        type="button"
+                      >
+                        <X size={15} />
+                      </button>
+                    </div>
+                    {renderLinkPicker(item)}
                   </div>
                 ))}
               </section>
