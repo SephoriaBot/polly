@@ -64,7 +64,7 @@ export default function DailyPlanner() {
   const [focusNote, setFocusNote] = useState<AppointmentNoteSelection | null>(null);
   const [showAllDoneCelebration, setShowAllDoneCelebration] = useState(false);
 
-  const noteMap = useAppointmentNoteMap(appointments.map(a => a.id));
+  const { map: noteMap, refresh: refreshNoteMap } = useAppointmentNoteMap(appointments.map(a => a.id));
 
   useEffect(() => {
     loadAll();
@@ -448,6 +448,7 @@ export default function DailyPlanner() {
           <AppointmentNotesPanel
             externalSelection={focusNote}
             onExternalSelectionConsumed={() => setFocusNote(null)}
+            onNotesChanged={refreshNoteMap}
           />
         </section>
 
