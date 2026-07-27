@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Plus, Sprout, Archive } from 'lucide-react';
+import { Plus, Sprout, Archive, ArrowLeft } from 'lucide-react';
 import CreateAppointmentNote from './CreateAppointmentNote';
 import AppointmentNotes from './AppointmentNotes';
 import UnlinkedNotes from './UnlinkedNotes';
@@ -16,11 +16,16 @@ export interface AppointmentNoteSelection {
 interface AppointmentNotesPanelProps {
   externalSelection?: AppointmentNoteSelection | null;
   onExternalSelectionConsumed?: () => void;
+  // Called whenever a note is added, carried over, or linked back to an
+  // appointment — lets the caller (e.g. DailyPlanner's note-icon map)
+  // refresh, since it has no other way of knowing this panel changed data.
+  onNotesChanged?: () => void;
 }
 
 export default function AppointmentNotesPanel({
   externalSelection,
   onExternalSelectionConsumed,
+  onNotesChanged,
 }: AppointmentNotesPanelProps) {
   const [creating, setCreating] = useState(false);
   const [viewingUnlinked, setViewingUnlinked] = useState(false);
@@ -63,6 +68,16 @@ export default function AppointmentNotesPanel({
     setViewingUnlinked(true);
   };
 
+  // Steps back out of "New note" or "Unlinked notes" to the menu where you
+  // can pick between them. Whatever appointment note you had open (if any)
+  // before switching modes is left alone, so it's still there underneath.
+  const goBack = () => {
+    setCreating(false);
+    setViewingUnlinked(false);
+  };
+
+  const inSubView = creating || viewingUnlinked;
+
   return (
     <div className={styles.wrapper} ref={wrapperRef}>
       <div className={styles.header}>
@@ -71,16 +86,22 @@ export default function AppointmentNotesPanel({
       </div>
 
       <div className={styles.actionRow}>
-        {!creating && !viewingUnlinked && (
-          <button type="button" className={styles.newButton} onClick={() => setCreating(true)}>
-            <Plus size={14} /> New note
+        {inSubView ? (
+          <button type="button" className={styles.backTopButton} onClick={goBack}>
+            <ArrowLeft size={14} /> Back
           </button>
-        )}
+        ) : (
+          <>
+            <button type="button" className={styles.newButton} onClick={() => setCreating(true)}>
+              <Plus size={14} /> New note
+            </button>
 
-        {!creating && !unlinked.loading && unlinked.items.length > 0 && (
-          <button type="button" className={styles.unlinkedButton} onClick={openUnlinked}>
-            <Archive size={14} /> Unlinked notes ({unlinked.items.length})
-          </button>
+            {!unlinked.loading && unlinked.items.length > 0 && (
+              <button type="button" className={styles.unlinkedButton} onClick={openUnlinked}>
+                <Archive size={14} /> Unlinked notes ({unlinked.items.length})
+              </button>
+            )}
+          </>
         )}
       </div>
 
@@ -98,10 +119,7 @@ export default function AppointmentNotesPanel({
           saveResolution={unlinked.saveResolution}
           removeItem={unlinked.removeItem}
           linkToAppointment={unlinked.linkToAppointment}
-          onWriteNewInstead={() => {
-            setViewingUnlinked(false);
-            setCreating(true);
-          }}
+          onLinked={onNotesChanged}
         />
       )}
 
@@ -110,6 +128,7 @@ export default function AppointmentNotesPanel({
           appointmentId={selectedApptId}
           appointmentLabel={selectedLabel}
           noteType={selectedNoteType}
+          onNoteChanged={onNotesChanged}
         />
       )}
     </div>
