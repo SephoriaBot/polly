@@ -999,7 +999,7 @@ export default function Wallet() {
     <Icon name="calendar" size={24} />
   </div>
 
-  <div style={{ fontSize: 14, fontWeight: 800 }}>
+  <div style={{ fontSize: 14, fontWeight: 800, color: "var(--ink)" }}>
     Money Calendar
   </div>
 
