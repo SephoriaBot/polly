@@ -66,7 +66,7 @@ export default function WildEncounterAlert({ currentPage, onNavigate }: Props) {
         transition: "top 0.35s cubic-bezier(0.34, 1.56, 0.64, 1)",
       }}
     >
-      <Icon name="hamster-tan" size={30} />
+      <Icon name="hamster-wild" size={30} />
       <div style={{ flex: 1 }}>
         <div style={{ fontSize: 12, fontWeight: 800, color: "var(--pink-dark)" }}>
           A wild hamster appeared!
