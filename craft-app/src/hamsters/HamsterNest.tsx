@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { RefreshCw } from "lucide-react";
 import { useHamsterGrowth } from "./HamsterGrowthContext";
 import { SOURCE_LABELS } from "./useHamsterGrowth";
 import Icon from "../components/Icon";
@@ -66,7 +67,7 @@ function NestEgg({ progressPct }: { progressPct: number }) {
 }
 
 export default function HamsterNest() {
-  const { loading, points, threshold, progressPct, recentPoints, justHatched, clearJustHatched } = useHamsterGrowth();
+  const { loading, refreshing, refresh, points, threshold, progressPct, recentPoints, justHatched, clearJustHatched } = useHamsterGrowth();
   const [showReveal, setShowReveal] = useState(false);
 
   useEffect(() => {
@@ -95,7 +96,38 @@ export default function HamsterNest() {
   return (
     <div className="card">
       <div className="card-body">
-        <div className="section-label" style={{ marginBottom: 10 }}><Icon name="egg-nest" size={16} /> The Nest</div>
+        <div
+          className="section-label"
+          style={{ marginBottom: 10, display: "flex", alignItems: "center", justifyContent: "space-between" }}
+        >
+          <span><Icon name="egg-nest" size={16} /> The Nest</span>
+          <button
+            type="button"
+            onClick={refresh}
+            disabled={refreshing}
+            aria-label="Refresh nest progress"
+            title="Refresh nest progress"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              width: 26,
+              height: 26,
+              padding: 0,
+              border: "1px solid var(--pink-light)",
+              borderRadius: 99,
+              background: "var(--blush)",
+              cursor: refreshing ? "default" : "pointer",
+              opacity: refreshing ? 0.6 : 1,
+            }}
+          >
+            <RefreshCw
+              size={13}
+              color="var(--pink-dark)"
+              style={refreshing ? { animation: "hamsterRefreshSpin 0.8s linear infinite" } : undefined}
+            />
+          </button>
+        </div>
 
         {justHatched ? (
   <div style={{ textAlign: "center", padding: "10px 0" }}>
@@ -169,6 +201,10 @@ export default function HamsterNest() {
             0% { transform: scale(0.3); opacity: 0; }
             60% { transform: scale(1.15); opacity: 1; }
             100% { transform: scale(1); }
+          }
+          @keyframes hamsterRefreshSpin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
           }
         `}</style>
       </div>
