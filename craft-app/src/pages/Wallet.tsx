@@ -1003,7 +1003,7 @@ export default function Wallet() {
     Money Calendar
   </div>
 
-  <div style={{ fontSize: 11, color: "var(--pink-dark)" }}>
+  <div style={{ fontSize: 11, color: "var(--ink-muted)" }}>
     14 day forecast
   </div>
 </button>
