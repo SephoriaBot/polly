@@ -199,9 +199,8 @@ a {
   content: '';
   position: absolute;
   top: -5px;
-  left: 8px;
-  right: 8px;
-  width: auto;
+  left: 2%;
+  width: 96%
   height: 13px;
   background: repeating-linear-gradient(
     128deg,
