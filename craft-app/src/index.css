@@ -194,15 +194,14 @@ a {
   box-shadow: 0 -8px 24px rgba(200, 140, 160, 0.12);
 }
 
-.bottombar::before,
-.bottombar-expand::before {
+.bottombar::before {
   content: '';
   position: absolute;
   top: -5px;
   left: 8px;
   right: 8px;
   width: auto;
-  height: 13px;
+  height: 16px;
   background: repeating-linear-gradient(
     128deg,
     rgba(240, 195, 90, 0.7) 0,
