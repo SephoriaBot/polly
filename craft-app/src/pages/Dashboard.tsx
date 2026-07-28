@@ -5,7 +5,7 @@ import Lantern from "../components/Lantern";
 import DailyAlmanac from "../components/DailyAlmanac";
 import sleepingNestImg from '../assets/illustrations/sleeping_nest.png';
 import WeatherBadge from '../components/WeatherBadge';
-
+import GroqDailies from '../groqDailies/GroqDailies';
 
 interface Focus {
   id: string;
@@ -119,6 +119,10 @@ export default function Dashboard() {
 
         <Lantern variant="divider" />
 
+<section>
+<GroqDailies />
+</section>
+        <Lantern variant="divider" />
         {/* ── TODAY'S FOCUS ── */}
         <section>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
