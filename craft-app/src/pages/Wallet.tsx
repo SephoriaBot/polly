@@ -71,12 +71,18 @@ interface MonthSnap {
   deferredTotal: number;
 }
 
-interface PlannerItem {
-  id: string;
-  type: "need" | "want";
+interface ListDef {
+  id: number;
+  name: string;
+  created_at?: string;
+}
+
+interface ListItem {
+  id: number;
+  list_id: number;
   label: string;
   done: boolean;
-  created_at: string;
+  created_at?: string;
 }
 
 const MONTH_NAMES = ["January","February","March","April","May","June","July","August","September","October","November","December"];
@@ -155,24 +161,10 @@ function hoursOfWork(amount: number, wage: number) {
 }
 
 // ── ANYTIME PAY ELIGIBLE PERCENTAGE (Amazon's real formula) ──
-// Ported from payroll.amazon.work's actual calculation, not a made-up ramp.
-// Amazon's real math is a snapshot, not a day-of-week curve:
-//   1. netToGrossRatio = previous paycheck's (post-tax earnings / pre-tax earnings)
-//      — held static all pay period, only updates when you refresh it after
-//      a real paycheck lands.
-//   2. availableAnytimePay = pre-tax earnings so far this period × netToGrossRatio
-//   3. subtract flat deductions from the PREVIOUS paycheck, then subtract
-//      garnishments from the CURRENT period (we don't track garnishments —
-//      Amazon shows $0 for most people, so it's hardcoded here)
-//   4. divide back by pre-tax earnings so far to get a percentage, then
-//      subtract Amazon's fixed 2% safety buffer
-// This naturally still moves a little day to day (the flat-dollar deduction
-// is a shrinking share of a growing pre-tax pool), but there's no ramp curve
-// and no overtime cutoff — it's just real math against real earnings.
-const ANYTIME_PAY_GARNISHMENTS = 0; // not tracked in Polly; Amazon shows $0 for most people
-const ANYTIME_PAY_SAFETY_BUFFER_NORMAL = 0.02; // Amazon's baseline 2% cushion
-const ANYTIME_PAY_SAFETY_BUFFER_HIGH_HOURS = 0.08; // cushion jumps once weekly hours cross the threshold
-const ANYTIME_PAY_HIGH_HOURS_THRESHOLD = 55; // hours this period where the buffer steps up
+const ANYTIME_PAY_GARNISHMENTS = 0;
+const ANYTIME_PAY_SAFETY_BUFFER_NORMAL = 0.02;
+const ANYTIME_PAY_SAFETY_BUFFER_HIGH_HOURS = 0.08;
+const ANYTIME_PAY_HIGH_HOURS_THRESHOLD = 55;
 
 function getSafetyBuffer(hoursSoFar: number) {
   return hoursSoFar >= ANYTIME_PAY_HIGH_HOURS_THRESHOLD
@@ -221,8 +213,6 @@ function EditableCell({ value, onChange, type = "number", style, className, plac
     }
   }
 
-  // Safety net: if this field unmounts (e.g. the user navigates to a different
-  // page) before blur ever fires, still save whatever was last typed.
   useEffect(() => {
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
@@ -270,9 +260,14 @@ export default function Wallet() {
   const [showConfetti, setShowConfetti] = useState(false);
   const [celebration, setCelebration] = useState<{ title: string; subtitle: string }>({ title: "", subtitle: "" });
 
-  const [plannerItems, setPlannerItems] = useState<PlannerItem[]>([]);
-  const [newNeed, setNewNeed] = useState("");
-  const [newWant, setNewWant] = useState("");
+  const [lists, setLists] = useState<ListDef[]>([]);
+  const [listItems, setListItems] = useState<ListItem[]>([]);
+  const [activeListId, setActiveListId] = useState<number | null>(null);
+  const [nextListId, setNextListId] = useState(1);
+  const [nextListItemId, setNextListItemId] = useState(1);
+  const [showNewListInput, setShowNewListInput] = useState(false);
+  const [newListName, setNewListName] = useState("");
+  const [newItemDrafts, setNewItemDrafts] = useState<Record<number, string>>({});
   const [taxRate, setTaxRate] = useState<number>(() => {
     const s = localStorage.getItem("tax_withholding_rate");
     return s ? parseFloat(s) : 20;
@@ -283,7 +278,6 @@ export default function Wallet() {
   useEffect(() => { localStorage.setItem("ot_wage_override", otWageOverride); }, [otWageOverride]);
 
 
-  // Budget calculator (landing page) — starts blank
   const [calcRegWage, setCalcRegWage] = useState("");
   const [calcOtWage, setCalcOtWage] = useState("");
   const [calcRegHours, setCalcRegHours] = useState("");
@@ -314,13 +308,15 @@ export default function Wallet() {
           { data: budgetData },
           { data: billData },
           { data: paymentData },
-          { data: plannerData },
+          { data: listData },
+          { data: listItemData },
         ] = await Promise.all([
           supabase.from("debts").select("*"),
           supabase.from("budget").select("*").eq("id", 1).maybeSingle(),
           supabase.from("bills").select("*").order("due_day"),
           supabase.from("bill_payments").select("*"),
-          supabase.from("planner_items").select("*").order("created_at"),
+          supabase.from("lists").select("*").order("created_at"),
+          supabase.from("list_items").select("*").order("created_at"),
         ]);
 
         if (debtData && debtData.length > 0) {
@@ -333,7 +329,17 @@ export default function Wallet() {
         }
 
         if (budgetData) setBudget(prev => ({ ...prev, ...budgetData }));
-        if (plannerData) setPlannerItems(plannerData);
+        if (listData) {
+          setLists(listData);
+          if (listData.length > 0) {
+            setNextListId(Math.max(...listData.map((l: ListDef) => l.id)) + 1);
+            setActiveListId(prev => prev ?? listData[0].id);
+          }
+        }
+        if (listItemData) {
+          setListItems(listItemData);
+          if (listItemData.length > 0) setNextListItemId(Math.max(...listItemData.map((li: ListItem) => li.id)) + 1);
+        }
 
         const isPastMonth = (m: number, y: number) =>
           y < today.getFullYear() || (y === today.getFullYear() && m < today.getMonth() + 1);
@@ -387,12 +393,12 @@ export default function Wallet() {
 
   const activeDebts = useMemo(() => debts.filter(d => !d.deferred).sort((a, b) => a.balance - b.balance), [debts]);
   const deferredDebts = debts.filter(d => d.deferred);
-  const needs = plannerItems.filter(p => p.type === "need");
-  const wants = plannerItems.filter(p => p.type === "want");
+  const activeList = lists.find(l => l.id === activeListId) || null;
+  const activeListItems = useMemo(
+    () => listItems.filter(li => li.list_id === activeListId).sort((a, b) => (a.done === b.done ? 0 : a.done ? 1 : -1)),
+    [listItems, activeListId]
+  );
 
-  // Bills due in the next 8 days, split into two 4-day stretches, regardless
-  // ── MONEY CALENDAR ── real calendar dates (this week + next week, Sun–Sat)
-  // showing bills due that day, hours logged that day, and a running balance.
   function dateKey(d: Date) {
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
   }
@@ -409,10 +415,6 @@ export default function Wallet() {
     return { week1: days.slice(0, 7), week2: days.slice(7, 14) };
   }, []);
 
-  // Map every UNPAID bill occurrence (respecting per-month edits) onto its exact
-  // calendar date. Paid bills are excluded entirely — that money already left
-  // your account and is already reflected in Current Balance, so showing (and
-  // subtracting) it again here would double-count it.
   const billsByDate = useMemo(() => {
     const map: Record<string, { id: number; name: string; amount: number }[]> = {};
     const allDays = [...calendarWeeks.week1, ...calendarWeeks.week2];
@@ -452,12 +454,6 @@ export default function Wallet() {
     setDailyHours(prev => ({ ...prev, [key]: { reg: prev[key]?.reg || "", ot: prev[key]?.ot || "", [field]: value } }));
   }
 
-  // ── Hours worked earlier in the current pay week, before "today" ──
-  // The Money Calendar only shows/logs hours from today forward, so if
-  // today isn't a Sunday, the pool for this first partial week would
-  // otherwise miss whatever was already earned Sun–yesterday. This seeds
-  // that gap. Keyed to the current week's Sunday so it auto-clears once a
-  // new pay week starts instead of silently carrying stale hours forward.
   function currentWeekStartKey() {
     const now = new Date();
     const sunday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay());
@@ -477,13 +473,6 @@ export default function Wallet() {
     setPriorWeekHours(prev => ({ ...prev, weekStart: currentWeekStartKey(), [field]: value }));
   }
 
-  // Fills the OTHER gap the today-forward window creates: if this Wednesday's
-  // release comes from a period that closed (Saturday) before the window
-  // starts, that whole week never had a visible row to log hours into, so
-  // dailyHours has nothing for it. Same pattern as priorWeekHours above, just
-  // for the full week before instead of the partial current week — keyed to
-  // THAT week's own Sunday (not currentWeekStartKey) so it can't get silently
-  // reused against the wrong week once time moves on.
   const [closedWeekHours, setClosedWeekHours] = useState<{ weekStart: string; reg: string; ot: string }>(() => {
     try {
       const stored = JSON.parse(localStorage.getItem("closed_week_hours") || "null");
@@ -517,33 +506,17 @@ export default function Wallet() {
   const netHourlyWage = budget.hourly_wage > 0 ? budget.hourly_wage * (1 - taxRate / 100) : 0;
   const netOtWage = effectiveOtWage > 0 ? effectiveOtWage * (1 - taxRate / 100) : 0;
 
-  // Build the 14-day Money Calendar. Anytime Pay ramp: each day's withdrawable
-  // amount is (today's ramp %) × (cumulative pool earned since Sunday) minus
-  // whatever's already been withdrawn from that pool this week. The pool
-  // resets fresh every Sunday. Whatever's left unwithdrawn when Saturday
-  // closes becomes a single lump "payday catch-up" released the following
-  // Wednesday — a real 4-day lag, matching how the actual deposit works.
-  // No lookback/replay of days before the visible window — this only uses
-  // hours actually logged on the visible dates.
   function buildMoneyCalendarRows(allDays: Date[], startingBalance: number) {
   let runningBalance = startingBalance;
 
-  let periodEarnedGross = 0;   // gross pool, untaxed, resets each Sunday
-  let periodHoursSoFar = 0;    // cumulative hours this period, resets each Sunday — drives the safety buffer step
-  let periodWithdrawnGross = 0; // gross cash advanced so far this period
-  let pendingPayout = 0;        // net amount owed, released the following Wednesday
+  let periodEarnedGross = 0;
+  let periodHoursSoFar = 0;
+  let periodWithdrawnGross = 0;
+  let pendingPayout = 0;
 
   const grossHourlyWage = budget.hourly_wage || 0;
   const grossOtWage = effectiveOtWage || 0;
 
-  // If the visible window starts mid-week (today isn't Sunday), the pool
-  // is missing whatever was earned Sun–yesterday since those days are never
-  // shown/logged. Seed it here so the eligible percentage is applied against
-  // the true cumulative pool, not just what's been logged since today. This
-  // has to seed BOTH the earned total and what would already have been
-  // withdrawn against it (same "max withdrawn every day" assumption the rest
-  // of this function uses) — seeding earned alone makes today think none of
-  // that prior gross was ever claimed, and dumps the whole thing onto today.
   if (allDays.length && allDays[0].getDay() !== 0 && priorWeekHours.weekStart === currentWeekStartKey()) {
     const priorReg = parseFloat(priorWeekHours.reg) || 0;
     const priorOt = parseFloat(priorWeekHours.ot) || 0;
@@ -555,18 +528,12 @@ export default function Wallet() {
     periodWithdrawnGross = priorGross * eligiblePercent(priorGross, budget.net_to_gross_ratio, budget.flat_deductions_prev, priorHours);
   }
 
-  // Seed pendingPayout: if the window's first Wednesday's release would
-  // come from a period that closed (Saturday) before the window starts,
-  // there's no in-window Saturday close to build it back up from, and
-  // dailyHours has nothing for that week either (it was never visible to
-  // log into). Use closedWeekHours instead — same computation the main
-  // loop below uses, just run once for the already-closed week.
   const firstSaturdayIdx = allDays.findIndex(d => d.getDay() === 6);
   const firstWednesdayIdx = allDays.findIndex(d => d.getDay() === 3);
   if (firstWednesdayIdx !== -1 && (firstSaturdayIdx === -1 || firstWednesdayIdx < firstSaturdayIdx)) {
     const firstWednesday = allDays[firstWednesdayIdx];
     const closingSaturday = new Date(firstWednesday);
-    closingSaturday.setDate(closingSaturday.getDate() - 4); // Wed's payout closed the Sat 4 days prior
+    closingSaturday.setDate(closingSaturday.getDate() - 4);
     const periodStartSunday = new Date(closingSaturday);
     periodStartSunday.setDate(periodStartSunday.getDate() - 6);
     const periodStartKey = dateKey(periodStartSunday);
@@ -585,7 +552,7 @@ export default function Wallet() {
 
   const rows = allDays.map(d => {
     const key = dateKey(d);
-    const dow = d.getDay(); // 0 Sun ... 6 Sat
+    const dow = d.getDay();
 
     if (dow === 0) {
       periodEarnedGross = 0;
@@ -601,7 +568,6 @@ export default function Wallet() {
     const otHoursToday = parseFloat(dailyHours[key]?.ot) || 0;
     const hoursToday = regHoursToday + otHoursToday;
 
-    // Gross earnings — no tax applied here. Tax only hits once, at payout.
     const fullEarnedToday =
       grossHourlyWage > 0
         ? regHoursToday * grossHourlyWage + otHoursToday * grossOtWage
@@ -612,12 +578,10 @@ export default function Wallet() {
 
     const eligiblePct = eligiblePercent(periodEarnedGross, budget.net_to_gross_ratio, budget.flat_deductions_prev, periodHoursSoFar);
     const maxWithdrawableGrossSoFar = periodEarnedGross * eligiblePct;
-    const withdrawnBeforeToday = periodWithdrawnGross; // snapshot before today's pull is added
+    const withdrawnBeforeToday = periodWithdrawnGross;
     const availableToday = Math.max(0, maxWithdrawableGrossSoFar - periodWithdrawnGross);
     periodWithdrawnGross += availableToday;
 
-    // Saturday closes the period: tax the FULL gross total once, then
-    // subtract whatever gross cash was already advanced during the week.
         if (dow === 6) {
       const taxableGross = Math.max(0, periodEarnedGross - budget.flat_deductions_prev);
       const netOwedForPeriod = taxableGross * (1 - taxRate / 100);
@@ -693,7 +657,6 @@ export default function Wallet() {
   let unifiedFun: number;
 
   if (isCrisis) {
-    // Groceries/gas floor is reserved FIRST, even in crisis — then bills get the rest
     unifiedNeeds = Math.min(inputAmount, NEEDS_FLOOR);
     const afterNeeds = Math.max(0, inputAmount - unifiedNeeds);
     unifiedBills = Math.min(afterNeeds, crisisTotal);
@@ -706,7 +669,6 @@ export default function Wallet() {
     unifiedBills = urgentBills.length > 0 ? Math.min(inputAmount * 0.45, urgentTotal) : Math.min(inputAmount * 0.40, billsRate * 1.2);
     const afterBills = Math.max(0, inputAmount - unifiedBills);
 
-    // Reserve the floor before snowball/buffer get a chance to eat into it
     const needsFloor = Math.min(afterBills, NEEDS_FLOOR);
     const afterFloor = Math.max(0, afterBills - needsFloor);
 
@@ -761,7 +723,6 @@ export default function Wallet() {
     },
   ];
 
-  // Budget calculator math (blank until the person fills it in)
   const calcRegWageNum = parseFloat(calcRegWage) || 0;
   const calcOtWageNum = parseFloat(calcOtWage) || 0;
   const calcRegHoursNum = parseFloat(calcRegHours) || 0;
@@ -854,27 +815,52 @@ export default function Wallet() {
     setTimeout(() => setBudgetSavedMsg(false), 2000);
   }
 
-  async function addPlannerItem(type: "need" | "want") {
-    const label = (type === "need" ? newNeed : newWant).trim();
+  async function addList() {
+    const name = newListName.trim();
+    if (!name) return;
+    const list: ListDef = { id: nextListId, name };
+    setLists(prev => [...prev, list]);
+    setNextListId(n => n + 1);
+    setActiveListId(list.id);
+    setNewListName("");
+    setShowNewListInput(false);
+    const { data, error } = await supabase.from("lists").insert(list).select().single();
+    if (error) console.error("addList failed:", error);
+    else if (data) setLists(prev => prev.map(l => l.id === list.id ? data : l));
+  }
+
+  async function deleteList(id: number) {
+    setLists(prev => prev.filter(l => l.id !== id));
+    setListItems(prev => prev.filter(li => li.list_id !== id));
+    if (activeListId === id) {
+      const remaining = lists.filter(l => l.id !== id);
+      setActiveListId(remaining.length > 0 ? remaining[0].id : null);
+    }
+    await supabase.from("list_items").delete().eq("list_id", id);
+    await supabase.from("lists").delete().eq("id", id);
+  }
+
+  async function addListItem(listId: number) {
+    const label = (newItemDrafts[listId] || "").trim();
     if (!label) return;
-    const { data } = await supabase
-      .from("planner_items")
-      .insert({ type, label, done: false })
-      .select()
-      .single();
-    if (data) setPlannerItems(prev => [...prev, data]);
-    if (type === "need") setNewNeed(""); else setNewWant("");
+    const item: ListItem = { id: nextListItemId, list_id: listId, label, done: false };
+    setListItems(prev => [...prev, item]);
+    setNextListItemId(n => n + 1);
+    setNewItemDrafts(prev => ({ ...prev, [listId]: "" }));
+    const { data, error } = await supabase.from("list_items").insert(item).select().single();
+    if (error) console.error("addListItem failed:", error);
+    else if (data) setListItems(prev => prev.map(li => li.id === item.id ? data : li));
   }
 
-  async function togglePlannerItem(item: PlannerItem) {
+  async function toggleListItem(item: ListItem) {
     const newDone = !item.done;
-    await supabase.from("planner_items").update({ done: newDone }).eq("id", item.id);
-    setPlannerItems(prev => prev.map(p => p.id === item.id ? { ...p, done: newDone } : p));
+    setListItems(prev => prev.map(li => li.id === item.id ? { ...li, done: newDone } : li));
+    await supabase.from("list_items").update({ done: newDone }).eq("id", item.id);
   }
 
-  async function deletePlannerItem(id: string) {
-    await supabase.from("planner_items").delete().eq("id", id);
-    setPlannerItems(prev => prev.filter(p => p.id !== id));
+  async function deleteListItem(id: number) {
+    setListItems(prev => prev.filter(li => li.id !== id));
+    await supabase.from("list_items").delete().eq("id", id);
   }
 
   async function addBill() {
@@ -977,8 +963,6 @@ export default function Wallet() {
     <div>
       {showConfetti && <Confetti />}
 
-      {/* ── HEADER ── */}
-      
       <div className="page-header">
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           {view !== "home" && (
@@ -992,10 +976,8 @@ export default function Wallet() {
 
       <div className="page-body" style={{ display: "flex", flexDirection: "column", gap: 20 }}>
 
-        {/* ══════════════════ HOME (LANDING) ══════════════════ */}
         {view === "home" && (
           <>
-            {/* ── NAV CARDS ── */}
             <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 10 }}>
               
 <button
@@ -1062,7 +1044,6 @@ export default function Wallet() {
 
             <Lantern variant="divider" />
 
-            {/* ── TODAY'S PAYCHECK CALCULATOR ── */}
             {isCrisis && (
               <div style={{ background: "var(--danger-bg)", border: "1.5px solid var(--danger)", borderRadius: 16, padding: "12px 16px", fontSize: 13, color: "var(--danger)", fontWeight: 700 }}>
                 Equity Mode Active — {crisisBills.length} bill(s) late or due within 3 days ({fmt(crisisTotal)} total). Fun money and general savings are zeroed until these are covered. Things you need are still protected.
@@ -1120,20 +1101,102 @@ export default function Wallet() {
                 )}
               </div>
             </div>
+
+            {/* ── LISTS ── */}
+            <div className="card">
+              <div className="card-body">
+                <div className="section-header">
+                  <div className="section-label" style={{ marginBottom: 0 }}><Icon name="clipboard-list" size={16} /> Lists</div>
+                  <button className="btn btn-primary btn-sm" onClick={() => setShowNewListInput(v => !v)}>+ New List</button>
+                </div>
+
+                {showNewListInput && (
+                  <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
+                    <input
+                      type="text"
+                      className="form-input"
+                      placeholder="e.g. Groceries, Hardware Store..."
+                      value={newListName}
+                      onChange={e => setNewListName(e.target.value)}
+                      onKeyDown={e => { if (e.key === "Enter") addList(); }}
+                      autoFocus
+                    />
+                    <button className="btn btn-green btn-sm" onClick={addList}>Add</button>
+                  </div>
+                )}
+
+                {lists.length === 0 ? (
+                  <div style={{ fontSize: 12, color: "var(--ink-muted)" }}>No lists yet — create one to start tracking things you need.</div>
+                ) : (
+                  <>
+                    <div style={{ display: "flex", gap: 6, overflowX: "auto", paddingBottom: 8, marginBottom: 8 }}>
+                      {lists.map(l => (
+                        <button
+                          key={l.id}
+                          onClick={() => setActiveListId(l.id)}
+                          className={activeListId === l.id ? "btn btn-primary btn-sm" : "btn btn-ghost btn-sm"}
+                          style={{ whiteSpace: "nowrap" }}
+                        >
+                          {l.name}
+                        </button>
+                      ))}
+                    </div>
+
+                    {activeList && (
+                      <div>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+                          <div style={{ fontSize: 13, fontWeight: 700, color: "var(--ink)" }}>{activeList.name}</div>
+                          <button className="btn btn-danger btn-sm" onClick={() => deleteList(activeList.id)}><Trash2 size={13} /></button>
+                        </div>
+
+                        <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 10 }}>
+                          {activeListItems.map(item => (
+                            <div key={item.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 0", borderBottom: "1px solid var(--border)" }}>
+                              <input
+                                type="checkbox"
+                                checked={item.done}
+                                onChange={() => toggleListItem(item)}
+                                style={{ width: 16, height: 16, cursor: "pointer", accentColor: "var(--green-dark)" }}
+                              />
+                              <div style={{ flex: 1, fontSize: 13, color: item.done ? "var(--ink-muted)" : "var(--ink)", textDecoration: item.done ? "line-through" : "none" }}>
+                                {item.label}
+                              </div>
+                              <button className="btn btn-ghost btn-sm" onClick={() => deleteListItem(item.id)}><Trash2 size={12} /></button>
+                            </div>
+                          ))}
+                          {activeListItems.length === 0 && (
+                            <div style={{ fontSize: 12, color: "var(--ink-muted)", padding: "8px 0" }}>Nothing on this list yet.</div>
+                          )}
+                        </div>
+
+                        <div style={{ display: "flex", gap: 8 }}>
+                          <input
+                            type="text"
+                            className="form-input"
+                            placeholder="Add an item..."
+                            value={newItemDrafts[activeList.id] || ""}
+                            onChange={e => setNewItemDrafts(prev => ({ ...prev, [activeList.id]: e.target.value }))}
+                            onKeyDown={e => { if (e.key === "Enter") addListItem(activeList.id); }}
+                          />
+                          <button className="btn btn-green btn-sm" onClick={() => addListItem(activeList.id)}>Add</button>
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            </div>
             </>
             )}
 
-{/* ══════════════════ MONEY CALENDAR ══════════════════ */}
 {view === "calendar" && (
   <>
-    {/* ── MONEY CALENDAR VIEW ── */}
             <div className="card">
               <div className="card-body">
             
                 <div style={{ fontSize: 24, lineHeight: 1 }}><Icon name="calendar" size={24} /></div>
                 <div style={{ fontSize: 14, fontWeight: 800, color: "var(--ink)" }}>Money Calendar</div>
-                <div style={{ fontSize: 11, color: "var(--ink-muted)" }}>
-                 <div style={{ fontSize: 11, color: "var(--pink-dark)", marginBottom: 14 }}>
+                <div style={{ fontSize: 11, color: "var(--pink-dark)", marginBottom: 14 }}>
                   Runs from today forward. Log the hours you're working (or plan to work) each day. Anytime Pay eligible percentage comes from your last paycheck's net-to-gross ratio (post-tax ÷ pre-tax), applied against your cumulative pool for the week, minus that check's flat deductions and a 2% safety buffer — whatever's unclaimed by Saturday night lands as a lump catch-up the following Wednesday.
                 </div>
 
@@ -1405,7 +1468,6 @@ export default function Wallet() {
 
 
 
-        {/* ══════════════════ BILLS VIEW ══════════════════ */}
         {view === "bills" && (
           <>
             <div style={{ display: "flex", gap: 6, overflowX: "auto", paddingBottom: 4 }}>
@@ -1524,7 +1586,6 @@ export default function Wallet() {
           </>
         )}
 
-        {/* ══════════════════ DEBTS VIEW ══════════════════ */}
         {view === "debts" && (
           <>
             <div className="card">
