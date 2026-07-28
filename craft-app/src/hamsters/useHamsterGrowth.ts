@@ -86,6 +86,7 @@ export function useHamsterGrowthState() {
   const [collection, setCollection] = useState<HamsterCollectionEntry[]>([]);
   const [recentPoints, setRecentPoints] = useState<PointsLogEntry[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [justHatched, setJustHatched] = useState<Hamster | null>(null);
   const [justEvolved, setJustEvolved] = useState<JustEvolved | null>(null);
   const [wildEncounter, setWildEncounter] = useState<WildHamster | null>(null);
@@ -425,6 +426,26 @@ export function useHamsterGrowthState() {
     }
   }, [runGrowthCheck]);
 
+  // Manual refresh for the button on the Habitat page. Does the same
+  // real-table growth check as the auto-triggers (mount + focus), plus an
+  // unconditional refetch of the collection/points log afterward — the
+  // auto-triggers only refetch those when addPoints actually hatched or
+  // evolved something, which is normally fine but would make a manual
+  // "refresh" button feel like it did nothing if you were staring right at
+  // slightly-stale numbers from another tab/device. checkingRef guards
+  // against double-firing if you tap it while a check is already running.
+  const refresh = useCallback(async () => {
+    if (checkingRef.current) return;
+    setRefreshing(true);
+    try {
+      await checkForNewGrowth();
+      await refreshCollection();
+      await refreshRecentPoints();
+    } finally {
+      setRefreshing(false);
+    }
+  }, [checkForNewGrowth, refreshCollection, refreshRecentPoints]);
+
   useEffect(() => {
     (async () => {
       setLoading(true);
@@ -494,6 +515,8 @@ export function useHamsterGrowthState() {
 
   return {
     loading,
+    refreshing,
+    refresh,
     points,
     threshold,
     progressPct: Math.min(100, Math.round((points / threshold) * 100)),
