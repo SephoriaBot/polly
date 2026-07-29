@@ -55,3 +55,17 @@
   color: var(--an-ink, #3F3A5C);
   cursor: pointer;
 }
+
+.backTopButton {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--an-line, #E7E2F7);
+  background: var(--an-card, #FFFFFF);
+  color: var(--an-ink, #3F3A5C);
+  cursor: pointer;
+}

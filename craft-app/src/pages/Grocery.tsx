@@ -3,19 +3,18 @@ import type { GroceryItem } from '../types/legacy';
 import { supabase } from '../lib/supabase';
 import Icon, { type IconName } from '../components/Icon';
 import {
-  ShoppingCart, ListChecks, RotateCcw, X, History, ClipboardList,
-  MapPin, Save, Trash2, ArrowLeft, CheckCircle2,
+  ShoppingCart, ListChecks, RotateCcw, X, FolderPlus, ClipboardList,
+  MapPin, Trash2, ArrowLeft, CheckCircle2,
   ChevronUp, ChevronDown, ExternalLink, Plus,
 } from 'lucide-react';
 import Lantern from "../components/Lantern";
 import EmptyState from '../components/EmptyState';
-import emptyJarImg from '../assets/illustrations/empty_jar.png';
 import breadBasketImg from '../assets/illustrations/bread_basket.png';
 import hourglassImg from '../assets/illustrations/hourglass.png';
 
 
 
-interface SavedList { id: string; name: string; items: string[]; created_at: string }
+interface GroceryList { id: string; name: string; created_at: string }
 
 interface PriceEntry {
   id: string
@@ -225,13 +224,13 @@ function filterToAllowedStores(results: any[]): any[] {
 
 export default function Grocery() {
   const [items, setItems] = useState<GroceryItem[]>([])
+  const [currentList, setCurrentList] = useState('Default')
+  const [lists, setLists] = useState<GroceryList[]>([])
+  const [listsLoading, setListsLoading] = useState(true)
+  const [newListName, setNewListName] = useState('')
   const [newItem, setNewItem] = useState('')
   const [newQty, setNewQty] = useState('')
   const [loading, setLoading] = useState(true)
-  const [savedLists, setSavedLists] = useState<SavedList[]>([])
-  const [listName, setListName] = useState('')
-  const [showSaved, setShowSaved] = useState(false)
-  const [saving, setSaving] = useState(false)
   const [cart, setCart] = useState<any[]>([])
   const [loadingCart, setLoadingCart] = useState(false)
   const [cartError, setCartError] = useState<string | null>(null)
@@ -246,27 +245,87 @@ export default function Grocery() {
   const [addingBasics, setAddingBasics] = useState(false)
 
   useEffect(() => {
-    fetchItems()
-    fetchSavedLists()
-    fetchPrices()
+    fetchLists()
   }, [])
+
+  useEffect(() => {
+    fetchItems()
+    fetchPrices()
+  }, [currentList])
 
   async function fetchItems() {
     setLoading(true)
     const { data } = await supabase
       .from('grocery_items')
       .select('*')
+      .eq('list_name', currentList)
       .order('created_at', { ascending: true })
     setItems(data ?? [])
     setLoading(false)
   }
 
-  async function fetchSavedLists() {
+  // Lists are their own table now (name + id), separate from the items that
+  // live inside them, so a list can exist (and be switched to) even before
+  // anything's been added to it. Every list is real/actionable — there's no
+  // separate "saved snapshot" concept anymore.
+  async function fetchLists() {
+    setListsLoading(true)
     const { data } = await supabase
-      .from('saved_grocery_lists')
+      .from('grocery_lists')
       .select('*')
-      .order('created_at', { ascending: false })
-    setSavedLists(data ?? [])
+      .order('created_at', { ascending: true })
+    let rows = data ?? []
+
+    if (rows.length === 0) {
+      // First run (or table just created) — seed a Default list so there's
+      // always at least one to select. This also picks up any items that
+      // already exist with list_name = 'Default' from before this table existed.
+      const { data: seeded } = await supabase
+        .from('grocery_lists')
+        .insert({ name: 'Default' })
+        .select().single()
+      if (seeded) rows = [seeded]
+    }
+
+    setLists(rows)
+    setListsLoading(false)
+    setCurrentList(prev => rows.some(l => l.name === prev) ? prev : (rows[0]?.name ?? 'Default'))
+  }
+
+  async function createList() {
+    const name = newListName.trim()
+    if (!name) return
+
+    const existing = lists.find(l => l.name.toLowerCase() === name.toLowerCase())
+    if (existing) {
+      setCurrentList(existing.name)
+      setNewListName('')
+      return
+    }
+
+    const { data } = await supabase
+      .from('grocery_lists')
+      .insert({ name })
+      .select().single()
+    if (data) {
+      setLists(prev => [...prev, data])
+      setCurrentList(data.name)
+    }
+    setNewListName('')
+  }
+
+  async function deleteList(list: GroceryList) {
+    if (lists.length <= 1) return // always keep at least one list around
+    if (!window.confirm(`Delete "${list.name}" and everything on it? This can't be undone.`)) return
+
+    await supabase.from('grocery_items').delete().eq('list_name', list.name)
+    await supabase.from('grocery_lists').delete().eq('id', list.id)
+
+    setLists(prev => {
+      const next = prev.filter(l => l.id !== list.id)
+      if (currentList === list.name) setCurrentList(next[0]?.name ?? 'Default')
+      return next
+    })
   }
 
   async function fetchPrices() {
@@ -288,13 +347,23 @@ export default function Grocery() {
       // single item — the qty field applies as normal
       const { data } = await supabase
         .from('grocery_items')
-        .insert({ name: names[0], qty: newQty.trim(), checked: false })
+        .insert({
+          name: names[0],
+          qty: newQty.trim(),
+          checked: false,
+          list_name: currentList,
+        })
         .select().single()
       if (data) setItems(prev => [...prev, data])
     } else {
       // multiple comma-separated items — one qty doesn't apply to all of
       // them, so each gets added blank and can be filled in individually
-      const rows = names.map(name => ({ name, qty: '', checked: false }))
+      const rows = names.map(name => ({
+        name,
+        qty: '',
+        checked: false,
+        list_name: currentList,
+      }))
       const { data } = await supabase
         .from('grocery_items')
         .insert(rows)
@@ -341,7 +410,7 @@ export default function Grocery() {
     const existingNames = new Set(items.map(i => i.name.toLowerCase()))
     const payload = toAdd
       .filter(i => !existingNames.has(i.name.toLowerCase()))
-      .map(i => ({ name: i.name, qty: i.qty, checked: false }))
+      .map(i => ({ name: i.name, qty: i.qty, checked: false, list_name: currentList }))
 
     if (payload.length > 0) {
       const { data } = await supabase.from('grocery_items').insert(payload).select()
@@ -486,24 +555,6 @@ export default function Grocery() {
     if (!checkedIds.length) return
     await supabase.from('grocery_items').delete().in('id', checkedIds)
     setItems(prev => prev.filter(i => !i.checked))
-  }
-
-  async function saveList() {
-    const name = listName.trim() || `List ${new Date().toLocaleDateString()}`
-    const itemNames = items.map(i => i.qty ? `${i.qty} ${i.name}` : i.name)
-    setSaving(true)
-    const { data } = await supabase
-      .from('saved_grocery_lists')
-      .insert({ name, items: itemNames })
-      .select().single()
-    if (data) setSavedLists(prev => [data, ...prev])
-    setListName('')
-    setSaving(false)
-  }
-
-  async function deleteSavedList(id: string) {
-    await supabase.from('saved_grocery_lists').delete().eq('id', id)
-    setSavedLists(prev => prev.filter(l => l.id !== id))
   }
 
   function openDoorDashList() {
@@ -709,9 +760,6 @@ export default function Grocery() {
           <button className="btn btn-ghost" onClick={clearSmartCart}>
             <X size={14} /> Clear
           </button>
-          <button className="btn btn-secondary" onClick={() => setShowSaved(!showSaved)}>
-            <History size={14} /> Saved Lists {savedLists.length > 0 && `(${savedLists.length})`}
-          </button>
           <button className="btn btn-primary" onClick={openDoorDashList} disabled={!needs.length}>
           <ClipboardList size={14} /> Copy List &amp; Open DoorDash
           </button>
@@ -810,7 +858,7 @@ export default function Grocery() {
           </div>
         )}
 
-        {/* location input */}
+                {/* location input */}
         <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
           <MapPin size={16} style={{ color: 'var(--ink-muted)', flexShrink: 0 }} />
           <input
@@ -823,61 +871,86 @@ export default function Grocery() {
             style={{ width: 280 }}
           />
           <button className="btn btn-primary" onClick={buildSmartCart} disabled={!location}>
-            Search
+            Build Smart Cart for {location}
           </button>
         </div>
 
-        {/* save list row */}
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          <input
-            className="form-input"
-            type="text"
-            placeholder="Name this list (optional)…"
-            value={listName}
-            onChange={e => setListName(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && saveList()}
-            style={{ flex: 2 }}
-          />
-          <button className="btn btn-primary" onClick={saveList} disabled={saving || !items.length}>
-            <Save size={14} /> Save List
-          </button>
-          {have.length > 0 && (
+        {/* my lists — every list here is a real, live list you can switch
+            to, add/check off items on, and come back to later. nothing is
+            just a static snapshot. */}
+        <div className="card">
+          <div className="section-label" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><FolderPlus size={13} /> My Lists</span>
+            <span style={{ fontWeight: 500 }}>{lists.length} list{lists.length === 1 ? '' : 's'}</span>
+          </div>
+
+          {listsLoading ? (
+            <p style={{ fontSize: '0.8rem', color: 'var(--ink-muted)' }}>Loading lists…</p>
+          ) : (
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 10 }}>
+              {lists.map(list => {
+                const active = currentList === list.name
+                return (
+                  <div key={list.id} style={{ display: 'flex', alignItems: 'stretch' }}>
+                    <button
+                      onClick={() => setCurrentList(list.name)}
+                      style={{
+                        padding: '6px 12px',
+                        borderRadius: lists.length > 1 ? 'var(--radius-md) 0 0 var(--radius-md)' : 'var(--radius-md)',
+                        border: `1.5px solid ${active ? 'var(--pink)' : 'var(--border)'}`,
+                        background: active ? 'var(--pink)' : 'var(--white)',
+                        color: active ? 'var(--white)' : 'var(--ink)',
+                        fontWeight: 600, fontSize: '0.8rem', cursor: 'pointer',
+                      }}
+                    >
+                      {list.name}
+                    </button>
+                    {lists.length > 1 && (
+                      <button
+                        onClick={() => deleteList(list)}
+                        title={`Delete ${list.name}`}
+                        style={{
+                          padding: '6px 8px',
+                          borderRadius: '0 var(--radius-md) var(--radius-md) 0',
+                          border: `1.5px solid ${active ? 'var(--pink)' : 'var(--border)'}`,
+                          borderLeft: 'none',
+                          background: active ? 'var(--pink)' : 'var(--white)',
+                          color: active ? 'var(--white)' : 'var(--ink-muted)',
+                          cursor: 'pointer', display: 'flex', alignItems: 'center',
+                        }}
+                      >
+                        <Trash2 size={12} />
+                      </button>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          )}
+
+          <div style={{ display: 'flex', gap: 6 }}>
+            <input
+              className="form-input"
+              type="text"
+              placeholder="New list name (e.g. Costco Run)…"
+              value={newListName}
+              onChange={e => setNewListName(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && createList()}
+              style={{ flex: 1 }}
+            />
+            <button className="btn btn-primary" onClick={createList} disabled={!newListName.trim()}>
+              <FolderPlus size={14} /> New List
+            </button>
+          </div>
+        </div>
+
+        <Lantern variant="divider" />
+
+        {have.length > 0 && (
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             <button className="btn btn-ghost" onClick={clearChecked}>
               <Trash2 size={14} /> Clear Checked
             </button>
-          )}
-        </div>
-
-        {/* saved lists panel */}
-        {showSaved && (
-          <div className="card">
-            <div className="section-label">Saved Lists</div>
-            {savedLists.length === 0
-              ? <EmptyState
-    image={emptyJarImg}
-    message="No saved lists yet."
-    subMessage="Add your first list below"
-  />
-              : savedLists.map(list => (
-                <div key={list.id} style={{
-                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                  padding: '8px 0', borderBottom: '1px dashed var(--border)', gap: 10,
-                }}>
-                  <div style={{ minWidth: 0 }}>
-                    <div style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--ink)' }}>{list.name}</div>
-                    <div style={{ fontSize: '0.72rem', color: 'var(--ink-muted)' }}>
-                      {list.items.slice(0, 5).join(' · ')}{list.items.length > 5 ? ` +${list.items.length - 5} more` : ''}
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => deleteSavedList(list.id)}
-                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-muted)', opacity: 0.5, flexShrink: 0 }}
-                  >
-                    <Trash2 size={14} />
-                  </button>
-                </div>
-              ))
-            }
           </div>
         )}
 
@@ -952,10 +1025,10 @@ export default function Grocery() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 420, overflowY: 'auto', marginBottom: 12 }}>
                 {needs.length === 0
                   ? <EmptyState
-    image={breadBasketImg}
-    message="List is empty!"
-    subMessage="Add an item to get started."
-  />
+                  image={breadBasketImg}
+                  message="List is empty!"
+                  subMessage="Add an item to get started."
+                />
                   : needs.map(item => {
                     const cheapest = cheapestFor(item.name)
                     const itemPrices = pricesFor(item.name)
@@ -1067,6 +1140,8 @@ export default function Grocery() {
             </div>
           </div>
         )}
+
+        <Lantern variant="divider" />
 
         {/* smart cart */}
         <div className="card">

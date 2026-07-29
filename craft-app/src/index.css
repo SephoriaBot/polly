@@ -184,6 +184,7 @@ a {
 }
 
 .bottombar {
+  position: relative;
   display: flex;
   justify-content: space-around;
   align-items: stretch;
@@ -191,6 +192,28 @@ a {
   background: var(--surface);
   border-top: 1px solid var(--border);
   box-shadow: 0 -8px 24px rgba(200, 140, 160, 0.12);
+}
+
+.bottombar::before {
+  content: '';
+  position: absolute;
+  top: -5px;
+  left: 8px;
+  right: 8px;
+  width: auto;
+  height: 11px;
+  background: repeating-linear-gradient(
+    128deg,
+    rgba(226, 205, 158, 0.45) 0,
+rgba(226, 205, 158, 0.45) 7px,
+rgba(247, 230, 195, 0.4) 7px,
+rgba(247, 230, 195, 0.4) 14px
+  );
+  border-radius: 1px;
+  box-shadow: 0 1px 3px rgba(150, 105, 20, 0.28);
+  opacity: 0.9;
+  pointer-events: none;
+  transform: rotate(-0.7deg);
 }
 
 .bottombar-tab {
@@ -204,7 +227,8 @@ a {
   border: none;
   cursor: pointer;
   padding: 6px 2px;
-  color: var(--ink-muted);
+  color: var(--pink-dark);
+  opacity: 0.6;
   font-family: 'IBM Plex Mono', monospace;
   font-size: 0.62rem;
   letter-spacing: 0.01em;
@@ -213,22 +237,26 @@ a {
 .bottombar-tab svg {
   width: 21px;
   height: 21px;
-  stroke: var(--ink-muted);
+  stroke: var(--pink-dark);
   fill: none;
   stroke-width: 1.8;
 }
 
 .bottombar-tab.active {
   color: var(--pink-dark);
+  opacity: 1;
+  font-weight: 700;
 }
 
 .bottombar-tab.active svg {
   stroke: var(--pink-dark);
+  stroke-width: 2.1;
 }
 
 /* ---- expandable row, slides open directly above the primary bar ---- */
 
 .bottombar-expand {
+  position: relative;
   display: flex;
   justify-content: space-around;
   align-items: stretch;

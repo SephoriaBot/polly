@@ -4,6 +4,8 @@ import { Heart } from 'lucide-react';
 import Lantern from "../components/Lantern";
 import DailyAlmanac from "../components/DailyAlmanac";
 import sleepingNestImg from '../assets/illustrations/sleeping_nest.png';
+import WeatherBadge from '../components/WeatherBadge';
+import GroqDailies from '../groqDailies/GroqDailies';
 
 interface Focus {
   id: string;
@@ -104,19 +106,16 @@ export default function Dashboard() {
           <div className="dash-subdate">
             {todayName}, {new Date().toLocaleDateString(undefined, { month: 'long', day: 'numeric' })}
           </div>
+
+        {/* WEATHER BADGE MINI WIDGET */}
+        <WeatherBadge />
+
         </div>
       </div>
 
       <div className="page-body">
 
-        {/* ── DAILY ALMANAC ── */}
-        <section>
-          <DailyAlmanac />
-        </section>
-
-        <Lantern variant="divider" />
-
-        {/* ── TODAY'S FOCUS ── */}
+                {/* ── TODAY'S FOCUS ── */}
         <section>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
             <div className="section-label" style={{ marginBottom: 0 }}>
@@ -242,6 +241,19 @@ export default function Dashboard() {
           )}
         </section>
 
+        <Lantern variant="divider" />
+
+        {/* ── DAILY ALMANAC ── */}
+        <section>
+          <DailyAlmanac />
+        </section>
+
+        <Lantern variant="divider" />
+
+         {/* ── GROQ DAILIES FEED ── */}
+          <section>
+          <GroqDailies />
+          </section>
       </div>
     </div>
   );

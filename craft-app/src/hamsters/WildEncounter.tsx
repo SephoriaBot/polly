@@ -329,7 +329,7 @@ export default function WildEncounter() {
                   gap: 6,
                 }}
               >
-                <Icon name="hamster-gray" size={18} />
+                <Icon name="hamster-wild" size={18} />
                 A wild hamster appeared while you were busy!
               </div>
             )}

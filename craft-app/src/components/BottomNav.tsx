@@ -27,13 +27,7 @@ const PRIMARY_TABS = [
       <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2" /><path d="M3 10h18M8 3v4M16 3v4" /></svg>
     ),
   },
-  {
-    id: 'trackers',
-    label: 'Trackers',
-    icon: (
-      <svg viewBox="0 0 24 24"><path d="M3 17l5-5 4 4 9-9" /><path d="M14 7h6v6" /></svg>
-    ),
-  },
+  
   {
     id: 'habitat',
     label: 'Habitat',
@@ -50,6 +44,13 @@ const PRIMARY_TABS = [
 // Items that live in the expandable row. No sections/labels here anymore —
 // just a flat row of icon tabs that slides open above the primary bar.
 const MORE_ITEMS = [
+  {
+    id: 'trackers',
+    label: 'Trackers',
+    icon: (
+      <svg viewBox="0 0 24 24"><path d="M3 17l5-5 4 4 9-9" /><path d="M14 7h6v6" /></svg>
+    ),
+  },
   {
     id: 'meals',
     label: 'Meals',

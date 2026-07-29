@@ -28,7 +28,8 @@ interface UseAppointmentNotesResult {
  */
 export function useAppointmentNotes(
   appointmentId: string,
-  noteType: AppointmentNoteType
+  noteType: AppointmentNoteType,
+  onChange?: () => void
 ): UseAppointmentNotesResult {
   const [items, setItems] = useState<AppointmentNoteItem[]>([]);
   const [carryOverItems, setCarryOverItems] = useState<AppointmentNoteItem[]>([]);
@@ -115,8 +116,9 @@ export function useAppointmentNotes(
       }
 
       setItems((prev) => [...prev, data]);
+      onChange?.();
     },
-    [appointmentId, noteType]
+    [appointmentId, noteType, onChange]
   );
 
   const updateItem = useCallback(async (itemId: string, patch: Partial<AppointmentNoteItem>) => {
@@ -180,6 +182,7 @@ export function useAppointmentNotes(
       }
 
       setItems((prev) => [...prev, inserted]);
+      onChange?.();
 
       // Mark the original as covered so it stops showing up as a carry-over
       // candidate next time, while keeping a record of why it closed.
@@ -195,7 +198,7 @@ export function useAppointmentNotes(
 
       setCarryOverItems((prev) => prev.filter((i) => i.id !== item.id));
     },
-    [appointmentId, noteType]
+    [appointmentId, noteType, onChange]
   );
 
   const removeItem = useCallback(async (itemId: string) => {

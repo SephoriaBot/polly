@@ -64,7 +64,7 @@ export default function DailyPlanner() {
   const [focusNote, setFocusNote] = useState<AppointmentNoteSelection | null>(null);
   const [showAllDoneCelebration, setShowAllDoneCelebration] = useState(false);
 
-  const noteMap = useAppointmentNoteMap(appointments.map(a => a.id));
+  const { map: noteMap, refresh: refreshNoteMap } = useAppointmentNoteMap(appointments.map(a => a.id));
 
   useEffect(() => {
     loadAll();
@@ -346,6 +346,8 @@ export default function DailyPlanner() {
             </div>
           </div>
 
+          <Lantern variant="divider" />
+
           {/* Appointments */}
           <div className="card">
             <div className="card-body">
@@ -354,12 +356,12 @@ export default function DailyPlanner() {
               </div>
 
               {appointments.length === 0 ? (
-  <EmptyState
-    image={checklistImg}
-    message="Nothing scheduled yet"
-    subMessage="Add your first appointment below"
-  />
-) : (
+              <EmptyState
+                image={checklistImg}
+                message="Nothing scheduled yet"
+                subMessage="Add your first appointment below"
+              />
+            ) : (
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16 }}>
                   {appointments.map(appt => {
@@ -442,12 +444,15 @@ export default function DailyPlanner() {
 
         </section>
 
-        <StitchDivider />
+        <Lantern variant="divider" />
+
+        {/* APPOINTMENT NOTES PANEL */}
 
         <section>
           <AppointmentNotesPanel
             externalSelection={focusNote}
             onExternalSelectionConsumed={() => setFocusNote(null)}
+            onNotesChanged={refreshNoteMap}
           />
         </section>
 

@@ -10,6 +10,7 @@ interface UseUnlinkedAppointmentNotesResult {
   toggleHomeworkDone: (item: AppointmentNoteItem) => Promise<void>;
   saveResolution: (itemId: string, resolution: string) => Promise<void>;
   removeItem: (itemId: string) => Promise<void>;
+  linkToAppointment: (itemIds: string[], appointmentId: string) => Promise<void>;
   refresh: () => Promise<void>;
 }
 
@@ -97,6 +98,27 @@ export function useUnlinkedAppointmentNotes(): UseUnlinkedAppointmentNotesResult
     setItems((prev) => prev.filter((i) => i.id !== itemId));
   }, []);
 
+  // Re-homes a whole note_type group of orphaned notes onto a (usually
+  // newly-created) appointment in one shot. Once linked they're no longer
+  // "unlinked", so drop them from this list rather than waiting on a full
+  // refresh.
+  const linkToAppointment = useCallback(async (itemIds: string[], appointmentId: string) => {
+    if (!appointmentId || itemIds.length === 0) return;
+
+    const { error: updateError } = await supabase
+      .from('appointment_note_items')
+      .update({ appointment_id: appointmentId })
+      .in('id', itemIds);
+
+    if (updateError) {
+      setError(updateError.message);
+      return;
+    }
+
+    const idSet = new Set(itemIds);
+    setItems((prev) => prev.filter((i) => !idSet.has(i.id)));
+  }, []);
+
   return {
     items,
     loading,
@@ -105,6 +127,7 @@ export function useUnlinkedAppointmentNotes(): UseUnlinkedAppointmentNotesResult
     toggleHomeworkDone,
     saveResolution,
     removeItem,
+    linkToAppointment,
     refresh,
   };
 }

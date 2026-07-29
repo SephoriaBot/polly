@@ -27,6 +27,5 @@ export interface AppointmentNoteItem {
 export interface AppointmentOption {
   id: string;
   title: string;
-  date: string; // ISO date
-  note_type: AppointmentNoteType;
+  date_time: string; // ISO datetime, matches the `appointments` table column
 }
