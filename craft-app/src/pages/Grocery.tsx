@@ -858,9 +858,26 @@ export default function Grocery() {
           </div>
         )}
 
+                {/* location input */}
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+          <MapPin size={16} style={{ color: 'var(--ink-muted)', flexShrink: 0 }} />
+          <input
+            className="form-input"
+            type="text"
+            placeholder="City, state (e.g. Richmond, Virginia)…"
+            value={location}
+            onChange={e => saveLocation(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && buildSmartCart()}
+            style={{ width: 280 }}
+          />
+          <button className="btn btn-primary" onClick={buildSmartCart} disabled={!location}>
+            Build Smart Cart for {location}
+          </button>
+        </div>
+
         {/* my lists — every list here is a real, live list you can switch
             to, add/check off items on, and come back to later. nothing is
-            just a static snapshot anymore. */}
+            just a static snapshot. */}
         <div className="card">
           <div className="section-label" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><FolderPlus size={13} /> My Lists</span>
@@ -927,22 +944,7 @@ export default function Grocery() {
           </div>
         </div>
 
-        {/* location input */}
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-          <MapPin size={16} style={{ color: 'var(--ink-muted)', flexShrink: 0 }} />
-          <input
-            className="form-input"
-            type="text"
-            placeholder="City, state (e.g. Richmond, Virginia)…"
-            value={location}
-            onChange={e => saveLocation(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && buildSmartCart()}
-            style={{ width: 280 }}
-          />
-          <button className="btn btn-primary" onClick={buildSmartCart} disabled={!location}>
-            Search
-          </button>
-        </div>
+        <Lantern variant="divider" />
 
         {have.length > 0 && (
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
@@ -1023,10 +1025,10 @@ export default function Grocery() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 420, overflowY: 'auto', marginBottom: 12 }}>
                 {needs.length === 0
                   ? <EmptyState
-    image={breadBasketImg}
-    message="List is empty!"
-    subMessage="Add an item to get started."
-  />
+                  image={breadBasketImg}
+                  message="List is empty!"
+                  subMessage="Add an item to get started."
+                />
                   : needs.map(item => {
                     const cheapest = cheapestFor(item.name)
                     const itemPrices = pricesFor(item.name)
@@ -1138,6 +1140,8 @@ export default function Grocery() {
             </div>
           </div>
         )}
+
+        <Lantern variant="divider" />
 
         {/* smart cart */}
         <div className="card">

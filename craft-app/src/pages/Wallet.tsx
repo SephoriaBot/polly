@@ -976,37 +976,39 @@ export default function Wallet() {
 
       <div className="page-body" style={{ display: "flex", flexDirection: "column", gap: 20 }}>
 
+    {/* CALENDAR, BILLS AND DEBTS BUTTONS */}
+
         {view === "home" && (
           <>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 10 }}>
               
-<button
-  onClick={() => setView("calendar")}
-  style={{
-    textAlign: "left",
-    cursor: "pointer",
-    fontFamily: "inherit",
-    border: "1.5px dashed var(--border)",
-    borderRadius: 18,
-    background: "var(--white)",
-    padding: "14px 16px",
-    display: "flex",
-    flexDirection: "column",
-    gap: 6,
-  }}
->
-  <div style={{ fontSize: 24 }}>
-    <Icon name="calendar" size={24} />
-  </div>
+            <button
+              onClick={() => setView("calendar")}
+              style={{
+                textAlign: "left",
+                cursor: "pointer",
+                fontFamily: "inherit",
+                border: "1.5px dashed var(--border)",
+                borderRadius: 18,
+                background: "var(--white)",
+                padding: "14px 16px",
+                display: "flex",
+                flexDirection: "column",
+                gap: 6,
+              }}
+            >
+              <div style={{ fontSize: 24 }}>
+                <Icon name="calendar" size={24} />
+              </div>
 
-  <div style={{ fontSize: 14, fontWeight: 800, color: "var(--ink)" }}>
-    Money Calendar
-  </div>
+              <div style={{ fontSize: 14, fontWeight: 800, color: "var(--ink)" }}>
+                Money Calendar
+              </div>
 
-  <div style={{ fontSize: 11, color: "var(--ink-muted)" }}>
-    14 day forecast
-  </div>
-</button>
+              <div style={{ fontSize: 11, color: "var(--ink-muted)" }}>
+                14 day forecast
+              </div>
+            </button>
 
               <button
                 onClick={() => setView("bills")}
@@ -1040,9 +1042,7 @@ export default function Wallet() {
               </button>
             </div>
 
-            
-
-            <Lantern variant="divider" />
+            {/* EQUITY MODE CHECK / TODAYS PAYCHECK CALCULATOR */}
 
             {isCrisis && (
               <div style={{ background: "var(--danger-bg)", border: "1.5px solid var(--danger)", borderRadius: 16, padding: "12px 16px", fontSize: 13, color: "var(--danger)", fontWeight: 700 }}>
@@ -1101,6 +1101,8 @@ export default function Wallet() {
                 )}
               </div>
             </div>
+
+            <Lantern variant="divider" />
 
             {/* ── LISTS ── */}
             <div className="card">

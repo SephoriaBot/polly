@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import Icon from '../Icon';
+import Lantern from "../components/Lantern";
 import {
   ResponsiveContainer,
   BarChart,
@@ -68,11 +69,26 @@ export default function TrackerChart({ type, startDate, endDate, refreshKey }: P
     loadLogs();
   }
 
+  <Lantern variant="divider" />
+
+  {/* ENTRIES LIST */}
+
   function EntriesList() {
     if (logs.length === 0) return null;
     return (
       <div className="card" style={{ marginTop: '1rem' }}>
         <h4>Entries</h4>
+
+        <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 18,
+          maxHeight: 420,
+          overflowY: 'auto',
+          paddingRight: 4,
+        }}
+      >
         {logs
           .slice()
           .reverse()
@@ -105,8 +121,10 @@ export default function TrackerChart({ type, startDate, endDate, refreshKey }: P
             </div>
           ))}
       </div>
-    );
+      </div>
+    ); 
   }
+  
 
   if (logs.length === 0) {
     return <p className="card">No data logged for this range yet.</p>;
