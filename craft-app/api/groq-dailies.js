@@ -23,15 +23,15 @@ export default async function handler(req, res) {
 
   const apiKey = process.env.VITE_GROQ_API_KEY;
   if (!apiKey) {
-    return res.status(500).json({ error: 'GROQ_API_KEY not configured' });
+    return res.status(500).json({ error: 'API key not configured' });
   }
 
-  const prompt = `You're helping someone stay informed about: "${subject}".
+  const prompt = `Share interesting facts and tidbits about: "${subject}".
 
-You do not have live internet access, so base this on what you know as of your training. Return ONLY a JSON array (no markdown, no preamble, no code fences) of up to 5 items that would help someone understand the current state, context, or background of this topic. Each item must have this exact shape:
-{"headline": string, "summary": string (1-2 sentences, plain language), "source_name": string (use "AI summary" if not citing a specific outlet), "source_url": string (empty string "" if none), "published": string (use "background" if not date-specific)}
+Return ONLY a JSON array (no markdown, no preamble, no code fences) of 6-8 items, covering a good variety of angles (history, science, quirks, lesser-known details). Each item must have this exact shape:
+{"headline": string (a short, punchy title for the fact, under 8 words), "summary": string (2-3 sentences explaining the fact in an engaging, easy way), "source_name": string (a short category tag like "History" or "Science" or "Fun Fact"), "source_url": "", "published": ""}
 
-If you genuinely have nothing useful to say about this subject, return an empty array [].`;
+Return an empty array [] only if you truly know nothing about this subject.`;
 
   try {
     const groqResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
