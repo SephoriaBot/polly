@@ -28,7 +28,17 @@ export function useGroqDailies() {
         body: JSON.stringify({ subject }),
       });
 
-      if (!res.ok) throw new Error(`Request failed (${res.status})`);
+      if (!res.ok) {
+        let message = `Request failed (${res.status})`;
+        try {
+          const errBody = await res.json();
+          if (errBody?.error) message = errBody.error;
+        } catch {
+          // response wasn't JSON — keep the generic message
+        }
+        throw new Error(message);
+      }
+
       const data: GroqDailyCacheEntry = await res.json();
 
       await supabase
