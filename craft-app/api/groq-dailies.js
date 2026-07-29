@@ -13,12 +13,12 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: 'GROQ_API_KEY not configured' });
   }
 
-  const prompt = `Search the web for the most important news from the last 24-48 hours about: "${subject}".
+  const prompt = `You're helping someone stay informed about: "${subject}".
 
-Return ONLY a JSON array (no markdown, no preamble, no code fences) of up to 5 items, most recent first. Each item must have this exact shape:
-{"headline": string, "summary": string (1-2 sentences, plain language), "source_name": string, "source_url": string, "published": string (e.g. "2 hours ago" or "Jul 27, 2026")}
+You do not have live internet access, so base this on what you know as of your training. Return ONLY a JSON array (no markdown, no preamble, no code fences) of up to 5 items that would help someone understand the current state, context, or background of this topic. Each item must have this exact shape:
+{"headline": string, "summary": string (1-2 sentences, plain language), "source_name": string (use "AI summary" if not citing a specific outlet), "source_url": string (empty string "" if none), "published": string (use "background" if not date-specific)}
 
-If you find no genuinely recent news on this subject, return an empty array [].`;
+If you genuinely have nothing useful to say about this subject, return an empty array [].`;
 
   try {
     const groqResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
@@ -28,7 +28,7 @@ If you find no genuinely recent news on this subject, return an empty array [].`
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'groq/compound',
+        model: 'openai/gpt-oss-120b',
         messages: [{ role: 'user', content: prompt }],
       }),
     });
