@@ -785,14 +785,14 @@ export default function Wallet() {
       note: isCrisis ? "paused -- bills come first" : "$22/day until $650",
     },
     {
-      label: "Groceries & Gas",
+      label: "Needs (gas, groceries, needs list)",
       icon: "basket",
       amount: unifiedNeeds,
       color: "var(--green-dark)",
       note: isCrisis ? "protected floor, even in crisis mode" : "groceries + gas, one combined category",
     },
     {
-      label: "Treats",
+      label: "Treats (wants list)",
       icon: "trophy",
       amount: unifiedFun,
       color: "var(--ink-soft)",
