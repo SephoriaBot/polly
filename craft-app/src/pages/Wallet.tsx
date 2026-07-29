@@ -268,14 +268,21 @@ export default function Wallet() {
   const [showNewListInput, setShowNewListInput] = useState(false);
   const [newListName, setNewListName] = useState("");
   const [newItemDrafts, setNewItemDrafts] = useState<Record<number, string>>({});
-  const [taxRate, setTaxRate] = useState<number>(() => {
-    const s = localStorage.getItem("tax_withholding_rate");
-    return s ? parseFloat(s) : 20;
-  });
-  const [otWageOverride, setOtWageOverride] = useState<string>(() => localStorage.getItem("ot_wage_override") || "");
+  const [taxRate, setTaxRate] = useState<number>(20);
+  const [otWageOverride, setOtWageOverride] = useState<string>("");
+  const [walletSettingsLoaded, setWalletSettingsLoaded] = useState(false);
 
-  useEffect(() => { localStorage.setItem("tax_withholding_rate", taxRate.toString()); }, [taxRate]);
-  useEffect(() => { localStorage.setItem("ot_wage_override", otWageOverride); }, [otWageOverride]);
+  const walletSettingsSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (!walletSettingsLoaded) return; // don't overwrite DB with defaults before initial load completes
+    if (walletSettingsSaveTimer.current) clearTimeout(walletSettingsSaveTimer.current);
+    walletSettingsSaveTimer.current = setTimeout(() => {
+      supabase.from("wallet_settings").upsert({ id: 1, tax_rate: taxRate, ot_wage_override: otWageOverride }).then(({ error }) => {
+        if (error) console.error("wallet_settings save failed:", error);
+      });
+    }, 800);
+    return () => { if (walletSettingsSaveTimer.current) clearTimeout(walletSettingsSaveTimer.current); };
+  }, [taxRate, otWageOverride, walletSettingsLoaded]);
 
 
   const [calcRegWage, setCalcRegWage] = useState("");
@@ -310,6 +317,10 @@ export default function Wallet() {
           { data: paymentData },
           { data: listData },
           { data: listItemData },
+          { data: walletSettingsData },
+          { data: dailyHoursData },
+          { data: extraFundsData },
+          { data: payPeriodData },
         ] = await Promise.all([
           supabase.from("debts").select("*"),
           supabase.from("budget").select("*").eq("id", 1).maybeSingle(),
@@ -317,6 +328,10 @@ export default function Wallet() {
           supabase.from("bill_payments").select("*"),
           supabase.from("lists").select("*").order("created_at"),
           supabase.from("list_items").select("*").order("created_at"),
+          supabase.from("wallet_settings").select("*").eq("id", 1).maybeSingle(),
+          supabase.from("daily_hours_log").select("*"),
+          supabase.from("extra_funds_log").select("*"),
+          supabase.from("wallet_pay_period").select("*").eq("id", 1).maybeSingle(),
         ]);
 
         if (debtData && debtData.length > 0) {
@@ -355,6 +370,45 @@ export default function Wallet() {
           const stalePaymentIds = paymentData.filter((p: BillPayment) => isPastMonth(p.month, p.year)).map((p: BillPayment) => p.id).filter(Boolean);
           if (stalePaymentIds.length > 0) supabase.from("bill_payments").delete().in("id", stalePaymentIds);
           setPayments(paymentData.filter((p: BillPayment) => !isPastMonth(p.month, p.year)));
+        }
+
+        if (walletSettingsData) {
+          setTaxRate(typeof walletSettingsData.tax_rate === "number" ? walletSettingsData.tax_rate : 20);
+          setOtWageOverride(walletSettingsData.ot_wage_override || "");
+        }
+        setWalletSettingsLoaded(true);
+
+        if (dailyHoursData && dailyHoursData.length > 0) {
+          const map: Record<string, { reg: string; ot: string }> = {};
+          dailyHoursData.forEach((row: { date: string; reg: string; ot: string }) => {
+            map[row.date] = { reg: row.reg || "", ot: row.ot || "" };
+          });
+          setDailyHours(map);
+        }
+
+        if (extraFundsData && extraFundsData.length > 0) {
+          const map: Record<string, string> = {};
+          extraFundsData.forEach((row: { date: string; amount: string }) => {
+            map[row.date] = row.amount || "";
+          });
+          setExtraFunds(map);
+        }
+
+        if (payPeriodData) {
+          if (payPeriodData.prior_week_start === currentWeekStartKey()) {
+            setPriorWeekHours({
+              weekStart: payPeriodData.prior_week_start,
+              reg: payPeriodData.prior_week_reg || "",
+              ot: payPeriodData.prior_week_ot || "",
+            });
+          }
+          if (payPeriodData.closed_week_start) {
+            setClosedWeekHours({
+              weekStart: payPeriodData.closed_week_start,
+              reg: payPeriodData.closed_week_reg || "",
+              ot: payPeriodData.closed_week_ot || "",
+            });
+          }
         }
       } catch (err) {
         console.error("Wallet loadData failed:", err);
@@ -445,10 +499,20 @@ export default function Wallet() {
     return map;
   }, [bills, payments, calendarWeeks]);
 
-  const [dailyHours, setDailyHours] = useState<Record<string, { reg: string; ot: string }>>(() => {
-    try { return JSON.parse(localStorage.getItem("daily_hours_log") || "{}"); } catch { return {}; }
-  });
-  useEffect(() => { localStorage.setItem("daily_hours_log", JSON.stringify(dailyHours)); }, [dailyHours]);
+  const [dailyHours, setDailyHours] = useState<Record<string, { reg: string; ot: string }>>({});
+  const dailyHoursSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (!walletSettingsLoaded) return;
+    if (dailyHoursSaveTimer.current) clearTimeout(dailyHoursSaveTimer.current);
+    dailyHoursSaveTimer.current = setTimeout(() => {
+      const rows = Object.entries(dailyHours).map(([date, v]) => ({ date, reg: v.reg || "", ot: v.ot || "" }));
+      if (rows.length === 0) return;
+      supabase.from("daily_hours_log").upsert(rows, { onConflict: "date" }).then(({ error }) => {
+        if (error) console.error("daily_hours_log save failed:", error);
+      });
+    }, 800);
+    return () => { if (dailyHoursSaveTimer.current) clearTimeout(dailyHoursSaveTimer.current); };
+  }, [dailyHours, walletSettingsLoaded]);
 
   function setDailyHourField(key: string, field: "reg" | "ot", value: string) {
     setDailyHours(prev => ({ ...prev, [key]: { reg: prev[key]?.reg || "", ot: prev[key]?.ot || "", [field]: value } }));
@@ -460,27 +524,37 @@ export default function Wallet() {
     return dateKey(sunday);
   }
 
-  const [priorWeekHours, setPriorWeekHours] = useState<{ weekStart: string; reg: string; ot: string }>(() => {
-    try {
-      const stored = JSON.parse(localStorage.getItem("prior_week_hours") || "null");
-      if (stored && stored.weekStart === currentWeekStartKey()) return stored;
-    } catch { /* fall through to blank */ }
-    return { weekStart: currentWeekStartKey(), reg: "", ot: "" };
+  const [priorWeekHours, setPriorWeekHours] = useState<{ weekStart: string; reg: string; ot: string }>({
+    weekStart: currentWeekStartKey(), reg: "", ot: "",
   });
-  useEffect(() => { localStorage.setItem("prior_week_hours", JSON.stringify(priorWeekHours)); }, [priorWeekHours]);
 
   function setPriorWeekHourField(field: "reg" | "ot", value: string) {
     setPriorWeekHours(prev => ({ ...prev, weekStart: currentWeekStartKey(), [field]: value }));
   }
 
-  const [closedWeekHours, setClosedWeekHours] = useState<{ weekStart: string; reg: string; ot: string }>(() => {
-    try {
-      const stored = JSON.parse(localStorage.getItem("closed_week_hours") || "null");
-      if (stored) return stored;
-    } catch { /* fall through to blank */ }
-    return { weekStart: "", reg: "", ot: "" };
+  const [closedWeekHours, setClosedWeekHours] = useState<{ weekStart: string; reg: string; ot: string }>({
+    weekStart: "", reg: "", ot: "",
   });
-  useEffect(() => { localStorage.setItem("closed_week_hours", JSON.stringify(closedWeekHours)); }, [closedWeekHours]);
+
+  const payPeriodSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (!walletSettingsLoaded) return;
+    if (payPeriodSaveTimer.current) clearTimeout(payPeriodSaveTimer.current);
+    payPeriodSaveTimer.current = setTimeout(() => {
+      supabase.from("wallet_pay_period").upsert({
+        id: 1,
+        prior_week_start: priorWeekHours.weekStart,
+        prior_week_reg: priorWeekHours.reg,
+        prior_week_ot: priorWeekHours.ot,
+        closed_week_start: closedWeekHours.weekStart,
+        closed_week_reg: closedWeekHours.reg,
+        closed_week_ot: closedWeekHours.ot,
+      }).then(({ error }) => {
+        if (error) console.error("wallet_pay_period save failed:", error);
+      });
+    }, 800);
+    return () => { if (payPeriodSaveTimer.current) clearTimeout(payPeriodSaveTimer.current); };
+  }, [priorWeekHours, closedWeekHours, walletSettingsLoaded]);
 
   function setClosedWeekHourField(weekStart: string, field: "reg" | "ot", value: string) {
     setClosedWeekHours(prev => ({
@@ -490,17 +564,20 @@ export default function Wallet() {
     }));
   }
 
-  const [extraFunds, setExtraFunds] = useState<Record<string, string>>(() => {
-    try {
-      return JSON.parse(localStorage.getItem("extra_funds_log") || "{}");
-    } catch {
-      return {};
-    }
-  });
-
+  const [extraFunds, setExtraFunds] = useState<Record<string, string>>({});
+  const extraFundsSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
-    localStorage.setItem("extra_funds_log", JSON.stringify(extraFunds));
-  }, [extraFunds]);
+    if (!walletSettingsLoaded) return;
+    if (extraFundsSaveTimer.current) clearTimeout(extraFundsSaveTimer.current);
+    extraFundsSaveTimer.current = setTimeout(() => {
+      const rows = Object.entries(extraFunds).map(([date, amount]) => ({ date, amount: amount || "" }));
+      if (rows.length === 0) return;
+      supabase.from("extra_funds_log").upsert(rows, { onConflict: "date" }).then(({ error }) => {
+        if (error) console.error("extra_funds_log save failed:", error);
+      });
+    }, 800);
+    return () => { if (extraFundsSaveTimer.current) clearTimeout(extraFundsSaveTimer.current); };
+  }, [extraFunds, walletSettingsLoaded]);
 
   const effectiveOtWage = parseFloat(otWageOverride) > 0 ? parseFloat(otWageOverride) : budget.hourly_wage * 1.5;
   const netHourlyWage = budget.hourly_wage > 0 ? budget.hourly_wage * (1 - taxRate / 100) : 0;
