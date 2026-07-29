@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Newspaper, Plus, X } from 'lucide-react';
+import { Sparkles, Plus, X } from 'lucide-react';
 import { useGroqDailies } from './useGroqDailies';
 
 export default function GroqDailies() {
@@ -23,7 +23,7 @@ export default function GroqDailies() {
       }}
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
-        <Newspaper size={20} color="var(--color-pink, #e8a2b0)" />
+        <Sparkles size={20} color="var(--color-pink, #e8a2b0)" />
         <h2
           style={{
             fontFamily: 'var(--font-heading, "Fraunces", serif)',
@@ -41,7 +41,7 @@ export default function GroqDailies() {
           value={newSubject}
           onChange={(e) => setNewSubject(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
-          placeholder="Add a subject to follow…"
+          placeholder="Add a subject to learn about…"
           style={{
             flex: 1,
             minWidth: 160,
@@ -75,13 +75,22 @@ export default function GroqDailies() {
       {loadingSubjects && <p style={{ opacity: 0.6 }}>Loading your subjects…</p>}
 
       {!loadingSubjects && feeds.length === 0 && (
-        <p style={{ opacity: 0.6, fontStyle: 'italic' }}>No subjects yet — add one above to start your feed 🌼</p>
+        <p style={{ opacity: 0.6, fontStyle: 'italic' }}>No subjects yet — add one above 🌼</p>
       )}
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 18,
+          maxHeight: 420,
+          overflowY: 'auto',
+          paddingRight: 4,
+        }}
+      >
         {feeds.map((feed) => (
           <div key={feed.subject.subject}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, position: 'sticky', top: 0, background: 'var(--color-cream, #fdf6ec)', paddingBottom: 4 }}>
               <span
                 style={{
                   background: 'var(--color-apricot, #f6c9a0)',
@@ -95,7 +104,7 @@ export default function GroqDailies() {
               >
                 {feed.subject.subject}
               </span>
-              {feed.loading && <span style={{ fontSize: 12, opacity: 0.6 }}>refreshing…</span>}
+              {feed.loading && <span style={{ fontSize: 12, opacity: 0.6 }}>loading facts…</span>}
               <button
                 onClick={() => removeSubject(feed.subject.subject)}
                 aria-label={`Remove ${feed.subject.subject}`}
@@ -108,41 +117,51 @@ export default function GroqDailies() {
             {feed.error && <p style={{ color: '#c0685a', fontSize: 13 }}>Couldn't refresh: {feed.error}</p>}
 
             {!feed.loading && !feed.error && feed.articles.length === 0 && (
-              <p style={{ opacity: 0.6, fontSize: 13 }}>No recent news found yet.</p>
+              <p style={{ opacity: 0.6, fontSize: 13 }}>No facts yet.</p>
             )}
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               {feed.articles.map((article, i) => (
-                <a
+                <div
                   key={i}
-                  href={article.source_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
                   style={{
-                    display: 'block',
                     padding: '10px 14px',
                     borderRadius: 14,
                     background: 'white',
                     border: '1px solid var(--color-gold, #e8c78a)',
-                    textDecoration: 'none',
-                    color: 'inherit',
                   }}
                 >
                   <div
                     style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 8,
                       fontFamily: 'var(--font-heading, "Fraunces", serif)',
                       fontSize: 15,
                       marginBottom: 4,
                       color: 'var(--color-text, #4a3b32)',
                     }}
                   >
+                    {article.source_name && (
+                      <span
+                        style={{
+                          fontFamily: 'var(--font-mono, "IBM Plex Mono", monospace)',
+                          fontSize: 10,
+                          textTransform: 'uppercase',
+                          letterSpacing: 0.5,
+                          background: 'var(--color-cream, #fdf6ec)',
+                          padding: '2px 8px',
+                          borderRadius: 999,
+                          color: 'var(--color-pink, #e8a2b0)',
+                        }}
+                      >
+                        {article.source_name}
+                      </span>
+                    )}
                     {article.headline}
                   </div>
-                  <div style={{ fontSize: 13, opacity: 0.8, marginBottom: 6 }}>{article.summary}</div>
-                  <div style={{ fontFamily: 'var(--font-mono, "IBM Plex Mono", monospace)', fontSize: 11, opacity: 0.55 }}>
-                    {article.source_name} · {article.published}
-                  </div>
-                </a>
+                  <div style={{ fontSize: 13, opacity: 0.8 }}>{article.summary}</div>
+                </div>
               ))}
             </div>
           </div>
