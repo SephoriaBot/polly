@@ -1125,7 +1125,7 @@ export default function Wallet() {
 
             {isCrisis && (
               <div style={{ background: "var(--danger-bg)", border: "1.5px solid var(--danger)", borderRadius: 16, padding: "12px 16px", fontSize: 13, color: "var(--danger)", fontWeight: 700 }}>
-                Equity Mode Active — {crisisBills.length} bill(s) late or due within 3 days ({fmt(crisisTotal)} total). Fun money and general savings are zeroed until these are covered. Things you need are still protected.
+                Equity Mode Active — {crisisBills.length} bill(s) late or due within 3 days: ({fmt(crisisTotal)}). Fun money and general savings are zeroed until these are covered. Things you need are still protected.
               </div>
             )}
             {!isCrisis && urgentBills.length > 0 && (
