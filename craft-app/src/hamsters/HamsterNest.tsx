@@ -4,6 +4,7 @@ import { useHamsterGrowth } from "./HamsterGrowthContext";
 import { SOURCE_LABELS } from "./useHamsterGrowth";
 import Icon from "../components/Icon";
 import hamsterHatchCrack from "../assets/illustrations/hamster-hatch-crack.PNG";
+import hamsterHatchRibbon from "../assets/illustrations/hamster-hatch-ribbon.PNG";
 
 function NestEgg({ progressPct }: { progressPct: number }) {
   const showSmallCrack = progressPct >= 35;
@@ -69,19 +70,23 @@ function NestEgg({ progressPct }: { progressPct: number }) {
 
 export default function HamsterNest() {
   const { loading, refreshing, refresh, points, threshold, progressPct, recentPoints, justHatched, clearJustHatched } = useHamsterGrowth();
-  const [showReveal, setShowReveal] = useState(false);
+  const [hatchStage, setHatchStage] = useState<"crack" | "ribbon" | "hamster">("crack");
 
   useEffect(() => {
-    if (justHatched) {
-      setShowReveal(false);
-      const revealTimer = setTimeout(() => setShowReveal(true), 900);
-      const clearTimer = setTimeout(clearJustHatched, 3000);
-      return () => {
-        clearTimeout(revealTimer);
-        clearTimeout(clearTimer);
-      };
-    }
-  }, [justHatched, clearJustHatched]);
+  if (justHatched) {
+    setHatchStage("crack");
+
+    const ribbonTimer = setTimeout(() => setHatchStage("ribbon"), 600);
+    const hamsterTimer = setTimeout(() => setHatchStage("hamster"), 1200);
+    const clearTimer = setTimeout(clearJustHatched, 3000);
+
+    return () => {
+      clearTimeout(ribbonTimer);
+      clearTimeout(hamsterTimer);
+      clearTimeout(clearTimer);
+    };
+  }
+}, [justHatched, clearJustHatched]);
 
   if (loading) {
     return (
@@ -133,12 +138,19 @@ export default function HamsterNest() {
         {justHatched ? (
   <div style={{ textAlign: "center", padding: "10px 0" }}>
     <img
-      src={showReveal ? justHatched.image : hamsterHatchCrack}
-      alt={showReveal ? "a new hamster hatched" : "the egg is cracking"}
-      style={{ width: 96, height: 96, objectFit: "contain", animation: "hatchPop 0.7s ease" }}
+  src={
+    hatchStage === "crack"
+      ? hamsterHatchCrack
+      : hatchStage === "ribbon"
+      ? hamsterHatchRibbon
+      : justHatched.image
+  }
+  alt={hatchStage === "hamster" ? "a new hamster hatched" : "the egg is hatching"}      style={{ width: 96, height: 96, objectFit: "contain", animation: "hatchPop 0.7s ease" }}
     />
     <div style={{ fontSize: 14, fontWeight: 800, color: "var(--pink-dark)", marginTop: 6 }}>
-      {showReveal ? <>A new hamster hatched! <Icon name="sparkles-cluster" size={16} /></> : "Something's happening..."}
+      {hatchStage === "hamster"
+  ? <>A new hamster hatched! <Icon name="sparkles-cluster" size={16} /></>
+  : "Something's happening..."}
     </div>
   </div>
 ) : (
