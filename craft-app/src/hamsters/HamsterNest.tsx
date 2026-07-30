@@ -3,6 +3,7 @@ import { RefreshCw } from "lucide-react";
 import { useHamsterGrowth } from "./HamsterGrowthContext";
 import { SOURCE_LABELS } from "./useHamsterGrowth";
 import Icon from "../components/Icon";
+import hamsterHatchCrack from "../assets/illustrations/hamster-hatch-crack.PNG";
 
 function NestEgg({ progressPct }: { progressPct: number }) {
   const showSmallCrack = progressPct >= 35;
@@ -132,7 +133,7 @@ export default function HamsterNest() {
         {justHatched ? (
   <div style={{ textAlign: "center", padding: "10px 0" }}>
     <img
-      src={showReveal ? justHatched.image : "/assets/illustrations/hamster-hatch-crack.PNG"}
+      src={showReveal ? justHatched.image : hamsterHatchCrack}
       alt={showReveal ? "a new hamster hatched" : "the egg is cracking"}
       style={{ width: 96, height: 96, objectFit: "contain", animation: "hatchPop 0.7s ease" }}
     />
