@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useHamsterGrowth } from "./HamsterGrowthContext";
 import { HAMSTERS, imageForForm } from "./hamsters";
 import Icon, { type IconName } from "../components/Icon";
+import HamsterStatTraining from "./HamsterStatTraining";
 
 function imageFor(hamsterId: string) {
   return HAMSTERS.find((h) => h.id === hamsterId)?.image;
@@ -117,10 +118,15 @@ export default function HamsterHabitat() {
                       borderRadius: 12, padding: 4, cursor: "pointer", position: "relative",
                     }}
                   >
-                    {img && <img src={img} alt={entry.hamsterId} style={{ width: 48, height: 48, objectFit: "contain" }} />}
+                    {img && <img src={img} alt={entry.name || entry.hamsterId} style={{ width: 48, height: 48, objectFit: "contain" }} />}
                     {entry.stage !== "baby" && (
                       <span style={{ position: "absolute", top: 0, right: 0, fontSize: 10 }}>
                         <Icon name={entry.stage === "final" ? "medal-wings" : "potted-plant"} size={12} />
+                      </span>
+                    )}
+                    {entry.name && (
+                      <span style={{ fontSize: 9, color: "var(--ink-muted)", marginTop: 2, maxWidth: 52, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                        {entry.name}
                       </span>
                     )}
                   </button>
@@ -176,6 +182,14 @@ export default function HamsterHabitat() {
                 )}
 
                 {selected.stage !== "final" && <EvolutionMeter pts={selected.evolutionPoints} threshold={threshold} />}
+
+                <HamsterStatTraining
+                  entryId={selected.id}
+                  stage={selected.stage}
+                  name={selected.name}
+                  trainingPoints={selected.trainingPoints}
+                  trainedStats={selected.trainedStats}
+                />
               </div>
             )}
           </>

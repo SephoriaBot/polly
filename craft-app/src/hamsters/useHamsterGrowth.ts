@@ -10,6 +10,12 @@
 // traits/abilities are never removed — evolving only rolls a random
 // teen/final form (1 of 20, independent of the starter and of each other)
 // and appends 1-2 new combat abilities on top.
+//
+// Stat training: every point-earning event also awards 1 training point to
+// EVERY hamster in the collection (unlike evolution points, this includes
+// final-stage hamsters — training is the progression loop that keeps going
+// after evolution caps out). Points are spent permanently via allocateStat,
+// clamped to the stage's cap (see STAT_CAPS in battle.ts).
 
 import { useEffect, useState, useCallback, useRef } from "react";
 import { supabase } from "../lib/supabase"; // match your actual client path
@@ -18,8 +24,8 @@ import { rollRandomHamster, rollTeenForm, rollFinalForm } from "./hamsters";
 import type { Hamster, EvolutionStage } from "./hamsters";
 import { rollPersonality, rollAbilities, TEEN_ABILITIES, FINAL_ABILITIES } from "./personalities";
 import type { Personality } from "./personalities";
-import { rollWildHamster } from "./battle";
-import type { WildHamster } from "./battle";
+import { rollWildHamster, capFor } from "./battle";
+import type { WildHamster, TrainedStats } from "./battle";
 
 // NOTE: this hook does real Supabase reads/writes and hatches/evolves
 // hamsters as a side effect. It must only ever be instantiated ONCE in the
@@ -43,9 +49,17 @@ const POINTS = {
 // never stacks a second encounter on top of one you haven't dealt with yet.
 const WILD_ENCOUNTER_CHANCE = 0.18;
 
+const TRAINED_STAT_COLUMNS: Record<keyof TrainedStats, string> = {
+  hp: "trained_hp",
+  attack: "trained_attack",
+  defense: "trained_defense",
+  speed: "trained_speed",
+};
+
 interface HamsterCollectionEntry {
   id: number;
   hamsterId: string;
+  name: string | null;
   hatchedAt: string;
   source: string | null;
   personality: Personality | null;
@@ -54,6 +68,8 @@ interface HamsterCollectionEntry {
   teenFormId: string | null;
   finalFormId: string | null;
   abilities: string[];
+  trainingPoints: number;
+  trainedStats: TrainedStats;
 }
 
 export interface JustEvolved {
@@ -69,6 +85,11 @@ export interface PointsLogEntry {
   source: string;
   amount: number;
   createdAt: string;
+}
+
+export interface AllocateStatResult {
+  ok: boolean;
+  reason?: string;
 }
 
 export const SOURCE_LABELS: Record<string, { text: string; icon: IconName }> = {
@@ -105,12 +126,15 @@ export function useHamsterGrowthState() {
   const refreshCollection = useCallback(async () => {
     const { data } = await supabase
       .from("hamster_collection")
-      .select("id, hamster_id, hatched_at, source, personality, stage, evolution_points, teen_form_id, final_form_id, abilities")
+      .select(
+        "id, hamster_id, name, hatched_at, source, personality, stage, evolution_points, teen_form_id, final_form_id, abilities, training_points, trained_hp, trained_attack, trained_defense, trained_speed"
+      )
       .order("hatched_at", { ascending: false });
     setCollection(
       (data || []).map((r) => ({
         id: r.id,
         hamsterId: r.hamster_id,
+        name: r.name ?? null,
         hatchedAt: r.hatched_at,
         source: r.source,
         personality: r.personality,
@@ -119,6 +143,13 @@ export function useHamsterGrowthState() {
         teenFormId: r.teen_form_id,
         finalFormId: r.final_form_id,
         abilities: r.abilities || [],
+        trainingPoints: Number(r.training_points) || 0,
+        trainedStats: {
+          hp: Number(r.trained_hp) || 0,
+          attack: Number(r.trained_attack) || 0,
+          defense: Number(r.trained_defense) || 0,
+          speed: Number(r.trained_speed) || 0,
+        },
       }))
     );
   }, []);
@@ -186,6 +217,18 @@ export function useHamsterGrowthState() {
     [threshold]
   );
 
+  // Awards training points to EVERY hamster in the collection, including
+  // final-stage ones — unlike evolution points, training doesn't stop once
+  // a hamster is fully evolved, it just means there's less room left under
+  // the stage's cap. Points sit unspent until allocateStat is called.
+  const growTrainingPoints = useCallback(async (amount: number) => {
+    const { data } = await supabase.from("hamster_collection").select("id, training_points");
+    for (const row of data || []) {
+      const tp = (Number(row.training_points) || 0) + amount;
+      await supabase.from("hamster_collection").update({ training_points: tp }).eq("id", row.id);
+    }
+  }, []);
+
   // Rolls a chance to spawn a wild hamster whenever an accomplishment is
   // earned — same trigger points as nest/evolution growth, so it feels like
   // part of the same loop instead of a separate grind. Only spawns if you
@@ -243,7 +286,8 @@ export function useHamsterGrowthState() {
 
   // Adds points, hatching as many times as needed if a jump crosses the
   // threshold more than once, and persists everything. Also grows every
-  // existing hamster toward its next evolution at the same rate.
+  // existing hamster toward its next evolution at the same rate, and awards
+  // training points to the whole collection.
   const addPoints = useCallback(
     async (amount: number, source: string, currentPoints: number) => {
       let newPoints = currentPoints + amount;
@@ -261,6 +305,7 @@ export function useHamsterGrowthState() {
       }
 
       const evolved = await growCollection(amount);
+      await growTrainingPoints(amount);
       await checkWildEncounterSpawn();
 
       await supabase.from("hamster_growth").upsert({ id: 1, points: newPoints, threshold });
@@ -268,7 +313,7 @@ export function useHamsterGrowthState() {
       await refreshRecentPoints();
       return newPoints;
     },
-    [threshold, growCollection, refreshCollection, refreshRecentPoints, checkWildEncounterSpawn]
+    [threshold, growCollection, growTrainingPoints, refreshCollection, refreshRecentPoints, checkWildEncounterSpawn]
   );
 
   // The core check — call this whenever the app loads. It looks at what's
@@ -513,6 +558,52 @@ export function useHamsterGrowthState() {
     setWildEncounter(null);
   }, []);
 
+  // Renames a hamster. Empty/whitespace-only clears the name back to null
+  // (falls back to the default label in the UI). Capped at 24 chars to keep
+  // it readable in the small habitat cards.
+  const renameHamster = useCallback(
+    async (entryId: number, name: string) => {
+      const trimmed = name.trim().slice(0, 24);
+      await supabase.from("hamster_collection").update({ name: trimmed || null }).eq("id", entryId);
+      await refreshCollection();
+    },
+    [refreshCollection]
+  );
+
+  // Spends one training point on one stat, permanently. Re-reads the row
+  // fresh from Supabase first (rather than trusting local state) so a stat
+  // cap can never be exceeded by a stale evolution stage. Returns a reason
+  // string when it can't spend, for the UI to surface.
+  const allocateStat = useCallback(
+    async (entryId: number, stat: keyof TrainedStats): Promise<AllocateStatResult> => {
+      const { data: row } = await supabase
+        .from("hamster_collection")
+        .select("stage, training_points, trained_hp, trained_attack, trained_defense, trained_speed")
+        .eq("id", entryId)
+        .maybeSingle();
+
+      if (!row) return { ok: false, reason: "Hamster not found" };
+
+      const stage = (row.stage as EvolutionStage) || "baby";
+      const unspent = Number(row.training_points) || 0;
+      if (unspent <= 0) return { ok: false, reason: "No training points to spend yet" };
+
+      const column = TRAINED_STAT_COLUMNS[stat];
+      const current = Number((row as Record<string, unknown>)[column]) || 0;
+      const cap = capFor(stage, stat);
+      if (current >= cap) return { ok: false, reason: `Maxed out for ${stage} stage — evolve to raise the cap` };
+
+      await supabase
+        .from("hamster_collection")
+        .update({ [column]: current + 1, training_points: unspent - 1 })
+        .eq("id", entryId);
+
+      await refreshCollection();
+      return { ok: true };
+    },
+    [refreshCollection]
+  );
+
   return {
     loading,
     refreshing,
@@ -528,5 +619,7 @@ export function useHamsterGrowthState() {
     clearJustEvolved,
     wildEncounter,
     clearWildEncounter,
+    renameHamster,
+    allocateStat,
   };
 }

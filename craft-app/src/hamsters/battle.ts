@@ -9,6 +9,12 @@
 // derived deterministically from a hash of its own text — same ability
 // always contributes the same attack/defense/speed bump, no extra schema
 // needed, and the bonus can't be seen/gamed since it's just a hash.
+//
+// Stat training: on top of ability-derived stats, each hamster can have
+// permanent trained bonuses spent from training points earned the same way
+// as evolution points. Caps rise with evolution stage (see STAT_CAPS) so a
+// maxed-out baby can't out-stat a final-stage hamster by hoarding points —
+// it just means less room to spend until it evolves.
 
 import { HAMSTERS, TEEN_FORMS, FINAL_FORMS, rollTeenForm, rollFinalForm } from "./hamsters";
 import type { EvolutionStage } from "./hamsters";
@@ -20,6 +26,27 @@ export interface BattleStats {
   attack: number;
   defense: number;
   speed: number;
+}
+
+export interface TrainedStats {
+  hp: number;
+  attack: number;
+  defense: number;
+  speed: number;
+}
+
+export const EMPTY_TRAINED_STATS: TrainedStats = { hp: 0, attack: 0, defense: 0, speed: 0 };
+
+// Caps per evolution stage. HP gets a bigger cap than the other three since
+// base HP is already much larger (25/55/95) than base attack/defense/speed.
+export const STAT_CAPS: Record<EvolutionStage, TrainedStats> = {
+  baby: { hp: 20, attack: 10, defense: 10, speed: 10 },
+  teen: { hp: 50, attack: 25, defense: 25, speed: 25 },
+  final: { hp: 100, attack: 50, defense: 50, speed: 50 },
+};
+
+export function capFor(stage: EvolutionStage, stat: keyof TrainedStats): number {
+  return STAT_CAPS[stage][stat];
 }
 
 function hashString(str: string): number {
@@ -52,7 +79,15 @@ export function canBattle(stage: EvolutionStage): boolean {
   return stage !== "baby";
 }
 
-export function deriveBattleStats(stage: EvolutionStage, abilities: string[]): BattleStats {
+// trained defaults to EMPTY_TRAINED_STATS so every existing call site that
+// doesn't pass trained stats (wild hamsters, anything untrained) still
+// works exactly as before. Trained bonuses are clamped to the stage's cap
+// here too, as a defensive backstop on top of the cap check at spend-time.
+export function deriveBattleStats(
+  stage: EvolutionStage,
+  abilities: string[],
+  trained: TrainedStats = EMPTY_TRAINED_STATS
+): BattleStats {
   const base = BASE_STATS[stage];
   let attack = base.attack;
   let defense = base.defense;
@@ -63,7 +98,13 @@ export function deriveBattleStats(stage: EvolutionStage, abilities: string[]): B
     defense += b.def;
     speed += b.spd;
   }
-  return { hp: base.hp, attack, defense, speed };
+  const cap = STAT_CAPS[stage];
+  return {
+    hp: base.hp + Math.min(trained.hp, cap.hp),
+    attack: attack + Math.min(trained.attack, cap.attack),
+    defense: defense + Math.min(trained.defense, cap.defense),
+    speed: speed + Math.min(trained.speed, cap.speed),
+  };
 }
 
 // Abilities are stored as "Name — spooky description". Only the name is
