@@ -4,7 +4,6 @@ import { SOURCE_LABELS } from "./useHamsterGrowth";
 import Icon from "../components/Icon";
 import hamsterHatchCrack from "../assets/illustrations/hamster-hatch-crack.PNG";
 import hamsterHatchRibbon from "../assets/illustrations/hamster-hatch-ribbon.PNG";
-import Icon, { type IconName } from '../components/Icon';
 
 function NestEgg({ progressPct }: { progressPct: number }) {
   const showSmallCrack = progressPct >= 35;
