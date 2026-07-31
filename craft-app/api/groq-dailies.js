@@ -23,7 +23,7 @@ export default async function handler(req, res) {
 
   const apiKey = process.env.VITE_GROQ_API_KEY;
   if (!apiKey) {
-    return res.status(500).json({ error: 'API key not configured' });
+    return res.status(500).json({ error: 'API key is not configured' });
   }
 
   const prompt = `Share interesting facts and tidbits about: "${subject}".
