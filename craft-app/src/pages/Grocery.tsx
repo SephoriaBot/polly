@@ -746,7 +746,7 @@ export default function Grocery() {
             <Icon name="icon-listchecks" size={14} /> Build Basics List
           </button>
           <button className="btn btn-primary" onClick={buildSmartCart}>
-            <Icon name="groq_10" size={14} /> Build Smart Cart
+            <Icon name="groq_10" size={15} /> Build Smart Cart
           </button>
           <button className="btn btn-secondary" onClick={refreshSmartCart}>
             <Icon name="groq_4" size={14} /> Refresh
@@ -1117,7 +1117,7 @@ export default function Grocery() {
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 420, overflowY: 'auto' }}>
                 {have.length === 0
-                  ? <p style={{ textAlign: 'center', fontSize: '0.78rem', color: 'var(--ink-muted)', padding: '1rem' }}>Nothing checked off yet.</p>
+                  ? <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Icon name="empty_jar" size={13} />Nothing checked off yet!</span>
                   : have.map(item => (
                     <div key={item.id} style={itemRowStyle(true)}>
                       <input type="checkbox" checked onChange={() => toggle(item.id, item.checked)} style={{ accentColor: 'var(--pink)', flexShrink: 0 }} />
@@ -1140,7 +1140,7 @@ export default function Grocery() {
         {/* smart cart */}
         <div className="card">
           <div className="section-label" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Icon name="groq_10" size={13} /> Smart Cart</span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Icon name="groq_10" size={15} /> Smart Cart</span>
             <span style={{ fontWeight: 500 }}>{cart.length} items</span>
           </div>
 

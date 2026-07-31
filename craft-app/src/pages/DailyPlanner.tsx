@@ -297,12 +297,10 @@ export default function DailyPlanner() {
                           alignItems: 'center', justifyContent: 'center',
                         }}
                       >
-                        <Icon name="icon-heart"
-                          size={21}
-                          strokeWidth={1.75}
-                          color={task.done ? 'var(--pink-dark)' : 'var(--border)'}
-                          fill={task.done ? 'var(--pink-dark)' : 'none'}
-                        />
+                        {task.done
+                          ? <Icon name="groq_7" size={17} style={{ color: 'var(--pink-dark)' }} />
+                          : <Icon name="icon-circle" size={17} style={{ color: 'var(--border)' }} />
+                        }
                       </button>
 
                       <span style={{
