@@ -14,7 +14,8 @@ export type IconName =
   | 'notepad-pencil' | 'piggy-bank' | 'potion' | 'potted-plant' | 'settings-gear'
   | 'sparkle-single' | 'sparkles-cluster' | 'spellbook' | 'sun-cloud' | 'trash-can'
   | 'trophy' | 'washing-machine' | 'aries' | 'taurus' | 'gemini' | 'cancer' | 'leo' | 'virgo' | 'libra' | 'scorpio' 
-  | 'sagittarius' | 'capricorn' | 'aquarius' | 'pisces';
+  | 'sagittarius' | 'capricorn' | 'aquarius' | 'pisces'| 'groq_1' | 'groq_2' | 'groq_3' | 'groq_4' 
+  | 'groq_5' | 'groq_6' | 'groq_7' ;
 
 interface IconProps {
   name: IconName;

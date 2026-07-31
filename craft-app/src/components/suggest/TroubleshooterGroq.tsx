@@ -1,26 +1,17 @@
 import { useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import Icon from '../Icon'
-import {
-  Wrench,
-  X,
-  RotateCcw,
-  Sparkles,
-  ChevronLeft,
-  ChevronRight,
-  CheckCircle2,
-} from 'lucide-react'
 import hourglassImg from '../../assets/illustrations/hourglass.png'
 
 interface QuizOption { value: string; label: string }
 
 const CATEGORIES: QuizOption[] = [
-  { value: 'car', label: '🚗 Car' },
-  { value: 'appliance', label: '🏠 Appliance' },
-  { value: 'pet', label: '🐶 Pet' },
-  { value: 'plant', label: '🌱 Plant' },
-  { value: 'computer', label: '💻 Computer' },
-  { value: 'phone', label: '📱 Phone / Tablet' },
+  { value: 'car', label: <Icon name="icon_car" size={16} />'Car' },
+  { value: 'appliance', label: <Icon name="icon_toaster" size={16} /> 'Appliance' },
+  { value: 'pet', label: <Icon name="icon_housepet" size={16} /> 'Pet' },
+  { value: 'plant', label: <Icon name="icon_plant" size={16} />'Plant' },
+  { value: 'computer', label: <Icon name="icon_computer" size={16} />'Computer' },
+  { value: 'phone', label: <Icon name="icon_cellphone" size={16} />'Phone / Tablet' },
 ]
 
 const CAR_SYMPTOMS = [
@@ -283,11 +274,10 @@ const progressPct = ((step + 1) / STEP_COUNT) * 100
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal" style={{ maxWidth: 580 }} onClick={e => e.stopPropagation()}>
-        <div className="modal-header" style={{ background: 'var(--blush)', color: 'var(--pink-dark)' }}>
+        <div className="modal-header" style={{ color: 'var(--pink-dark)' }}>
           <span style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 700, fontSize: '0.95rem' }}>
-            <Wrench size={17} /> Troubleshooter Groq
+            <Icon name="groq_1" size={16} /> Troubleshooter Groq
           </span>
-          <button className="close-btn" onClick={onClose}><X size={16} /></button>
         </div>
 
         <div className="modal-body" style={{ maxHeight: '70vh', overflowY: 'auto' }}>
@@ -298,7 +288,7 @@ const progressPct = ((step + 1) / STEP_COUNT) * 100
             background: 'var(--blush)', border: '1.5px solid var(--border)',
             fontSize: '0.76rem', color: 'var(--ink-muted)', lineHeight: 1.5,
           }}>
-            <Icon name="wrench" size={16} /> General troubleshooting guidance only. For safety-critical issues or professional repairs, contact a qualified professional.
+            <Icon name="groq_1" size={16} /> General troubleshooting guidance only. For safety-critical issues or professional repairs, contact a qualified professional.
           </div>
 
           {wizardState === 'quiz' && (
@@ -437,7 +427,7 @@ const progressPct = ((step + 1) / STEP_COUNT) * 100
                   disabled={step === 0}
                   onClick={() => setStep(s => s - 1)}
                 >
-                  <ChevronLeft size={14} /> Back
+                  <Icon name="groq_5" size={14} /> Back
                 </button>
                 {step < STEP_COUNT - 1 ? (
                   <button
@@ -446,11 +436,11 @@ const progressPct = ((step + 1) / STEP_COUNT) * 100
                     disabled={!canAdvance()}
                     onClick={() => setStep(s => s + 1)}
                   >
-                    Next <ChevronRight size={14} />
+                    Next <Icon name="groq_6" size={14} />
                   </button>
                 ) : (
                   <button className="btn btn-primary" style={{ flex: 1, justifyContent: 'center' }} onClick={submit}>
-                    <Sparkles size={14} /> Troubleshoot
+                    <Icon name="groq_2" size={14} /> Troubleshoot
                   </button>
                 )}
               </div>
@@ -604,7 +594,7 @@ className="btn btn-ghost"
 style={{width:'100%',justifyContent:'center'}}
 onClick={reset}
 >
-<RotateCcw size={13}/>
+<Icon name="groq_4" size={13}/>
 Start Over
 </button>
 
