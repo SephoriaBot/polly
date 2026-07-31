@@ -6,6 +6,7 @@ import DailyAlmanac from "../components/DailyAlmanac";
 import sleepingNestImg from '../assets/illustrations/sleeping_nest.png';
 import WeatherBadge from '../components/WeatherBadge';
 import GroqDailies from '../groqDailies/GroqDailies';
+import TroubleshooterGroq from '../components/suggest/TroubleshooterGroq';
 
 interface Focus {
   id: string;
@@ -29,17 +30,6 @@ function getGreeting() {
   return 'Winding down';
 }
 
-function Sprig() {
-  return (
-    <svg className="sprig" width="30" height="30" viewBox="0 0 30 30" fill="none">
-      <path d="M15 27 C14 19 14 12 15 3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
-      <path d="M15 18 C12 16 9 16 7 13" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
-      <path d="M15 12 C18 10 20 10 22 7" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
-      <circle cx="15" cy="4" r="2.2" fill="currentColor" />
-    </svg>
-  );
-}
-
 function StitchDivider() {
   return (
     <div className="stitch-divider">
@@ -49,8 +39,6 @@ function StitchDivider() {
     </div>
   );
 }
-
-
 
 export default function Dashboard() {
   const [focuses, setFocuses] = useState<Focus[]>([]);
@@ -270,6 +258,13 @@ async function loadAll() {
         </section>
 
         <Lantern variant="divider" />
+
+         {/* ── TROUBLESHOOTER GROQ ── */}
+          <section>
+          <TroubleshooterGroq />
+          </section>
+
+          <Lantern variant="divider" />
 
          {/* ── GROQ DAILIES FEED ── */}
           <section>
