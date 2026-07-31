@@ -36,12 +36,13 @@ import type { WildHamster, TrainedStats } from "./battle";
 // caused two hamsters to hatch from a single accomplishment.
 
 const POINTS = {
-  bill_paid_on_time: 10,
+  bill_paid_on_time: 15,
   debt_payment_logged: 12,
   debt_paid_off: 40,
   savings_contribution: 8,
   tracker_log_entry: 6,
-  daily_task_list_complete: 20,
+  daily_task_list_complete: 10,
+  daily_focuses_complete: 20,
 } as const;
 
 // Chance, per point-earning event, that a wild hamster shows up. Only rolls
@@ -99,6 +100,7 @@ export const SOURCE_LABELS: Record<string, { text: string; icon: IconName }> = {
   savings_contribution: { text: "Savings contribution", icon: "piggy-bank" },
   tracker_log_entry: { text: "Tracker log", icon: "notebook-pen" },
   daily_task_list_complete: { text: "Full task list", icon: "clipboard-check" },
+  daily_focuses_complete: { text: "All focuses completed", icon: "clipboard-check"},
 };
 
 export function useHamsterGrowthState() {
@@ -321,7 +323,7 @@ export function useHamsterGrowthState() {
   const runGrowthCheck = useCallback(async () => {
     let { data: lastCheck } = await supabase
       .from("hamster_last_check")
-      .select("last_bill_check, last_log_check, last_tracker_check, debt_snapshot, tasks_all_done_awarded")
+      .select("last_bill_check, last_log_check, last_tracker_check, focus_all_done_awarded, debt_snapshot, tasks_all_done_awarded")
       .eq("id", 1)
       .maybeSingle();
 
@@ -336,6 +338,7 @@ export function useHamsterGrowthState() {
         last_bill_check: "2000-01-01T00:00:00.000Z",
         last_log_check: "2000-01-01T00:00:00.000Z",
         last_tracker_check: "2000-01-01T00:00:00.000Z",
+        focus_all_done_awarded: false,
         debt_snapshot: {},
         tasks_all_done_awarded: false,
       };
@@ -441,6 +444,27 @@ export function useHamsterGrowthState() {
       tasksAllDoneAwarded = false;
     }
 
+    // 6. Full focus list for the day completed
+    const { data: dailyFocuses } = await supabase
+    .from("focuses")
+    .select("is_done");
+
+const totalFocuses = (dailyFocuses || []).length;
+const doneFocuses = (dailyFocuses || []).filter((f) => f.done).length;
+const allFinished =  totalFocuses > 0 && doneFocuses === totalFocuses;
+const focusAllDoneAwarded = lastCheck.focus_all_done_awarded;
+ 
+if (allFinished && !focusAllDoneAwarded) {
+  runningPoints = await addPoints(
+    POINTS.daily_focuses_complete,
+    "daily_focuses_complete",
+    runningPoints
+  );
+  focusAllDoneAwarded = true;
+} else if (!allDone) {
+  focusAllDoneAwarded = false;
+}
+
     setPoints(runningPoints);
 
     await supabase
@@ -450,6 +474,7 @@ export function useHamsterGrowthState() {
         last_bill_check: now,
         last_log_check: now,
         last_tracker_check: now,
+        focus_all_done_awarded: focusAllDoneAwarded,
         debt_snapshot: newSnapshot,
         tasks_all_done_awarded: tasksAllDoneAwarded,
       });
