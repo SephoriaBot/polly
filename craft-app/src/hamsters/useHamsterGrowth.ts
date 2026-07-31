@@ -445,25 +445,23 @@ export function useHamsterGrowthState() {
     }
 
     // 6. Full focus list for the day completed
-    const { data: dailyFocuses } = await supabase
-    .from("focuses")
-    .select("is_done");
+    const { data: dailyFocuses } = await supabase.from("focuses").select("is_done");
 
-const totalFocuses = (dailyFocuses || []).length;
-const doneFocuses = (dailyFocuses || []).filter((f) => f.done).length;
-const allFinished =  totalFocuses > 0 && doneFocuses === totalFocuses;
-const focusAllDoneAwarded = lastCheck.focus_all_done_awarded;
- 
-if (allFinished && !focusAllDoneAwarded) {
-  runningPoints = await addPoints(
-    POINTS.daily_focuses_complete,
-    "daily_focuses_complete",
-    runningPoints
-  );
-  focusAllDoneAwarded = true;
-} else if (!allDone) {
-  focusAllDoneAwarded = false;
-}
+    const totalFocuses = (dailyFocuses || []).length;
+    const doneFocuses = (dailyFocuses || []).filter((f) => f.done).length;
+    const allFinished =  totalFocuses > 0 && doneFocuses === totalFocuses;
+    const focusAllDoneAwarded = lastCheck.focus_all_done_awarded;
+    
+    if (allFinished && !focusAllDoneAwarded) {
+      runningPoints = await addPoints(
+        POINTS.daily_focuses_complete,
+        "daily_focuses_complete",
+        runningPoints
+      );
+      focusAllDoneAwarded = true;
+    } else if (!allFinished) {
+      focusAllDoneAwarded = false;
+    }
 
     setPoints(runningPoints);
 
