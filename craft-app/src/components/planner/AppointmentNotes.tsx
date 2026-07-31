@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { RotateCcw, Plus, X, Circle, CheckCircle2 } from 'lucide-react';
 import { useAppointmentNotes } from '../../hooks/useAppointmentNotes';
 import type { AppointmentNoteItem, AppointmentNoteType } from '../../types/appointmentNotes';
 import styles from './AppointmentNotes.module.css'; // NOTE: adjust to your CSS token setup
+import Icon, { type IconName } from '../Icon';
 
 interface AppointmentNotesProps {
   appointmentId: string;
@@ -68,7 +68,7 @@ export default function AppointmentNotes({
       {carryOverItems.length > 0 && (
         <section className={`${styles.section} ${styles.carryOverSection}`}>
           <div className={styles.sectionHeader}>
-            <RotateCcw size={14} />
+            <Icon name="icon-refreshcw" size={14} />
             <span>Still open from last time</span>
           </div>
           {carryOverItems.map((item) => (
@@ -99,7 +99,7 @@ export default function AppointmentNotes({
               aria-label="Mark covered"
               type="button"
             >
-              <Circle size={18} />
+              <Icon name="icon-circle" size={18} />
             </button>
             <span className={styles.itemText}>{item.content}</span>
             <button
@@ -108,7 +108,7 @@ export default function AppointmentNotes({
               aria-label="Delete"
               type="button"
             >
-              <X size={15} />
+              <Icon name="groq_3" size={15} />
             </button>
           </div>
         ))}
@@ -122,7 +122,7 @@ export default function AppointmentNotes({
             placeholder="Add something to bring up…"
           />
           <button className={styles.addButton} onClick={handleAddBringUp} aria-label="Add" type="button">
-            <Plus size={18} />
+            <Icon name="icon-plus" size={18} />
           </button>
         </div>
       </section>
@@ -142,7 +142,7 @@ export default function AppointmentNotes({
                   aria-label="Mark not covered"
                   type="button"
                 >
-                  <CheckCircle2 size={18} className={styles.coveredIcon} />
+                  <Icon name="groq_7" size={18} className={styles.coveredIcon} />
                 </button>
                 <span className={`${styles.itemText} ${styles.strikethrough}`}>{item.content}</span>
                 <button
@@ -151,7 +151,7 @@ export default function AppointmentNotes({
                   aria-label="Delete"
                   type="button"
                 >
-                  <X size={15} />
+                  <Icon name="groq_3" size={15} />
                 </button>
               </div>
 
@@ -192,9 +192,9 @@ export default function AppointmentNotes({
               type="button"
             >
               {item.status === 'done' ? (
-                <CheckCircle2 size={18} className={styles.coveredIcon} />
+                <Icon name="groq_7" size={18} className={styles.coveredIcon} />
               ) : (
-                <Circle size={18} />
+                <Icon name="icon-circle" size={18} />
               )}
             </button>
             <span
@@ -208,7 +208,7 @@ export default function AppointmentNotes({
               aria-label="Delete"
               type="button"
             >
-              <X size={15} />
+              <Icon name="groq_3" size={15} />
             </button>
           </div>
         ))}
@@ -222,7 +222,7 @@ export default function AppointmentNotes({
             placeholder="Add homework…"
           />
           <button className={styles.addButton} onClick={handleAddHomework} aria-label="Add homework" type="button">
-            <Plus size={18} />
+            <Icon name="icon-plus" size={18} />
           </button>
         </div>
       </section>

@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
-import { Plus, Sprout, Archive, ArrowLeft } from 'lucide-react';
 import CreateAppointmentNote from './CreateAppointmentNote';
 import AppointmentNotes from './AppointmentNotes';
 import UnlinkedNotes from './UnlinkedNotes';
 import { useUnlinkedAppointmentNotes } from '../../hooks/useUnlinkedAppointmentNotes';
 import type { AppointmentNoteType } from '../../types/appointmentNotes';
 import styles from './AppointmentNotesPanel.module.css';
+import Icon, { type IconName } from '../Icon';
 
 export interface AppointmentNoteSelection {
   appointmentId: string;
@@ -81,24 +81,24 @@ export default function AppointmentNotesPanel({
   return (
     <div className={styles.wrapper} ref={wrapperRef}>
       <div className={styles.header}>
-        <Sprout size={20} className={styles.headerIcon} />
+        <Icon name="icon-flower" size={20} className={styles.headerIcon} />
         <span className={styles.headerLabel}>Appointment Notes</span>
       </div>
 
       <div className={styles.actionRow}>
         {inSubView ? (
           <button type="button" className={styles.backTopButton} onClick={goBack}>
-            <ArrowLeft size={14} /> Back
+            <Icon name="icon-arrowleft" size={14} /> Back
           </button>
         ) : (
           <>
             <button type="button" className={styles.newButton} onClick={() => setCreating(true)}>
-              <Plus size={14} /> New note
+              <Icon name="icon-plus" size={14} /> New note
             </button>
 
             {!unlinked.loading && unlinked.items.length > 0 && (
               <button type="button" className={styles.unlinkedButton} onClick={openUnlinked}>
-                <Archive size={14} /> Unlinked notes ({unlinked.items.length})
+                <Icon name="icon-archive" size={14} /> Unlinked notes ({unlinked.items.length})
               </button>
             )}
           </>

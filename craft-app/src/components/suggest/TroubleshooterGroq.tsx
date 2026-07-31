@@ -3,15 +3,15 @@ import { supabase } from '../../lib/supabase'
 import Icon from '../Icon'
 import hourglassImg from '../../assets/illustrations/hourglass.png'
 
-interface QuizOption { value: string; label: string }
+interface QuizOption { value: string; label: ReactNode }
 
 const CATEGORIES: QuizOption[] = [
-  { value: 'car', label: <Icon name="icon_car" size={16} />'Car' },
-  { value: 'appliance', label: <Icon name="icon_toaster" size={16} /> 'Appliance' },
-  { value: 'pet', label: <Icon name="icon_housepet" size={16} /> 'Pet' },
-  { value: 'plant', label: <Icon name="icon_plant" size={16} />'Plant' },
-  { value: 'computer', label: <Icon name="icon_computer" size={16} />'Computer' },
-  { value: 'phone', label: <Icon name="icon_cellphone" size={16} />'Phone / Tablet' },
+  { value: 'car', label: <><Icon name="icon_car" size={16} /> Car</> },
+  { value: 'appliance', label: <><Icon name="icon_toaster" size={16} /> Appliance</> },
+  { value: 'pet', label: <><Icon name="icon_housepet" size={16} /> Pet</> },
+  { value: 'plant', label: <><Icon name="icon_plant" size={16} /> Plant</> },
+  { value: 'computer', label: <><Icon name="icon_computer" size={16} /> Computer</> },
+  { value: 'phone', label: <><Icon name="icon_cellphone" size={16} /> Phone / Tablet</> },
 ]
 
 const CAR_SYMPTOMS = [

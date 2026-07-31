@@ -2,10 +2,6 @@ import React, { useState, useEffect } from 'react';
 import Icon from '../components/Icon';
 import type { WeekPlan } from '../types/legacy';
 import { supabase } from '../lib/supabase';
-import {
-  SlidersHorizontal, Sparkles, Search, AlertCircle, Database, Salad,
-  Loader2, Check, Plus, X, Heart, ChefHat, Trash2, ShoppingCart, CalendarDays,
-} from 'lucide-react';
 import DrDietGroq from '../components/suggest/DrDietGroq';
 import RecipeModal from '../components/meals/RecipeModal';
 import teaCupImg from '../assets/illustrations/tea_cup.png';
@@ -225,13 +221,13 @@ export default function Meals() {
         <div className="card" style={{ padding: 8 }}>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
             <button style={chipStyle(tab === 'week')} onClick={() => setTab('week')}>
-              <CalendarDays size={12} style={{ marginRight: 4, verticalAlign: -1 }} /> This Week
+              <Icon name="icon-calendardays" size={12} style={{ marginRight: 4, verticalAlign: -1 }} /> This Week
             </button>
             <button style={chipStyle(tab === 'discover')} onClick={() => setTab('discover')}>
-              <Sparkles size={12} style={{ marginRight: 4, verticalAlign: -1 }} /> Discover
+              <Icon name="groq_2" size={12} style={{ marginRight: 4, verticalAlign: -1 }} /> Discover
             </button>
             <button style={chipStyle(tab === 'saved')} onClick={() => setTab('saved')}>
-              <Heart size={12} style={{ marginRight: 4, verticalAlign: -1 }} /> Saved Meals
+              <Icon name="icon-heart" size={12} style={{ marginRight: 4, verticalAlign: -1 }} /> Saved Meals
             </button>
           </div>
         </div>
@@ -332,7 +328,7 @@ function WeekTab({
                     </span>
                     {meal
                       ? <span style={{ fontSize: '0.6rem', lineHeight: 1.3 }}>{meal}</span>
-                      : <Plus size={9} style={{ opacity: 0.4 }} />}
+                      : <Icon name="icon-plus" size={9} style={{ opacity: 0.4 }} />}
                   </div>
                 )
               })}
@@ -346,7 +342,7 @@ function WeekTab({
           <div className="modal" style={{ maxWidth: 340, maxHeight: '70vh' }} onClick={e => e.stopPropagation()}>
             <div className="modal-header" style={{ background: 'var(--blush)', color: 'var(--pink-dark)' }}>
               <span style={{ fontSize: '0.85rem', fontWeight: 700 }}>Pick a meal for {selecting.day} {selecting.type}</span>
-              <button className="close-btn" onClick={onCloseSelect}><X size={16} /></button>
+              <button className="close-btn" onClick={onCloseSelect}><Icon name="groq_3" size={16} /></button>
             </div>
             <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
               {savedMeals.length === 0 && (
@@ -503,23 +499,23 @@ function DiscoverTab({ onOpenRecipe, onSaved }: { onOpenRecipe: (id: number) => 
           </div>
         </div>
         <button className="btn btn-primary" onClick={() => setShowDietModal(true)}>
-          <Sparkles size={14} /> Ask Dr. Groq
+          <Icon name="groq_2" size={14} /> Ask Dr. Groq
         </button>
       </div>
 
       <div className="card">
         <h2 style={{ fontSize: '1rem', display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-          <SlidersHorizontal size={16} style={{ color: 'var(--pink)' }} /> Find Recipes That Work for You
+          <Icon name="icon-slidershorizontal" size={16} style={{ color: 'var(--pink)' }} /> Find Recipes That Work for You
         </h2>
         <p style={{ fontSize: '0.78rem', color: 'var(--ink-muted)', marginBottom: 12 }}>Search by name, or get a surprise pick</p>
 
         <div style={{ marginBottom: 10 }}>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
             <button style={chipStyle(mode === 'random')} onClick={() => switchMode('random')}>
-              <Sparkles size={12} style={{ marginRight: 4, verticalAlign: -1 }} /> Surprise Me
+              <Icon name="groq_2" size={12} style={{ marginRight: 4, verticalAlign: -1 }} /> Surprise Me
             </button>
             <button style={chipStyle(mode === 'search')} onClick={() => switchMode('search')}>
-              <Search size={12} style={{ marginRight: 4, verticalAlign: -1 }} /> Search
+              <Icon name="icon-search" size={12} style={{ marginRight: 4, verticalAlign: -1 }} /> Search
             </button>
           </div>
         </div>
@@ -587,10 +583,10 @@ function DiscoverTab({ onOpenRecipe, onSaved }: { onOpenRecipe: (id: number) => 
 
         <button className="btn btn-primary" onClick={fetchRecipes} disabled={loading} style={{ marginTop: '0.5rem' }}>
           {loading
-            ? <><Loader2 size={14} style={{ animation: 'mealsSpin 0.7s linear infinite' }} /> Loading...</>
+            ? <><Icon name="icon-loader2" size={14} style={{ animation: 'mealsSpin 0.7s linear infinite' }} /> Loading...</>
             : mode === 'search'
-              ? <><Search size={14} /> Search Recipes</>
-              : <><Sparkles size={14} /> Surprise Me</>}
+              ? <><Icon name="icon-search" size={14} /> Search Recipes</>
+              : <><Icon name="groq_2" size={14} /> Surprise Me</>}
         </button>
       </div>
 
@@ -614,7 +610,7 @@ function DiscoverTab({ onOpenRecipe, onSaved }: { onOpenRecipe: (id: number) => 
             background: 'var(--pink-light)', color: 'var(--pink-dark)',
             fontSize: '0.68rem', fontWeight: 700, padding: '3px 10px', borderRadius: 999,
           }}>
-            <Database size={11} /> Recipes from Spoonacular
+            <Icon name="icon-database" size={11} /> Recipes from Spoonacular
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 10 }}>
             {meals.map(m => (
@@ -648,10 +644,10 @@ function DiscoverTab({ onOpenRecipe, onSaved }: { onOpenRecipe: (id: number) => 
                     disabled={saved.has(m.id) || savingId === m.id}
                   >
                     {saved.has(m.id)
-                      ? <><Check size={12} /> Saved!</>
+                      ? <><Icon name="groq_8" size={12} /> Saved!</>
                       : savingId === m.id
-                        ? <><Loader2 size={12} style={{ animation: 'mealsSpin 0.7s linear infinite' }} /> Saving...</>
-                        : <><Plus size={12} /> Save to My Meals</>}
+                        ? <><Icon name="icon-loader2" size={12} style={{ animation: 'mealsSpin 0.7s linear infinite' }} /> Saving...</>
+                        : <><Icon name="icon-plus" size={12} /> Save to My Meals</>}
                   </button>
                 </div>
               </div>
@@ -662,7 +658,7 @@ function DiscoverTab({ onOpenRecipe, onSaved }: { onOpenRecipe: (id: number) => 
 
       {!loading && !error && meals.length === 0 && (
         <div className="empty-state">
-          <Salad size={20} />
+          <Icon name="groq_9" size={20} />
           {mode === 'search' ? 'Search for a recipe by name' : 'Hit Surprise Me for a random pick'}
         </div>
       )}
@@ -691,7 +687,7 @@ function SavedTab({
   if (savedMeals.length === 0) {
     return (
       <div className="empty-state">
-        <Salad size={20} />
+        <Icon name="groq_9" size={20} />
         No saved meals yet
         <button className="btn btn-secondary btn-sm" style={{ marginLeft: 8 }} onClick={onGoDiscover}>Find some</button>
       </div>
@@ -712,7 +708,7 @@ function SavedTab({
                 onClick={() => onDelete(m.id)}
                 title="Delete meal"
               >
-                <Trash2 size={12} />
+                <Icon name="icon-trash2" size={12} />
               </button>
             </div>
             <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
@@ -727,7 +723,7 @@ function SavedTab({
                 disabled={!m.spoonacular_id}
                 title={!m.spoonacular_id ? 'No recipe details saved for this meal' : ''}
               >
-                <ChefHat size={12} /> Cook This
+                <Icon name="icon-chefhat" size={12} /> Cook This
               </button>
               <button
                 className="btn btn-primary"
@@ -737,10 +733,10 @@ function SavedTab({
                 title={!hasIngredients ? 'No ingredients saved for this meal' : ''}
               >
                 {addedId === m.id
-                  ? <><Check size={12} /> Added!</>
+                  ? <><Icon name="groq_8" size={12} /> Added!</>
                   : addingId === m.id
-                    ? <><Loader2 size={12} style={{ animation: 'mealsSpin 0.7s linear infinite' }} /> Adding...</>
-                    : <><ShoppingCart size={12} /> Add to List</>}
+                    ? <><Icon name="icon-loader2" size={12} style={{ animation: 'mealsSpin 0.7s linear infinite' }} /> Adding...</>
+                    : <><Icon name="icon-plus" size={12} /> Add to List</>}
               </button>
             </div>
           </div>

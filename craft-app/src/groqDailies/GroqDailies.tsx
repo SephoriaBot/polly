@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Sparkles, Plus, X } from 'lucide-react';
 import { useGroqDailies } from './useGroqDailies';
+import Icon, { type IconName } from '../components/Icon';
 
 export default function GroqDailies() {
   const { feeds, loadingSubjects, addSubject, removeSubject } = useGroqDailies();
@@ -37,7 +37,7 @@ export default function GroqDailies() {
       }}
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
-        <Sparkles size={20} color="var(--color-pink, #e8a2b0)" />
+        <Icon name="groq_2" size={20} color="var(--color-pink, #e8a2b0)" />
         <h2
           style={{
             fontFamily: 'var(--font-heading, "Fraunces", serif)',
@@ -82,7 +82,7 @@ export default function GroqDailies() {
             cursor: 'pointer',
           }}
         >
-          <Plus size={16} /> Add
+          <Icon name="icon-plus" size={16} /> Add
         </button>
       </div>
 
@@ -155,7 +155,7 @@ export default function GroqDailies() {
                   aria-label={`Remove ${activeFeed.subject.subject}`}
                   style={{ marginLeft: 'auto', border: 'none', background: 'transparent', cursor: 'pointer', opacity: 0.5 }}
                 >
-                  <X size={14} />
+                  <Icon name="groq_3" size={14} />
                 </button>
               </div>
 

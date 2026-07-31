@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
-import { RefreshCw } from "lucide-react";
 import { useHamsterGrowth } from "./HamsterGrowthContext";
 import { SOURCE_LABELS } from "./useHamsterGrowth";
 import Icon from "../components/Icon";
 import hamsterHatchCrack from "../assets/illustrations/hamster-hatch-crack.PNG";
 import hamsterHatchRibbon from "../assets/illustrations/hamster-hatch-ribbon.PNG";
+import Icon, { type IconName } from '../components/Icon';
 
 function NestEgg({ progressPct }: { progressPct: number }) {
   const showSmallCrack = progressPct >= 35;
@@ -127,7 +127,7 @@ export default function HamsterNest() {
               opacity: refreshing ? 0.6 : 1,
             }}
           >
-            <RefreshCw
+            <Icon name="icon-refreshcw"
               size={13}
               color="var(--pink-dark)"
               style={refreshing ? { animation: "hamsterRefreshSpin 0.8s linear infinite" } : undefined}

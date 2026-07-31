@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
-import { Heart } from 'lucide-react';
 import Lantern from "../components/Lantern";
 import DailyAlmanac from "../components/DailyAlmanac";
 import sleepingNestImg from '../assets/illustrations/sleeping_nest.png';
 import WeatherBadge from '../components/WeatherBadge';
 import GroqDailies from '../groqDailies/GroqDailies';
 import TroubleshooterGroq from '../components/suggest/TroubleshooterGroq';
+import Icon, { type IconName } from '../components/Icon';
 
 interface Focus {
   id: string;
@@ -203,7 +203,7 @@ async function loadAll() {
                           alignItems: 'center', justifyContent: 'center',
                         }}
                       >
-                        <Heart
+                        <Icon name="icon-heart"
                           size={21}
                           strokeWidth={1.75}
                           color={f.completed ? 'var(--pink-dark)' : 'var(--border)'}

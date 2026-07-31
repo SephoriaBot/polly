@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
-import { ChefHat, AlertCircle, Check, ArrowLeft, ArrowRight, X, ShoppingCart, Loader2 } from 'lucide-react'
+import { ArrowRight } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
+import Icon, { type IconName } from '../Icon';
 
 const CONVERSIONS = {
   us: [
@@ -191,9 +192,9 @@ export default function RecipeModal({ mealId, onClose }: RecipeModalProps) {
       <div className="modal" style={{ maxWidth: 760, width: '95%', maxHeight: '90vh', overflowY: 'auto', padding: 0 }} onClick={e => e.stopPropagation()}>
         <div className="modal-header" style={{ background: 'var(--blush)', color: 'var(--pink-dark)', position: 'sticky', top: 0, zIndex: 1 }}>
           <span style={{ fontSize: '0.85rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6 }}>
-            <ChefHat size={16} /> {meal?.title || 'Recipe'}
+            <Icon name="icon-chefhat" size={16} /> {meal?.title || 'Recipe'}
           </span>
-          <button className="close-btn" onClick={onClose}><X size={16} /></button>
+          <button className="close-btn" onClick={onClose}><Icon name="groq_3" size={16} /></button>
         </div>
 
         {loading && (
@@ -209,7 +210,7 @@ export default function RecipeModal({ mealId, onClose }: RecipeModalProps) {
 
         {error && (
           <div style={{ textAlign: 'center', padding: '48px 20px', color: 'var(--danger)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
-            <AlertCircle size={20} />
+            <Icon name="icon-alertcircle" size={20} />
             <span style={{ fontSize: '0.85rem' }}>{error}</span>
           </div>
         )}
@@ -240,10 +241,10 @@ export default function RecipeModal({ mealId, onClose }: RecipeModalProps) {
                 disabled={addingToCart || addedToCart}
               >
                 {addedToCart
-                  ? <><Check size={13} /> Added!</>
+                  ? <><Icon name="groq_7" size={13} /> Added!</>
                   : addingToCart
-                    ? <><Loader2 size={13} style={{ animation: 'cookSpin 0.7s linear infinite' }} /> Adding...</>
-                    : <><ShoppingCart size={13} /> Add missing to cart</>}
+                    ? <><Icon name="icon-loader2" size={13} style={{ animation: 'cookSpin 0.7s linear infinite' }} /> Adding...</>
+                    : <><Icon name="groq_10" size={13} /> Add missing to cart</>}
               </button>
             </div>
 
@@ -339,7 +340,7 @@ export default function RecipeModal({ mealId, onClose }: RecipeModalProps) {
                           color: state === 'pending' ? 'var(--ink-muted)' : '#fff',
                           fontSize: '0.62rem', fontWeight: 700,
                         }}>
-                          {i < step ? <Check size={11} /> : i + 1}
+                          {i < step ? <Icon name="groq_7" size={11} /> : i + 1}
                         </div>
                         <div style={{ fontSize: '0.85rem', lineHeight: 1.55, color: state === 'done' ? 'var(--ink-muted)' : 'var(--ink)' }}>
                           {s}
@@ -356,7 +357,7 @@ export default function RecipeModal({ mealId, onClose }: RecipeModalProps) {
                     disabled={step === 0}
                     onClick={() => setStep(s => s - 1)}
                   >
-                    <ArrowLeft size={14} /> Prev
+                    <Icon name="icon-arrowleft" size={14} /> Prev
                   </button>
                   <button
                     className="btn btn-primary"
@@ -364,7 +365,7 @@ export default function RecipeModal({ mealId, onClose }: RecipeModalProps) {
                     onClick={() => step < meal.steps.length - 1 ? setStep(s => s + 1) : undefined}
                   >
                     {step === meal.steps.length - 1
-                      ? <><Check size={14} /> Done!</>
+                      ? <><Icon name="groq_7" size={14} /> Done!</>
                       : <>Next <ArrowRight size={14} /></>}
                   </button>
                 </div>

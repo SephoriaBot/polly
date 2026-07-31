@@ -3,7 +3,6 @@ import type { CSSProperties } from "react";
 import { supabase } from '../lib/supabase';
 import Icon, { type IconName } from '../components/Icon';
 import Lantern from "../components/Lantern";
-import { Trash2 } from "lucide-react";
 import walletPouchImg from '../assets/illustrations/wallet_pouch.png';
 import celebrationImg from '../assets/illustrations/celebration.png';
 
@@ -1227,7 +1226,7 @@ export default function Wallet() {
                       <div>
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
                           <div style={{ fontSize: 13, fontWeight: 700, color: "var(--ink)" }}>{activeList.name}</div>
-                          <button className="btn btn-danger btn-sm" onClick={() => deleteList(activeList.id)}><Trash2 size={13} /></button>
+                          <button className="btn btn-danger btn-sm" onClick={() => deleteList(activeList.id)}><Icon name="icon-trash2" size={13} /></button>
                         </div>
 
                         <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 10 }}>
@@ -1242,7 +1241,7 @@ export default function Wallet() {
                               <div style={{ flex: 1, fontSize: 13, color: item.done ? "var(--ink-muted)" : "var(--ink)", textDecoration: item.done ? "line-through" : "none" }}>
                                 {item.label}
                               </div>
-                              <button className="btn btn-ghost btn-sm" onClick={() => deleteListItem(item.id)}><Trash2 size={12} /></button>
+                              <button className="btn btn-ghost btn-sm" onClick={() => deleteListItem(item.id)}><Icon name="icon-trash2" size={12} /></button>
                             </div>
                           ))}
                           {activeListItems.length === 0 && (
@@ -1648,7 +1647,7 @@ export default function Wallet() {
                             : <span className="badge badge-pink">{b.days}d away</span>}
                             </td>
                         <td style={{ padding: "9px 8px" }}>
-                          <button className="btn btn-danger btn-sm" onClick={() => removeBill(b.id)}><Trash2 size={13} /></button>
+                          <button className="btn btn-danger btn-sm" onClick={() => removeBill(b.id)}><Icon name="icon-trash2" size={13} /></button>
                         </td>
                       </tr>
                     ))}
@@ -1739,7 +1738,7 @@ export default function Wallet() {
                               <button className="btn btn-green btn-sm" onClick={() => markDebtPaid(d.id, d.name)}>Paid <Icon name="clipboard-check" size={13} /></button>
                             </td>
                             <td style={{ padding: "9px 8px" }}>
-                              <button className="btn btn-danger btn-sm" onClick={() => removeDebt(d.id)}><Trash2 size={13} /></button>
+                              <button className="btn btn-danger btn-sm" onClick={() => removeDebt(d.id)}><Icon name="icon-trash2" size={13} /></button>
                             </td>
                           </tr>
                         );
@@ -1766,7 +1765,7 @@ export default function Wallet() {
                           <td style={{ padding: "9px 8px" }}><span className="badge badge-green">PAID OFF</span></td>
                           <td style={{ padding: "9px 8px", display: "flex", gap: 6 }}>
                             <button className="btn btn-ghost btn-sm" onClick={() => unmarkDebtPaid(d.id)}>Undo</button>
-                            <button className="btn btn-danger btn-sm" onClick={() => removeDebt(d.id)}><Trash2 size={13} /></button>
+                            <button className="btn btn-danger btn-sm" onClick={() => removeDebt(d.id)}><Icon name="icon-trash2" size={13} /></button>
                           </td>
                         </tr>
                       ))}
@@ -1802,7 +1801,7 @@ export default function Wallet() {
                             <td style={{ padding: "9px 8px" }}><EditableCell value={d.balance} onChange={v => updateDebt(d.id, "balance", parseFloat(v) || 0)} /></td>
                             <td style={{ padding: "9px 8px" }}><EditableCell value={d.apr} onChange={v => updateDebt(d.id, "apr", parseFloat(v) || 0)} /></td>
                             <td style={{ padding: "9px 8px", color: "var(--ink-muted)", fontSize: 11 }}>Not targeted until active debts clear</td>
-                            <td style={{ padding: "9px 8px" }}><button className="btn btn-danger btn-sm" onClick={() => removeDebt(d.id)}><Trash2 size={13} /></button></td>
+                            <td style={{ padding: "9px 8px" }}><button className="btn btn-danger btn-sm" onClick={() => removeDebt(d.id)}><Icon name="icon-trash2" size={13} /></button></td>
                           </tr>
                         ))}
                       </tbody>
