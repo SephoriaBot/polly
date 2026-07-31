@@ -13,7 +13,9 @@ interface Focus {
   estimated_minutes: number | null;
   completed: boolean;
   date: string;
+  carried_over: boolean;
 }
+
 
 const DAY_NAMES = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 
@@ -48,23 +50,34 @@ function StitchDivider() {
   );
 }
 
+
+
 export default function Dashboard() {
   const [focuses, setFocuses] = useState<Focus[]>([]);
   const [newFocus, setNewFocus] = useState('');
   const [newFocusMins, setNewFocusMins] = useState('');
   const [addingFocus, setAddingFocus] = useState(false);
 
-  const todayStr = new Date().toISOString().split('T')[0];
+  const now = new Date();
+  const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
   const todayName = DAY_NAMES[new Date().getDay()];
 
   useEffect(() => {
     loadAll();
   }, []);
 
-  async function loadAll() {
-    const { data } = await supabase.from('focuses').select('*').eq('date', todayStr).order('created_at');
-    setFocuses(data || []);
-  }
+  async function carryOverFocuses() {
+  await supabase.from('focuses')
+    .update({ date: todayStr, carried_over: true })
+    .lt('date', todayStr)
+    .eq('completed', false);
+}
+
+async function loadAll() {
+  await carryOverFocuses();
+  const { data } = await supabase.from('focuses').select('*').eq('date', todayStr).order('created_at');
+  setFocuses(data || []);
+}
 
   async function addFocus() {
     if (!newFocus.trim()) return;
@@ -218,6 +231,14 @@ export default function Dashboard() {
                     }}>
                       {f.title}
                     </div>
+
+                    {f.carried_over && !f.completed && (
+  <div style={{ fontSize: '0.7rem', color: 'var(--pink-dark)', fontWeight: 700, marginTop: 2 }}>
+    Not finished!
+  </div>
+)}
+
+
                     {f.estimated_minutes && (
                       <div style={{ fontSize: '0.72rem', color: 'var(--ink-muted)', marginTop: 2, fontFamily: 'IBM Plex Mono, monospace' }}>
                         Est. {f.estimated_minutes} min
