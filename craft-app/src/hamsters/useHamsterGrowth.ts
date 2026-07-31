@@ -450,7 +450,7 @@ export function useHamsterGrowthState() {
     const totalFocuses = (dailyFocuses || []).length;
     const doneFocuses = (dailyFocuses || []).filter((f) => f.done).length;
     const allFinished =  totalFocuses > 0 && doneFocuses === totalFocuses;
-    const focusAllDoneAwarded = lastCheck.focus_all_done_awarded;
+    let focusAllDoneAwarded = lastCheck.focus_all_done_awarded;
     
     if (allFinished && !focusAllDoneAwarded) {
       runningPoints = await addPoints(
