@@ -203,12 +203,10 @@ async function loadAll() {
                           alignItems: 'center', justifyContent: 'center',
                         }}
                       >
-                        <Icon name="icon-heart"
-                          size={21}
-                          strokeWidth={1.75}
-                          color={f.completed ? 'var(--pink-dark)' : 'var(--border)'}
-                          fill={f.completed ? 'var(--pink-dark)' : 'none'}
-                        />
+                        {f.completed
+                          ? <Icon name="groq_7" size={17} style={{ color: 'var(--pink-dark)' }} />
+                          : <Icon name="icon-circle" size={17} style={{ color: 'var(--border)' }} />
+                        }
                       </button>
 
                   <div style={{ flex: 1 }}>

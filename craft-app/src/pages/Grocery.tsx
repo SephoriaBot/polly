@@ -1117,7 +1117,7 @@ export default function Grocery() {
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 420, overflowY: 'auto' }}>
                 {have.length === 0
-                  ? <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Icon name="empty_jar" size={13} />Nothing checked off yet!</span>
+                  ? <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Icon name="empty_jar" size={30} />Nothing checked off yet!</span>
                   : have.map(item => (
                     <div key={item.id} style={itemRowStyle(true)}>
                       <input type="checkbox" checked onChange={() => toggle(item.id, item.checked)} style={{ accentColor: 'var(--pink)', flexShrink: 0 }} />
