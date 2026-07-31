@@ -434,6 +434,7 @@ export function useHamsterGrowthState() {
     const { data: dailyTasks } = await supabase.from("daily_tasks").select("done");
     const total = (dailyTasks || []).length;
     const doneCount = (dailyTasks || []).filter((t) => t.done).length;
+
     const allDone = total > 0 && doneCount === total;
     let tasksAllDoneAwarded = lastCheck.tasks_all_done_awarded;
 
@@ -445,10 +446,10 @@ export function useHamsterGrowthState() {
     }
 
     // 6. Full focus list for the day completed
-    const { data: dailyFocuses } = await supabase.from("focuses").select("is_done");
+    const { data: dailyFocuses } = await supabase.from("focuses").select("completed");
 
     const totalFocuses = (dailyFocuses || []).length;
-    const doneFocuses = (dailyFocuses || []).filter((f) => f.is_done).length;
+    const doneFocuses = (dailyFocuses || []).filter((f) => f.completed).length;
     const allFinished =  totalFocuses > 0 && doneFocuses === totalFocuses;
     let focusAllDoneAwarded = lastCheck.focus_all_done_awarded;
     
