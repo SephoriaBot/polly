@@ -114,6 +114,26 @@ export function useHamsterGrowthState() {
   const [justEvolved, setJustEvolved] = useState<JustEvolved | null>(null);
   const [wildEncounter, setWildEncounter] = useState<WildHamster | null>(null);
 
+  // Surfaced Supabase errors from the writes that guard against double
+  // counting (credit flags, awarded flags, points/threshold persistence,
+  // hatch inserts). These are the writes where a silent failure means "this
+  // accomplishment looks new again next load" — i.e. the exact bug that
+  // handed out 15 free hamsters from a column-name mismatch. Since there's
+  // no console access on mobile, this state is the only way to see it: the
+  // Habitat page should render a small banner when it's non-null.
+  const [growthError, setGrowthError] = useState<string | null>(null);
+  const clearGrowthError = useCallback(() => setGrowthError(null), []);
+
+  // Logs + surfaces a Supabase error for a labeled write. Returns true if
+  // there WAS an error (so callers can `if (reportError(...)) return/continue;`
+  // to bail instead of proceeding as if the write succeeded).
+  const reportError = useCallback((label: string, error: { message?: string } | null) => {
+    if (!error) return false;
+    console.error(`[useHamsterGrowth] ${label} failed:`, error);
+    setGrowthError(`${label} failed: ${error.message || "unknown error"}`);
+    return true;
+  }, []);
+
   const refreshRecentPoints = useCallback(async () => {
     const { data } = await supabase
       .from("hamster_points_log")
@@ -191,7 +211,7 @@ export function useHamsterGrowthState() {
           evolvedThisRow = true;
         }
 
-        await supabase
+        const { error } = await supabase
           .from("hamster_collection")
           .update({
             stage,
@@ -201,6 +221,13 @@ export function useHamsterGrowthState() {
             abilities,
           })
           .eq("id", row.id);
+
+        // If this write fails, the row's evolution_points stays at its old
+        // value in the DB even though we're about to tell the UI it
+        // evolved. Bail on THIS row only — don't set justEvolved for a
+        // change that didn't actually persist — but keep processing the
+        // rest of the collection.
+        if (reportError(`Evolve hamster #${row.id}`, error)) continue;
 
         if (evolvedThisRow) {
           anyEvolved = true;
@@ -216,20 +243,24 @@ export function useHamsterGrowthState() {
 
       return anyEvolved;
     },
-    [threshold]
+    [threshold, reportError]
   );
 
   // Awards training points to EVERY hamster in the collection, including
   // final-stage ones — unlike evolution points, training doesn't stop once
   // a hamster is fully evolved, it just means there's less room left under
   // the stage's cap. Points sit unspent until allocateStat is called.
-  const growTrainingPoints = useCallback(async (amount: number) => {
-    const { data } = await supabase.from("hamster_collection").select("id, training_points");
-    for (const row of data || []) {
-      const tp = (Number(row.training_points) || 0) + amount;
-      await supabase.from("hamster_collection").update({ training_points: tp }).eq("id", row.id);
-    }
-  }, []);
+  const growTrainingPoints = useCallback(
+    async (amount: number) => {
+      const { data } = await supabase.from("hamster_collection").select("id, training_points");
+      for (const row of data || []) {
+        const tp = (Number(row.training_points) || 0) + amount;
+        const { error } = await supabase.from("hamster_collection").update({ training_points: tp }).eq("id", row.id);
+        reportError(`Training points for hamster #${row.id}`, error);
+      }
+    },
+    [reportError]
+  );
 
   // Rolls a chance to spawn a wild hamster whenever an accomplishment is
   // earned — same trigger points as nest/evolution growth, so it feels like
@@ -274,7 +305,7 @@ export function useHamsterGrowthState() {
     const playerMaxStage: EvolutionStage = (allNonBaby || []).some((r) => r.stage === "final") ? "final" : "teen";
 
     const wild = rollWildHamster(playerMaxStage);
-    await supabase.from("wild_encounter_pending").upsert({
+    const { error } = await supabase.from("wild_encounter_pending").upsert({
       id: 1,
       hamster_id: wild.hamsterId,
       stage: wild.stage,
@@ -283,8 +314,9 @@ export function useHamsterGrowthState() {
       abilities: wild.abilities,
       spawned_at: new Date().toISOString(),
     });
+    if (reportError("Save wild encounter", error)) return;
     setWildEncounter(wild);
-  }, [wildEncounter]);
+  }, [wildEncounter, reportError]);
 
   // Adds points, hatching as many times as needed if a jump crosses the
   // threshold more than once, and persists everything. Also grows every
@@ -295,13 +327,26 @@ export function useHamsterGrowthState() {
       let newPoints = currentPoints + amount;
       let hatched = false;
 
-      await supabase.from("hamster_points_log").insert({ source, amount });
+      const { error: logError } = await supabase.from("hamster_points_log").insert({ source, amount });
+      reportError("Log points", logError);
 
       while (newPoints >= threshold) {
         const h = rollRandomHamster();
         const personality = rollPersonality();
+        const pointsBeforeHatch = newPoints;
         newPoints -= threshold;
-        await supabase.from("hamster_collection").insert({ hamster_id: h.id, source, personality, stage: "baby", evolution_points: 0, abilities: [] });
+        const { error: hatchError } = await supabase
+          .from("hamster_collection")
+          .insert({ hamster_id: h.id, source, personality, stage: "baby", evolution_points: 0, abilities: [] });
+
+        // If the insert failed, no hamster actually exists to show for the
+        // points we're about to spend. Put the points back and stop trying
+        // to hatch, rather than silently draining points into nothing.
+        if (reportError("Hatch hamster", hatchError)) {
+          newPoints = pointsBeforeHatch;
+          break;
+        }
+
         setJustHatched(h);
         hatched = true;
       }
@@ -310,12 +355,22 @@ export function useHamsterGrowthState() {
       await growTrainingPoints(amount);
       await checkWildEncounterSpawn();
 
-      await supabase.from("hamster_growth").upsert({ id: 1, points: newPoints, threshold });
+      const { error: growthSaveError } = await supabase
+        .from("hamster_growth")
+        .upsert({ id: 1, points: newPoints, threshold });
+
+      // This is THE write that caused the original bug: if points/threshold
+      // don't persist, the next load re-reads the old (lower) points value,
+      // and any progress this call made toward a hatch effectively repeats
+      // itself on the next check. Surface it loudly rather than pressing on
+      // as if newPoints is safely saved.
+      reportError("Save points/threshold", growthSaveError);
+
       if (hatched || evolved) await refreshCollection();
       await refreshRecentPoints();
       return newPoints;
     },
-    [threshold, growCollection, growTrainingPoints, refreshCollection, refreshRecentPoints, checkWildEncounterSpawn]
+    [threshold, growCollection, growTrainingPoints, refreshCollection, refreshRecentPoints, checkWildEncounterSpawn, reportError]
   );
 
   // The core check — call this whenever the app loads. It looks at what's
@@ -342,7 +397,8 @@ export function useHamsterGrowthState() {
         debt_snapshot: {},
         tasks_all_done_awarded: false,
       };
-      await supabase.from("hamster_last_check").upsert(seed);
+      const { error: seedError } = await supabase.from("hamster_last_check").upsert(seed);
+      if (reportError("Seed hamster_last_check", seedError)) return;
       lastCheck = seed;
     }
 
@@ -382,7 +438,15 @@ export function useHamsterGrowthState() {
         if (new Date(p.paid_at) <= dueDate) {
           runningPoints = await addPoints(POINTS.bill_paid_on_time, "bill_paid_on_time", runningPoints);
           // Lock in credit so this exact payment can never be double-counted.
-          await supabase.from("bill_payments").update({ hamster_credited: true }).eq("id", p.id);
+          // If THIS write fails, the payment still looks uncredited next
+          // check even though points were just awarded for it — which is
+          // exactly how a schema mismatch here mints duplicate hamsters. So
+          // surface it loudly instead of moving on quietly.
+          const { error: creditError } = await supabase
+            .from("bill_payments")
+            .update({ hamster_credited: true })
+            .eq("id", p.id);
+          reportError(`Lock credit for bill payment #${p.id}`, creditError);
         }
       }
     }
@@ -450,9 +514,9 @@ export function useHamsterGrowthState() {
 
     const totalFocuses = (dailyFocuses || []).length;
     const doneFocuses = (dailyFocuses || []).filter((f) => f.completed).length;
-    const allFinished =  totalFocuses > 0 && doneFocuses === totalFocuses;
+    const allFinished = totalFocuses > 0 && doneFocuses === totalFocuses;
     let focusAllDoneAwarded = lastCheck.focus_all_done_awarded;
-    
+
     if (allFinished && !focusAllDoneAwarded) {
       runningPoints = await addPoints(
         POINTS.daily_focuses_complete,
@@ -466,7 +530,7 @@ export function useHamsterGrowthState() {
 
     setPoints(runningPoints);
 
-    await supabase
+    const { error: finalSaveError } = await supabase
       .from("hamster_last_check")
       .upsert({
         id: 1,
@@ -477,7 +541,12 @@ export function useHamsterGrowthState() {
         debt_snapshot: newSnapshot,
         tasks_all_done_awarded: tasksAllDoneAwarded,
       });
-  }, [points, addPoints]);
+
+    // The other write that caused the original bug: if the awarded flags
+    // and debt snapshot don't persist here, every "all done" state looks
+    // fresh again on the next load and gets re-credited. Surface it.
+    reportError("Save last-check state", finalSaveError);
+  }, [points, addPoints, reportError]);
 
   // Guards against overlapping/duplicate calls (e.g. React StrictMode's
   // dev-mode double-invoke, or an accidental extra mount) so a single
@@ -523,7 +592,8 @@ export function useHamsterGrowthState() {
         setPoints(Number(growthRow.points) || 0);
         setThreshold(Number(growthRow.threshold) || 100);
       } else {
-        await supabase.from("hamster_growth").upsert({ id: 1, points: 0, threshold: 100 });
+        const { error } = await supabase.from("hamster_growth").upsert({ id: 1, points: 0, threshold: 100 });
+        reportError("Initialize hamster_growth", error);
       }
       await refreshCollection();
       await refreshRecentPoints();
@@ -547,7 +617,7 @@ export function useHamsterGrowthState() {
 
       setLoading(false);
     })();
-  }, [refreshCollection, refreshRecentPoints]);
+  }, [refreshCollection, refreshRecentPoints, reportError]);
 
     useEffect(() => {
     if (!loading) checkForNewGrowth();
@@ -570,7 +640,7 @@ export function useHamsterGrowthState() {
   // Call once a wild encounter has been fought (win, loss, or tamed) so a
   // new one can spawn later instead of the same one sitting there forever.
   const clearWildEncounter = useCallback(async () => {
-    await supabase.from("wild_encounter_pending").upsert({
+    const { error } = await supabase.from("wild_encounter_pending").upsert({
       id: 1,
       hamster_id: null,
       stage: null,
@@ -579,8 +649,9 @@ export function useHamsterGrowthState() {
       abilities: null,
       spawned_at: null,
     });
+    if (reportError("Clear wild encounter", error)) return;
     setWildEncounter(null);
-  }, []);
+  }, [reportError]);
 
   // Renames a hamster. Empty/whitespace-only clears the name back to null
   // (falls back to the default label in the UI). Capped at 24 chars to keep
@@ -588,10 +659,11 @@ export function useHamsterGrowthState() {
   const renameHamster = useCallback(
     async (entryId: number, name: string) => {
       const trimmed = name.trim().slice(0, 24);
-      await supabase.from("hamster_collection").update({ name: trimmed || null }).eq("id", entryId);
+      const { error } = await supabase.from("hamster_collection").update({ name: trimmed || null }).eq("id", entryId);
+      reportError("Rename hamster", error);
       await refreshCollection();
     },
-    [refreshCollection]
+    [refreshCollection, reportError]
   );
 
   // Spends one training point on one stat, permanently. Re-reads the row
@@ -617,10 +689,12 @@ export function useHamsterGrowthState() {
       const cap = capFor(stage, stat);
       if (current >= cap) return { ok: false, reason: `Maxed out for ${stage} stage — evolve to raise the cap` };
 
-      await supabase
+      const { error } = await supabase
         .from("hamster_collection")
         .update({ [column]: current + 1, training_points: unspent - 1 })
         .eq("id", entryId);
+
+      if (error) return { ok: false, reason: error.message || "Save failed" };
 
       await refreshCollection();
       return { ok: true };
@@ -645,5 +719,7 @@ export function useHamsterGrowthState() {
     clearWildEncounter,
     renameHamster,
     allocateStat,
+    growthError,
+    clearGrowthError,
   };
 }
