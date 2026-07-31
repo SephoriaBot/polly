@@ -10,22 +10,22 @@ const PRIMARY_TABS = [
   {
     id: 'dashboard',
     label: 'Home',
-    icon: <Icon name="icon-home" size={15} />,
+    icon: <Icon name="icon-home" size={25} />,
   },
   {
     id: 'wallet',
     label: 'Wallet',
-    icon: <Icon name="icon-wallet" size={15} />,
+    icon: <Icon name="icon-wallet" size={25} />,
   },
   {
     id: 'dailyplanner',
     label: 'Planner',
-    icon: <Icon name="icon-planner" size={15} />,
+    icon: <Icon name="icon-planner" size={25} />,
   },
   {
     id: 'habitat',
     label: 'Habitat',
-    icon: <Icon name="icon-habitat" size={15} />,
+    icon: <Icon name="icon-habitat" size={25} />,
   },
 ];
 
@@ -35,27 +35,27 @@ const MORE_ITEMS = [
   {
     id: 'trackers',
     label: 'Trackers',
-    icon: <Icon name="icon-trackers" size={15} />,
+    icon: <Icon name="icon-trackers" size={25} />,
   },
   {
     id: 'meals',
     label: 'Meals',
-    icon: <Icon name="icon-meals" size={15} />,
+    icon: <Icon name="icon-meals" size={25} />,
   },
   {
     id: 'grocery',
     label: 'Grocery',
-    icon: <Icon name="icon-grocery" size={15} />,
+    icon: <Icon name="icon-grocery" size={25} />,
   },
   {
     id: 'decisions',
     label: 'Decisions',
-    icon: <Icon name="icon-decisions" size={15} />,
+    icon: <Icon name="icon-decisions" size={25} />,
   },
   {
     id: 'maidwizard',
     label: 'Maid Wizard',
-    icon: <Icon name="icon-maidwizard" size={15} />,
+    icon: <Icon name="icon-maidwizard" size={25} />,
   },
 ];
 
