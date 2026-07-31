@@ -448,7 +448,7 @@ export function useHamsterGrowthState() {
     const { data: dailyFocuses } = await supabase.from("focuses").select("is_done");
 
     const totalFocuses = (dailyFocuses || []).length;
-    const doneFocuses = (dailyFocuses || []).filter((f) => f.done).length;
+    const doneFocuses = (dailyFocuses || []).filter((f) => f.is_done).length;
     const allFinished =  totalFocuses > 0 && doneFocuses === totalFocuses;
     let focusAllDoneAwarded = lastCheck.focus_all_done_awarded;
     
