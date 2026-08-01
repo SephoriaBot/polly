@@ -743,19 +743,19 @@ export default function Grocery() {
         </div>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           <button className="btn btn-primary" onClick={openBasicsModal}>
-            <Icon name="icon-listchecks" size={14} /> Build Basics List
+            <Icon name="icon-listchecks" size={20} /> Build Basics List
           </button>
           <button className="btn btn-primary" onClick={buildSmartCart}>
-            <Icon name="groq_10" size={15} /> Build Smart Cart
+            <Icon name="groq_10" size={20} /> Build Smart Cart
           </button>
           <button className="btn btn-secondary" onClick={refreshSmartCart}>
-            <Icon name="groq_4" size={14} /> Refresh
+            <Icon name="groq_4" size={20} /> Refresh
           </button>
           <button className="btn btn-ghost" onClick={clearSmartCart}>
-            <Icon name="groq_3" size={14} /> Clear
+            <Icon name="groq_3" size={20} /> Clear
           </button>
           <button className="btn btn-primary" onClick={openDoorDashList} disabled={!needs.length}>
-          <Icon name="icon-externallink" size={14} /> Copy List &amp; Open DoorDash
+          <Icon name="icon-externallink" size={20} /> Copy List &amp; Open DoorDash
           </button>
         </div>
       </div>
@@ -933,7 +933,7 @@ export default function Grocery() {
               style={{ flex: 1 }}
             />
             <button className="btn btn-primary" onClick={createList} disabled={!newListName.trim()}>
-              <Icon name="icon-folderplus" size={14} /> New List
+              <Icon name="icon-folderplus" size={20} /> New List
             </button>
           </div>
         </div>
@@ -943,7 +943,7 @@ export default function Grocery() {
         {have.length > 0 && (
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             <button className="btn btn-ghost" onClick={clearChecked}>
-              <Icon name="icon-trash2" size={14} /> Clear Checked
+              <Icon name="icon-trash2" size={20} /> Clear Checked
             </button>
           </div>
         )}
@@ -1105,7 +1105,7 @@ export default function Grocery() {
                   onKeyDown={e => e.key === 'Enter' && addItem()}
                   style={{ flex: 1, minWidth: 0 }} />
                 <button className="btn btn-primary" style={{ padding: '8px 12px' }} onClick={addItem}>
-                  <Icon name="icon-plus" size={14} />
+                  <Icon name="icon-plus" size={20} />
                 </button>
               </div>
             </div>
@@ -1117,7 +1117,7 @@ export default function Grocery() {
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 420, overflowY: 'auto' }}>
                 {have.length === 0
-                  ? <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Icon name="empty_jar" size={30} />Nothing checked off yet!</span>
+                  ? <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Icon name="empty_jar" size={60} />Nothing checked off yet!</span>
                   : have.map(item => (
                     <div key={item.id} style={itemRowStyle(true)}>
                       <input type="checkbox" checked onChange={() => toggle(item.id, item.checked)} style={{ accentColor: 'var(--pink)', flexShrink: 0 }} />
@@ -1140,7 +1140,7 @@ export default function Grocery() {
         {/* smart cart */}
         <div className="card">
           <div className="section-label" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Icon name="groq_10" size={15} /> Smart Cart</span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Icon name="groq_10" size={20} /> Smart Cart</span>
             <span style={{ fontWeight: 500 }}>{cart.length} items</span>
           </div>
 
