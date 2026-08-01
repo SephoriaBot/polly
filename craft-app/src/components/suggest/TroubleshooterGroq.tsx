@@ -92,14 +92,22 @@ type WizardState = 'quiz' | 'loading' | 'result'
 
 function chipStyle(active: boolean): React.CSSProperties {
   return {
-    padding: '8px 14px', borderRadius: 999, cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    padding: '8px 14px',
+    borderRadius: 999,
+    cursor: 'pointer',
     border: active ? '1.5px solid var(--pink-dark)' : '1.5px solid var(--border)',
     background: active ? 'var(--blush)' : 'var(--white)',
     color: active ? 'var(--pink-dark)' : 'var(--ink-soft)',
-    fontSize: '0.85rem', fontWeight: active ? 700 : 500,
+    fontSize: '0.85rem',
+    fontWeight: active ? 700 : 500,
     transition: 'all 0.15s ease',
   }
 }
+
 
 export default function TroubleshooterGroq({ onClose }: { onClose: () => void }) {
   const STEP_COUNT = 4
@@ -288,7 +296,7 @@ const progressPct = ((step + 1) / STEP_COUNT) * 100
             background: 'var(--blush)', border: '1.5px solid var(--border)',
             fontSize: '0.76rem', color: 'var(--ink-muted)', lineHeight: 1.5,
           }}>
-            <Icon name="groq_1" size={35} /> General troubleshooting guidance only. For safety-critical issues or professional repairs, contact a qualified professional.
+            <Icon name="icon-circle" size={25} /> General troubleshooting guidance only. For safety-critical issues or professional repairs, contact a qualified professional.
           </div>
 
           {wizardState === 'quiz' && (
