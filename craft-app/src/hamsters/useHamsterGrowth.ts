@@ -91,6 +91,7 @@ export interface PointsLogEntry {
 export interface AllocateStatResult {
   ok: boolean;
   reason?: string;
+  spent?: number;
 }
 
 export const SOURCE_LABELS: Record<string, { text: string; icon: IconName }> = {
@@ -666,12 +667,17 @@ export function useHamsterGrowthState() {
     [refreshCollection, reportError]
   );
 
-  // Spends one training point on one stat, permanently. Re-reads the row
-  // fresh from Supabase first (rather than trusting local state) so a stat
-  // cap can never be exceeded by a stale evolution stage. Returns a reason
-  // string when it can't spend, for the UI to surface.
+  // Spends training points on one stat, permanently. `amount` defaults to 1
+  // for backward compatibility; pass Infinity (or any large number) to mean
+  // "max out this stat." Re-reads the row fresh from Supabase first (rather
+  // than trusting local state) so a stat cap can never be exceeded by a
+  // stale evolution stage. The actual amount spent is clamped to whichever
+  // is smaller: unspent TP, or room left under the stage's cap — so a
+  // "+10" tap with only 3 TP left, or with only 3 points of cap room left,
+  // silently spends what it can rather than failing outright. Returns a
+  // reason string only when NOTHING could be spent, for the UI to surface.
   const allocateStat = useCallback(
-    async (entryId: number, stat: keyof TrainedStats): Promise<AllocateStatResult> => {
+    async (entryId: number, stat: keyof TrainedStats, amount: number = 1): Promise<AllocateStatResult> => {
       const { data: row } = await supabase
         .from("hamster_collection")
         .select("stage, training_points, trained_hp, trained_attack, trained_defense, trained_speed")
@@ -687,17 +693,22 @@ export function useHamsterGrowthState() {
       const column = TRAINED_STAT_COLUMNS[stat];
       const current = Number((row as Record<string, unknown>)[column]) || 0;
       const cap = capFor(stage, stat);
-      if (current >= cap) return { ok: false, reason: `Maxed out for ${stage} stage — evolve to raise the cap` };
+      const room = cap - current;
+      if (room <= 0) return { ok: false, reason: `Maxed out for ${stage} stage — evolve to raise the cap` };
+
+      const requested = Math.max(1, Math.floor(amount));
+      const spend = Math.min(requested, unspent, room);
+      if (spend <= 0) return { ok: false, reason: "No training points to spend yet" };
 
       const { error } = await supabase
         .from("hamster_collection")
-        .update({ [column]: current + 1, training_points: unspent - 1 })
+        .update({ [column]: current + spend, training_points: unspent - spend })
         .eq("id", entryId);
 
       if (error) return { ok: false, reason: error.message || "Save failed" };
 
       await refreshCollection();
-      return { ok: true };
+      return { ok: true, spent: spend };
     },
     [refreshCollection]
   );
