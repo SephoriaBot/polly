@@ -721,8 +721,7 @@ export default function Wallet() {
 
   const urgentTotal = urgentBills.reduce((s, b) => s + b.amount, 0);
   const crisisTotal = crisisBills.reduce((s, b) => s + b.amount, 0);
-  const isCrisis = crisisTotal > 0;
-  const hasHighUpcomingBills = crisisTotal >= 200;
+  const isCrisis = crisisTotal >= 200;
   const billsRate = totalMonthlyBills / 30;
 
   const NEEDS_FLOOR = 25;
@@ -733,7 +732,7 @@ export default function Wallet() {
   let unifiedNeeds: number;
   let unifiedFun: number;
 
-  if (hasHighUpcomingBills) {
+  if (isCrisis) {
     unifiedNeeds = Math.min(inputAmount, NEEDS_FLOOR);
     const afterNeeds = Math.max(0, inputAmount - unifiedNeeds);
     unifiedBills = Math.min(afterNeeds, crisisTotal);
