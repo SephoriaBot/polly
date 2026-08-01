@@ -4,7 +4,6 @@ import Lantern from "../components/Lantern";
 import DailyAlmanac from "../components/DailyAlmanac";
 import sleepingNestImg from '../assets/illustrations/sleeping_nest.png';
 import WeatherBadge from '../components/WeatherBadge';
-import GroqDailies from '../groqDailies/GroqDailies';
 import TroubleshooterGroq from '../components/suggest/TroubleshooterGroq';
 import Icon, { type IconName } from '../components/Icon';
 
@@ -260,13 +259,6 @@ async function loadAll() {
          {/* ── TROUBLESHOOTER GROQ ── */}
           <section>
           <TroubleshooterGroq />
-          </section>
-
-          <Lantern variant="divider" />
-
-         {/* ── GROQ DAILIES FEED ── */}
-          <section>
-          <GroqDailies />
           </section>
       </div>
     </div>
