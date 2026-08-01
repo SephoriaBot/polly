@@ -36,13 +36,13 @@ import type { WildHamster, TrainedStats } from "./battle";
 // caused two hamsters to hatch from a single accomplishment.
 
 const POINTS = {
-  bill_paid_on_time: 15,
+  bill_paid_on_time: 20,
   debt_payment_logged: 12,
   debt_paid_off: 40,
   savings_contribution: 8,
-  tracker_log_entry: 6,
-  daily_task_list_complete: 10,
-  daily_focuses_complete: 20,
+  tracker_log_entry: 4,
+  daily_task_list_complete: 5,
+  daily_focuses_complete: 7,
 } as const;
 
 // Chance, per point-earning event, that a wild hamster shows up. Only rolls
