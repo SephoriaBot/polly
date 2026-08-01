@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect, useRef } from "react";
 import type { CSSProperties } from "react";
 import { supabase } from '../lib/supabase';
-import Icon, { type IconName } from '../components/Icon';
+import Icon from '../components/Icon';
 import Lantern from "../components/Lantern";
 import walletPouchImg from '../assets/illustrations/wallet_pouch.png';
 import celebrationImg from '../assets/illustrations/celebration.png';
