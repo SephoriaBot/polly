@@ -711,17 +711,25 @@ export default function Wallet() {
   }, [bills, payments, selectedMonth, selectedYear]);
 
   const urgentBills = monthBills.filter(b => !b.paid && b.days <= 7 && b.days >= 0);
-  const crisisBills = monthBills.filter(b => !b.paid && (b.late || (b.days <= 3 && b.days >= 0)));
+  const near3Bills = monthBills.filter(b => !b.paid && (b.late || (b.days <= 3 && b.days >= 0)));
+  const near5Bills = monthBills.filter(b => !b.paid && (b.late || (b.days <= 5 && b.days >= 0)));
   const totalMonthlyBills = monthBills.reduce((s, b) => s + b.amount, 0);
   const paidTotal = monthBills.filter(b => b.paid).reduce((s, b) => s + b.amount, 0);
   const unpaidTotal = monthBills.filter(b => !b.paid).reduce((s, b) => s + b.amount, 0);
+
+  const near5Total = near5Bills.reduce((s, b) => s + b.amount, 0);
+  const SAFE_TO_SPEND_BUFFER = 50;
+  const safeToSpend = Math.max(0, (budget.current_balance || 0) - near5Total - SAFE_TO_SPEND_BUFFER);
 
   const pay = parseFloat(anytimePay) || 0;
   const inputAmount = pay;
 
   const urgentTotal = urgentBills.reduce((s, b) => s + b.amount, 0);
-  const crisisTotal = crisisBills.reduce((s, b) => s + b.amount, 0);
-  const isCrisis = crisisTotal >= 200;
+  const near3Total = near3Bills.reduce((s, b) => s + b.amount, 0);
+  const isCrisis = near3Total >= 200 || near5Total >= 475;
+  // near5 is a superset of near3, so it always covers whichever threshold tripped
+  const crisisBills = near5Bills;
+  const crisisTotal = near5Total;
   const billsRate = totalMonthlyBills / 30;
 
   const NEEDS_FLOOR = 25;
@@ -766,7 +774,7 @@ export default function Wallet() {
       color: "var(--pink-dark)",
       noteIcon: (isCrisis || urgentBills.length > 0) ? "lightning" as IconName : undefined,
       note: isCrisis
-        ? `${crisisBills.length} bill(s) late or due in ≤3 days -- covered first`
+        ? `${crisisBills.length} bill(s) due in ≤5 days -- covered first`
         : urgentBills.length > 0 ? `${urgentBills.length} bill(s) due soon!` : "bills + debt minimums",
     },
     {
@@ -1118,11 +1126,52 @@ export default function Wallet() {
               </button>
             </div>
 
+            {/* SAFE TO SPEND */}
+
+            <div className="card" style={{ borderColor: budget.current_balance ? (safeToSpend > 0 ? "var(--green-dark)" : "var(--danger)") : "var(--border)" }}>
+              <div className="card-body">
+                <div className="section-label">Safe to Spend Right Now</div>
+                {budget.current_balance ? (
+                  <>
+                    <div style={{ fontSize: 32, fontWeight: 800, color: safeToSpend > 0 ? "var(--green-dark)" : "var(--danger)", marginTop: 4 }}>
+                      {fmt(safeToSpend)}
+                    </div>
+                    <div style={{ fontSize: 11, color: "var(--ink-muted)", marginBottom: 12 }}>
+                      after bills due within 5 days (debt minimums included) and a {fmt(SAFE_TO_SPEND_BUFFER)} safety buffer
+                    </div>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: 12 }}>
+                      <div style={{ display: "flex", justifyContent: "space-between" }}>
+                        <span style={{ color: "var(--ink-soft)" }}>Current balance</span>
+                        <span style={{ fontWeight: 700 }}>{fmt(budget.current_balance)}</span>
+                      </div>
+                      <div style={{ display: "flex", justifyContent: "space-between" }}>
+                        <span style={{ color: "var(--ink-soft)" }}>− Bills due within 5 days</span>
+                        <span style={{ fontWeight: 700, color: "var(--danger)" }}>−{fmt(near5Total)}</span>
+                      </div>
+                      <div style={{ display: "flex", justifyContent: "space-between" }}>
+                        <span style={{ color: "var(--ink-soft)" }}>− Safety buffer</span>
+                        <span style={{ fontWeight: 700, color: "var(--danger)" }}>−{fmt(SAFE_TO_SPEND_BUFFER)}</span>
+                      </div>
+                    </div>
+                    {safeToSpend <= 0 && (
+                      <div style={{ marginTop: 10, fontSize: 12, color: "var(--danger)", fontWeight: 600 }}>
+                        Nothing free right now — committed money covers everything. Hold off on treats until this clears.
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <div style={{ fontSize: 12, color: "var(--ink-muted)" }}>
+                    Enter your current balance below (Money Calendar settings) to see this number.
+                  </div>
+                )}
+              </div>
+            </div>
+
             {/* EQUITY MODE CHECK / TODAYS PAYCHECK CALCULATOR */}
 
             {isCrisis && (
               <div style={{ background: "var(--danger-bg)", border: "1.5px solid var(--danger)", borderRadius: 16, padding: "12px 16px", fontSize: 13, color: "var(--danger)", fontWeight: 700 }}>
-                Equity Mode Active — {crisisBills.length} bill(s) late or due within 3 days: ({fmt(crisisTotal)}). Fun money and general savings are zeroed until these are covered. Things you need are still protected.
+                Equity Mode Active — {near3Total >= 200 && `${fmt(near3Total)} due within 3 days`}{near3Total >= 200 && near5Total >= 475 && " and "}{near5Total >= 475 && `${fmt(near5Total)} due within 5 days`}. Fun money and general savings are zeroed until these are covered. Things you need are still protected.
               </div>
             )}
             {!isCrisis && urgentBills.length > 0 && (
