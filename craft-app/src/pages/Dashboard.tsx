@@ -203,7 +203,7 @@ async function loadAll() {
                         }}
                       >
                         {f.completed
-                          ? <Icon name="groq_7" size={17} style={{ color: 'var(--pink-dark)' }} />
+                          ? <Icon name="groq_8" size={17} style={{ color: 'var(--pink-dark)' }} />
                           : <Icon name="icon-circle" size={17} style={{ color: 'var(--border)' }} />
                         }
                       </button>
