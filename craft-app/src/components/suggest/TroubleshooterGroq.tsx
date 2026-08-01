@@ -284,7 +284,7 @@ const progressPct = ((step + 1) / STEP_COUNT) * 100
       <div className="modal" style={{ maxWidth: 580 }} onClick={e => e.stopPropagation()}>
         <div className="modal-header" style={{ color: 'var(--pink-dark)' }}>
           <span style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 700, fontSize: '0.95rem' }}>
-            <Icon name="groq_1" size={35} /> Troubleshooter Groq
+            <Icon name="groq_1" size={35} /> Troubleshooter Tool
           </span>
         </div>
 
@@ -296,7 +296,7 @@ const progressPct = ((step + 1) / STEP_COUNT) * 100
             background: 'var(--blush)', border: '1.5px solid var(--border)',
             fontSize: '0.76rem', color: 'var(--ink-muted)', lineHeight: 1.5,
           }}>
-            <Icon name="icon-circle" size={25} /> General troubleshooting guidance only. For safety-critical issues or professional repairs, contact a qualified professional.
+            <Icon name="icon-circle" size={15} /> General troubleshooting guidance only. For safety-critical issues or professional repairs, contact a qualified professional.
           </div>
 
           {wizardState === 'quiz' && (
