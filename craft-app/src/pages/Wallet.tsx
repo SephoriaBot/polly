@@ -1615,6 +1615,7 @@ export default function Wallet() {
                   </div>
                 )}
 
+                <div style={{ overflowX: "auto" }}>
                 <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
                   <thead>
                     <tr>
@@ -1661,6 +1662,7 @@ export default function Wallet() {
                     )}
                   </tbody>
                 </table>
+                </div>
               </div>
             </div>
           </>
