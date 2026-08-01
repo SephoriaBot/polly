@@ -1647,9 +1647,9 @@ export default function Wallet() {
                             : b.days <= 3 ? <span className="badge badge-lavender">DUE SOON</span>
                             : <span className="badge badge-pink">{b.days}d away</span>}
                             </td>
-                        <td style={{ padding: "9px 8px" }}>
+                        
                           <button className="btn btn-danger btn-sm" onClick={() => removeBill(b.id)}><Icon name="icon-trash2" size={13} /></button>
-                        </td>
+                        
                       </tr>
                     ))}
                     {monthBills.length === 0 && (
@@ -1765,10 +1765,10 @@ export default function Wallet() {
                           <td style={{ padding: "9px 8px", textDecoration: "line-through", color: "var(--green-dark)", fontWeight: 700 }}>{d.name}</td>
                           <td style={{ padding: "9px 8px", color: "var(--green-dark)", fontWeight: 800 }}>$0.00</td>
                           <td style={{ padding: "9px 8px" }}><span className="badge badge-green">PAID OFF</span></td>
-                          <td style={{ padding: "9px 8px", display: "flex", gap: 6 }}>
+                          
                             <button className="btn btn-ghost btn-sm" onClick={() => unmarkDebtPaid(d.id)}>Undo</button>
                             <button className="btn btn-danger btn-sm" onClick={() => removeDebt(d.id)}><Icon name="icon-trash2" size={13} /></button>
-                          </td>
+                          
                         </tr>
                       ))}
                     </tbody>
@@ -1803,7 +1803,7 @@ export default function Wallet() {
                             <td style={{ padding: "9px 8px" }}><EditableCell value={d.balance} onChange={v => updateDebt(d.id, "balance", parseFloat(v) || 0)} /></td>
                             <td style={{ padding: "9px 8px" }}><EditableCell value={d.apr} onChange={v => updateDebt(d.id, "apr", parseFloat(v) || 0)} /></td>
                             <td style={{ padding: "9px 8px", color: "var(--ink-muted)", fontSize: 11 }}>Not targeted until active debts clear</td>
-                            <td style={{ padding: "9px 8px" }}><button className="btn btn-danger btn-sm" onClick={() => removeDebt(d.id)}><Icon name="icon-trash2" size={13} /></button></td>
+                           <button className="btn btn-danger btn-sm" onClick={() => removeDebt(d.id)}><Icon name="icon-trash2" size={13} /></button>
                           </tr>
                         ))}
                       </tbody>
