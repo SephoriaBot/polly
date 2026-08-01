@@ -1,10 +1,6 @@
 import { useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import Icon from '../Icon'
-import {
-  Salad, X, RotateCcw, Sparkles, ChevronLeft, ChevronRight,
-  CheckCircle2, ShoppingCart, Check,
-} from 'lucide-react'
 import hourglassImg from '../../assets/illustrations/hourglass.png'
 
 interface QuizOption { value: string; label: string }
@@ -249,9 +245,9 @@ Never mention calories, macros, or specific weight numbers. If the goal involves
       <div className="modal" style={{ maxWidth: 580 }} onClick={e => e.stopPropagation()}>
         <div className="modal-header" style={{ background: 'var(--blush)', color: 'var(--pink-dark)' }}>
           <span style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 700, fontSize: '0.95rem' }}>
-            <Salad size={17} /> Ask Dr. Groq — Diet Check-In
+            <Icon name="groq_9" size={17} /> Ask Dr. Groq — Diet Check-In
           </span>
-          <button className="close-btn" onClick={onClose}><X size={16} /></button>
+          <button className="close-btn" onClick={onClose}><Icon name="groq_3" size={16} /></button>
         </div>
 
         <div className="modal-body" style={{ maxHeight: '70vh', overflowY: 'auto' }}>
@@ -373,7 +369,7 @@ Never mention calories, macros, or specific weight numbers. If the goal involves
                   disabled={step === 0}
                   onClick={() => setStep(s => s - 1)}
                 >
-                  <ChevronLeft size={14} /> Back
+                  <Icon name="groq_5" size={14} /> Back
                 </button>
                 {step < STEP_COUNT - 1 ? (
                   <button
@@ -382,11 +378,11 @@ Never mention calories, macros, or specific weight numbers. If the goal involves
                     disabled={!canAdvance()}
                     onClick={() => setStep(s => s + 1)}
                   >
-                    Next <ChevronRight size={14} />
+                    Next <Icon name="groq_6" size={14} />
                   </button>
                 ) : (
                   <button className="btn btn-primary" style={{ flex: 1, justifyContent: 'center' }} onClick={submit}>
-                    <Sparkles size={14} /> Get My Check-In
+                    <Icon name="groq_2" size={14} /> Get My Check-In
                   </button>
                 )}
               </div>
@@ -441,7 +437,7 @@ Never mention calories, macros, or specific weight numbers. If the goal involves
                         <div style={{ marginTop: 10, paddingTop: 10, borderTop: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: 6 }}>
                           {area.tips.map((tip, ti) => (
                             <div key={ti} style={{ display: 'flex', alignItems: 'flex-start', gap: 6, fontSize: '0.8rem', color: 'var(--ink-soft)', lineHeight: 1.5 }}>
-                              <CheckCircle2 size={13} style={{ color: 'var(--pink-dark)', flexShrink: 0, marginTop: 2 }} />
+                              <Icon name="groq_7" size={13} style={{ color: 'var(--pink-dark)', flexShrink: 0, marginTop: 2 }} />
                               {tip}
                             </div>
                           ))}
@@ -499,14 +495,14 @@ Never mention calories, macros, or specific weight numbers. If the goal involves
                 disabled={selectedPicks.size === 0 || addingToCart || addedToCart}
               >
                 {addedToCart
-                  ? <><Check size={14} /> Added to Grocery List!</>
+                  ? <><Icon name="groq_8" size={14} /> Added to Grocery List!</>
                   : addingToCart
                     ? 'Adding…'
-                    : <><ShoppingCart size={14} /> Add {selectedPicks.size} Item{selectedPicks.size === 1 ? '' : 's'} to Grocery List</>}
+                    : <><Icon name="groq_10" size={14} /> Add {selectedPicks.size} Item{selectedPicks.size === 1 ? '' : 's'} to Grocery List</>}
               </button>
 
               <button className="btn btn-ghost" style={{ width: '100%', justifyContent: 'center', marginTop: 8 }} onClick={reset}>
-                <RotateCcw size={13} /> Start Over
+                <Icon name="groq_4" size={13} /> Start Over
               </button>
             </div>
           )}

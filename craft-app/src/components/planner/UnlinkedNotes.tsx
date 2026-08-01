@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { X, Circle, CheckCircle2, Inbox, Link2 } from 'lucide-react';
 import { useAppointments } from '../../hooks/useAppointments';
 import type { AppointmentNoteItem } from '../../types/appointmentNotes';
 import notesStyles from './AppointmentNotes.module.css';
 import styles from './UnlinkedNotes.module.css';
+import Icon, { type IconName } from '../Icon';
 
 interface UnlinkedNotesProps {
   items: AppointmentNoteItem[];
@@ -64,7 +64,7 @@ export default function UnlinkedNotes({
   if (items.length === 0) {
     return (
       <div className={styles.emptyState}>
-        <Inbox size={22} className={styles.emptyIcon} />
+        <Icon name="icon-inbox" size={22} className={styles.emptyIcon} />
         <p>No unlinked notes — nothing orphaned right now.</p>
       </div>
     );
@@ -143,7 +143,7 @@ export default function UnlinkedNotes({
                 className={styles.groupLinkButton}
                 onClick={() => openLinkPicker(noteType)}
               >
-                <Link2 size={13} /> Link to appointment
+                <Icon name="icon-link2" size={13} /> Link to appointment
               </button>
             </div>
 
@@ -162,7 +162,7 @@ export default function UnlinkedNotes({
                       aria-label="Mark covered"
                       type="button"
                     >
-                      <Circle size={18} />
+                      <Icon name="icon-circle" size={18} />
                     </button>
                     <span className={notesStyles.itemText}>{item.content}</span>
                     <button
@@ -171,7 +171,7 @@ export default function UnlinkedNotes({
                       aria-label="Delete"
                       type="button"
                     >
-                      <X size={15} />
+                      <Icon name="groq_3" size={15} />
                     </button>
                   </div>
                 ))}
@@ -192,7 +192,7 @@ export default function UnlinkedNotes({
                         aria-label="Mark not covered"
                         type="button"
                       >
-                        <CheckCircle2 size={18} className={notesStyles.coveredIcon} />
+                        <Icon name="groq_7" size={18} className={notesStyles.coveredIcon} />
                       </button>
                       <span className={`${notesStyles.itemText} ${notesStyles.strikethrough}`}>
                         {item.content}
@@ -203,7 +203,7 @@ export default function UnlinkedNotes({
                         aria-label="Delete"
                         type="button"
                       >
-                        <X size={15} />
+                        <Icon name="groq_3" size={15} />
                       </button>
                     </div>
                     <div className={notesStyles.resolutionRow}>
@@ -243,9 +243,9 @@ export default function UnlinkedNotes({
                       type="button"
                     >
                       {item.status === 'done' ? (
-                        <CheckCircle2 size={18} className={notesStyles.coveredIcon} />
+                        <Icon name="groq_7" size={18} className={notesStyles.coveredIcon} />
                       ) : (
-                        <Circle size={18} />
+                        <Icon name="icon-circle" size={18} />
                       )}
                     </button>
                     <span
@@ -259,7 +259,7 @@ export default function UnlinkedNotes({
                       aria-label="Delete"
                       type="button"
                     >
-                      <X size={15} />
+                      <Icon name="groq_3" size={15} />
                     </button>
                   </div>
                 ))}

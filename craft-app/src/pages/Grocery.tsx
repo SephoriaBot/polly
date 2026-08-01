@@ -2,16 +2,10 @@ import { useState, useEffect } from 'react';
 import type { GroceryItem } from '../types/legacy';
 import { supabase } from '../lib/supabase';
 import Icon, { type IconName } from '../components/Icon';
-import {
-  ShoppingCart, ListChecks, RotateCcw, X, FolderPlus, ClipboardList,
-  MapPin, Trash2, ArrowLeft, CheckCircle2,
-  ChevronUp, ChevronDown, ExternalLink, Plus,
-} from 'lucide-react';
 import Lantern from "../components/Lantern";
 import EmptyState from '../components/EmptyState';
 import breadBasketImg from '../assets/illustrations/bread_basket.png';
 import hourglassImg from '../assets/illustrations/hourglass.png';
-
 
 
 interface GroceryList { id: string; name: string; created_at: string }
@@ -749,19 +743,19 @@ export default function Grocery() {
         </div>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           <button className="btn btn-primary" onClick={openBasicsModal}>
-            <ListChecks size={14} /> Build Basics List
+            <Icon name="icon-listchecks" size={20} /> Build Basics List
           </button>
           <button className="btn btn-primary" onClick={buildSmartCart}>
-            <ShoppingCart size={14} /> Build Smart Cart
+            <Icon name="groq_10" size={20} /> Build Smart Cart
           </button>
           <button className="btn btn-secondary" onClick={refreshSmartCart}>
-            <RotateCcw size={14} /> Refresh
+            <Icon name="groq_4" size={20} /> Refresh
           </button>
           <button className="btn btn-ghost" onClick={clearSmartCart}>
-            <X size={14} /> Clear
+            <Icon name="groq_3" size={20} /> Clear
           </button>
           <button className="btn btn-primary" onClick={openDoorDashList} disabled={!needs.length}>
-          <ClipboardList size={14} /> Copy List &amp; Open DoorDash
+          <Icon name="icon-externallink" size={20} /> Copy List &amp; Open DoorDash
           </button>
         </div>
       </div>
@@ -816,7 +810,7 @@ export default function Grocery() {
                         Uncheck anything you don't want — {basicsChecked.size} of {BASICS_PRESETS[basicsPreset].items.length} selected
                       </p>
                       <button className="btn btn-ghost btn-sm" onClick={backToPresets}>
-                        <ArrowLeft size={13} /> Back
+                        <Icon name="icon-arrowleft" size={13} /> Back
                       </button>
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 360, overflowY: 'auto' }}>
@@ -860,7 +854,7 @@ export default function Grocery() {
 
                 {/* location input */}
         <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-          <MapPin size={16} style={{ color: 'var(--ink-muted)', flexShrink: 0 }} />
+          <Icon name="icon-mappin" size={16} style={{ color: 'var(--ink-muted)', flexShrink: 0 }} />
           <input
             className="form-input"
             type="text"
@@ -880,7 +874,7 @@ export default function Grocery() {
             just a static snapshot. */}
         <div className="card">
           <div className="section-label" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><FolderPlus size={13} /> My Lists</span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Icon name="icon-listchecks" size={13} /> My Lists</span>
             <span style={{ fontWeight: 500 }}>{lists.length} list{lists.length === 1 ? '' : 's'}</span>
           </div>
 
@@ -919,7 +913,7 @@ export default function Grocery() {
                           cursor: 'pointer', display: 'flex', alignItems: 'center',
                         }}
                       >
-                        <Trash2 size={12} />
+                        <Icon name="icon-trash2" size={12} />
                       </button>
                     )}
                   </div>
@@ -939,7 +933,7 @@ export default function Grocery() {
               style={{ flex: 1 }}
             />
             <button className="btn btn-primary" onClick={createList} disabled={!newListName.trim()}>
-              <FolderPlus size={14} /> New List
+              <Icon name="icon-folderplus" size={20} /> New List
             </button>
           </div>
         </div>
@@ -949,7 +943,7 @@ export default function Grocery() {
         {have.length > 0 && (
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             <button className="btn btn-ghost" onClick={clearChecked}>
-              <Trash2 size={14} /> Clear Checked
+              <Icon name="icon-trash2" size={20} /> Clear Checked
             </button>
           </div>
         )}
@@ -1019,7 +1013,7 @@ export default function Grocery() {
           <div className="grid-2" style={{ alignItems: 'start' }}>
             <div className="card">
               <div className="section-label" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><ListChecks size={13} /> Need to Buy</span>
+                <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Icon name="icon-clipboardlist" size={13} /> Need to Buy</span>
                 <span style={{ fontWeight: 500 }}>{needs.length} items</span>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 420, overflowY: 'auto', marginBottom: 12 }}>
@@ -1046,11 +1040,11 @@ export default function Grocery() {
                           )}
                           <button onClick={() => setExpandedItem(isOpen ? null : item.id)}
                             style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-muted)', display: 'flex', flexShrink: 0 }}>
-                            {isOpen ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+                            {isOpen ? <Icon name="icon-chevronup" size={13} /> : <Icon name="icon-chevrondown" size={13} />}
                           </button>
                           <button onClick={() => removeItem(item.id)}
                             style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-muted)', opacity: 0.4, display: 'flex', flexShrink: 0 }}>
-                            <Trash2 size={13} />
+                            <Icon name="icon-trash2" size={13} />
                           </button>
                         </div>
 
@@ -1066,7 +1060,7 @@ export default function Grocery() {
                                     <span style={{ flex: 1, color: 'var(--pink-dark)', fontWeight: 600 }}>${p.price.toFixed(2)}</span>
                                     <span style={{ flex: 1, color: isStale(p.updated_at) ? 'var(--gold-dark)' : 'var(--ink-muted)', fontSize: '0.66rem' }}>{p.updated_at}</span>
                                     <button onClick={() => deletePrice(p.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-muted)', opacity: 0.5 }}>
-                                      <X size={12} />
+                                      <Icon name="groq_3" size={12} />
                                     </button>
                                   </div>
                                 ))}
@@ -1091,7 +1085,7 @@ export default function Grocery() {
                                 style={{ flex: 1, fontSize: '0.78rem', padding: '6px 8px' }}
                               />
                               <button className="btn btn-primary" style={{ padding: '6px 10px' }} onClick={() => addPrice(item.name)}>
-                                <Plus size={13} />
+                                <Icon name="icon-plus" size={13} />
                               </button>
                             </div>
                           </div>
@@ -1111,19 +1105,20 @@ export default function Grocery() {
                   onKeyDown={e => e.key === 'Enter' && addItem()}
                   style={{ flex: 1, minWidth: 0 }} />
                 <button className="btn btn-primary" style={{ padding: '8px 12px' }} onClick={addItem}>
-                  <Plus size={14} />
+                  <Icon name="icon-plus" size={20} />
                 </button>
               </div>
             </div>
 
             <div className="card">
               <div className="section-label" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><CheckCircle2 size={13} /> Already Have</span>
+                <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Icon name="groq_7" size={13} /> Already Have</span>
                 <span style={{ fontWeight: 500 }}>{have.length} items</span>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 420, overflowY: 'auto' }}>
                 {have.length === 0
-                  ? <p style={{ textAlign: 'center', fontSize: '0.78rem', color: 'var(--ink-muted)', padding: '1rem' }}>Nothing checked off yet.</p>
+                  ? <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6, width: '100%', padding: '12px 0' }}><Icon name="empty_jar" size={60} />Nothing checked off yet!</span>
+
                   : have.map(item => (
                     <div key={item.id} style={itemRowStyle(true)}>
                       <input type="checkbox" checked onChange={() => toggle(item.id, item.checked)} style={{ accentColor: 'var(--pink)', flexShrink: 0 }} />
@@ -1131,7 +1126,7 @@ export default function Grocery() {
                       <span style={{ fontSize: '0.72rem', color: 'var(--ink-muted)', whiteSpace: 'nowrap' }}>{item.qty}</span>
                       <button onClick={() => removeItem(item.id)}
                         style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-muted)', opacity: 0.4, display: 'flex', flexShrink: 0 }}>
-                        <Trash2 size={13} />
+                        <Icon name="icon-trash2" size={13} />
                       </button>
                     </div>
                   ))
@@ -1146,7 +1141,7 @@ export default function Grocery() {
         {/* smart cart */}
         <div className="card">
           <div className="section-label" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><ShoppingCart size={13} /> Smart Cart</span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Icon name="groq_10" size={20} /> Smart Cart</span>
             <span style={{ fontWeight: 500 }}>{cart.length} items</span>
           </div>
 

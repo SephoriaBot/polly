@@ -1,9 +1,8 @@
 import { useState, useMemo, useEffect, useRef } from "react";
 import type { CSSProperties } from "react";
 import { supabase } from '../lib/supabase';
-import Icon, { type IconName } from '../components/Icon';
+import Icon from '../components/Icon';
 import Lantern from "../components/Lantern";
-import { Trash2 } from "lucide-react";
 import walletPouchImg from '../assets/illustrations/wallet_pouch.png';
 import celebrationImg from '../assets/illustrations/celebration.png';
 
@@ -268,14 +267,21 @@ export default function Wallet() {
   const [showNewListInput, setShowNewListInput] = useState(false);
   const [newListName, setNewListName] = useState("");
   const [newItemDrafts, setNewItemDrafts] = useState<Record<number, string>>({});
-  const [taxRate, setTaxRate] = useState<number>(() => {
-    const s = localStorage.getItem("tax_withholding_rate");
-    return s ? parseFloat(s) : 20;
-  });
-  const [otWageOverride, setOtWageOverride] = useState<string>(() => localStorage.getItem("ot_wage_override") || "");
+  const [taxRate, setTaxRate] = useState<number>(20);
+  const [otWageOverride, setOtWageOverride] = useState<string>("");
+  const [walletSettingsLoaded, setWalletSettingsLoaded] = useState(false);
 
-  useEffect(() => { localStorage.setItem("tax_withholding_rate", taxRate.toString()); }, [taxRate]);
-  useEffect(() => { localStorage.setItem("ot_wage_override", otWageOverride); }, [otWageOverride]);
+  const walletSettingsSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (!walletSettingsLoaded) return; // don't overwrite DB with defaults before initial load completes
+    if (walletSettingsSaveTimer.current) clearTimeout(walletSettingsSaveTimer.current);
+    walletSettingsSaveTimer.current = setTimeout(() => {
+      supabase.from("wallet_settings").upsert({ id: 1, tax_rate: taxRate, ot_wage_override: otWageOverride }).then(({ error }) => {
+        if (error) console.error("wallet_settings save failed:", error);
+      });
+    }, 800);
+    return () => { if (walletSettingsSaveTimer.current) clearTimeout(walletSettingsSaveTimer.current); };
+  }, [taxRate, otWageOverride, walletSettingsLoaded]);
 
 
   const [calcRegWage, setCalcRegWage] = useState("");
@@ -310,6 +316,10 @@ export default function Wallet() {
           { data: paymentData },
           { data: listData },
           { data: listItemData },
+          { data: walletSettingsData },
+          { data: dailyHoursData },
+          { data: extraFundsData },
+          { data: payPeriodData },
         ] = await Promise.all([
           supabase.from("debts").select("*"),
           supabase.from("budget").select("*").eq("id", 1).maybeSingle(),
@@ -317,6 +327,10 @@ export default function Wallet() {
           supabase.from("bill_payments").select("*"),
           supabase.from("lists").select("*").order("created_at"),
           supabase.from("list_items").select("*").order("created_at"),
+          supabase.from("wallet_settings").select("*").eq("id", 1).maybeSingle(),
+          supabase.from("daily_hours_log").select("*"),
+          supabase.from("extra_funds_log").select("*"),
+          supabase.from("wallet_pay_period").select("*").eq("id", 1).maybeSingle(),
         ]);
 
         if (debtData && debtData.length > 0) {
@@ -355,6 +369,45 @@ export default function Wallet() {
           const stalePaymentIds = paymentData.filter((p: BillPayment) => isPastMonth(p.month, p.year)).map((p: BillPayment) => p.id).filter(Boolean);
           if (stalePaymentIds.length > 0) supabase.from("bill_payments").delete().in("id", stalePaymentIds);
           setPayments(paymentData.filter((p: BillPayment) => !isPastMonth(p.month, p.year)));
+        }
+
+        if (walletSettingsData) {
+          setTaxRate(typeof walletSettingsData.tax_rate === "number" ? walletSettingsData.tax_rate : 20);
+          setOtWageOverride(walletSettingsData.ot_wage_override || "");
+        }
+        setWalletSettingsLoaded(true);
+
+        if (dailyHoursData && dailyHoursData.length > 0) {
+          const map: Record<string, { reg: string; ot: string }> = {};
+          dailyHoursData.forEach((row: { date: string; reg: string; ot: string }) => {
+            map[row.date] = { reg: row.reg || "", ot: row.ot || "" };
+          });
+          setDailyHours(map);
+        }
+
+        if (extraFundsData && extraFundsData.length > 0) {
+          const map: Record<string, string> = {};
+          extraFundsData.forEach((row: { date: string; amount: string }) => {
+            map[row.date] = row.amount || "";
+          });
+          setExtraFunds(map);
+        }
+
+        if (payPeriodData) {
+          if (payPeriodData.prior_week_start === currentWeekStartKey()) {
+            setPriorWeekHours({
+              weekStart: payPeriodData.prior_week_start,
+              reg: payPeriodData.prior_week_reg || "",
+              ot: payPeriodData.prior_week_ot || "",
+            });
+          }
+          if (payPeriodData.closed_week_start) {
+            setClosedWeekHours({
+              weekStart: payPeriodData.closed_week_start,
+              reg: payPeriodData.closed_week_reg || "",
+              ot: payPeriodData.closed_week_ot || "",
+            });
+          }
         }
       } catch (err) {
         console.error("Wallet loadData failed:", err);
@@ -445,10 +498,20 @@ export default function Wallet() {
     return map;
   }, [bills, payments, calendarWeeks]);
 
-  const [dailyHours, setDailyHours] = useState<Record<string, { reg: string; ot: string }>>(() => {
-    try { return JSON.parse(localStorage.getItem("daily_hours_log") || "{}"); } catch { return {}; }
-  });
-  useEffect(() => { localStorage.setItem("daily_hours_log", JSON.stringify(dailyHours)); }, [dailyHours]);
+  const [dailyHours, setDailyHours] = useState<Record<string, { reg: string; ot: string }>>({});
+  const dailyHoursSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (!walletSettingsLoaded) return;
+    if (dailyHoursSaveTimer.current) clearTimeout(dailyHoursSaveTimer.current);
+    dailyHoursSaveTimer.current = setTimeout(() => {
+      const rows = Object.entries(dailyHours).map(([date, v]) => ({ date, reg: v.reg || "", ot: v.ot || "" }));
+      if (rows.length === 0) return;
+      supabase.from("daily_hours_log").upsert(rows, { onConflict: "date" }).then(({ error }) => {
+        if (error) console.error("daily_hours_log save failed:", error);
+      });
+    }, 800);
+    return () => { if (dailyHoursSaveTimer.current) clearTimeout(dailyHoursSaveTimer.current); };
+  }, [dailyHours, walletSettingsLoaded]);
 
   function setDailyHourField(key: string, field: "reg" | "ot", value: string) {
     setDailyHours(prev => ({ ...prev, [key]: { reg: prev[key]?.reg || "", ot: prev[key]?.ot || "", [field]: value } }));
@@ -460,27 +523,37 @@ export default function Wallet() {
     return dateKey(sunday);
   }
 
-  const [priorWeekHours, setPriorWeekHours] = useState<{ weekStart: string; reg: string; ot: string }>(() => {
-    try {
-      const stored = JSON.parse(localStorage.getItem("prior_week_hours") || "null");
-      if (stored && stored.weekStart === currentWeekStartKey()) return stored;
-    } catch { /* fall through to blank */ }
-    return { weekStart: currentWeekStartKey(), reg: "", ot: "" };
+  const [priorWeekHours, setPriorWeekHours] = useState<{ weekStart: string; reg: string; ot: string }>({
+    weekStart: currentWeekStartKey(), reg: "", ot: "",
   });
-  useEffect(() => { localStorage.setItem("prior_week_hours", JSON.stringify(priorWeekHours)); }, [priorWeekHours]);
 
   function setPriorWeekHourField(field: "reg" | "ot", value: string) {
     setPriorWeekHours(prev => ({ ...prev, weekStart: currentWeekStartKey(), [field]: value }));
   }
 
-  const [closedWeekHours, setClosedWeekHours] = useState<{ weekStart: string; reg: string; ot: string }>(() => {
-    try {
-      const stored = JSON.parse(localStorage.getItem("closed_week_hours") || "null");
-      if (stored) return stored;
-    } catch { /* fall through to blank */ }
-    return { weekStart: "", reg: "", ot: "" };
+  const [closedWeekHours, setClosedWeekHours] = useState<{ weekStart: string; reg: string; ot: string }>({
+    weekStart: "", reg: "", ot: "",
   });
-  useEffect(() => { localStorage.setItem("closed_week_hours", JSON.stringify(closedWeekHours)); }, [closedWeekHours]);
+
+  const payPeriodSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (!walletSettingsLoaded) return;
+    if (payPeriodSaveTimer.current) clearTimeout(payPeriodSaveTimer.current);
+    payPeriodSaveTimer.current = setTimeout(() => {
+      supabase.from("wallet_pay_period").upsert({
+        id: 1,
+        prior_week_start: priorWeekHours.weekStart,
+        prior_week_reg: priorWeekHours.reg,
+        prior_week_ot: priorWeekHours.ot,
+        closed_week_start: closedWeekHours.weekStart,
+        closed_week_reg: closedWeekHours.reg,
+        closed_week_ot: closedWeekHours.ot,
+      }).then(({ error }) => {
+        if (error) console.error("wallet_pay_period save failed:", error);
+      });
+    }, 800);
+    return () => { if (payPeriodSaveTimer.current) clearTimeout(payPeriodSaveTimer.current); };
+  }, [priorWeekHours, closedWeekHours, walletSettingsLoaded]);
 
   function setClosedWeekHourField(weekStart: string, field: "reg" | "ot", value: string) {
     setClosedWeekHours(prev => ({
@@ -490,17 +563,20 @@ export default function Wallet() {
     }));
   }
 
-  const [extraFunds, setExtraFunds] = useState<Record<string, string>>(() => {
-    try {
-      return JSON.parse(localStorage.getItem("extra_funds_log") || "{}");
-    } catch {
-      return {};
-    }
-  });
-
+  const [extraFunds, setExtraFunds] = useState<Record<string, string>>({});
+  const extraFundsSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
-    localStorage.setItem("extra_funds_log", JSON.stringify(extraFunds));
-  }, [extraFunds]);
+    if (!walletSettingsLoaded) return;
+    if (extraFundsSaveTimer.current) clearTimeout(extraFundsSaveTimer.current);
+    extraFundsSaveTimer.current = setTimeout(() => {
+      const rows = Object.entries(extraFunds).map(([date, amount]) => ({ date, amount: amount || "" }));
+      if (rows.length === 0) return;
+      supabase.from("extra_funds_log").upsert(rows, { onConflict: "date" }).then(({ error }) => {
+        if (error) console.error("extra_funds_log save failed:", error);
+      });
+    }, 800);
+    return () => { if (extraFundsSaveTimer.current) clearTimeout(extraFundsSaveTimer.current); };
+  }, [extraFunds, walletSettingsLoaded]);
 
   const effectiveOtWage = parseFloat(otWageOverride) > 0 ? parseFloat(otWageOverride) : budget.hourly_wage * 1.5;
   const netHourlyWage = budget.hourly_wage > 0 ? budget.hourly_wage * (1 - taxRate / 100) : 0;
@@ -646,6 +722,7 @@ export default function Wallet() {
   const urgentTotal = urgentBills.reduce((s, b) => s + b.amount, 0);
   const crisisTotal = crisisBills.reduce((s, b) => s + b.amount, 0);
   const isCrisis = crisisTotal > 0;
+  const hasHighUpcomingBills = crisisTotal >= 200;
   const billsRate = totalMonthlyBills / 30;
 
   const NEEDS_FLOOR = 25;
@@ -656,7 +733,7 @@ export default function Wallet() {
   let unifiedNeeds: number;
   let unifiedFun: number;
 
-  if (isCrisis) {
+  if (hasHighUpcomingBills) {
     unifiedNeeds = Math.min(inputAmount, NEEDS_FLOOR);
     const afterNeeds = Math.max(0, inputAmount - unifiedNeeds);
     unifiedBills = Math.min(afterNeeds, crisisTotal);
@@ -708,14 +785,14 @@ export default function Wallet() {
       note: isCrisis ? "paused -- bills come first" : "$22/day until $650",
     },
     {
-      label: "Groceries & Gas",
+      label: "Needs (gas, groceries, needs list)",
       icon: "basket",
       amount: unifiedNeeds,
       color: "var(--green-dark)",
       note: isCrisis ? "protected floor, even in crisis mode" : "groceries + gas, one combined category",
     },
     {
-      label: "Treats",
+      label: "Treats (wants list)",
       icon: "trophy",
       amount: unifiedFun,
       color: "var(--ink-soft)",
@@ -1046,7 +1123,7 @@ export default function Wallet() {
 
             {isCrisis && (
               <div style={{ background: "var(--danger-bg)", border: "1.5px solid var(--danger)", borderRadius: 16, padding: "12px 16px", fontSize: 13, color: "var(--danger)", fontWeight: 700 }}>
-                Equity Mode Active — {crisisBills.length} bill(s) late or due within 3 days ({fmt(crisisTotal)} total). Fun money and general savings are zeroed until these are covered. Things you need are still protected.
+                Equity Mode Active — {crisisBills.length} bill(s) late or due within 3 days: ({fmt(crisisTotal)}). Fun money and general savings are zeroed until these are covered. Things you need are still protected.
               </div>
             )}
             {!isCrisis && urgentBills.length > 0 && (
@@ -1148,22 +1225,31 @@ export default function Wallet() {
                       <div>
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
                           <div style={{ fontSize: 13, fontWeight: 700, color: "var(--ink)" }}>{activeList.name}</div>
-                          <button className="btn btn-danger btn-sm" onClick={() => deleteList(activeList.id)}><Trash2 size={13} /></button>
+                          <button className="btn btn-ghost btn-sm" onClick={() => deleteList(activeList.id)}><Icon name="icon-trash2" size={13} /></button>
                         </div>
 
                         <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 10 }}>
                           {activeListItems.map(item => (
                             <div key={item.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 0", borderBottom: "1px solid var(--border)" }}>
-                              <input
-                                type="checkbox"
-                                checked={item.done}
-                                onChange={() => toggleListItem(item)}
-                                style={{ width: 16, height: 16, cursor: "pointer", accentColor: "var(--green-dark)" }}
-                              />
+                              <button
+                                onClick={() => toggleListItem(item)}
+                                aria-label={item.done ? "Mark not done" : "Mark done"}
+                                style={{
+                                  width: 24, height: 24, flexShrink: 0,
+                                  border: "none", background: "none", padding: 0,
+                                  cursor: "pointer", display: "flex",
+                                  alignItems: "center", justifyContent: "center",
+                                }}
+                              >
+                                {item.done
+                                  ? <Icon name="groq_8" size={17} style={{ color: "var(--pink-dark)" }} />
+                                  : <Icon name="icon-circle" size={17} style={{ color: "var(--border)" }} />
+                                }
+                              </button>
                               <div style={{ flex: 1, fontSize: 13, color: item.done ? "var(--ink-muted)" : "var(--ink)", textDecoration: item.done ? "line-through" : "none" }}>
                                 {item.label}
                               </div>
-                              <button className="btn btn-ghost btn-sm" onClick={() => deleteListItem(item.id)}><Trash2 size={12} /></button>
+                              <button className="btn btn-ghost btn-sm" onClick={() => deleteListItem(item.id)}><Icon name="icon-trash2" size={12} /></button>
                             </div>
                           ))}
                           {activeListItems.length === 0 && (
@@ -1199,7 +1285,7 @@ export default function Wallet() {
                 <div style={{ fontSize: 24, lineHeight: 1 }}><Icon name="calendar" size={24} /></div>
                 <div style={{ fontSize: 14, fontWeight: 800, color: "var(--ink)" }}>Money Calendar</div>
                 <div style={{ fontSize: 11, color: "var(--pink-dark)", marginBottom: 14 }}>
-                  Runs from today forward. Log the hours you're working (or plan to work) each day. Anytime Pay eligible percentage comes from your last paycheck's net-to-gross ratio (post-tax ÷ pre-tax), applied against your cumulative pool for the week, minus that check's flat deductions and a 2% safety buffer — whatever's unclaimed by Saturday night lands as a lump catch-up the following Wednesday.
+                  Runs from today forward. Log the hours you're working (or plan to work) each day. Anytime Pay eligible percentage comes from your last paycheck's net-to-gross ratio (post-tax ÷ pre-tax), applied against your cumulative pool for the week, minus that check's flat deductions and a growing 2% safety buffer — whatever's unclaimed by Saturday night lands as a lump catch-up the following Wednesday.
                 </div>
 
                 {new Date().getDay() !== 0 && (
@@ -1537,6 +1623,7 @@ export default function Wallet() {
                   </div>
                 )}
 
+                <div style={{ overflowX: "auto" }}>
                 <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
                   <thead>
                     <tr>
@@ -1549,7 +1636,21 @@ export default function Wallet() {
                     {monthBills.map((b, i) => (
                       <tr key={b.id} style={{ background: b.late ? "var(--danger-bg)" : b.paid ? "var(--sage-light)" : i % 2 === 0 ? "transparent" : "var(--accent)" }}>
                         <td style={{ padding: "9px 8px" }}>
-                          <input type="checkbox" checked={b.paid} onChange={() => togglePaid(b)} style={{ width: 16, height: 16, cursor: "pointer", accentColor: "var(--green-dark)" }} />
+                          <button
+                            onClick={() => togglePaid(b)}
+                            aria-label={b.paid ? "Mark not paid" : "Mark paid"}
+                            style={{
+                              width: 24, height: 24, flexShrink: 0,
+                              border: "none", background: "none", padding: 0,
+                              cursor: "pointer", display: "flex",
+                              alignItems: "center", justifyContent: "center",
+                            }}
+                          >
+                            {b.paid
+                              ? <Icon name="groq_8" size={17} style={{ color: "var(--pink-dark)" }} />
+                              : <Icon name="icon-circle" size={17} style={{ color: "var(--border)" }} />
+                            }
+                          </button>
                         </td>
                         <td style={{ padding: "9px 8px", textDecoration: b.paid ? "line-through" : "none" }}>
                           <EditableCell value={b.name} onChange={v => updateMonthBill(b, "name", v)} type="text" style={{ color: b.paid ? "var(--ink-muted)" : "var(--ink)", fontWeight: 600 }} />
@@ -1568,8 +1669,8 @@ export default function Wallet() {
                             : b.days <= 3 ? <span className="badge badge-lavender">DUE SOON</span>
                             : <span className="badge badge-pink">{b.days}d away</span>}
                             </td>
-                        <td style={{ padding: "9px 8px" }}>
-                          <button className="btn btn-danger btn-sm" onClick={() => removeBill(b.id)}><Trash2 size={13} /></button>
+                        <td style={{ padding: "9px 8px", textAlign: "center" }}>
+                          <button className="btn btn-ghost btn-sm" onClick={() => removeBill(b.id)}><Icon name="icon-trash2" size={13} /></button>
                         </td>
                       </tr>
                     ))}
@@ -1583,6 +1684,7 @@ export default function Wallet() {
                     )}
                   </tbody>
                 </table>
+                </div>
               </div>
             </div>
           </>
@@ -1660,7 +1762,7 @@ export default function Wallet() {
                               <button className="btn btn-green btn-sm" onClick={() => markDebtPaid(d.id, d.name)}>Paid <Icon name="clipboard-check" size={13} /></button>
                             </td>
                             <td style={{ padding: "9px 8px" }}>
-                              <button className="btn btn-danger btn-sm" onClick={() => removeDebt(d.id)}><Trash2 size={13} /></button>
+                              <button className="btn btn-ghost btn-sm" onClick={() => removeDebt(d.id)}><Icon name="icon-trash2" size={13} /></button>
                             </td>
                           </tr>
                         );
@@ -1685,9 +1787,9 @@ export default function Wallet() {
                           <td style={{ padding: "9px 8px", textDecoration: "line-through", color: "var(--green-dark)", fontWeight: 700 }}>{d.name}</td>
                           <td style={{ padding: "9px 8px", color: "var(--green-dark)", fontWeight: 800 }}>$0.00</td>
                           <td style={{ padding: "9px 8px" }}><span className="badge badge-green">PAID OFF</span></td>
-                          <td style={{ padding: "9px 8px", display: "flex", gap: 6 }}>
+                          <td style={{ padding: "9px 8px", display: "flex", gap: 6, justifyContent: "center" }}>
                             <button className="btn btn-ghost btn-sm" onClick={() => unmarkDebtPaid(d.id)}>Undo</button>
-                            <button className="btn btn-danger btn-sm" onClick={() => removeDebt(d.id)}><Trash2 size={13} /></button>
+                            <button className="btn btn-ghost btn-sm" onClick={() => removeDebt(d.id)}><Icon name="icon-trash2" size={13} /></button>
                           </td>
                         </tr>
                       ))}
@@ -1723,7 +1825,9 @@ export default function Wallet() {
                             <td style={{ padding: "9px 8px" }}><EditableCell value={d.balance} onChange={v => updateDebt(d.id, "balance", parseFloat(v) || 0)} /></td>
                             <td style={{ padding: "9px 8px" }}><EditableCell value={d.apr} onChange={v => updateDebt(d.id, "apr", parseFloat(v) || 0)} /></td>
                             <td style={{ padding: "9px 8px", color: "var(--ink-muted)", fontSize: 11 }}>Not targeted until active debts clear</td>
-                            <td style={{ padding: "9px 8px" }}><button className="btn btn-danger btn-sm" onClick={() => removeDebt(d.id)}><Trash2 size={13} /></button></td>
+                            <td style={{ padding: "9px 8px", textAlign: "center" }}>
+                              <button className="btn btn-ghost btn-sm" onClick={() => removeDebt(d.id)}><Icon name="icon-trash2" size={13} /></button>
+                            </td>
                           </tr>
                         ))}
                       </tbody>

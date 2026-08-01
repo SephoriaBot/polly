@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
-import { ChevronDown, Plus, Sparkles } from 'lucide-react';
 import { useAppointments } from '../../hooks/useAppointments';
 import { supabase } from '../../lib/supabase';
 import { DEFAULT_NOTE_TYPES } from '../../types/appointmentNotes';
 import type { AppointmentNoteType } from '../../types/appointmentNotes';
 import styles from './CreateAppointmentNote.module.css';
+import Icon, { type IconName } from '../Icon';
 
 interface CreateAppointmentNoteProps {
   onCreate: (appointmentId: string, noteType: AppointmentNoteType, appointmentLabel: string) => void;
@@ -96,7 +96,7 @@ export default function CreateAppointmentNote({ onCreate, onCancel }: CreateAppo
               </option>
             ))}
           </select>
-          <ChevronDown size={16} className={styles.selectChevron} />
+          <Icon name="icon-chevrondown" size={16} className={styles.selectChevron} />
         </div>
       )}
 
@@ -112,7 +112,7 @@ export default function CreateAppointmentNote({ onCreate, onCancel }: CreateAppo
 
       {appointmentId && !checkingType && existingType && (
         <p className={styles.helperText}>
-          <Sparkles size={12} style={{ verticalAlign: '-1px', marginRight: 4 }} />
+          <Icon name="groq_2" size={12} style={{ verticalAlign: '-1px', marginRight: 4 }} />
           This appointment already has "{existingType}" notes — picking up where you left off.
         </p>
       )}
@@ -144,7 +144,7 @@ export default function CreateAppointmentNote({ onCreate, onCancel }: CreateAppo
               className={styles.typeChipAdd}
               onClick={() => setShowCustomInput((s) => !s)}
             >
-              <Plus size={13} /> other
+              <Icon name="icon-plus" size={13} /> other
             </button>
           </div>
 

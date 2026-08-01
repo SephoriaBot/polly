@@ -13,8 +13,23 @@ export type IconName =
   | 'moon-last-quarter' | 'moon-waning-crescent' | 'music-note' | 'notebook-pen'
   | 'notepad-pencil' | 'piggy-bank' | 'potion' | 'potted-plant' | 'settings-gear'
   | 'sparkle-single' | 'sparkles-cluster' | 'spellbook' | 'sun-cloud' | 'trash-can'
-  | 'trophy' | 'washing-machine' | 'aries' | 'taurus' | 'gemini' | 'cancer' | 'leo' | 'virgo' | 'libra' | 'scorpio' 
-  | 'sagittarius' | 'capricorn' | 'aquarius' | 'pisces';
+  | 'trophy' | 'washing-machine' | 'aries' | 'taurus' | 'gemini' | 'cancer' | 'leo' | 'virgo' | 'libra' | 'scorpio'
+  | 'sagittarius' | 'capricorn' | 'aquarius' | 'pisces'
+  | 'groq_1' | 'groq_2' | 'groq_3' | 'groq_4' | 'groq_5' | 'groq_6' | 'groq_7' | 'groq_8' | 'groq_9' | 'groq_10'
+  | 'empty_jar'
+  | 'icon-alertcircle' | 'icon-archive' | 'icon-arrowleft' | 'icon-calendar'
+  | 'icon-calendardays' | 'icon-chefhat' | 'icon-chevrondown' | 'icon-chevronup'
+  | 'icon-circle' | 'icon-clipboardlist' | 'icon-clock' | 'icon-database'
+  | 'icon-decisions' | 'icon-externallink' | 'icon-flower' | 'icon-folderplus'
+  | 'icon-grocery' | 'icon-habitat' | 'icon-heart' | 'icon-home'
+  | 'icon-inbox' | 'icon-link2' | 'icon-listchecks' | 'icon-loader2'
+  | 'icon-maidwizard' | 'icon-mappin' | 'icon-meals' | 'icon-moon'
+  | 'icon-notebook' | 'icon-package' | 'icon-planner' | 'icon-plus'
+  | 'icon-refreshcw' | 'icon-search' | 'icon-slidershorizontal' | 'icon-trackers'
+  | 'icon-trash2' | 'icon-wallet'
+  | 'icon_car' | 'icon_cellphone' | 'icon_computer' | 'icon_housepet'
+  | 'icon_plant' | 'icon_toaster';
+
 
 interface IconProps {
   name: IconName;
@@ -36,6 +51,7 @@ export default function Icon({ name, size = 20, alt = '', className, style }: Ic
         display: 'inline-block',
         verticalAlign: '-0.2em',
         objectFit: 'contain',
+        maxWidth: 'none',
         ...style,
       }}
     />

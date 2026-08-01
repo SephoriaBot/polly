@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { Clock, Package, ChevronRight, RotateCcw, CheckCircle2, Circle, Sparkles } from 'lucide-react';
 import Icon, { type IconName } from '../components/Icon';
 import Lantern from "../components/Lantern";
 import hourglassImg from '../assets/illustrations/hourglass.png';
@@ -107,7 +106,7 @@ Include 4–8 supplies, a realistic time estimate, and 6–10 steps in logical c
         </div>
         {wizardState === 'plan' && (
           <button className="btn btn-ghost" onClick={reset}>
-            <RotateCcw size={14} /> New Room
+            <Icon name="groq_4" size={14} /> New Room
           </button>
         )}
       </div>
@@ -158,7 +157,7 @@ Include 4–8 supplies, a realistic time estimate, and 6–10 steps in logical c
                     <span style={{ fontSize: '1.4rem' }}><Icon name={r.icon} size={22} /></span>
                     <span style={{ fontWeight: 600, fontSize: '0.95rem', color: 'var(--ink)' }}>{r.label}</span>
                   </div>
-                  <ChevronRight size={16} style={{ color: 'var(--ink-muted)' }} />
+                  <Icon name="groq_6" size={16} style={{ color: 'var(--ink-muted)' }} />
                 </button>
               ))}
             </div>
@@ -210,7 +209,7 @@ Include 4–8 supplies, a realistic time estimate, and 6–10 steps in logical c
                 </div>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--pink-dark)', fontWeight: 600, fontSize: '0.88rem' }}>
-                <Clock size={15} />
+                <Icon name="icon-clock" size={15} />
                 ~{plan.estimatedMinutes} min
               </div>
             </div>
@@ -252,8 +251,8 @@ Include 4–8 supplies, a realistic time estimate, and 6–10 steps in logical c
                     >
                       <div style={{ flexShrink: 0, marginTop: 1 }}>
                         {done
-                          ? <CheckCircle2 size={17} style={{ color: 'var(--pink-dark)' }} />
-                          : <Circle size={17} style={{ color: 'var(--border)' }} />
+                          ? <Icon name="groq_8" size={17} style={{ color: 'var(--pink-dark)' }} />
+                          : <Icon name="icon-circle" size={17} style={{ color: 'var(--border)' }} />
                         }
                       </div>
                       <div>
@@ -291,7 +290,7 @@ Include 4–8 supplies, a realistic time estimate, and 6–10 steps in logical c
                           border: '1px solid var(--gold-light)',
                           fontSize: '0.84rem', color: 'var(--ink)',
                         }}>
-                          <Package size={13} style={{ color: 'var(--pink-dark)', flexShrink: 0 }} />
+                          <Icon name="icon-package" size={13} style={{ color: 'var(--pink-dark)', flexShrink: 0 }} />
                           {supply}
                         </div>
                       ))}

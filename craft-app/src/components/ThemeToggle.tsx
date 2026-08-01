@@ -1,5 +1,5 @@
-import { Flower2, Moon } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
+import Icon, { type IconName } from './Icon';
 
 export default function ThemeToggle() {
   const { theme, toggleTheme } = useTheme();
@@ -40,9 +40,9 @@ export default function ThemeToggle() {
         }}
       >
         {isDark ? (
-          <Moon size={14} color="var(--gold)" />
+          <Icon name="icon-moon" size={14} color="var(--gold)" />
         ) : (
-          <Flower2 size={14} color="var(--gold-dark)" />
+          <Icon name="icon-flower" size={14} color="var(--gold-dark)" />
         )}
       </span>
     </button>

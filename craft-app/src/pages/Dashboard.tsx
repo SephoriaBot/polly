@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
-import { Heart } from 'lucide-react';
 import Lantern from "../components/Lantern";
 import DailyAlmanac from "../components/DailyAlmanac";
 import sleepingNestImg from '../assets/illustrations/sleeping_nest.png';
 import WeatherBadge from '../components/WeatherBadge';
-import GroqDailies from '../groqDailies/GroqDailies';
+import TroubleshooterGroq from '../components/suggest/TroubleshooterGroq';
+import Icon, { type IconName } from '../components/Icon';
 
 interface Focus {
   id: string;
@@ -13,7 +13,9 @@ interface Focus {
   estimated_minutes: number | null;
   completed: boolean;
   date: string;
+  carried_over: boolean;
 }
+
 
 const DAY_NAMES = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 
@@ -25,17 +27,6 @@ function getGreeting() {
   if (h < 17) return 'Good afternoon';
   if (h < 21) return 'Good evening';
   return 'Winding down';
-}
-
-function Sprig() {
-  return (
-    <svg className="sprig" width="30" height="30" viewBox="0 0 30 30" fill="none">
-      <path d="M15 27 C14 19 14 12 15 3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
-      <path d="M15 18 C12 16 9 16 7 13" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
-      <path d="M15 12 C18 10 20 10 22 7" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
-      <circle cx="15" cy="4" r="2.2" fill="currentColor" />
-    </svg>
-  );
 }
 
 function StitchDivider() {
@@ -54,17 +45,26 @@ export default function Dashboard() {
   const [newFocusMins, setNewFocusMins] = useState('');
   const [addingFocus, setAddingFocus] = useState(false);
 
-  const todayStr = new Date().toISOString().split('T')[0];
+  const now = new Date();
+  const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
   const todayName = DAY_NAMES[new Date().getDay()];
 
   useEffect(() => {
     loadAll();
   }, []);
 
-  async function loadAll() {
-    const { data } = await supabase.from('focuses').select('*').eq('date', todayStr).order('created_at');
-    setFocuses(data || []);
-  }
+  async function carryOverFocuses() {
+  await supabase.from('focuses')
+    .update({ date: todayStr, carried_over: true })
+    .lt('date', todayStr)
+    .eq('completed', false);
+}
+
+async function loadAll() {
+  await carryOverFocuses();
+  const { data } = await supabase.from('focuses').select('*').eq('date', todayStr).order('created_at');
+  setFocuses(data || []);
+}
 
   async function addFocus() {
     if (!newFocus.trim()) return;
@@ -202,12 +202,10 @@ export default function Dashboard() {
                           alignItems: 'center', justifyContent: 'center',
                         }}
                       >
-                        <Heart
-                          size={21}
-                          strokeWidth={1.75}
-                          color={f.completed ? 'var(--pink-dark)' : 'var(--border)'}
-                          fill={f.completed ? 'var(--pink-dark)' : 'none'}
-                        />
+                        {f.completed
+                          ? <Icon name="groq_8" size={17} style={{ color: 'var(--pink-dark)' }} />
+                          : <Icon name="icon-circle" size={17} style={{ color: 'var(--border)' }} />
+                        }
                       </button>
 
                   <div style={{ flex: 1 }}>
@@ -218,6 +216,14 @@ export default function Dashboard() {
                     }}>
                       {f.title}
                     </div>
+
+                    {f.carried_over && !f.completed && (
+  <div style={{ fontSize: '0.7rem', color: 'var(--pink-dark)', fontWeight: 700, marginTop: 2 }}>
+    Not finished!
+  </div>
+)}
+
+
                     {f.estimated_minutes && (
                       <div style={{ fontSize: '0.72rem', color: 'var(--ink-muted)', marginTop: 2, fontFamily: 'IBM Plex Mono, monospace' }}>
                         Est. {f.estimated_minutes} min
@@ -250,9 +256,9 @@ export default function Dashboard() {
 
         <Lantern variant="divider" />
 
-         {/* ── GROQ DAILIES FEED ── */}
+         {/* ── TROUBLESHOOTER GROQ ── */}
           <section>
-          <GroqDailies />
+          <TroubleshooterGroq />
           </section>
       </div>
     </div>

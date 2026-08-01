@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { Plus, X, RotateCcw, Calendar, NotebookText, Heart } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import AppointmentNotesPanel from '../components/planner/AppointmentNotesPanel';
 import type { AppointmentNoteSelection } from '../components/planner/AppointmentNotesPanel';
@@ -8,7 +7,7 @@ import Lantern from "../components/Lantern";
 import EmptyState from '../components/EmptyState';
 import checklistImg from '../assets/illustrations/checklist.png';
 import celebrationImg from '../assets/illustrations/celebration.png';
-
+import Icon, { type IconName } from '../components/Icon';
 
 interface DailyTask {
   id: string;
@@ -222,7 +221,7 @@ export default function DailyPlanner() {
         </div>
         {tasks.length > 0 && (
           <button className="btn btn-ghost" onClick={resetAll}>
-            <RotateCcw size={14} /> Reset
+            <Icon name="groq_4" size={14} /> Reset
           </button>
         )}
       </div>
@@ -267,7 +266,7 @@ export default function DailyPlanner() {
                   gap: 8, padding: '28px 16px', marginBottom: 16,
                   border: '1.5px dashed var(--border)', borderRadius: 'var(--radius-md)',
                 }}>
-                  <Heart size={26} style={{ color: 'var(--pink-light)' }} strokeWidth={1.5} />
+                  <Icon name="icon-heart" size={26} style={{ color: 'var(--pink-light)' }} strokeWidth={1.5} />
                   <p style={{
                     fontSize: '0.85rem', color: 'var(--ink-muted)', margin: 0,
                     lineHeight: 1.6, textAlign: 'center',
@@ -298,12 +297,10 @@ export default function DailyPlanner() {
                           alignItems: 'center', justifyContent: 'center',
                         }}
                       >
-                        <Heart
-                          size={21}
-                          strokeWidth={1.75}
-                          color={task.done ? 'var(--pink-dark)' : 'var(--border)'}
-                          fill={task.done ? 'var(--pink-dark)' : 'none'}
-                        />
+                        {task.done
+                          ? <Icon name="groq_8" size={17} style={{ color: 'var(--pink-dark)' }} />
+                          : <Icon name="icon-circle" size={17} style={{ color: 'var(--border)' }} />
+                        }
                       </button>
 
                       <span style={{
@@ -319,7 +316,7 @@ export default function DailyPlanner() {
                         onClick={() => deleteTask(task.id)}
                         style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-muted)', padding: 0, display: 'flex', alignItems: 'center', opacity: 0.4 }}
                       >
-                        <X size={13} />
+                        <Icon name="groq_3" size={13} />
                       </button>
                     </div>
                   ))}
@@ -340,7 +337,7 @@ export default function DailyPlanner() {
                   style={{ padding: '10px 14px' }}
                   onClick={addTask}
                 >
-                  <Plus size={14} />
+                  <Icon name="icon-plus" size={14} />
                 </button>
               </div>
             </div>
@@ -378,7 +375,7 @@ export default function DailyPlanner() {
                           background: 'var(--blush)',
                           display: 'flex', alignItems: 'center', justifyContent: 'center',
                         }}>
-                          <Calendar size={13} style={{ color: 'var(--pink-dark)' }} />
+                          <Icon name="icon-calendar" size={13} style={{ color: 'var(--pink-dark)' }} />
                         </div>
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ fontWeight: 600, fontSize: '0.88rem', color: 'var(--ink)' }}>{appt.title}</div>
@@ -397,14 +394,14 @@ export default function DailyPlanner() {
                               flexShrink: 0,
                             }}
                           >
-                            <NotebookText size={13} style={{ color: 'var(--pink-dark)' }} />
+                            <Icon name="icon-notebook" size={13} style={{ color: 'var(--pink-dark)' }} />
                           </button>
                         )}
                         <button
                           onClick={() => deleteAppointment(appt.id)}
                           style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-muted)', padding: 0, display: 'flex', alignItems: 'center', opacity: 0.4 }}
                         >
-                          <X size={13} />
+                          <Icon name="groq_3" size={13} />
                         </button>
                       </div>
                     );
@@ -435,7 +432,7 @@ export default function DailyPlanner() {
                     style={{ padding: '10px 14px' }}
                     onClick={addAppointment}
                   >
-                    <Plus size={14} />
+                    <Icon name="icon-plus" size={14} />
                   </button>
                 </div>
               </div>

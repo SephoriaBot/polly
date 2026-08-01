@@ -29,14 +29,16 @@ import {
   pickOpponentMove,
   rollsFirst,
 } from "./battle";
-import type { WildHamster, AttackOutcome } from "./battle";
+import type { WildHamster, AttackOutcome, TrainedStats } from "./battle";
 
 interface FighterEntry {
   id: number;
   hamsterId: string;
+  name: string | null;
   stage: EvolutionStage;
   abilities: string[];
   image: string;
+  trainedStats: TrainedStats;
 }
 
 type Phase = "pick" | "scouting" | "found" | "battling" | "result";
@@ -83,7 +85,7 @@ export default function WildEncounter() {
     setLoading(true);
     const { data } = await supabase
       .from("hamster_collection")
-      .select("id, hamster_id, stage, teen_form_id, final_form_id, abilities")
+      .select("id, hamster_id, name, stage, teen_form_id, final_form_id, abilities, trained_hp, trained_attack, trained_defense, trained_speed")
       .neq("stage", "baby")
       .order("hatched_at", { ascending: false });
 
@@ -94,9 +96,16 @@ export default function WildEncounter() {
       return {
         id: r.id,
         hamsterId: r.hamster_id,
+        name: r.name ?? null,
         stage: r.stage as EvolutionStage,
         abilities: r.abilities || [],
         image,
+        trainedStats: {
+          hp: Number(r.trained_hp) || 0,
+          attack: Number(r.trained_attack) || 0,
+          defense: Number(r.trained_defense) || 0,
+          speed: Number(r.trained_speed) || 0,
+        },
       };
     });
 
@@ -117,7 +126,7 @@ export default function WildEncounter() {
   }, [fighters]);
 
   const playerStats = useMemo(
-    () => (selected ? deriveBattleStats(selected.stage, selected.abilities) : null),
+    () => (selected ? deriveBattleStats(selected.stage, selected.abilities, selected.trainedStats) : null),
     [selected]
   );
 
@@ -357,7 +366,7 @@ export default function WildEncounter() {
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
                   <div style={{ flex: 1, textAlign: "center" }}>
                     <img src={selected.image} alt="your hamster" style={{ width: 64, height: 64, objectFit: "contain" }} />
-                    <div style={{ fontSize: 11, fontWeight: 700, color: "var(--pink-dark)" }}>Your hamster</div>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: "var(--pink-dark)" }}>{selected.name || "Your hamster"}</div>
                     <HpBar
                       current={phase === "found" ? playerStats.hp : playerHp}
                       max={playerStats.hp}
