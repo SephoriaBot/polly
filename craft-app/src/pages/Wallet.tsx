@@ -1231,12 +1231,21 @@ export default function Wallet() {
                         <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 10 }}>
                           {activeListItems.map(item => (
                             <div key={item.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 0", borderBottom: "1px solid var(--border)" }}>
-                              <input
-                                type="checkbox"
-                                checked={item.done}
-                                onChange={() => toggleListItem(item)}
-                                style={{ width: 16, height: 16, cursor: "pointer", accentColor: "var(--green-dark)" }}
-                              />
+                              <button
+                                onClick={() => toggleListItem(item)}
+                                aria-label={item.done ? "Mark not done" : "Mark done"}
+                                style={{
+                                  width: 24, height: 24, flexShrink: 0,
+                                  border: "none", background: "none", padding: 0,
+                                  cursor: "pointer", display: "flex",
+                                  alignItems: "center", justifyContent: "center",
+                                }}
+                              >
+                                {item.done
+                                  ? <Icon name="groq_8" size={17} style={{ color: "var(--pink-dark)" }} />
+                                  : <Icon name="icon-circle" size={17} style={{ color: "var(--border)" }} />
+                                }
+                              </button>
                               <div style={{ flex: 1, fontSize: 13, color: item.done ? "var(--ink-muted)" : "var(--ink)", textDecoration: item.done ? "line-through" : "none" }}>
                                 {item.label}
                               </div>
