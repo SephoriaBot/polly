@@ -6,12 +6,12 @@ import hourglassImg from '../../assets/illustrations/hourglass.png'
 interface QuizOption { value: string; label: ReactNode }
 
 const CATEGORIES: QuizOption[] = [
-  { value: 'car', label: <><Icon name="icon_car" size={25} /> Car</> },
-  { value: 'appliance', label: <><Icon name="icon_toaster" size={25} /> Appliance</> },
-  { value: 'pet', label: <><Icon name="icon_housepet" size={25} /> Pet</> },
-  { value: 'plant', label: <><Icon name="icon_plant" size={25} /> Plant</> },
-  { value: 'computer', label: <><Icon name="icon_computer" size={25} /> Computer</> },
-  { value: 'phone', label: <><Icon name="icon_cellphone" size={25} /> Phone / Tablet</> },
+  { value: 'car', label: <><Icon name="icon_car" size={35} /> Car</> },
+  { value: 'appliance', label: <><Icon name="icon_toaster" size={35} /> Appliance</> },
+  { value: 'pet', label: <><Icon name="icon_housepet" size={35} /> Pet</> },
+  { value: 'plant', label: <><Icon name="icon_plant" size={35} /> Plant</> },
+  { value: 'computer', label: <><Icon name="icon_computer" size={35} /> Computer</> },
+  { value: 'phone', label: <><Icon name="icon_cellphone" size={35} /> Phone / Tablet</> },
 ]
 
 const CAR_SYMPTOMS = [
@@ -276,7 +276,7 @@ const progressPct = ((step + 1) / STEP_COUNT) * 100
       <div className="modal" style={{ maxWidth: 580 }} onClick={e => e.stopPropagation()}>
         <div className="modal-header" style={{ color: 'var(--pink-dark)' }}>
           <span style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 700, fontSize: '0.95rem' }}>
-            <Icon name="groq_1" size={25} /> Troubleshooter Groq
+            <Icon name="groq_1" size={35} /> Troubleshooter Groq
           </span>
         </div>
 
@@ -288,7 +288,7 @@ const progressPct = ((step + 1) / STEP_COUNT) * 100
             background: 'var(--blush)', border: '1.5px solid var(--border)',
             fontSize: '0.76rem', color: 'var(--ink-muted)', lineHeight: 1.5,
           }}>
-            <Icon name="groq_1" size={25} /> General troubleshooting guidance only. For safety-critical issues or professional repairs, contact a qualified professional.
+            <Icon name="groq_1" size={35} /> General troubleshooting guidance only. For safety-critical issues or professional repairs, contact a qualified professional.
           </div>
 
           {wizardState === 'quiz' && (
