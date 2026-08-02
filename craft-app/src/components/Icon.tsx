@@ -28,7 +28,10 @@ export type IconName =
   | 'icon-refreshcw' | 'icon-search' | 'icon-slidershorizontal' | 'icon-trackers'
   | 'icon-trash2' | 'icon-wallet'
   | 'icon_car' | 'icon_cellphone' | 'icon_computer' | 'icon_housepet'
-  | 'icon_plant' | 'icon_toaster';
+  | 'icon_plant' | 'icon_toaster'
+  | 'creamhamster' | 'pinkhamster' | 'cupempty' | 'cupfull'
+  | 'picnicempty' | 'picnicfull' | 'shellempty' | 'shellfull'
+  | 'sugarempty' | 'sugarfull' | 'heartempty' | 'heartfull' ;
 
 
 interface IconProps {

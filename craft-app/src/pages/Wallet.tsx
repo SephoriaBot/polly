@@ -711,18 +711,25 @@ export default function Wallet() {
   }, [bills, payments, selectedMonth, selectedYear]);
 
   const urgentBills = monthBills.filter(b => !b.paid && b.days <= 7 && b.days >= 0);
-  const crisisBills = monthBills.filter(b => !b.paid && (b.late || (b.days <= 3 && b.days >= 0)));
+  const near3Bills = monthBills.filter(b => !b.paid && (b.late || (b.days <= 3 && b.days >= 0)));
+  const near5Bills = monthBills.filter(b => !b.paid && (b.late || (b.days <= 5 && b.days >= 0)));
   const totalMonthlyBills = monthBills.reduce((s, b) => s + b.amount, 0);
   const paidTotal = monthBills.filter(b => b.paid).reduce((s, b) => s + b.amount, 0);
   const unpaidTotal = monthBills.filter(b => !b.paid).reduce((s, b) => s + b.amount, 0);
+
+  const near5Total = near5Bills.reduce((s, b) => s + b.amount, 0);
+  const SAFE_TO_SPEND_BUFFER = 50;
+  const safeToSpend = Math.max(0, (budget.current_balance || 0) - near5Total - SAFE_TO_SPEND_BUFFER);
 
   const pay = parseFloat(anytimePay) || 0;
   const inputAmount = pay;
 
   const urgentTotal = urgentBills.reduce((s, b) => s + b.amount, 0);
-  const crisisTotal = crisisBills.reduce((s, b) => s + b.amount, 0);
-  const isCrisis = crisisTotal > 0;
-  const hasHighUpcomingBills = crisisTotal >= 200;
+  const near3Total = near3Bills.reduce((s, b) => s + b.amount, 0);
+  const isCrisis = near3Total >= 200 || near5Total >= 475;
+  // near5 is a superset of near3, so it always covers whichever threshold tripped
+  const crisisBills = near5Bills;
+  const crisisTotal = near5Total;
   const billsRate = totalMonthlyBills / 30;
 
   const NEEDS_FLOOR = 25;
@@ -733,7 +740,7 @@ export default function Wallet() {
   let unifiedNeeds: number;
   let unifiedFun: number;
 
-  if (hasHighUpcomingBills) {
+  if (isCrisis) {
     unifiedNeeds = Math.min(inputAmount, NEEDS_FLOOR);
     const afterNeeds = Math.max(0, inputAmount - unifiedNeeds);
     unifiedBills = Math.min(afterNeeds, crisisTotal);
@@ -767,7 +774,7 @@ export default function Wallet() {
       color: "var(--pink-dark)",
       noteIcon: (isCrisis || urgentBills.length > 0) ? "lightning" as IconName : undefined,
       note: isCrisis
-        ? `${crisisBills.length} bill(s) late or due in ≤3 days -- covered first`
+        ? `${crisisBills.length} bill(s) due in ≤5 days -- covered first`
         : urgentBills.length > 0 ? `${urgentBills.length} bill(s) due soon!` : "bills + debt minimums",
     },
     {
@@ -1119,11 +1126,52 @@ export default function Wallet() {
               </button>
             </div>
 
+            {/* SAFE TO SPEND */}
+
+            <div className="card" style={{ borderColor: budget.current_balance ? (safeToSpend > 0 ? "var(--green-dark)" : "var(--danger)") : "var(--border)" }}>
+              <div className="card-body">
+                <div className="section-label">Safe to Spend Right Now</div>
+                {budget.current_balance ? (
+                  <>
+                    <div style={{ fontSize: 32, fontWeight: 800, color: safeToSpend > 0 ? "var(--green-dark)" : "var(--danger)", marginTop: 4 }}>
+                      {fmt(safeToSpend)}
+                    </div>
+                    <div style={{ fontSize: 11, color: "var(--ink-muted)", marginBottom: 12 }}>
+                      after bills due within 5 days (debt minimums included) and a {fmt(SAFE_TO_SPEND_BUFFER)} safety buffer
+                    </div>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: 12 }}>
+                      <div style={{ display: "flex", justifyContent: "space-between" }}>
+                        <span style={{ color: "var(--ink-soft)" }}>Current balance</span>
+                        <span style={{ fontWeight: 700 }}>{fmt(budget.current_balance)}</span>
+                      </div>
+                      <div style={{ display: "flex", justifyContent: "space-between" }}>
+                        <span style={{ color: "var(--ink-soft)" }}>− Bills due within 5 days</span>
+                        <span style={{ fontWeight: 700, color: "var(--danger)" }}>−{fmt(near5Total)}</span>
+                      </div>
+                      <div style={{ display: "flex", justifyContent: "space-between" }}>
+                        <span style={{ color: "var(--ink-soft)" }}>− Safety buffer</span>
+                        <span style={{ fontWeight: 700, color: "var(--danger)" }}>−{fmt(SAFE_TO_SPEND_BUFFER)}</span>
+                      </div>
+                    </div>
+                    {safeToSpend <= 0 && (
+                      <div style={{ marginTop: 10, fontSize: 12, color: "var(--danger)", fontWeight: 600 }}>
+                        Nothing free right now — committed money covers everything. Hold off on treats until this clears.
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <div style={{ fontSize: 12, color: "var(--ink-muted)" }}>
+                    Enter your current balance below (Money Calendar settings) to see this number.
+                  </div>
+                )}
+              </div>
+            </div>
+
             {/* EQUITY MODE CHECK / TODAYS PAYCHECK CALCULATOR */}
 
             {isCrisis && (
               <div style={{ background: "var(--danger-bg)", border: "1.5px solid var(--danger)", borderRadius: 16, padding: "12px 16px", fontSize: 13, color: "var(--danger)", fontWeight: 700 }}>
-                Equity Mode Active — {crisisBills.length} bill(s) late or due within 3 days: ({fmt(crisisTotal)}). Fun money and general savings are zeroed until these are covered. Things you need are still protected.
+                Equity Mode Active — {near3Total >= 200 && `${fmt(near3Total)} due within 3 days`}{near3Total >= 200 && near5Total >= 475 && " and "}{near5Total >= 475 && `${fmt(near5Total)} due within 5 days`}. Fun money and general savings are zeroed until these are covered. Things you need are still protected.
               </div>
             )}
             {!isCrisis && urgentBills.length > 0 && (
@@ -1640,15 +1688,15 @@ export default function Wallet() {
                             onClick={() => togglePaid(b)}
                             aria-label={b.paid ? "Mark not paid" : "Mark paid"}
                             style={{
-                              width: 24, height: 24, flexShrink: 0,
+                              width: 26, height: 26, flexShrink: 0,
                               border: "none", background: "none", padding: 0,
                               cursor: "pointer", display: "flex",
                               alignItems: "center", justifyContent: "center",
                             }}
                           >
                             {b.paid
-                              ? <Icon name="groq_8" size={17} style={{ color: "var(--pink-dark)" }} />
-                              : <Icon name="icon-circle" size={17} style={{ color: "var(--border)" }} />
+                              ? <Icon name="sugarfull" size={22} />
+                              : <Icon name="sugarempty" size={22} />
                             }
                           </button>
                         </td>
@@ -1732,7 +1780,7 @@ export default function Wallet() {
                   <table className="table">
                     <thead>
                       <tr>
-                        {["#","Name","Balance","Progress","APR%","Min/Mo","",""].map(h => (
+                        {["","#","Name","Balance","Progress","APR%","Min/Mo",""].map(h => (
                           <th key={h} style={{ fontSize: 10, color: "var(--ink-muted)", textTransform: "uppercase", padding: "8px", textAlign: "left", borderBottom: "1.5px solid var(--border)", fontWeight: 700 }}>{h}</th>
                         ))}
                       </tr>
@@ -1743,6 +1791,20 @@ export default function Wallet() {
                         const paidPct = origBal > 0 ? Math.min(100, ((origBal - d.balance) / origBal) * 100) : 0;
                         return (
                           <tr key={d.id} style={{ background: i % 2 === 0 ? "transparent" : "var(--accent)" }}>
+                            <td style={{ padding: "9px 8px" }}>
+                              <button
+                                onClick={() => markDebtPaid(d.id, d.name)}
+                                aria-label="Mark debt paid off"
+                                style={{
+                                  width: 26, height: 26, flexShrink: 0,
+                                  border: "none", background: "none", padding: 0,
+                                  cursor: "pointer", display: "flex",
+                                  alignItems: "center", justifyContent: "center",
+                                }}
+                              >
+                                <Icon name="shellempty" size={22} />
+                              </button>
+                            </td>
                             <td style={{ padding: "9px 8px" }}>
                               {i === 0
                                 ? <span className="badge badge-pink">Target</span>
@@ -1758,9 +1820,6 @@ export default function Wallet() {
                             </td>
                             <td style={{ padding: "9px 8px" }}><EditableCell value={d.apr} onChange={v => updateDebt(d.id, "apr", parseFloat(v) || 0)} /></td>
                             <td style={{ padding: "9px 8px" }}><EditableCell value={d.min_payment} onChange={v => updateDebt(d.id, "min_payment", parseFloat(v) || 0)} /></td>
-                            <td style={{ padding: "9px 8px" }}>
-                              <button className="btn btn-green btn-sm" onClick={() => markDebtPaid(d.id, d.name)}>Paid <Icon name="clipboard-check" size={13} /></button>
-                            </td>
                             <td style={{ padding: "9px 8px" }}>
                               <button className="btn btn-ghost btn-sm" onClick={() => removeDebt(d.id)}><Icon name="icon-trash2" size={13} /></button>
                             </td>
@@ -1784,11 +1843,24 @@ export default function Wallet() {
                     <tbody>
                       {activeDebts.filter(d => d.paid_off).map(d => (
                         <tr key={d.id} style={{ background: "var(--sage-light)" }}>
+                          <td style={{ padding: "9px 8px", width: 36 }}>
+                            <button
+                              onClick={() => unmarkDebtPaid(d.id)}
+                              aria-label="Mark debt not paid off"
+                              style={{
+                                width: 26, height: 26, flexShrink: 0,
+                                border: "none", background: "none", padding: 0,
+                                cursor: "pointer", display: "flex",
+                                alignItems: "center", justifyContent: "center",
+                              }}
+                            >
+                              <Icon name="shellfull" size={22} />
+                            </button>
+                          </td>
                           <td style={{ padding: "9px 8px", textDecoration: "line-through", color: "var(--green-dark)", fontWeight: 700 }}>{d.name}</td>
                           <td style={{ padding: "9px 8px", color: "var(--green-dark)", fontWeight: 800 }}>$0.00</td>
                           <td style={{ padding: "9px 8px" }}><span className="badge badge-green">PAID OFF</span></td>
-                          <td style={{ padding: "9px 8px", display: "flex", gap: 6, justifyContent: "center" }}>
-                            <button className="btn btn-ghost btn-sm" onClick={() => unmarkDebtPaid(d.id)}>Undo</button>
+                          <td style={{ padding: "9px 8px", textAlign: "center" }}>
                             <button className="btn btn-ghost btn-sm" onClick={() => removeDebt(d.id)}><Icon name="icon-trash2" size={13} /></button>
                           </td>
                         </tr>

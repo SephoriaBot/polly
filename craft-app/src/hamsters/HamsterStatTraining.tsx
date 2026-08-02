@@ -34,12 +34,14 @@ function StatRow({
   cap,
   disabled,
   onAllocate,
+  incrementLabel,
 }: {
   stat: keyof TrainedStats;
   value: number;
   cap: number;
   disabled: boolean;
   onAllocate: () => void;
+  incrementLabel: string;
 }) {
   const label = STAT_LABELS[stat];
   const pct = Math.min(100, Math.round((value / cap) * 100));
@@ -83,7 +85,7 @@ function StatRow({
           opacity: disabled || maxed ? 0.35 : 1,
           flexShrink: 0,
         }}
-        aria-label={`Add a point to ${label.text}`}
+        aria-label={`Add ${incrementLabel} to ${label.text}`}
       >
         +
       </button>
@@ -91,12 +93,20 @@ function StatRow({
   );
 }
 
+const INCREMENT_OPTIONS: Array<{ label: string; value: number }> = [
+  { label: "+1", value: 1 },
+  { label: "+5", value: 5 },
+  { label: "+10", value: 10 },
+  { label: "Max", value: Infinity },
+];
+
 export default function HamsterStatTraining({ entryId, stage, name, trainingPoints, trainedStats }: HamsterStatTrainingProps) {
   const { allocateStat, renameHamster } = useHamsterGrowth();
   const [editingName, setEditingName] = useState(false);
   const [nameDraft, setNameDraft] = useState(name || "");
   const [busyStat, setBusyStat] = useState<keyof TrainedStats | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const [increment, setIncrement] = useState<number>(1);
 
   const cap = STAT_CAPS[stage];
 
@@ -104,8 +114,12 @@ export default function HamsterStatTraining({ entryId, stage, name, trainingPoin
     if (busyStat) return;
     setBusyStat(stat);
     setMessage(null);
-    const result = await allocateStat(entryId, stat);
-    if (!result.ok && result.reason) setMessage(result.reason);
+    const result = await allocateStat(entryId, stat, increment);
+    if (!result.ok && result.reason) {
+      setMessage(result.reason);
+    } else if (result.ok && result.spent) {
+      setMessage(result.spent === 1 ? "+1 point spent" : `+${result.spent} points spent`);
+    }
     setBusyStat(null);
   };
 
@@ -170,6 +184,32 @@ export default function HamsterStatTraining({ entryId, stage, name, trainingPoin
         </span>
       </div>
 
+      <div style={{ display: "flex", gap: 4, marginBottom: 8 }}>
+        {INCREMENT_OPTIONS.map((opt) => {
+          const selected = increment === opt.value;
+          return (
+            <button
+              key={opt.label}
+              onClick={() => setIncrement(opt.value)}
+              style={{
+                flex: 1,
+                fontSize: 10,
+                fontWeight: 700,
+                padding: "4px 0",
+                borderRadius: 8,
+                border: `1.5px solid ${selected ? "var(--pink-dark)" : "var(--border)"}`,
+                background: selected ? "var(--pink-dark)" : "transparent",
+                color: selected ? "var(--white)" : "var(--ink-muted)",
+                cursor: "pointer",
+              }}
+              aria-pressed={selected}
+            >
+              {opt.label}
+            </button>
+          );
+        })}
+      </div>
+
       {STAT_ORDER.map((stat) => (
         <StatRow
           key={stat}
@@ -178,6 +218,7 @@ export default function HamsterStatTraining({ entryId, stage, name, trainingPoin
           cap={cap[stat]}
           disabled={busyStat !== null || trainingPoints <= 0}
           onAllocate={() => handleAllocate(stat)}
+          incrementLabel={INCREMENT_OPTIONS.find((o) => o.value === increment)?.label || "+1"}
         />
       ))}
 
