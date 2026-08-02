@@ -298,8 +298,8 @@ export default function DailyPlanner() {
                         }}
                       >
                         {task.done
-                          ? <Icon name="pinkhamster" size={25} style={{ color: 'var(--pink-dark)' }} />
-                          : <Icon name="creamhamster" size={25} style={{ color: 'var(--border)' }} />
+                          ? <Icon name="conefull" size={25} style={{ color: 'var(--pink-dark)' }} />
+                          : <Icon name="coneempty" size={25} style={{ color: 'var(--border)' }} />
                         }
                       </button>
 
