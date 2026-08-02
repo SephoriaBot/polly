@@ -1695,8 +1695,8 @@ export default function Wallet() {
                             }}
                           >
                             {b.paid
-                              ? <Icon name="sugar full" size={22} />
-                              : <Icon name="sugarempty" size={22} />
+                              ? <Icon name="sugarfull" size={22} />
+                              : <Icon name="sugar empty" size={22} />
                             }
                           </button>
                         </td>
