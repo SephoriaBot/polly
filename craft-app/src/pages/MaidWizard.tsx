@@ -251,8 +251,8 @@ Include 4–8 supplies, a realistic time estimate, and 6–10 steps in logical c
                     >
                       <div style={{ flexShrink: 0, marginTop: 1 }}>
                         {done
-                          ? <Icon name="pinkhamster" size={17} style={{ color: 'var(--pink-dark)' }} />
-                          : <Icon name="creamhamster" size={17} style={{ color: 'var(--border)' }} />
+                          ? <Icon name="cupfull" size={17} style={{ color: 'var(--pink-dark)' }} />
+                          : <Icon name="cupempty" size={17} style={{ color: 'var(--border)' }} />
                         }
                       </div>
                       <div>
