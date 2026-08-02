@@ -203,8 +203,8 @@ async function loadAll() {
                         }}
                       >
                         {f.completed
-                          ? <Icon name="pinkhamster" size={17} style={{ color: 'var(--pink-dark)' }} />
-                          : <Icon name="creamhamster" size={17} style={{ color: 'var(--border)' }} />
+                          ? <Icon name="picnicfull" size={17} style={{ color: 'var(--pink-dark)' }} />
+                          : <Icon name="pinicempty" size={17} style={{ color: 'var(--border)' }} />
                         }
                       </button>
 
