@@ -204,7 +204,7 @@ async function loadAll() {
                       >
                         {f.completed
                           ? <Icon name="picnicfull" size={22} style={{ color: 'var(--pink-dark)' }} />
-                          : <Icon name="pinicempty" size={22} style={{ color: 'var(--border)' }} />
+                          : <Icon name="picnicempty" size={22} style={{ color: 'var(--border)' }} />
                         }
                       </button>
 
