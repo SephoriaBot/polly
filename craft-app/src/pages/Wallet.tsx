@@ -1688,15 +1688,15 @@ export default function Wallet() {
                             onClick={() => togglePaid(b)}
                             aria-label={b.paid ? "Mark not paid" : "Mark paid"}
                             style={{
-                              width: 24, height: 24, flexShrink: 0,
+                              width: 26, height: 26, flexShrink: 0,
                               border: "none", background: "none", padding: 0,
                               cursor: "pointer", display: "flex",
                               alignItems: "center", justifyContent: "center",
                             }}
                           >
                             {b.paid
-                              ? <Icon name="groq_8" size={17} style={{ color: "var(--pink-dark)" }} />
-                              : <Icon name="icon-circle" size={17} style={{ color: "var(--border)" }} />
+                              ? <Icon name="sugar full" size={22} />
+                              : <Icon name="sugarempty" size={22} />
                             }
                           </button>
                         </td>
@@ -1780,7 +1780,7 @@ export default function Wallet() {
                   <table className="table">
                     <thead>
                       <tr>
-                        {["#","Name","Balance","Progress","APR%","Min/Mo","",""].map(h => (
+                        {["","#","Name","Balance","Progress","APR%","Min/Mo",""].map(h => (
                           <th key={h} style={{ fontSize: 10, color: "var(--ink-muted)", textTransform: "uppercase", padding: "8px", textAlign: "left", borderBottom: "1.5px solid var(--border)", fontWeight: 700 }}>{h}</th>
                         ))}
                       </tr>
@@ -1791,6 +1791,20 @@ export default function Wallet() {
                         const paidPct = origBal > 0 ? Math.min(100, ((origBal - d.balance) / origBal) * 100) : 0;
                         return (
                           <tr key={d.id} style={{ background: i % 2 === 0 ? "transparent" : "var(--accent)" }}>
+                            <td style={{ padding: "9px 8px" }}>
+                              <button
+                                onClick={() => markDebtPaid(d.id, d.name)}
+                                aria-label="Mark debt paid off"
+                                style={{
+                                  width: 26, height: 26, flexShrink: 0,
+                                  border: "none", background: "none", padding: 0,
+                                  cursor: "pointer", display: "flex",
+                                  alignItems: "center", justifyContent: "center",
+                                }}
+                              >
+                                <Icon name="shellempty" size={22} />
+                              </button>
+                            </td>
                             <td style={{ padding: "9px 8px" }}>
                               {i === 0
                                 ? <span className="badge badge-pink">Target</span>
@@ -1806,9 +1820,6 @@ export default function Wallet() {
                             </td>
                             <td style={{ padding: "9px 8px" }}><EditableCell value={d.apr} onChange={v => updateDebt(d.id, "apr", parseFloat(v) || 0)} /></td>
                             <td style={{ padding: "9px 8px" }}><EditableCell value={d.min_payment} onChange={v => updateDebt(d.id, "min_payment", parseFloat(v) || 0)} /></td>
-                            <td style={{ padding: "9px 8px" }}>
-                              <button className="btn btn-green btn-sm" onClick={() => markDebtPaid(d.id, d.name)}>Paid <Icon name="clipboard-check" size={13} /></button>
-                            </td>
                             <td style={{ padding: "9px 8px" }}>
                               <button className="btn btn-ghost btn-sm" onClick={() => removeDebt(d.id)}><Icon name="icon-trash2" size={13} /></button>
                             </td>
@@ -1832,11 +1843,24 @@ export default function Wallet() {
                     <tbody>
                       {activeDebts.filter(d => d.paid_off).map(d => (
                         <tr key={d.id} style={{ background: "var(--sage-light)" }}>
+                          <td style={{ padding: "9px 8px", width: 36 }}>
+                            <button
+                              onClick={() => unmarkDebtPaid(d.id)}
+                              aria-label="Mark debt not paid off"
+                              style={{
+                                width: 26, height: 26, flexShrink: 0,
+                                border: "none", background: "none", padding: 0,
+                                cursor: "pointer", display: "flex",
+                                alignItems: "center", justifyContent: "center",
+                              }}
+                            >
+                              <Icon name="shellfull" size={22} />
+                            </button>
+                          </td>
                           <td style={{ padding: "9px 8px", textDecoration: "line-through", color: "var(--green-dark)", fontWeight: 700 }}>{d.name}</td>
                           <td style={{ padding: "9px 8px", color: "var(--green-dark)", fontWeight: 800 }}>$0.00</td>
                           <td style={{ padding: "9px 8px" }}><span className="badge badge-green">PAID OFF</span></td>
-                          <td style={{ padding: "9px 8px", display: "flex", gap: 6, justifyContent: "center" }}>
-                            <button className="btn btn-ghost btn-sm" onClick={() => unmarkDebtPaid(d.id)}>Undo</button>
+                          <td style={{ padding: "9px 8px", textAlign: "center" }}>
                             <button className="btn btn-ghost btn-sm" onClick={() => removeDebt(d.id)}><Icon name="icon-trash2" size={13} /></button>
                           </td>
                         </tr>
