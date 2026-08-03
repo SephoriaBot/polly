@@ -4,11 +4,12 @@ import type { IconName } from '../components/Icon';
 import SleepLogForm from '../components/tracker/SleepLogForm';
 import PeriodLogForm from '../components/tracker/PeriodLogForm';
 import WeightLogForm from '../components/tracker/WeightLogForm';
+import CustomLogForm from '../components/tracker/CustomLogForm';
 import TrackerChart from '../components/tracker/TrackerChart';
 import TrackerOverlap from '../components/tracker/TrackerOverlap';
 import { TRACKER_CONFIG } from '../data/trackerConfig';
-import type { TrackerType, PeriodValue } from '../types/tracker';
-import { getTrackerLogsInRange } from '../lib/trackerApi';
+import type { TrackerType, PeriodValue, CustomTrackerDef } from '../types/tracker';
+import { getTrackerLogsInRange, listCustomTrackers, addCustomTracker, removeCustomTracker } from '../lib/trackerApi';
 import { getMoonPhase, MOON_ICON_BY_PHASE, type MoonPhase } from '../lib/almanac';
 import Lantern from "../components/Lantern";
 
@@ -33,6 +34,40 @@ export default function TrackerPage() {
     start: null,
     end: null,
   });
+  const [customTrackers, setCustomTrackers] = useState<CustomTrackerDef[]>([]);
+  const [showAddTracker, setShowAddTracker] = useState(false);
+  const [newTrackerLabel, setNewTrackerLabel] = useState('');
+  const [newTrackerUnit, setNewTrackerUnit] = useState('');
+  const [savingTracker, setSavingTracker] = useState(false);
+
+  useEffect(() => {
+    listCustomTrackers().then(setCustomTrackers).catch((e) => console.error('failed to load custom trackers', e));
+  }, []);
+
+  async function handleAddTracker() {
+    const label = newTrackerLabel.trim();
+    if (!label) return;
+    setSavingTracker(true);
+    try {
+      const def = await addCustomTracker(label, newTrackerUnit.trim());
+      setCustomTrackers((prev) => [...prev, def]);
+      setActiveType(def.id);
+      setNewTrackerLabel('');
+      setNewTrackerUnit('');
+      setShowAddTracker(false);
+    } catch (e) {
+      console.error('failed to add custom tracker', e);
+    } finally {
+      setSavingTracker(false);
+    }
+  }
+
+  async function handleRemoveTracker(def: CustomTrackerDef) {
+    if (!window.confirm(`Remove "${def.label}" and all its logged entries? This can't be undone.`)) return;
+    await removeCustomTracker(def.id);
+    setCustomTrackers((prev) => prev.filter((t) => t.id !== def.id));
+    if (activeType === def.id) setActiveType('sleep');
+  }
 
   useEffect(() => {
     getTrackerLogsInRange('period', daysAgoISO(90), todayISO()).then((logs) => {
@@ -71,6 +106,8 @@ export default function TrackerPage() {
   function handleSaved() {
     setRefreshKey((k) => k + 1);
   }
+
+  const activeCustomTracker = customTrackers.find((t) => t.id === activeType);
 
   return (
     <div>
@@ -117,13 +154,57 @@ export default function TrackerPage() {
               : TRACKER_CONFIG[type].emoji} {TRACKER_CONFIG[type].label}
           </button>
         ))}
+        {customTrackers.map((t) => (
+          <button
+            key={t.id}
+            className={activeType === t.id ? 'btn-primary' : 'btn-secondary'}
+            onClick={() => setActiveType(t.id)}
+          >
+            {t.label}
+          </button>
+        ))}
         <button
           className={activeType === 'overlap' ? 'btn-primary' : 'btn-secondary'}
           onClick={() => setActiveType('overlap')}
         >
           <Icon name="calculator" size={16} /> Overlap
         </button>
+        <button className="btn-secondary" onClick={() => setShowAddTracker((s) => !s)}>
+          <Icon name="icon-plus" size={16} /> Add Tracker
+        </button>
       </div>
+
+      {showAddTracker && (
+        <div className="card" style={{ marginBottom: '1rem' }}>
+          <h4>New Custom Tracker</h4>
+          <div style={{ fontSize: 11, color: 'var(--ink-muted)', marginBottom: 8 }}>
+            Track anything with a single daily number — water intake, pages read, mood score, whatever's useful to you.
+          </div>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <input
+              className="form-input" type="text" placeholder="Name (e.g. Water Intake)"
+              value={newTrackerLabel} onChange={(e) => setNewTrackerLabel(e.target.value)}
+              style={{ width: 200 }}
+            />
+            <input
+              className="form-input" type="text" placeholder="Unit (e.g. cups)"
+              value={newTrackerUnit} onChange={(e) => setNewTrackerUnit(e.target.value)}
+              style={{ width: 140 }}
+            />
+            <button className="btn-primary" onClick={handleAddTracker} disabled={savingTracker || !newTrackerLabel.trim()}>
+              {savingTracker ? 'Adding…' : 'Add'}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {activeCustomTracker && (
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8 }}>
+          <button className="btn-secondary" onClick={() => handleRemoveTracker(activeCustomTracker)}>
+            <Icon name="icon-trash2" size={14} /> Remove "{activeCustomTracker.label}"
+          </button>
+        </div>
+      )}
 
       {activeType !== 'overlap' && (
         <>
@@ -139,12 +220,23 @@ export default function TrackerPage() {
           {activeType === 'sleep' && <SleepLogForm date={date} onSaved={handleSaved} />}
           {activeType === 'period' && <PeriodLogForm date={date} onSaved={handleSaved} />}
           {activeType === 'weight' && <WeightLogForm date={date} onSaved={handleSaved} />}
+          {activeCustomTracker && (
+            <CustomLogForm
+              type={activeCustomTracker.id}
+              label={activeCustomTracker.label}
+              unit={activeCustomTracker.unit}
+              date={date}
+              onSaved={handleSaved}
+            />
+          )}
 
           <TrackerChart
             type={activeType}
             startDate={daysAgoISO(30)}
             endDate={todayISO()}
             refreshKey={refreshKey}
+            label={activeCustomTracker?.label}
+            unit={activeCustomTracker?.unit}
           />
         </>
       )}
