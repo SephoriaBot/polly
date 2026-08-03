@@ -179,7 +179,11 @@ const BASICS_PRESETS: Record<string, BasicsPreset> = {
 // substrings that identify that chain in a raw seller string (SerpAPI
 // results show things like "Walmart.com", "Walmart Supercenter", etc, so
 // aliases need to be loose substrings, not exact matches).
-const ALLOWED_STORES: Record<string, string[]> = {
+//
+// This is only the *default* seed list — every user's actual whitelist is
+// stored in grocery_settings and editable from Settings, since which chains
+// exist near you depends entirely on where you live.
+const DEFAULT_ALLOWED_STORES: Record<string, string[]> = {
   'Walmart': ['walmart'],
   'Kroger': ['kroger'],
   'Target': ['target'],
@@ -191,15 +195,15 @@ const ALLOWED_STORES: Record<string, string[]> = {
   'Aldi': ['aldi'],
 }
 
-// Matches a raw seller/store string against ALLOWED_STORES and returns the
-// canonical chain name, or null if it's not on the whitelist. Normalizing
-// to the canonical name (rather than just filtering) means "Walmart" and
-// "Walmart.com" get grouped together in the tally instead of counted as
-// two different stores.
-function normalizeStoreName(raw: string | undefined | null): string | null {
+// Matches a raw seller/store string against the user's store whitelist and
+// returns the canonical chain name, or null if it's not on the whitelist.
+// Normalizing to the canonical name (rather than just filtering) means
+// "Walmart" and "Walmart.com" get grouped together in the tally instead of
+// counted as two different stores.
+function normalizeStoreName(raw: string | undefined | null, allowedStores: Record<string, string[]>): string | null {
   if (!raw) return null
   const lower = raw.toLowerCase()
-  for (const [canonical, aliases] of Object.entries(ALLOWED_STORES)) {
+  for (const [canonical, aliases] of Object.entries(allowedStores)) {
     if (aliases.some(alias => lower.includes(alias))) return canonical
   }
   return null
@@ -209,10 +213,10 @@ function normalizeStoreName(raw: string | undefined | null): string | null {
 // (or from cache). Anything that doesn't match a known chain is dropped
 // entirely rather than shown under its raw name — this is what keeps
 // random marketplace sellers / instacart-only listings out of the cart.
-function filterToAllowedStores(results: any[]): any[] {
+function filterToAllowedStores(results: any[], allowedStores: Record<string, string[]>): any[] {
   if (!Array.isArray(results)) return []
   return results
-    .map(r => ({ ...r, store: normalizeStoreName(r.store) }))
+    .map(r => ({ ...r, store: normalizeStoreName(r.store, allowedStores) }))
     .filter(r => r.store !== null)
 }
 
@@ -237,6 +241,48 @@ export default function Grocery() {
   const [basicsPreset, setBasicsPreset] = useState<string | null>(null)
   const [basicsChecked, setBasicsChecked] = useState<Set<string>>(new Set())
   const [addingBasics, setAddingBasics] = useState(false)
+
+  const [allowedStores, setAllowedStores] = useState<Record<string, string[]>>(DEFAULT_ALLOWED_STORES)
+  const [showStoreSettings, setShowStoreSettings] = useState(false)
+  const [newStoreName, setNewStoreName] = useState('')
+  const [newStoreAliases, setNewStoreAliases] = useState('')
+  const [storeSettingsLoaded, setStoreSettingsLoaded] = useState(false)
+
+  useEffect(() => {
+    supabase.from('grocery_settings').select('*').eq('id', 1).maybeSingle().then(({ data }) => {
+      if (data?.allowed_stores && Object.keys(data.allowed_stores).length > 0) {
+        setAllowedStores(data.allowed_stores)
+      }
+      setStoreSettingsLoaded(true)
+    })
+  }, [])
+
+  useEffect(() => {
+    if (!storeSettingsLoaded) return // don't overwrite DB with the default seed before initial load completes
+    const timer = setTimeout(() => {
+      supabase.from('grocery_settings').upsert({ id: 1, allowed_stores: allowedStores }).then(({ error }) => {
+        if (error) console.error('grocery_settings save failed:', error)
+      })
+    }, 800)
+    return () => clearTimeout(timer)
+  }, [allowedStores, storeSettingsLoaded])
+
+  function addAllowedStore() {
+    const name = newStoreName.trim()
+    const aliases = newStoreAliases.trim().toLowerCase()
+    if (!name || !aliases) return
+    setAllowedStores(prev => ({ ...prev, [name]: aliases.split(',').map(a => a.trim()).filter(Boolean) }))
+    setNewStoreName('')
+    setNewStoreAliases('')
+  }
+
+  function removeAllowedStore(name: string) {
+    setAllowedStores(prev => {
+      const next = { ...prev }
+      delete next[name]
+      return next
+    })
+  }
 
   useEffect(() => {
     fetchLists()
@@ -637,7 +683,7 @@ export default function Grocery() {
 
     const allStores = new Set<string>()
     cartData.forEach(c => {
-      filterToAllowedStores(c.results ?? []).forEach((r: any) => {
+      filterToAllowedStores(c.results ?? [], allowedStores).forEach((r: any) => {
         if (r.store && r.price != null) allStores.add(r.store)
       })
     })
@@ -649,7 +695,7 @@ export default function Grocery() {
 
     cartData.forEach(c => {
       // Real prices: only from whitelisted stores, since that's all we rank
-      const whitelisted = filterToAllowedStores(c.results ?? [])
+      const whitelisted = filterToAllowedStores(c.results ?? [], allowedStores)
       const byStore = new Map<string, number>()
       whitelisted.forEach((r: any) => {
         if (!r.store || r.price == null) return
@@ -858,7 +904,7 @@ export default function Grocery() {
           <input
             className="form-input"
             type="text"
-            placeholder="City, state (e.g. Richmond, Virginia)…"
+            placeholder="City, state (e.g. your city, your state)…"
             value={location}
             onChange={e => saveLocation(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && buildSmartCart()}
@@ -867,7 +913,47 @@ export default function Grocery() {
           <button className="btn btn-primary" onClick={buildSmartCart} disabled={!location}>
             Build Smart Cart for {location}
           </button>
+          <button className="btn btn-ghost" onClick={() => setShowStoreSettings(s => !s)}>
+            <Icon name="icon-slidershorizontal" size={14} /> Stores ({Object.keys(allowedStores).length})
+          </button>
         </div>
+
+        {showStoreSettings && (
+          <div className="card" style={{ marginTop: 8 }}>
+            <div className="section-label">Stores Smart Cart Will Search</div>
+            <div style={{ fontSize: 11, color: 'var(--ink-muted)', marginBottom: 10 }}>
+              Only chains on this list are matched against search results — everything else gets filtered out. Add whatever's actually near you; remove ones that aren't.
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 12 }}>
+              {Object.entries(allowedStores).map(([name, aliases]) => (
+                <div key={name} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                  <div>
+                    <div style={{ fontSize: 13, fontWeight: 600 }}>{name}</div>
+                    <div style={{ fontSize: 10, color: 'var(--ink-muted)' }}>matches: {aliases.join(', ')}</div>
+                  </div>
+                  <button className="btn btn-ghost" onClick={() => removeAllowedStore(name)}>
+                    <Icon name="icon-trash2" size={14} />
+                  </button>
+                </div>
+              ))}
+            </div>
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+              <input
+                className="form-input" type="text" placeholder="Store name (e.g. H-E-B)"
+                value={newStoreName} onChange={e => setNewStoreName(e.target.value)}
+                style={{ width: 160 }}
+              />
+              <input
+                className="form-input" type="text" placeholder="Match text, comma-separated (e.g. heb, h-e-b)"
+                value={newStoreAliases} onChange={e => setNewStoreAliases(e.target.value)}
+                style={{ width: 220 }}
+              />
+              <button className="btn btn-primary" onClick={addAllowedStore} disabled={!newStoreName.trim() || !newStoreAliases.trim()}>
+                Add
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* my lists — every list here is a real, live list you can switch
             to, add/check off items on, and come back to later. nothing is
@@ -1175,7 +1261,7 @@ export default function Grocery() {
                 // for the median estimator) — filter to whitelisted stores
                 // here so the visible per-item list only shows chains from
                 // ALLOWED_STORES, same as the leaderboard above.
-                const sorted = filterToAllowedStores(c.results ?? [])
+                const sorted = filterToAllowedStores(c.results ?? [], allowedStores)
                   .sort((a: any, b: any) => Number(a.price ?? 9999) - Number(b.price ?? 9999))
                 const cheapest = sorted[0]
                 const priciest = sorted[sorted.length - 1]
