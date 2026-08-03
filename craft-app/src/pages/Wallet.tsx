@@ -1888,10 +1888,7 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
 
 
 
-            <div className="card">
-              <div className="card-body">
-                <div className="section-header">
-
+           
 <div className="card" style={{ marginBottom: 12 }}>
   <div className="card-body">
     <div style={{ fontWeight: 700, marginBottom: 10 }}>
@@ -1923,6 +1920,9 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
     </label>
   </div>
 </div>
+ <div className="card">
+              <div className="card-body">
+                <div className="section-header">
 
                   <div className="section-label">Active Debts</div>
                   <button className="btn btn-primary btn-sm" onClick={() => addDebt(false)}>
