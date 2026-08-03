@@ -61,6 +61,9 @@ interface DailyLog {
   notes: string;
 }
 
+type DebtStrategy = "snowball" | "avalanche";
+
+
 interface MonthSnap {
   month: number;
   target: string;
@@ -86,25 +89,32 @@ interface ListItem {
 
 const MONTH_NAMES = ["January","February","March","April","May","June","July","August","September","October","November","December"];
 
-function runSnowball(debts: Debt[], takeHome: number, fixedExpenses: number) {
+function runDebtPlan(
+  debts: Debt[],
+  takeHome: number,
+  fixedExpenses: number,
+  strategy: DebtStrategy
+) {
   const active = debts
     .filter(d => !d.deferred && !d.paid_off && d.balance > 0)
-    .map(d => ({ ...d, balance: Number(d.balance) || 0 }))
-    .sort((a, b) => a.balance - b.balance);
+    .map(d => ({ ...d, balance: Number(d.balance) || 0 }));
   const deferred = debts
     .filter(d => d.deferred)
     .map(d => ({ ...d, balance: Number(d.balance) || 0 }));
   const totalMins = active.reduce((s, d) => s + (Number(d.min_payment) || 0), 0);
-  const snowballExtra = takeHome - fixedExpenses - totalMins;
+  const extraDebtPayment = takeHome - fixedExpenses - totalMins;
   const months: MonthSnap[] = [];
   let state = active.map(d => ({ ...d }));
   let defState = deferred.map(d => ({ ...d }));
   for (let m = 1; m <= 120; m++) {
     const remaining = state.filter(d => d.balance > 0.01);
     if (remaining.length === 0) break;
-    const target = remaining.reduce((a, b) => a.balance < b.balance ? a : b);
+    const target =
+  strategy === "avalanche"
+    ? remaining.reduce((a, b) => a.apr > b.apr ? a : b)
+    : remaining.reduce((a, b) => a.balance < b.balance ? a : b);
     const otherMins = remaining.filter(d => d.id !== target.id).reduce((s, d) => s + (Number(d.min_payment) || 0), 0);
-    const extraForTarget = snowballExtra - otherMins;
+    const extraForTarget = extraDebtPayment - otherMins;
     const snap: MonthSnap = { month: m, target: target.name, balances: {}, deferredBalances: {}, activeTotal: 0, deferredTotal: 0 };
     state = state.map(d => {
       if (d.balance <= 0.01) { snap.balances[d.id] = 0; return { ...d, balance: 0 }; }
@@ -124,7 +134,7 @@ function runSnowball(debts: Debt[], takeHome: number, fixedExpenses: number) {
     snap.deferredTotal = defState.reduce((s, d) => s + d.balance, 0);
     months.push(snap);
   }
-  return { months, snowballExtra, totalMins };
+  return { months, extraDebtPayment, totalMins };
 }
 
 function fmt(n: number) {
@@ -273,7 +283,9 @@ function EditableCell({ value, onChange, type = "number", style, className, plac
 
 export default function Wallet() {
   const [debts, setDebts] = useState<Debt[]>([]);
-  const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, hourly_wage: 0, current_balance: 0, net_to_gross_ratio: 0, flat_deductions_prev: 0 });
+  const [debtStrategy, setDebtStrategy] =
+  useState<DebtStrategy>("snowball");
+const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, hourly_wage: 0, current_balance: 0, net_to_gross_ratio: 0, flat_deductions_prev: 0 });
   const [bills, setBills] = useState<Bill[]>([]);
   const [payments, setPayments] = useState<BillPayment[]>([]);
   const [nextId, setNextId] = useState(20);
@@ -481,10 +493,14 @@ export default function Wallet() {
     ensurePaymentsExist();
   }, [bills, availableMonths]);
 
-  const { months, snowballExtra, totalMins } = useMemo(
-    () => runSnowball(debts, budget.take_home, budget.fixed_expenses),
-    [debts, budget]
-  );
+  const { months, extraDebtPayment, totalMins } = useMemo(
+  () =>
+    runDebtPlan(
+      debts,
+      budget.take_home,
+      budget.fixed_expenses,
+      debtStrategy
+    ),
 
   const activeDebts = useMemo(() => debts.filter(d => !d.deferred).sort((a, b) => a.balance - b.balance), [debts]);
   const deferredDebts = debts.filter(d => d.deferred);
@@ -798,7 +814,7 @@ export default function Wallet() {
     const needsFloor = Math.min(afterBills, NEEDS_FLOOR);
     const afterFloor = Math.max(0, afterBills - needsFloor);
 
-    unifiedSnowball = snowballExtra > 0 ? Math.min(afterFloor * 0.25, snowballExtra / 30) : 0;
+    unifiedSnowball = extraDebtPayment > 0 ? Math.min(afterFloor * 0.25, extraDebtPayment / 30) : 0;
     const afterSnowball = Math.max(0, afterFloor - unifiedSnowball);
     unifiedBuffer = Math.min(22, afterSnowball);
     const afterBuffer = Math.max(0, afterSnowball - unifiedBuffer);
@@ -1855,12 +1871,12 @@ export default function Wallet() {
                 <div style={{ fontSize: 11, color: "var(--ink-muted)", marginTop: 6 }}>rent + transport + non-debt bills — used to calculate your snowball extra</div>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 16, paddingTop: 14, borderTop: "1px solid var(--border)" }}>
                   <div>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: snowballExtra >= 0 ? "var(--green-dark)" : "var(--danger)" }}>True Snowball Extra</div>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: extraDebtPayment >= 0 ? "var(--green-dark)" : "var(--danger)" }}>True Snowball Extra</div>
                     <div style={{ fontSize: 11, color: "var(--ink-muted)" }}>take-home ({fmt(budget.take_home)}) minus fixed expenses and {fmt(totalMins)} in minimums</div>
                   </div>
-                  <div style={{ fontSize: 20, fontWeight: 800, color: snowballExtra >= 0 ? "var(--green-dark)" : "var(--danger)" }}>{fmt(snowballExtra)}</div>
+                  <div style={{ fontSize: 20, fontWeight: 800, color: extraDebtPayment >= 0 ? "var(--green-dark)" : "var(--danger)" }}>{fmt(extraDebtPayment)}</div>
                 </div>
-                {snowballExtra < 0 && (
+                {extraDebtPayment < 0 && (
                   <div style={{ marginTop: 10, fontSize: 12, color: "var(--danger)", fontWeight: 600 }}>
                     <Icon name="lightning" size={13} /> Minimums + fixed expenses exceed your take-home pay. Update your Budget Calculator on the home page.
                   </div>
@@ -2009,10 +2025,42 @@ export default function Wallet() {
               </div>
             </div>
 
+<div className="card" style={{ marginBottom: 12 }}>
+  <div className="card-body">
+    <div style={{ fontWeight: 700, marginBottom: 10 }}>
+      Debt Payoff Strategy
+    </div>
+
+    <label style={{ display: "block", marginBottom: 8 }}>
+      <input
+        type="radio"
+        checked={debtStrategy === "snowball"}
+        onChange={() => setDebtStrategy("snowball")}
+      />
+      {" "}Snowball
+      <div style={{ fontSize: 12, opacity: .7 }}>
+        Pay the smallest balance first.
+      </div>
+    </label>
+
+    <label style={{ display: "block" }}>
+      <input
+        type="radio"
+        checked={debtStrategy === "avalanche"}
+        onChange={() => setDebtStrategy("avalanche")}
+      />
+      {" "}Avalanche
+      <div style={{ fontSize: 12, opacity: .7 }}>
+        Pay the highest APR first.
+      </div>
+    </label>
+  </div>
+</div>
+
             <div className="section-label" style={{ marginTop: 4 }}><Icon name="clipboard-list" size={16} /> Payoff Schedule</div>
-            {snowballExtra < 0 && (
+            {extraDebtPayment < 0 && (
               <div style={{ background: "var(--danger-bg)", border: "1.5px solid var(--danger)", borderRadius: 16, padding: "12px 16px", fontSize: 13, color: "var(--danger)", fontWeight: 600 }}>
-                <Icon name="lightning" size={13} /> Snowball extra is negative — minimums exceed your budget!
+                <Icon name="lightning" size={13} /> Extra debt payment is negative — minimum payments exceed your budget!
               </div>
             )}
 
