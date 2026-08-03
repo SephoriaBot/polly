@@ -829,7 +829,7 @@ export default function Grocery() {
                               color: 'var(--ink)',
                             }}
                           >
-                            <Icon name={checked ? 'heartfull' : 'heartempty'} size={18} />
+                            <Icon name={checked ? 'flowerfull' : 'flowerempty'} size={18} />
                             <span style={{ flex: 1, fontSize: '0.86rem', color: 'var(--ink)' }}>{item.name}</span>
                             <span style={{ fontSize: '0.76rem', color: 'var(--ink-muted)' }}>{item.qty}</span>
                             {alreadyOnList && <span style={{ fontSize: '0.7rem', color: 'var(--ink-muted)' }}>on list</span>}
@@ -1031,7 +1031,7 @@ export default function Grocery() {
                       <div key={item.id}>
                         <div style={itemRowStyle(false)}>
                           <button onClick={() => toggle(item.id, item.checked)} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', display: 'flex', flexShrink: 0 }}>
-                            <Icon name="heartempty" size={20} />
+                            <Icon name="flowerempty" size={20} />
                           </button>
                           <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--ink)' }}>{item.name}</span>
                           <span style={{ fontSize: '0.72rem', color: 'var(--ink-muted)', whiteSpace: 'nowrap' }}>{item.qty}</span>
@@ -1124,7 +1124,7 @@ export default function Grocery() {
                   : have.map(item => (
                     <div key={item.id} style={itemRowStyle(true)}>
                       <button onClick={() => toggle(item.id, item.checked)} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', display: 'flex', flexShrink: 0 }}>
-                        <Icon name="heartfull" size={20} />
+                        <Icon name="flowerfull" size={20} />
                       </button>
                       <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--ink-muted)', textDecoration: 'line-through' }}>{item.name}</span>
                       <span style={{ fontSize: '0.72rem', color: 'var(--ink-muted)', whiteSpace: 'nowrap' }}>{item.qty}</span>
