@@ -159,25 +159,54 @@ function hoursOfWork(amount: number, wage: number) {
   return (amount / wage).toFixed(1);
 }
 
-// ── ANYTIME PAY ELIGIBLE PERCENTAGE (Amazon's real formula) ──
-const ANYTIME_PAY_GARNISHMENTS = 0;
-const ANYTIME_PAY_SAFETY_BUFFER_NORMAL = 0.02;
-const ANYTIME_PAY_SAFETY_BUFFER_HIGH_HOURS = 0.08;
-const ANYTIME_PAY_HIGH_HOURS_THRESHOLD = 55;
+// ── EARLY PAY ELIGIBLE PERCENTAGE ──
+// Employer presets for early-pay/advance-pay eligibility formulas. "Amazon"
+// mirrors Amazon's real Anytime Pay math (garnishments, a 2% safety buffer
+// that steps up to 8% past 55 hours in a week). "Custom" lets anyone using
+// a different employer's early-pay program plug in their own numbers.
+export type EarlyPayPresetId = "amazon" | "custom";
 
-function getSafetyBuffer(hoursSoFar: number) {
-  return hoursSoFar >= ANYTIME_PAY_HIGH_HOURS_THRESHOLD
-    ? ANYTIME_PAY_SAFETY_BUFFER_HIGH_HOURS
-    : ANYTIME_PAY_SAFETY_BUFFER_NORMAL;
+export interface EarlyPayPreset {
+  id: EarlyPayPresetId;
+  label: string;
+  garnishments: number;
+  safetyBufferNormal: number;
+  safetyBufferHighHours: number;
+  highHoursThreshold: number;
 }
 
-function eligiblePercent(preTaxEarnedSoFar: number, netToGrossRatio: number, flatDeductionsPrev: number, hoursSoFar: number) {
+export const EARLY_PAY_PRESETS: Record<EarlyPayPresetId, EarlyPayPreset> = {
+  amazon: {
+    id: "amazon",
+    label: "Amazon Anytime Pay",
+    garnishments: 0,
+    safetyBufferNormal: 0.02,
+    safetyBufferHighHours: 0.08,
+    highHoursThreshold: 55,
+  },
+  custom: {
+    id: "custom",
+    label: "Custom / Other Employer",
+    garnishments: 0,
+    safetyBufferNormal: 0.02,
+    safetyBufferHighHours: 0.02,
+    highHoursThreshold: 999,
+  },
+};
+
+function getSafetyBuffer(hoursSoFar: number, preset: EarlyPayPreset) {
+  return hoursSoFar >= preset.highHoursThreshold
+    ? preset.safetyBufferHighHours
+    : preset.safetyBufferNormal;
+}
+
+function eligiblePercent(preTaxEarnedSoFar: number, netToGrossRatio: number, flatDeductionsPrev: number, hoursSoFar: number, preset: EarlyPayPreset) {
   if (preTaxEarnedSoFar <= 0 || netToGrossRatio <= 0) return 0;
-  const availableAnytimePay = preTaxEarnedSoFar * netToGrossRatio;
-  const afterFlatDeductions = availableAnytimePay - flatDeductionsPrev;
-  const afterGarnishments = afterFlatDeductions - ANYTIME_PAY_GARNISHMENTS;
+  const availableEarlyPay = preTaxEarnedSoFar * netToGrossRatio;
+  const afterFlatDeductions = availableEarlyPay - flatDeductionsPrev;
+  const afterGarnishments = afterFlatDeductions - preset.garnishments;
   const rawPct = afterGarnishments / preTaxEarnedSoFar;
-  return Math.max(0, rawPct - getSafetyBuffer(hoursSoFar));
+  return Math.max(0, rawPct - getSafetyBuffer(hoursSoFar, preset));
 }
 
 const PERIOD_MULTIPLIERS: Record<string, number> = {
@@ -270,18 +299,27 @@ export default function Wallet() {
   const [taxRate, setTaxRate] = useState<number>(20);
   const [otWageOverride, setOtWageOverride] = useState<string>("");
   const [walletSettingsLoaded, setWalletSettingsLoaded] = useState(false);
+  const [earlyPayPresetId, setEarlyPayPresetId] = useState<EarlyPayPresetId>("amazon");
+  const [customEarlyPayPreset, setCustomEarlyPayPreset] = useState<EarlyPayPreset>(EARLY_PAY_PRESETS.custom);
+  const earlyPayPreset: EarlyPayPreset = earlyPayPresetId === "custom" ? customEarlyPayPreset : EARLY_PAY_PRESETS[earlyPayPresetId];
 
   const walletSettingsSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
     if (!walletSettingsLoaded) return; // don't overwrite DB with defaults before initial load completes
     if (walletSettingsSaveTimer.current) clearTimeout(walletSettingsSaveTimer.current);
     walletSettingsSaveTimer.current = setTimeout(() => {
-      supabase.from("wallet_settings").upsert({ id: 1, tax_rate: taxRate, ot_wage_override: otWageOverride }).then(({ error }) => {
+      supabase.from("wallet_settings").upsert({
+        id: 1,
+        tax_rate: taxRate,
+        ot_wage_override: otWageOverride,
+        early_pay_preset_id: earlyPayPresetId,
+        custom_early_pay_preset: customEarlyPayPreset,
+      }).then(({ error }) => {
         if (error) console.error("wallet_settings save failed:", error);
       });
     }, 800);
     return () => { if (walletSettingsSaveTimer.current) clearTimeout(walletSettingsSaveTimer.current); };
-  }, [taxRate, otWageOverride, walletSettingsLoaded]);
+  }, [taxRate, otWageOverride, earlyPayPresetId, customEarlyPayPreset, walletSettingsLoaded]);
 
 
   const [calcRegWage, setCalcRegWage] = useState("");
@@ -374,6 +412,10 @@ export default function Wallet() {
         if (walletSettingsData) {
           setTaxRate(typeof walletSettingsData.tax_rate === "number" ? walletSettingsData.tax_rate : 20);
           setOtWageOverride(walletSettingsData.ot_wage_override || "");
+          setEarlyPayPresetId(walletSettingsData.early_pay_preset_id === "custom" ? "custom" : "amazon");
+          if (walletSettingsData.custom_early_pay_preset) {
+            setCustomEarlyPayPreset({ ...EARLY_PAY_PRESETS.custom, ...walletSettingsData.custom_early_pay_preset });
+          }
         }
         setWalletSettingsLoaded(true);
 
@@ -601,7 +643,7 @@ export default function Wallet() {
     const priorHours = priorReg + priorOt;
     periodEarnedGross = priorGross;
     periodHoursSoFar = priorHours;
-    periodWithdrawnGross = priorGross * eligiblePercent(priorGross, budget.net_to_gross_ratio, budget.flat_deductions_prev, priorHours);
+    periodWithdrawnGross = priorGross * eligiblePercent(priorGross, budget.net_to_gross_ratio, budget.flat_deductions_prev, priorHours, earlyPayPreset);
   }
 
   const firstSaturdayIdx = allDays.findIndex(d => d.getDay() === 6);
@@ -619,7 +661,7 @@ export default function Wallet() {
       const closedOt = parseFloat(closedWeekHours.ot) || 0;
       const closedEarnedGross = closedReg * grossHourlyWage + closedOt * grossOtWage;
       const closedHours = closedReg + closedOt;
-      const closedWithdrawnGross = closedEarnedGross * eligiblePercent(closedEarnedGross, budget.net_to_gross_ratio, budget.flat_deductions_prev, closedHours);
+      const closedWithdrawnGross = closedEarnedGross * eligiblePercent(closedEarnedGross, budget.net_to_gross_ratio, budget.flat_deductions_prev, closedHours, earlyPayPreset);
       const closedTaxableGross = Math.max(0, closedEarnedGross - budget.flat_deductions_prev);
       const closedNetOwed = closedTaxableGross * (1 - taxRate / 100);
       pendingPayout = Math.max(0, closedNetOwed - closedWithdrawnGross);
@@ -652,7 +694,7 @@ export default function Wallet() {
     periodEarnedGross += fullEarnedToday;
     periodHoursSoFar += hoursToday;
 
-    const eligiblePct = eligiblePercent(periodEarnedGross, budget.net_to_gross_ratio, budget.flat_deductions_prev, periodHoursSoFar);
+    const eligiblePct = eligiblePercent(periodEarnedGross, budget.net_to_gross_ratio, budget.flat_deductions_prev, periodHoursSoFar, earlyPayPreset);
     const maxWithdrawableGrossSoFar = periodEarnedGross * eligiblePct;
     const withdrawnBeforeToday = periodWithdrawnGross;
     const availableToday = Math.max(0, maxWithdrawableGrossSoFar - periodWithdrawnGross);
@@ -1333,7 +1375,61 @@ export default function Wallet() {
                 <div style={{ fontSize: 24, lineHeight: 1 }}><Icon name="calendar" size={24} /></div>
                 <div style={{ fontSize: 14, fontWeight: 800, color: "var(--ink)" }}>Money Calendar</div>
                 <div style={{ fontSize: 11, color: "var(--pink-dark)", marginBottom: 14 }}>
-                  Runs from today forward. Log the hours you're working (or plan to work) each day. Anytime Pay eligible percentage comes from your last paycheck's net-to-gross ratio (post-tax ÷ pre-tax), applied against your cumulative pool for the week, minus that check's flat deductions and a growing 2% safety buffer — whatever's unclaimed by Saturday night lands as a lump catch-up the following Wednesday.
+                  Runs from today forward. Log the hours you're working (or plan to work) each day. Your early-pay eligible percentage comes from your last paycheck's net-to-gross ratio (post-tax ÷ pre-tax), applied against your cumulative pool for the week, minus that check's flat deductions and a growing safety buffer — whatever's unclaimed by Saturday night lands as a lump catch-up the following Wednesday.
+                </div>
+
+                <div style={{ marginBottom: 14 }}>
+                  <div className="form-label">Early Pay Formula</div>
+                  <select
+                    className="form-input"
+                    value={earlyPayPresetId}
+                    onChange={e => setEarlyPayPresetId(e.target.value as EarlyPayPresetId)}
+                  >
+                    {Object.values(EARLY_PAY_PRESETS).map(p => (
+                      <option key={p.id} value={p.id}>{p.label}</option>
+                    ))}
+                  </select>
+                  <div style={{ fontSize: 10, color: "var(--ink-muted)", marginTop: 4 }}>
+                    {earlyPayPresetId === "amazon"
+                      ? "Mirrors Amazon's Anytime Pay math: a 2% safety buffer that steps up to 8% once you've logged 55+ hours in the week."
+                      : "Set your own safety buffer and hours threshold below to match your employer's early-pay program."}
+                  </div>
+                  {earlyPayPresetId === "custom" && (
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginTop: 8 }}>
+                      <div>
+                        <div className="form-label" style={{ fontSize: 10 }}>Safety Buffer (%)</div>
+                        <input
+                          type="number" className="form-input"
+                          value={customEarlyPayPreset.safetyBufferNormal * 100}
+                          onChange={e => setCustomEarlyPayPreset(prev => ({ ...prev, safetyBufferNormal: (parseFloat(e.target.value) || 0) / 100 }))}
+                        />
+                      </div>
+                      <div>
+                        <div className="form-label" style={{ fontSize: 10 }}>High-Hours Buffer (%)</div>
+                        <input
+                          type="number" className="form-input"
+                          value={customEarlyPayPreset.safetyBufferHighHours * 100}
+                          onChange={e => setCustomEarlyPayPreset(prev => ({ ...prev, safetyBufferHighHours: (parseFloat(e.target.value) || 0) / 100 }))}
+                        />
+                      </div>
+                      <div>
+                        <div className="form-label" style={{ fontSize: 10 }}>High-Hours Threshold</div>
+                        <input
+                          type="number" className="form-input"
+                          value={customEarlyPayPreset.highHoursThreshold}
+                          onChange={e => setCustomEarlyPayPreset(prev => ({ ...prev, highHoursThreshold: parseFloat(e.target.value) || 0 }))}
+                        />
+                      </div>
+                      <div>
+                        <div className="form-label" style={{ fontSize: 10 }}>Garnishments ($)</div>
+                        <input
+                          type="number" className="form-input"
+                          value={customEarlyPayPreset.garnishments}
+                          onChange={e => setCustomEarlyPayPreset(prev => ({ ...prev, garnishments: parseFloat(e.target.value) || 0 }))}
+                        />
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {new Date().getDay() !== 0 && (
@@ -1457,14 +1553,18 @@ export default function Wallet() {
                     <div className="form-label">Net-to-Gross Ratio</div>
                     <EditableCell type="number" className="form-input" value={budget.net_to_gross_ratio || ""} placeholder="e.g. 0.77" onChange={v => updateBudget("net_to_gross_ratio", parseFloat(v) || 0)} />
                     <div style={{ fontSize: 10, color: "var(--ink-muted)", marginTop: 4 }}>
-                      From payroll.amazon.work: previous paycheck's post-tax ÷ pre-tax earnings. Update it each payday.
+                      {earlyPayPresetId === "amazon"
+                        ? "From payroll.amazon.work: previous paycheck's post-tax ÷ pre-tax earnings. Update it each payday."
+                        : "Previous paycheck's post-tax ÷ pre-tax earnings, from your pay portal. Update it each payday."}
                     </div>
                   </div>
                   <div>
                     <div className="form-label">Flat Deductions ($)</div>
                     <EditableCell type="number" className="form-input" value={budget.flat_deductions_prev || ""} placeholder="e.g. 62.84" onChange={v => updateBudget("flat_deductions_prev", parseFloat(v) || 0)} />
                     <div style={{ fontSize: 10, color: "var(--ink-muted)", marginTop: 4 }}>
-                      Flat deductions from your previous paycheck (per the Amazon app) — for most people this is just the health premium.
+                      {earlyPayPresetId === "amazon"
+                        ? "Flat deductions from your previous paycheck (per the Amazon app) — for most people this is just the health premium."
+                        : "Flat deductions from your previous paycheck — for most people this is just the health premium."}
                     </div>
                   </div>
                 </div>
