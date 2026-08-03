@@ -1895,29 +1895,33 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
       Debt Payoff Strategy
     </div>
 
-    <label style={{ display: "block", marginBottom: 8 }}>
-      <input
-        type="radio"
-        checked={debtStrategy === "snowball"}
-        onChange={() => setDebtStrategy("snowball")}
-      />
-      {" "}Snowball
-      <div style={{ fontSize: 12, opacity: .7 }}>
-        Pay the smallest balance first.
+        <label
+      style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8, cursor: "pointer" }}
+      onClick={() => setDebtStrategy("snowball")}
+    >
+      <Icon name={debtStrategy === "snowball" ? "heartfull" : "heartempty"} size={18} />
+      <div>
+        Snowball
+        <div style={{ fontSize: 12, opacity: .7 }}>
+          Pay the smallest balance first.
+        </div>
       </div>
     </label>
 
-    <label style={{ display: "block" }}>
-      <input
-        type="radio"
-        checked={debtStrategy === "avalanche"}
-        onChange={() => setDebtStrategy("avalanche")}
-      />
-      {" "}Avalanche
-      <div style={{ fontSize: 12, opacity: .7 }}>
-        Pay the highest APR first.
+
+       <label
+      style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}
+      onClick={() => setDebtStrategy("avalanche")}
+    >
+      <Icon name={debtStrategy === "avalanche" ? "heartfull" : "heartempty"} size={18} />
+      <div>
+        Avalanche
+        <div style={{ fontSize: 12, opacity: .7 }}>
+          Pay the highest APR first.
+        </div>
       </div>
     </label>
+
   </div>
 </div>
  <div className="card">
