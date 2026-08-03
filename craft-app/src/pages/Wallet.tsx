@@ -502,7 +502,12 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
       debtStrategy
     ));
 
-  const activeDebts = useMemo(() => debts.filter(d => !d.deferred).sort((a, b) => a.balance - b.balance), [debts]);
+    const activeDebts = useMemo(
+    () => debts.filter(d => !d.deferred).sort((a, b) =>
+      debtStrategy === "avalanche" ? b.apr - a.apr : a.balance - b.balance
+    ),
+    [debts, debtStrategy]
+  );
   const deferredDebts = debts.filter(d => d.deferred);
   const activeList = lists.find(l => l.id === activeListId) || null;
   const activeListItems = useMemo(
