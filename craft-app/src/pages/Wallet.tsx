@@ -1884,9 +1884,46 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
               </div>
             </div>
 
+
+
+
+
             <div className="card">
               <div className="card-body">
                 <div className="section-header">
+
+<div className="card" style={{ marginBottom: 12 }}>
+  <div className="card-body">
+    <div style={{ fontWeight: 700, marginBottom: 10 }}>
+      Debt Payoff Strategy
+    </div>
+
+    <label style={{ display: "block", marginBottom: 8 }}>
+      <input
+        type="radio"
+        checked={debtStrategy === "snowball"}
+        onChange={() => setDebtStrategy("snowball")}
+      />
+      {" "}Snowball
+      <div style={{ fontSize: 12, opacity: .7 }}>
+        Pay the smallest balance first.
+      </div>
+    </label>
+
+    <label style={{ display: "block" }}>
+      <input
+        type="radio"
+        checked={debtStrategy === "avalanche"}
+        onChange={() => setDebtStrategy("avalanche")}
+      />
+      {" "}Avalanche
+      <div style={{ fontSize: 12, opacity: .7 }}>
+        Pay the highest APR first.
+      </div>
+    </label>
+  </div>
+</div>
+
                   <div className="section-label">Active Debts</div>
                   <button className="btn btn-primary btn-sm" onClick={() => addDebt(false)}>
                     + Add
@@ -2025,37 +2062,6 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
               </div>
             </div>
 
-<div className="card" style={{ marginBottom: 12 }}>
-  <div className="card-body">
-    <div style={{ fontWeight: 700, marginBottom: 10 }}>
-      Debt Payoff Strategy
-    </div>
-
-    <label style={{ display: "block", marginBottom: 8 }}>
-      <input
-        type="radio"
-        checked={debtStrategy === "snowball"}
-        onChange={() => setDebtStrategy("snowball")}
-      />
-      {" "}Snowball
-      <div style={{ fontSize: 12, opacity: .7 }}>
-        Pay the smallest balance first.
-      </div>
-    </label>
-
-    <label style={{ display: "block" }}>
-      <input
-        type="radio"
-        checked={debtStrategy === "avalanche"}
-        onChange={() => setDebtStrategy("avalanche")}
-      />
-      {" "}Avalanche
-      <div style={{ fontSize: 12, opacity: .7 }}>
-        Pay the highest APR first.
-      </div>
-    </label>
-  </div>
-</div>
 
             <div className="section-label" style={{ marginTop: 4 }}><Icon name="clipboard-list" size={16} /> Payoff Schedule</div>
             {extraDebtPayment < 0 && (
