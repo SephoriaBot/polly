@@ -1871,7 +1871,7 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                 <div style={{ fontSize: 11, color: "var(--ink-muted)", marginTop: 6 }}>rent + transport + non-debt bills — used to calculate your snowball extra</div>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 16, paddingTop: 14, borderTop: "1px solid var(--border)" }}>
                   <div>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: extraDebtPayment >= 0 ? "var(--green-dark)" : "var(--danger)" }}>True Snowball Extra</div>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: extraDebtPayment >= 0 ? "var(--green-dark)" : "var(--danger)" }}>True Debt Payment Extra</div>
                     <div style={{ fontSize: 11, color: "var(--ink-muted)" }}>take-home ({fmt(budget.take_home)}) minus fixed expenses and {fmt(totalMins)} in minimums</div>
                   </div>
                   <div style={{ fontSize: 20, fontWeight: 800, color: extraDebtPayment >= 0 ? "var(--green-dark)" : "var(--danger)" }}>{fmt(extraDebtPayment)}</div>
@@ -1887,7 +1887,7 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
             <div className="card">
               <div className="card-body">
                 <div className="section-header">
-                  <div className="section-label">Active Debts — Snowball Order</div>
+                  <div className="section-label">Active Debts</div>
                   <button className="btn btn-primary btn-sm" onClick={() => addDebt(false)}>
                     + Add
                   </button>
