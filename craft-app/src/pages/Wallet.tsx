@@ -1899,7 +1899,7 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
 <div className="card" style={{ marginBottom: 12 }}>
   <div className="card-body">
     <div style={{ fontWeight: 700, marginBottom: 10 }}>
-      Debt Payoff Strategy
+      Select Debt Payoff Strategy
     </div>
 
         <label
