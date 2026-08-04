@@ -244,7 +244,7 @@ export default function RecipeModal({ mealId, onClose }: RecipeModalProps) {
                   ? <><Icon name="groq_7" size={13} /> Added!</>
                   : addingToCart
                     ? <><Icon name="icon-loader2" size={13} style={{ animation: 'cookSpin 0.7s linear infinite' }} /> Adding...</>
-                    : <><Icon name="groq_10" size={13} /> Add missing to cart</>}
+                    : <><Icon name="shopping-cart" size={13} /> Add missing to cart</>}
               </button>
             </div>
 

@@ -498,7 +498,7 @@ Never mention calories, macros, or specific weight numbers. If the goal involves
                   ? <><Icon name="flowerfull" size={14} /> Added to Grocery List!</>
                   : addingToCart
                     ? 'Adding…'
-                    : <><Icon name="groq_10" size={14} /> Add {selectedPicks.size} Item{selectedPicks.size === 1 ? '' : 's'} to Grocery List</>}
+                    : <><Icon name="shopping-cart" size={14} /> Add {selectedPicks.size} Item{selectedPicks.size === 1 ? '' : 's'} to Grocery List</>}
               </button>
 
               <button className="btn btn-ghost" style={{ width: '100%', justifyContent: 'center', marginTop: 8 }} onClick={reset}>
