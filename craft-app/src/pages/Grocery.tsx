@@ -795,10 +795,10 @@ export default function Grocery() {
             <Icon name="groq_10" size={20} /> Build Smart Cart
           </button>
           <button className="btn btn-secondary" onClick={refreshSmartCart}>
-            <Icon name="groq_4" size={20} /> Refresh
+            <Icon name="icon-recur" size={20} /> Refresh
           </button>
           <button className="btn btn-ghost" onClick={clearSmartCart}>
-            <Icon name="groq_3" size={20} /> Clear
+            <Icon name="icon-clear" size={20} /> Clear
           </button>
           <button className="btn btn-primary" onClick={openDoorDashList} disabled={!needs.length}>
           <Icon name="icon-externallink" size={20} /> Copy List &amp; Open DoorDash
@@ -1150,7 +1150,7 @@ export default function Grocery() {
                                     <span style={{ flex: 1, color: 'var(--pink-dark)', fontWeight: 600 }}>${p.price.toFixed(2)}</span>
                                     <span style={{ flex: 1, color: isStale(p.updated_at) ? 'var(--gold-dark)' : 'var(--ink-muted)', fontSize: '0.66rem' }}>{p.updated_at}</span>
                                     <button onClick={() => deletePrice(p.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-muted)', opacity: 0.5 }}>
-                                      <Icon name="groq_3" size={12} />
+                                      <Icon name="icon-clear" size={12} />
                                     </button>
                                   </div>
                                 ))}

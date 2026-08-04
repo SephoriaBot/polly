@@ -342,7 +342,7 @@ function WeekTab({
           <div className="modal" style={{ maxWidth: 340, maxHeight: '70vh' }} onClick={e => e.stopPropagation()}>
             <div className="modal-header" style={{ background: 'var(--blush)', color: 'var(--pink-dark)' }}>
               <span style={{ fontSize: '0.85rem', fontWeight: 700 }}>Pick a meal for {selecting.day} {selecting.type}</span>
-              <button className="close-btn" onClick={onCloseSelect}><Icon name="groq_3" size={16} /></button>
+              <button className="close-btn" onClick={onCloseSelect}><Icon name="icon-clear" size={16} /></button>
             </div>
             <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
               {savedMeals.length === 0 && (
@@ -644,7 +644,7 @@ function DiscoverTab({ onOpenRecipe, onSaved }: { onOpenRecipe: (id: number) => 
                     disabled={saved.has(m.id) || savingId === m.id}
                   >
                     {saved.has(m.id)
-                      ? <><Icon name="groq_8" size={12} /> Saved!</>
+                      ? <><Icon name="flowerfull" size={12} /> Saved!</>
                       : savingId === m.id
                         ? <><Icon name="icon-loader2" size={12} style={{ animation: 'mealsSpin 0.7s linear infinite' }} /> Saving...</>
                         : <><Icon name="icon-plus" size={12} /> Save to My Meals</>}
@@ -733,7 +733,7 @@ function SavedTab({
                 title={!hasIngredients ? 'No ingredients saved for this meal' : ''}
               >
                 {addedId === m.id
-                  ? <><Icon name="groq_8" size={12} /> Added!</>
+                  ? <><Icon name="flowerfull" size={12} /> Added!</>
                   : addingId === m.id
                     ? <><Icon name="icon-loader2" size={12} style={{ animation: 'mealsSpin 0.7s linear infinite' }} /> Adding...</>
                     : <><Icon name="icon-plus" size={12} /> Add to List</>}

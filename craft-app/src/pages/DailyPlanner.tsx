@@ -344,7 +344,7 @@ export default function DailyPlanner() {
         <div style={{ display: 'flex', gap: 8 }}>
           {tasks.length > 0 && (
             <button className="btn btn-ghost" onClick={resetAll}>
-              <Icon name="groq_4" size={14} /> Reset
+              <Icon name="icon-recur" size={14} /> Reset
             </button>
           )}
         </div>
@@ -443,7 +443,7 @@ export default function DailyPlanner() {
                             title="Repeats — tap to stop"
                             style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', color: 'var(--ink-muted)', opacity: 0.6, flexShrink: 0 }}
                           >
-                            <Icon name="groq_4" size={11} />
+                            <Icon name="icon-recur" size={11} />
                           </button>
                         )}
                       </span>
@@ -452,7 +452,7 @@ export default function DailyPlanner() {
                         onClick={() => deleteTask(task.id)}
                         style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-muted)', padding: 0, display: 'flex', alignItems: 'center', opacity: 0.4 }}
                       >
-                        <Icon name="groq_3" size={13} />
+                        <Icon name="icon-clear" size={13} />
                       </button>
                     </div>
                   ))}
@@ -532,7 +532,7 @@ export default function DailyPlanner() {
                           onClick={() => deleteUpcomingTask(task.id)}
                           style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-muted)', padding: 0, display: 'flex', alignItems: 'center', opacity: 0.4 }}
                         >
-                          <Icon name="groq_3" size={12} />
+                          <Icon name="icon-clear" size={12} />
                         </button>
                       </div>
                     ))}
@@ -600,7 +600,7 @@ export default function DailyPlanner() {
                           onClick={() => deleteAppointment(appt.id)}
                           style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-muted)', padding: 0, display: 'flex', alignItems: 'center', opacity: 0.4 }}
                         >
-                          <Icon name="groq_3" size={13} />
+                          <Icon name="icon-clear" size={13} />
                         </button>
                       </div>
                     );

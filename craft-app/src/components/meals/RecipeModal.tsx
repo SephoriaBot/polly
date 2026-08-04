@@ -194,7 +194,7 @@ export default function RecipeModal({ mealId, onClose }: RecipeModalProps) {
           <span style={{ fontSize: '0.85rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6 }}>
             <Icon name="icon-chefhat" size={16} /> {meal?.title || 'Recipe'}
           </span>
-          <button className="close-btn" onClick={onClose}><Icon name="groq_3" size={16} /></button>
+          <button className="close-btn" onClick={onClose}><Icon name="icon-clear" size={16} /></button>
         </div>
 
         {loading && (

@@ -108,7 +108,7 @@ export default function AppointmentNotes({
               aria-label="Delete"
               type="button"
             >
-              <Icon name="groq_3" size={15} />
+              <Icon name="icon-clear" size={15} />
             </button>
           </div>
         ))}
@@ -151,7 +151,7 @@ export default function AppointmentNotes({
                   aria-label="Delete"
                   type="button"
                 >
-                  <Icon name="groq_3" size={15} />
+                  <Icon name="icon-clear" size={15} />
                 </button>
               </div>
 
@@ -208,7 +208,7 @@ export default function AppointmentNotes({
               aria-label="Delete"
               type="button"
             >
-              <Icon name="groq_3" size={15} />
+              <Icon name="icon-clear" size={15} />
             </button>
           </div>
         ))}

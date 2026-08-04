@@ -171,7 +171,7 @@ export default function UnlinkedNotes({
                       aria-label="Delete"
                       type="button"
                     >
-                      <Icon name="groq_3" size={15} />
+                      <Icon name="icon-clear" size={15} />
                     </button>
                   </div>
                 ))}
@@ -203,7 +203,7 @@ export default function UnlinkedNotes({
                         aria-label="Delete"
                         type="button"
                       >
-                        <Icon name="groq_3" size={15} />
+                        <Icon name="icon-clear" size={15} />
                       </button>
                     </div>
                     <div className={notesStyles.resolutionRow}>
@@ -259,7 +259,7 @@ export default function UnlinkedNotes({
                       aria-label="Delete"
                       type="button"
                     >
-                      <Icon name="groq_3" size={15} />
+                      <Icon name="icon-clear" size={15} />
                     </button>
                   </div>
                 ))}

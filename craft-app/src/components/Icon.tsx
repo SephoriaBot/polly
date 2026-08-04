@@ -31,7 +31,7 @@ export type IconName =
   | 'icon_plant' | 'icon_toaster'
   | 'creamhamster' | 'pinkhamster' | 'cupempty' | 'cupfull'
   | 'picnicempty' | 'picnicfull' | 'shellempty' | 'shellfull'
-  | 'sugarempty' | 'sugarfull' | 'heartempty' | 'heartfull' ;
+  | 'sugarempty' | 'sugarfull' | 'heartempty' | 'heartfull' | 'flowerfull' | 'flowerempty' | 'icon-clear';
 
 
 interface IconProps {
