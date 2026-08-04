@@ -1300,6 +1300,9 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                   <button className="btn btn-primary btn-sm" onClick={() => setShowNewListInput(v => !v)}>+ New List</button>
                 </div>
 
+    <p className="daily-tasks-subtitle">Tap the flower to check it off...</p>
+
+
                 {showNewListInput && (
                   <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
                     <input
@@ -1353,8 +1356,8 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                                 }}
                               >
                                 {item.done
-                                  ? <Icon name="groq_8" size={17} style={{ color: "var(--pink-dark)" }} />
-                                  : <Icon name="icon-circle" size={17} style={{ color: "var(--border)" }} />
+                                  ? <Icon name="flowerfull" size={17} style={{ color: "var(--pink-dark)" }} />
+                                  : <Icon name="flowerempty" size={17} style={{ color: "var(--border)" }} />
                                 }
                               </button>
                               <div style={{ flex: 1, fontSize: 13, color: item.done ? "var(--ink-muted)" : "var(--ink)", textDecoration: item.done ? "line-through" : "none" }}>
