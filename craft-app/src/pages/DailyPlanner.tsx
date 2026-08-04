@@ -14,7 +14,19 @@ interface DailyTask {
   label: string;
   done: boolean;
   created_at: string;
+  task_date: string; // YYYY-MM-DD — the day this instance belongs to
+  template_id: string | null; // set if this instance was generated from a recurring template
 }
+
+interface DailyTaskTemplate {
+  id: string;
+  label: string;
+  days_of_week: number[]; // 0=Sun .. 6=Sat (matches JS Date#getDay())
+  active: boolean;
+  created_at: string;
+}
+
+const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 interface Appointment {
   id: string;
@@ -52,16 +64,27 @@ function StitchDivider() {
   );
 }
 
+function todayISO() {
+  return new Date().toISOString().slice(0, 10);
+}
+
 export default function DailyPlanner() {
   const [tasks, setTasks] = useState<DailyTask[]>([]);
+  const [templates, setTemplates] = useState<DailyTaskTemplate[]>([]);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
   const [newTask, setNewTask] = useState('');
+  const [newTaskDate, setNewTaskDate] = useState(todayISO());
+  const [upcomingTasks, setUpcomingTasks] = useState<DailyTask[]>([]);
   const [newApptTitle, setNewApptTitle] = useState('');
   const [newApptDate, setNewApptDate] = useState('');
   const [sparks, setSparks] = useState<Spark[]>([]);
   const [focusNote, setFocusNote] = useState<AppointmentNoteSelection | null>(null);
   const [showAllDoneCelebration, setShowAllDoneCelebration] = useState(false);
+  const [showTemplateManager, setShowTemplateManager] = useState(false);
+  const [newTemplateLabel, setNewTemplateLabel] = useState('');
+  const [newTemplateDays, setNewTemplateDays] = useState<Set<number>>(new Set());
+  const [savingTemplate, setSavingTemplate] = useState(false);
 
   const { map: noteMap, refresh: refreshNoteMap } = useAppointmentNoteMap(appointments.map(a => a.id));
 
@@ -71,25 +94,62 @@ export default function DailyPlanner() {
 
   async function loadAll() {
     setLoading(true);
-    const [tasksRes, apptsRes] = await Promise.all([
-      supabase.from('daily_tasks').select('*').order('created_at'),
+    const today = todayISO();
+    const [tasksRes, upcomingRes, templatesRes, apptsRes] = await Promise.all([
+      supabase.from('daily_tasks').select('*').eq('task_date', today).order('created_at'),
+      supabase.from('daily_tasks').select('*').gt('task_date', today).order('task_date'),
+      supabase.from('daily_task_templates').select('*').order('created_at'),
       supabase.from('appointments').select('*').order('date_time'),
     ]);
-    setTasks(tasksRes.data ?? []);
+
+    const todaysTemplates: DailyTaskTemplate[] = templatesRes.data ?? [];
+    const todaysTasks: DailyTask[] = tasksRes.data ?? [];
+    setTemplates(todaysTemplates);
+    setUpcomingTasks(upcomingRes.data ?? []);
     setAppointments(apptsRes.data ?? []);
+
+    // Generate today's instances for any active template that applies to
+    // today's weekday and doesn't already have an instance for today.
+    const todayWeekday = new Date().getDay();
+    const alreadyGenerated = new Set(todaysTasks.filter(t => t.template_id).map(t => t.template_id));
+    const dueTemplates = todaysTemplates.filter(
+      t => t.active && t.days_of_week.includes(todayWeekday) && !alreadyGenerated.has(t.id)
+    );
+
+    if (dueTemplates.length > 0) {
+      const { data: inserted } = await supabase
+        .from('daily_tasks')
+        .insert(dueTemplates.map(t => ({ label: t.label, done: false, task_date: today, template_id: t.id })))
+        .select();
+      setTasks([...todaysTasks, ...(inserted ?? [])]);
+    } else {
+      setTasks(todaysTasks);
+    }
+
     setLoading(false);
   }
 
   async function addTask() {
     const label = newTask.trim();
     if (!label) return;
+    const targetDate = newTaskDate || todayISO();
     const { data } = await supabase
       .from('daily_tasks')
-      .insert({ label, done: false })
+      .insert({ label, done: false, task_date: targetDate, template_id: null })
       .select()
       .single();
-    if (data) setTasks(prev => [...prev, data]);
+    // Only add to today's visible list if it was actually scheduled for
+    // today — anything scheduled for a future date shows up in the
+    // "Scheduled" list instead, and moves into the main checklist on its day.
+    if (data) {
+      if (targetDate === todayISO()) {
+        setTasks(prev => [...prev, data]);
+      } else {
+        setUpcomingTasks(prev => [...prev, data].sort((a, b) => a.task_date.localeCompare(b.task_date)));
+      }
+    }
     setNewTask('');
+    setNewTaskDate(todayISO());
   }
 
   async function toggleTask(task: DailyTask, e: React.MouseEvent) {
@@ -124,6 +184,17 @@ export default function DailyPlanner() {
     setTasks(prev => prev.filter(t => t.id !== id));
   }
 
+  async function deleteUpcomingTask(id: string) {
+    await supabase.from('daily_tasks').delete().eq('id', id);
+    setUpcomingTasks(prev => prev.filter(t => t.id !== id));
+  }
+
+  function formatScheduledDate(dateStr: string) {
+    return new Date(`${dateStr}T12:00:00`).toLocaleDateString(undefined, {
+      weekday: 'short', month: 'short', day: 'numeric',
+    });
+  }
+
   async function resetAll() {
     const { error } = await supabase
       .from('daily_tasks')
@@ -131,6 +202,55 @@ export default function DailyPlanner() {
       .in('id', tasks.map(t => t.id));
     if (error) { console.error(error); return; }
     setTasks(prev => prev.map(t => ({ ...t, done: false })));
+  }
+
+  function toggleNewTemplateDay(day: number) {
+    setNewTemplateDays(prev => {
+      const next = new Set(prev);
+      if (next.has(day)) next.delete(day); else next.add(day);
+      return next;
+    });
+  }
+
+  async function addTemplate() {
+    const label = newTemplateLabel.trim();
+    if (!label || newTemplateDays.size === 0) return;
+    setSavingTemplate(true);
+    try {
+      const { data, error } = await supabase
+        .from('daily_task_templates')
+        .insert({ label, days_of_week: Array.from(newTemplateDays).sort(), active: true })
+        .select()
+        .single();
+      if (error) throw error;
+      setTemplates(prev => [...prev, data]);
+
+      // If today matches the new template's days, generate today's instance
+      // immediately instead of waiting for the next page load.
+      if (data.days_of_week.includes(new Date().getDay())) {
+        const { data: inserted } = await supabase
+          .from('daily_tasks')
+          .insert({ label: data.label, done: false, task_date: todayISO(), template_id: data.id })
+          .select()
+          .single();
+        if (inserted) setTasks(prev => [...prev, inserted]);
+      }
+
+      setNewTemplateLabel('');
+      setNewTemplateDays(new Set());
+    } catch (e) {
+      console.error('failed to add recurring task', e);
+    } finally {
+      setSavingTemplate(false);
+    }
+  }
+
+  async function deleteTemplate(id: string) {
+    // Only stops future generation — today's already-generated instance (if
+    // any) sticks around, same as any other task, since template_id is
+    // ON DELETE SET NULL.
+    await supabase.from('daily_task_templates').delete().eq('id', id);
+    setTemplates(prev => prev.filter(t => t.id !== id));
   }
 
   async function addAppointment() {
@@ -219,12 +339,76 @@ export default function DailyPlanner() {
             {allDone ? 'All done! Good job.' : `${doneCount} of ${tasks.length} done today`}
           </p>
         </div>
-        {tasks.length > 0 && (
-          <button className="btn btn-ghost" onClick={resetAll}>
-            <Icon name="groq_4" size={14} /> Reset
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button className="btn btn-ghost" onClick={() => setShowTemplateManager(s => !s)}>
+            <Icon name="icon-calendar" size={14} /> Recurring
           </button>
-        )}
+          {tasks.length > 0 && (
+            <button className="btn btn-ghost" onClick={resetAll}>
+              <Icon name="groq_4" size={14} /> Reset
+            </button>
+          )}
+        </div>
       </div>
+
+      {showTemplateManager && (
+        <div className="card" style={{ margin: '0 0 16px' }}>
+          <div className="card-body">
+            <div className="section-label">Recurring Tasks</div>
+            <div style={{ fontSize: 12, color: 'var(--ink-muted)', marginBottom: 12 }}>
+              These auto-add themselves to today's checklist on the days you pick — no more retyping the same task every morning.
+            </div>
+
+            {templates.length > 0 && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 14 }}>
+                {templates.map(t => (
+                  <div key={t.id} style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8,
+                    padding: '8px 10px', borderRadius: 'var(--radius-sm)', border: '1.5px solid var(--border)',
+                  }}>
+                    <div>
+                      <div style={{ fontWeight: 600, fontSize: 13 }}>{t.label}</div>
+                      <div style={{ fontSize: 10, color: 'var(--ink-muted)' }}>
+                        {t.days_of_week.length === 7 ? 'Every day' : t.days_of_week.map(d => DAY_LABELS[d]).join(', ')}
+                      </div>
+                    </div>
+                    <button className="btn btn-ghost" onClick={() => deleteTemplate(t.id)}>
+                      <Icon name="icon-trash2" size={13} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <input
+              className="form-input"
+              placeholder="New recurring task…"
+              value={newTemplateLabel}
+              onChange={e => setNewTemplateLabel(e.target.value)}
+              style={{ marginBottom: 8 }}
+            />
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 10 }}>
+              {DAY_LABELS.map((label, day) => (
+                <button
+                  key={day}
+                  onClick={() => toggleNewTemplateDay(day)}
+                  className={newTemplateDays.has(day) ? 'btn btn-primary btn-sm' : 'btn btn-ghost btn-sm'}
+                  style={{ minWidth: 44 }}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+            <button
+              className="btn btn-primary"
+              onClick={addTemplate}
+              disabled={savingTemplate || !newTemplateLabel.trim() || newTemplateDays.size === 0}
+            >
+              {savingTemplate ? 'Adding…' : 'Add Recurring Task'}
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="page-body">
 
@@ -308,8 +492,12 @@ export default function DailyPlanner() {
                         letterSpacing: '0.01em', lineHeight: 1.4,
                         color: task.done ? 'var(--ink-muted)' : 'var(--ink)',
                         textDecoration: task.done ? 'line-through' : 'none',
+                        display: 'flex', alignItems: 'center', gap: 6,
                       }}>
                         {task.label}
+                        {task.template_id && (
+                          <Icon name="groq_4" size={11} style={{ color: 'var(--ink-muted)', opacity: 0.6, flexShrink: 0 }} />
+                        )}
                       </span>
 
                       <button
@@ -323,14 +511,23 @@ export default function DailyPlanner() {
                 </div>
               )}
 
-              <div style={{ display: 'flex', gap: 8 }}>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                 <input
                   className="form-input"
-                  placeholder="Add a daily task…"
+                  placeholder="Add a task…"
                   value={newTask}
                   onChange={e => setNewTask(e.target.value)}
                   onKeyDown={e => e.key === 'Enter' && addTask()}
-                  style={{ flex: 1 }}
+                  style={{ flex: 1, minWidth: 140 }}
+                />
+                <input
+                  className="form-input"
+                  type="date"
+                  value={newTaskDate}
+                  min={todayISO()}
+                  onChange={e => setNewTaskDate(e.target.value)}
+                  title="Defaults to today — pick a future date to schedule it instead"
+                  style={{ width: 150 }}
                 />
                 <button
                   className="btn btn-primary"
@@ -340,6 +537,32 @@ export default function DailyPlanner() {
                   <Icon name="icon-plus" size={14} />
                 </button>
               </div>
+
+              {upcomingTasks.length > 0 && (
+                <div style={{ marginTop: 16 }}>
+                  <div className="section-label" style={{ fontSize: 11, marginBottom: 8 }}>Scheduled</div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    {upcomingTasks.map(task => (
+                      <div key={task.id} style={{
+                        display: 'flex', alignItems: 'center', gap: 10,
+                        padding: '8px 10px', borderRadius: 'var(--radius-sm)',
+                        border: '1.5px dashed var(--border)',
+                      }}>
+                        <span style={{ flex: 1, fontSize: 13 }}>{task.label}</span>
+                        <span style={{ fontSize: 10, color: 'var(--ink-muted)', fontFamily: "'IBM Plex Mono', monospace" }}>
+                          {formatScheduledDate(task.task_date)}
+                        </span>
+                        <button
+                          onClick={() => deleteUpcomingTask(task.id)}
+                          style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-muted)', padding: 0, display: 'flex', alignItems: 'center', opacity: 0.4 }}
+                        >
+                          <Icon name="groq_3" size={12} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
