@@ -1762,9 +1762,8 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                   <button className="btn btn-primary btn-sm" onClick={() => setShowBillForm(v => !v)}>+ Add Bill</button>
                 </div>
 
-                <div style={{ fontSize: 11, color: "var(--ink-muted)", marginBottom: 12 }}>
-                  <Icon name="lightning" size={12} /> Tap any bill, amount, or due day to edit it — changes only apply to {MONTH_NAMES[selectedMonth - 1]}. Recurring bills still show up automatically in new months.
-                </div>
+<p className="daily-tasks-subtitle">Tap the jar to give it some sugar...</p>
+
 
                 {showBillForm && (
                   <div style={{ background: "var(--accent)", borderRadius: 16, padding: 14, marginBottom: 14, display: "flex", flexDirection: "column", gap: 10 }}>
@@ -1934,6 +1933,8 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                 <div className="section-header">
 
                   <div className="section-label">Active Debts</div>
+<p className="daily-tasks-subtitle">Tap the shell to give it some color...</p>
+
                   <button className="btn btn-primary btn-sm" onClick={() => addDebt(false)}>
                     + Add
                   </button>
