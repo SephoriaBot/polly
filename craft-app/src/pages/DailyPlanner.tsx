@@ -381,6 +381,7 @@ export default function DailyPlanner() {
               <div className="section-label" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <span>Daily Tasks</span>
               </div>
+             <p className="daily-tasks-subtitle">Tap the toast to give it some jam...</p>
 
               {loading ? (
                 <p style={{ fontSize: 13, color: 'var(--ink-muted)' }}>Loading…</p>
