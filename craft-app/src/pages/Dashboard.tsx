@@ -126,6 +126,8 @@ async function loadAll() {
                 </span>
               )}
             </div>
+<p className="daily-tasks-subtitle">Tap the basket to fill it up...</p>
+
             <button
               onClick={() => setAddingFocus(true)}
               style={{
