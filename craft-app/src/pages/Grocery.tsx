@@ -1102,6 +1102,8 @@ export default function Grocery() {
                 <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Icon name="icon-clipboardlist" size={13} /> Need to Buy</span>
                 <span style={{ fontWeight: 500 }}>{needs.length} items</span>
               </div>
+    <p className="daily-tasks-subtitle">Tap the flower to check it off...</p>
+
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 420, overflowY: 'auto', marginBottom: 12 }}>
                 {needs.length === 0
                   ? <EmptyState
