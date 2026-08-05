@@ -6,8 +6,8 @@ import Lantern from "../components/Lantern";
 import EmptyState from '../components/EmptyState';
 import breadBasketImg from '../assets/illustrations/bread_basket.png';
 import hourglassImg from '../assets/illustrations/hourglass.png';
-import empty9Img from '../../icons/empty9.png';
-import empty4Img from '../../icons/empty4.png';
+import empty9Img from '../../public/icons/empty9.png';
+import empty4Img from '../../public/icons/empty4.png';
 
 
 interface GroceryList { id: string; name: string; created_at: string }

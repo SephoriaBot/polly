@@ -7,7 +7,7 @@ import Lantern from "../components/Lantern";
 import EmptyState from '../components/EmptyState';
 import checklistImg from '../assets/illustrations/checklist.png';
 import celebrationImg from '../assets/illustrations/celebration.png';
-import empty7Img from '../../icons/empty7.png';
+import empty7Img from '../../public/icons/empty7.png';
 import Icon, { type IconName } from '../components/Icon';
 
 interface DailyTask {
