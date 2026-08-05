@@ -1,3 +1,5 @@
+import Icon from '../Icon';
+
 // src/components/EmptyState.tsx
 interface EmptyStateProps {
   image: string;
