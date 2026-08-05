@@ -1128,9 +1128,12 @@ export default function Grocery() {
             return (
               <div className="card">
                 <div className="section-label">Best Store for Your Whole List</div>
-                <p style={{ fontSize: '0.8rem', color: 'var(--ink-muted)', padding: '4px 0' }}>
-                  At least one item on your list had zero search results anywhere (not just at whitelisted stores), so no store total could be estimated yet.
-                </p>
+                
+      <div className={styles.emptyState}>
+        <Icon name="empty9" size={22} className={styles.emptyIcon} />
+        <p>No products found at atleast one store in your list...</p>
+      </div>
+    
               </div>
             )
           }
@@ -1219,11 +1222,12 @@ export default function Grocery() {
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 420, overflowY: 'auto', marginBottom: 12 }}>
                 {needs.length === 0
-                  ? <EmptyState
-                  image={breadBasketImg}
-                  message="List is empty!"
-                  subMessage="Add an item to get started."
-                />
+                  ? 
+      <div className={styles.emptyState}>
+        <Icon name="empty4" size={22} className={styles.emptyIcon} />
+        <p>Nothing here yet!</p>
+      </div>
+    
                   : needs.map(item => {
                     const cheapest = cheapestFor(item.name)
                     const itemPrices = pricesFor(item.name)

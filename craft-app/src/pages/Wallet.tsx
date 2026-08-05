@@ -1319,7 +1319,10 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                 )}
 
                 {lists.length === 0 ? (
-                  <div style={{ fontSize: 12, color: "var(--ink-muted)" }}>No lists yet — create one to start tracking things you need.</div>
+                  <div className={styles.emptyState}>
+        <Icon name="empty8" size={22} className={styles.emptyIcon} />
+        <p>No lists yet. Create one to start tracking things you need...</p>
+      </div>
                 ) : (
                   <>
                     <div style={{ display: "flex", gap: 6, overflowX: "auto", paddingBottom: 8, marginBottom: 8 }}>
@@ -1367,7 +1370,10 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                             </div>
                           ))}
                           {activeListItems.length === 0 && (
-                            <div style={{ fontSize: 12, color: "var(--ink-muted)", padding: "8px 0" }}>Nothing on this list yet.</div>
+                            <div className={styles.emptyState}>
+        <Icon name="empty6" size={22} className={styles.emptyIcon} />
+        <p>Nothing on this list yet.</p>
+      </div>
                           )}
                         </div>
 
@@ -1847,10 +1853,10 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                     ))}
                     {monthBills.length === 0 && (
                       <tr><td colSpan={6} style={{ padding: 24, textAlign: "center", color: "var(--ink-muted)" }}>
-                        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
-                          <img src={walletPouchImg} alt="" style={{ width: 100 }} />
-                          No bills yet — click + Add Bill to get started.
-                        </div>
+                        <div className={styles.emptyState}>
+        <Icon name="empty5" size={22} className={styles.emptyIcon} />
+        <p>No bills yet. Add one to get started.</p>
+      </div>
                       </td></tr>
                     )}
                   </tbody>

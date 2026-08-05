@@ -64,7 +64,7 @@ export default function UnlinkedNotes({
   if (items.length === 0) {
     return (
       <div className={styles.emptyState}>
-        <Icon name="icon-inbox" size={22} className={styles.emptyIcon} />
+        <Icon name="empty10" size={22} className={styles.emptyIcon} />
         <p>No unlinked notes — nothing orphaned right now.</p>
       </div>
     );

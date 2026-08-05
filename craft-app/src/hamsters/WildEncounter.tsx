@@ -295,9 +295,12 @@ export default function WildEncounter() {
         </div>
 
         {fighters.length === 0 ? (
-          <div style={{ fontSize: 12, color: "var(--ink-muted)", textAlign: "center", padding: "10px 0" }}>
-            No teen or final hamsters yet — evolve one before it can battle.
-          </div>
+          
+      <div className={styles.emptyState}>
+        <Icon name="empty3" size={22} className={styles.emptyIcon} />
+        <p>No hamsters are old enough to battle yet!</p>
+      </div>
+    
         ) : (
           <>
             {(phase === "pick" || phase === "scouting" || phase === "found") && (

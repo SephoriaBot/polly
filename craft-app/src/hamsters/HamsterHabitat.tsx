@@ -92,9 +92,10 @@ export default function HamsterHabitat() {
         )}
 
         {collection.length === 0 ? (
-          <div style={{ fontSize: 12, color: "var(--ink-muted)", textAlign: "center", padding: "16px 0" }}>
-            No hamsters yet — fill the nest to hatch your first one.
-          </div>
+      <div className={styles.emptyState}>
+        <Icon name="empty3" size={22} className={styles.emptyIcon} />
+        <p>No hamsters yet.</p>
+      </div>
         ) : (
           <>
             <div

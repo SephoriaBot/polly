@@ -386,19 +386,12 @@ export default function DailyPlanner() {
               {loading ? (
                 <p style={{ fontSize: 13, color: 'var(--ink-muted)' }}>Loading…</p>
               ) : tasks.length === 0 ? (
-                <div style={{
-                  display: 'flex', flexDirection: 'column', alignItems: 'center',
-                  gap: 8, padding: '28px 16px', marginBottom: 16,
-                  border: '1.5px dashed var(--border)', borderRadius: 'var(--radius-md)',
-                }}>
-                  <Icon name="icon-heart" size={26} style={{ color: 'var(--pink-light)' }} strokeWidth={1.5} />
-                  <p style={{
-                    fontSize: '0.85rem', color: 'var(--ink-muted)', margin: 0,
-                    lineHeight: 1.6, textAlign: 'center',
-                  }}>
-                    No tasks yet — add your first one below
-                  </p>
-                </div>
+                
+      <div className={styles.emptyState}>
+        <Icon name="empty2" size={22} className={styles.emptyIcon} />
+        <p>No tasks yet...Add your first one below.</p>
+      </div>
+    
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 16 }}>
                   {sortedTasks.map(task => (
@@ -552,11 +545,12 @@ export default function DailyPlanner() {
               </div>
 
               {appointments.length === 0 ? (
-              <EmptyState
-                image={checklistImg}
-                message="Nothing scheduled yet"
-                subMessage="Add your first appointment below"
-              />
+              
+      <div className={styles.emptyState}>
+        <Icon name="empty7" size={22} className={styles.emptyIcon} />
+        <p>No appointments scheduled yet...</p>
+      </div>
+    
             ) : (
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16 }}>

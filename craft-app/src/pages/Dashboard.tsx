@@ -170,15 +170,12 @@ async function loadAll() {
           )}
 
           {focuses.length === 0 && !addingFocus ? (
-            <div style={{
-              background: 'var(--white)', border: '1.5px dashed var(--border)',
-              borderRadius: 18, padding: '18px 16px', textAlign: 'center',
-              color: 'var(--ink-muted)', fontSize: '0.82rem',
-              display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6,
-            }}>
-              <img src={sleepingNestImg} alt="" style={{ width: 80 }} />
-              No focuses set for today — add one to get started
-            </div>
+            
+      <div className={styles.emptyState}>
+        <Icon name="empty8" size={22} className={styles.emptyIcon} />
+        <p>No focuses set for today yet...</p>
+      </div>
+    
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
 

@@ -346,9 +346,12 @@ function WeekTab({
             </div>
             <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
               {savedMeals.length === 0 && (
-                <p style={{ fontSize: '0.78rem', color: 'var(--ink-muted)', padding: '1rem', textAlign: 'center' }}>
-                  No saved meals yet — visit Discover to add some
-                </p>
+                
+      <div className={styles.emptyState}>
+        <Icon name="empty2" size={22} className={styles.emptyIcon} />
+        <p>No saved meals yet...</p>
+      </div>
+    
               )}
               {savedMeals.map(m => (
                 <div
@@ -687,7 +690,7 @@ function SavedTab({
   if (savedMeals.length === 0) {
     return (
       <div className="empty-state">
-        <Icon name="groq_9" size={20} />
+        <Icon name="empty2" size={20} />
         No saved meals yet
         <button className="btn btn-secondary btn-sm" style={{ marginLeft: 8 }} onClick={onGoDiscover}>Find some</button>
       </div>
