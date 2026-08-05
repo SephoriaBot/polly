@@ -5,7 +5,7 @@ import { supabase } from '../lib/supabase';
 import DrDietGroq from '../components/suggest/DrDietGroq';
 import RecipeModal from '../components/meals/RecipeModal';
 import teaCupImg from '../assets/illustrations/tea_cup.png';
-import empty2Img from '../public/icons/empty2.png';
+import empty2Img from '../assets/icons/empty2.png';
 import errorDizzyImg from '../assets/illustrations/error_dizzy.png';
 import Lantern from "../components/Lantern";
 import EmptyState from '../components/EmptyState';
