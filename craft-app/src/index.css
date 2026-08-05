@@ -4,85 +4,85 @@
 
 [data-theme='light'],
 :root {
-  --bg: #F5F3EE;
-  --surface: #FFFDF8;
-  --text: #45444A;
+  --bg: #F4F1EA;
+  --surface: #FFFDF9;
+  --text: #3E3B37;
 
-  --primary: #D8D4E8;
-  --secondary: #E6DDD0;
-  --accent: #D3DCE0;
-  --mint: #AEBBAA;
+  --primary: #7C9484;
+  --secondary: #C9A574;
+  --accent: #8B9DAC;
+  --mint: #9FB39F;
 
-  --border: rgba(113, 108, 105, .18);
-  --shadow: 0 10px 26px rgba(75, 70, 65, .08);
+  --border: rgba(90, 84, 74, .16);
+  --shadow: 0 10px 26px rgba(70, 64, 54, .10);
 
-  --ink: #45444A;
-  --ink-soft: #706D73;
-  --ink-muted: #9A9694;
+  --ink: #3E3B37;
+  --ink-soft: #6B655D;
+  --ink-muted: #9C948A;
 
-  --white: #FFFDF8;
-  --cream: #F5F3EE;
-  --blush: #EEEAE5;
+  --white: #FFFDF9;
+  --cream: #F4F1EA;
+  --blush: #EDE7DC;
 
-  --green-dark: #687A6A;
-  --citrus-blue: #718697;
-  --sage: #C8D2C6;
-  --sage-dark: #8B9B88;
-  --sage-light: #EAF0E8;
+  --green-dark: #5C7360;
+  --citrus-blue: #62798A;
+  --sage: #B7C4B3;
+  --sage-dark: #7C9484;
+  --sage-light: #E8EDE5;
 
-  --pink: #D8C8C8;
-  --pink-dark: #9B7F82;
-  --pink-light: #F0E8E7;
+  --pink: #CBA9A2;
+  --pink-dark: #8C6A63;
+  --pink-light: #F0E4DF;
 
-  --sky: #C8D5DA;
+  --sky: #ADC2C9;
 
-  --gold: #DED2B8;
-  --gold-dark: #A99770;
-  --gold-light: #F3EEE2;
+  --gold: #D6BE8C;
+  --gold-dark: #A98A55;
+  --gold-light: #F5EEDE;
 
-  --danger: #B96D78;
-  --danger-bg: #F5E7E8;
+  --danger: #B5615B;
+  --danger-bg: #F5E6E3;
 }
 
 [data-theme='dark'] {
-  --bg: #202022;
-  --surface: #2A292B;
-  --text: #F1EEE8;
+  --bg: #201F1C;
+  --surface: #2A2926;
+  --text: #EFEBE3;
 
-  --primary: #4A4652;
-  --secondary: #575149;
-  --accent: #45545A;
-  --mint: #647062;
+  --primary: #8FA391;
+  --secondary: #C7A876;
+  --accent: #93A5AF;
+  --mint: #8FA391;
 
-  --border: rgba(220, 215, 205, .14);
+  --border: rgba(220, 213, 200, .14);
   --shadow: 0 14px 30px rgba(0,0,0,.38);
 
-  --ink: #F1EEE8;
-  --ink-soft: #C8C4BC;
-  --ink-muted: #97938C;
+  --ink: #EFEBE3;
+  --ink-soft: #C6C0B6;
+  --ink-muted: #948C82;
 
-  --white: #2A292B;
-  --cream: #323133;
-  --blush: #3A3738;
+  --white: #2A2926;
+  --cream: #322F2A;
+  --blush: #383530;
 
-  --green-dark: #A6B39F;
-  --citrus-blue: #9BAEB5;
-  --sage: #7F927D;
-  --sage-dark: #647263;
-  --sage-light: #343B35;
+  --green-dark: #9FB49F;
+  --citrus-blue: #9DB0B8;
+  --sage: #7E9280;
+  --sage-dark: #8FA391;
+  --sage-light: #333A32;
 
-  --pink: #A89598;
-  --pink-dark: #C1A5A8;
-  --pink-light: #40393B;
+  --pink: #B99B90;
+  --pink-dark: #CBA599;
+  --pink-light: #3B342F;
 
-  --sky: #8FA5AC;
+  --sky: #91A8AE;
 
-  --gold: #B5A680;
-  --gold-dark: #C1B18D;
-  --gold-light: #403D35;
+  --gold: #C1AC82;
+  --gold-dark: #D2BC8E;
+  --gold-light: #3B3428;
 
-  --danger: #D58A91;
-  --danger-bg: #492F32;
+  --danger: #D28A81;
+  --danger-bg: #402B29;
 }
 
 /* Light mode: soft gold-tinted glow on hover */
@@ -411,7 +411,7 @@ input, textarea, select {
 
 input:focus {
   border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(231, 198, 255, 0.3);
+  box-shadow: 0 0 0 3px rgba(124, 148, 132, 0.3);
 }
 
 /* ================= BUTTONS ================= */
