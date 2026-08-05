@@ -131,8 +131,7 @@ export default function TrackerChart({ type, startDate, endDate, refreshKey, lab
   if (logs.length === 0) {
     return (
       
-        <Icon name="empty4" size={22} className={styles.emptyIcon} />
-        <p>No data logged for this range yet.</p>
+        <EmptyState icon="empty4" title="No data logged yet." />
       
     );
   }

@@ -387,8 +387,7 @@ export default function DailyPlanner() {
                 <p style={{ fontSize: 13, color: 'var(--ink-muted)' }}>Loading…</p>
               ) : tasks.length === 0 ? (
                 
-        <Icon name="empty2" size={22} className={styles.emptyIcon} />
-        <p>No tasks yet...Add your first one below.</p>
+        <EmptyState icon="empty2" title="No tasks yet. Add one to get started." />
     
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 16 }}>
@@ -544,8 +543,7 @@ export default function DailyPlanner() {
 
               {appointments.length === 0 ? (
               
-        <Icon name="empty7" size={22} className={styles.emptyIcon} />
-        <p>No appointments scheduled yet...</p>
+        <EmptyState icon="empty7" title="No appointments scheduled yet" />
     
             ) : (
 

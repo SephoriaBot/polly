@@ -294,11 +294,9 @@ export default function WildEncounter() {
           <Icon name="map-pin" size={16} /> Wild Encounter
         </div>
 
-        {fighters.length === 0 ? (
-        <Icon name="empty3" size={22} className={styles.emptyIcon} />
-        <p>No hamsters are old enough to battle yet!</p>
-     
-        ) : (
+        {fighters.length ? (
+        <EmptyState icon="empty3" title="No hamsters are old enough to battle yet!" />
+) : (
           <>
             {(phase === "pick" || phase === "scouting" || phase === "found") && (
               <>
