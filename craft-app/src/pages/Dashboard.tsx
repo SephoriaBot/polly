@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase';
 import Lantern from "../components/Lantern";
 import DailyAlmanac from "../components/DailyAlmanac";
 import sleepingNestImg from '../assets/illustrations/sleeping_nest.png';
+import empty8Img from '../../icons/empty8.png';
 import WeatherBadge from '../components/WeatherBadge';
 import TroubleshooterGroq from '../components/suggest/TroubleshooterGroq';
 import Icon, { type IconName } from '../components/Icon';
@@ -172,7 +173,7 @@ async function loadAll() {
 
           {focuses.length === 0 && !addingFocus ? (
             
-        <EmptyState image="empty8" message="No focuses set for today yet." />
+        <EmptyState image={empty8Img} message="No focuses set for today yet." />
     
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>

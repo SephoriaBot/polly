@@ -5,6 +5,7 @@ import notesStyles from './AppointmentNotes.module.css';
 import styles from './UnlinkedNotes.module.css';
 import Icon, { type IconName } from '../Icon';
 import EmptyState from '../EmptyState';
+import empty10Img from '../../icons/empty10.png';
 
 interface UnlinkedNotesProps {
   items: AppointmentNoteItem[];
@@ -65,7 +66,7 @@ export default function UnlinkedNotes({
   if (items.length === 0) {
     return (
       
-        <EmptyState image="empty10" message="No unlinked notes yet." />
+        <EmptyState image={empty10Img} message="No unlinked notes yet." />
       
     );
   }

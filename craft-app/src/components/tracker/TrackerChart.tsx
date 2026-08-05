@@ -16,6 +16,7 @@ import {
 import { getTrackerLogsInRange, deleteTrackerLog } from '../../lib/trackerApi';
 import type { TrackerType, TrackerLog, PeriodValue } from '../../types/tracker';
 import EmptyState from '../EmptyState';
+import empty4Img from '../../icons/empty4.png';
 
 interface Props {
   type: TrackerType;
@@ -132,7 +133,7 @@ export default function TrackerChart({ type, startDate, endDate, refreshKey, lab
   if (logs.length === 0) {
     return (
       
-        <EmptyState image="empty4" message="No data logged yet." />
+        <EmptyState image={empty4Img} message="No data logged yet." />
       
     );
   }

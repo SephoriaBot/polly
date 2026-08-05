@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase';
 import DrDietGroq from '../components/suggest/DrDietGroq';
 import RecipeModal from '../components/meals/RecipeModal';
 import teaCupImg from '../assets/illustrations/tea_cup.png';
+import empty2Img from '../../icons/empty2.png';
 import errorDizzyImg from '../assets/illustrations/error_dizzy.png';
 import Lantern from "../components/Lantern";
 import EmptyState from '../components/EmptyState';
@@ -348,7 +349,7 @@ function WeekTab({
             <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
               {savedMeals.length === 0 && (
                 
-        <EmptyState image="empty2" message="No saved meals yet." />
+        <EmptyState image={empty2Img} message="No saved meals yet." />
 
     
               )}

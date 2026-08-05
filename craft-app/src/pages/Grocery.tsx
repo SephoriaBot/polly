@@ -6,6 +6,8 @@ import Lantern from "../components/Lantern";
 import EmptyState from '../components/EmptyState';
 import breadBasketImg from '../assets/illustrations/bread_basket.png';
 import hourglassImg from '../assets/illustrations/hourglass.png';
+import empty9Img from '../../icons/empty9.png';
+import empty4Img from '../../icons/empty4.png';
 
 
 interface GroceryList { id: string; name: string; created_at: string }
@@ -1128,7 +1130,7 @@ export default function Grocery() {
             return (
               <div className="card">
                 <div className="section-label">Best Store for Your Whole List</div>
-<EmptyState image="empty9" message="No products found...Refresh or try again." />
+<EmptyState image={empty9Img} message="No products found...Refresh or try again." />
       
     
               </div>
@@ -1220,7 +1222,7 @@ export default function Grocery() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 420, overflowY: 'auto', marginBottom: 12 }}>
                 {needs.length === 0
                   ? 
-      <EmptyState image="empty4" message="Nothing here yet." />
+      <EmptyState image={empty4Img} message="Nothing here yet." />
     
                   : needs.map(item => {
                     const cheapest = cheapestFor(item.name)
