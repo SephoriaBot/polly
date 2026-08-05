@@ -1128,11 +1128,9 @@ export default function Grocery() {
             return (
               <div className="card">
                 <div className="section-label">Best Store for Your Whole List</div>
-                
-      <div className={styles.emptyState}>
         <Icon name="empty9" size={22} className={styles.emptyIcon} />
         <p>No products found at atleast one store in your list...</p>
-      </div>
+      
     
               </div>
             )
@@ -1223,10 +1221,8 @@ export default function Grocery() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 420, overflowY: 'auto', marginBottom: 12 }}>
                 {needs.length === 0
                   ? 
-      <div className={styles.emptyState}>
         <Icon name="empty4" size={22} className={styles.emptyIcon} />
         <p>Nothing here yet!</p>
-      </div>
     
                   : needs.map(item => {
                     const cheapest = cheapestFor(item.name)

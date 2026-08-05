@@ -171,10 +171,8 @@ async function loadAll() {
 
           {focuses.length === 0 && !addingFocus ? (
             
-      <div className={styles.emptyState}>
         <Icon name="empty8" size={22} className={styles.emptyIcon} />
         <p>No focuses set for today yet...</p>
-      </div>
     
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>

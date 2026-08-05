@@ -347,10 +347,9 @@ function WeekTab({
             <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
               {savedMeals.length === 0 && (
                 
-      <div className={styles.emptyState}>
         <Icon name="empty2" size={22} className={styles.emptyIcon} />
         <p>No saved meals yet...</p>
-      </div>
+
     
               )}
               {savedMeals.map(m => (
