@@ -1,4 +1,4 @@
-import Icon from '../Icon';
+import Icon from './Icon';
 
 // src/components/EmptyState.tsx
 interface EmptyStateProps {
