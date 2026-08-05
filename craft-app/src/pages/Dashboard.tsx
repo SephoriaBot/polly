@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase';
 import Lantern from "../components/Lantern";
 import DailyAlmanac from "../components/DailyAlmanac";
 import sleepingNestImg from '../assets/illustrations/sleeping_nest.png';
-import empty8Img from '../../public/icons/empty8.png';
+import empty8Img from '../public/icons/empty8.png';
 import WeatherBadge from '../components/WeatherBadge';
 import TroubleshooterGroq from '../components/suggest/TroubleshooterGroq';
 import Icon, { type IconName } from '../components/Icon';

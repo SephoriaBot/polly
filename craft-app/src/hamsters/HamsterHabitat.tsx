@@ -4,7 +4,7 @@ import { HAMSTERS, imageForForm } from "./hamsters";
 import Icon, { type IconName } from "../components/Icon";
 import HamsterStatTraining from "./HamsterStatTraining";
 import EmptyState from '../components/EmptyState';
-import empty3Img from '../../public/icons/empty3.png';
+import empty3Img from '../public/icons/empty3.png';
 
 function imageFor(hamsterId: string) {
   return HAMSTERS.find((h) => h.id === hamsterId)?.image;
