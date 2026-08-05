@@ -4,7 +4,7 @@ import type { AppointmentNoteItem } from '../../types/appointmentNotes';
 import notesStyles from './AppointmentNotes.module.css';
 import styles from './UnlinkedNotes.module.css';
 import Icon, { type IconName } from '../Icon';
-import EmptyState from '../components/EmptyState';
+import EmptyState from '../EmptyState';
 
 interface UnlinkedNotesProps {
   items: AppointmentNoteItem[];
