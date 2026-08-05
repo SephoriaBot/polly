@@ -5,7 +5,7 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase"; // match your actual client path
-import Icon from "../components/Icon";
+import Icon from "../Icon";
 import {
   getMoonPhase,
   getMoonSign,
