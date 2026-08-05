@@ -297,7 +297,7 @@ export default function WildEncounter() {
           <Icon name="map-pin" size={16} /> Wild Encounter
         </div>
 
-        {fighters.length ? (
+        {fighters.length === 0 ? (
         <EmptyState image={empty3Img} message="No hamsters are old enough to battle yet!" />
 ) : (
           <>
