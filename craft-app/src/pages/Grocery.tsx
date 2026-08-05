@@ -237,6 +237,8 @@ export default function Grocery() {
   const [priceForm, setPriceForm] = useState<{ store: string; price: string }>({ store: '', price: '' })
   const [location, setLocation] = useState(() => localStorage.getItem('grocery_location') || '')
 
+  const [showSplitTrip, setShowSplitTrip] = useState(false)
+
   const [showBasicsModal, setShowBasicsModal] = useState(false)
   const [basicsPreset, setBasicsPreset] = useState<string | null>(null)
   const [basicsChecked, setBasicsChecked] = useState<Set<string>>(new Set())
@@ -677,10 +679,11 @@ export default function Grocery() {
   //   direct result for a given item; if it only drew from the whitelisted
   //   subset, one item with zero whitelisted hits would have no median to
   //   fall back on and would knock every store out of the ranking.
-  function computeTally(cartData: any[]) {
-    const totalTracked = cartData.length
-    if (totalTracked === 0) return []
-
+  // Shared by computeTally and computeSplitTrip so both work off the exact
+  // same pricing data — one pass over the cart's raw search results builds
+  // every map either function needs, instead of each re-deriving its own
+  // (and risking the two drifting out of sync with each other).
+  function buildPriceMaps(cartData: any[]) {
     const allStores = new Set<string>()
     cartData.forEach(c => {
       filterToAllowedStores(c.results ?? [], allowedStores).forEach((r: any) => {
@@ -722,6 +725,15 @@ export default function Grocery() {
       }
     })
 
+    return { allStores, perItemStorePrice, perItemMedian }
+  }
+
+  function computeTally(cartData: any[]) {
+    const totalTracked = cartData.length
+    if (totalTracked === 0) return []
+
+    const { allStores, perItemStorePrice, perItemMedian } = buildPriceMaps(cartData)
+
     const storeResults = Array.from(allStores).map(store => {
       let total = 0
       let realCount = 0
@@ -753,6 +765,66 @@ export default function Grocery() {
     return storeResults
       .filter(s => s.missingCount === 0)
       .sort((a, b) => a.total - b.total)
+  }
+
+  // Split-trip: instead of picking one store for the whole list, send each
+  // item to whichever whitelisted store has the lowest REAL price for it.
+  // Items with no real price anywhere get parked at the single cheapest
+  // store (from computeTally) using the same median estimate that store
+  // would've gotten anyway — so a gap in the data never becomes its own
+  // phantom stop. Only worth showing if it actually beats the best
+  // single-store total and doesn't fragment the list too much.
+  function computeSplitTrip(cartData: any[]) {
+    if (cartData.length === 0) return null
+
+    const { perItemStorePrice, perItemMedian } = buildPriceMaps(cartData)
+    const singleStore = computeTally(cartData)[0]
+    if (!singleStore) return null
+
+    const stops = new Map<string, { store: string; items: { name: string; price: number; estimated: boolean }[]; subtotal: number }>()
+
+    cartData.forEach(c => {
+      const byStore = perItemStorePrice.get(c.item)
+      let bestStore: string | null = null
+      let bestPrice = Infinity
+      byStore?.forEach((price, store) => {
+        if (price < bestPrice) { bestPrice = price; bestStore = store }
+      })
+
+      let store: string
+      let price: number
+      let estimated: boolean
+      if (bestStore != null) {
+        store = bestStore
+        price = bestPrice
+        estimated = false
+      } else {
+        // No real price anywhere for this item — park it at the single
+        // cheapest store using its median estimate rather than inventing
+        // a new stop for one unpriced item.
+        store = singleStore.store
+        price = perItemMedian.get(c.item) ?? 0
+        estimated = true
+      }
+
+      if (!stops.has(store)) stops.set(store, { store, items: [], subtotal: 0 })
+      const stop = stops.get(store)!
+      stop.items.push({ name: c.item, price, estimated })
+      stop.subtotal += price
+    })
+
+    const stopList = Array.from(stops.values()).sort((a, b) => b.subtotal - a.subtotal)
+    const total = stopList.reduce((sum, s) => sum + s.subtotal, 0)
+    const savings = singleStore.total - total
+
+    return {
+      stops: stopList,
+      total,
+      singleStoreName: singleStore.store,
+      singleStoreTotal: singleStore.total,
+      savings,
+      worthIt: stopList.length > 1 && savings > 0.5,
+    }
   }
 
   const needs = items.filter(i => !i.checked)
@@ -1089,6 +1161,47 @@ export default function Grocery() {
                   </div>
                 ))}
               </div>
+            </div>
+          )
+        })()}
+
+        {/* split-trip mode — spread the list across stores if it actually saves money */}
+        {(() => {
+          if (cart.length === 0 || cartError) return null
+          const split = computeSplitTrip(cart)
+          if (!split || !split.worthIt) return null
+
+          return (
+            <div className="card">
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                <div className="section-label" style={{ marginBottom: 0 }}>Split Trip Saves ${split.savings.toFixed(2)}</div>
+                <button className="btn btn-ghost" onClick={() => setShowSplitTrip(s => !s)} style={{ fontSize: '0.72rem', padding: '4px 10px' }}>
+                  {showSplitTrip ? 'Hide' : 'Show'}
+                </button>
+              </div>
+              <p style={{ fontSize: '0.72rem', color: 'var(--ink-muted)', margin: '4px 0 0' }}>
+                Buying everything at {split.singleStoreName} runs ${split.singleStoreTotal.toFixed(2)}. Splitting across {split.stops.length} stores brings it to ${split.total.toFixed(2)}.
+              </p>
+              {showSplitTrip && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 10 }}>
+                  {split.stops.map(stop => (
+                    <div key={stop.store} style={{ border: '1px solid var(--border)', borderRadius: 10, padding: '8px 10px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontWeight: 600, color: 'var(--ink)', fontSize: '0.82rem' }}>{stop.store}</span>
+                        <span style={priceBadgeStyle(false)}>${stop.subtotal.toFixed(2)}</span>
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 2, marginTop: 6 }}>
+                        {stop.items.map(it => (
+                          <div key={it.name} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.74rem', color: 'var(--ink-muted)' }}>
+                            <span>{it.name}{it.estimated ? ' (est.)' : ''}</span>
+                            <span>${it.price.toFixed(2)}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )
         })()}
