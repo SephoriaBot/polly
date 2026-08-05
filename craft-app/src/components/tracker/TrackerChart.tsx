@@ -16,7 +16,7 @@ import {
 import { getTrackerLogsInRange, deleteTrackerLog } from '../../lib/trackerApi';
 import type { TrackerType, TrackerLog, PeriodValue } from '../../types/tracker';
 import EmptyState from '../EmptyState';
-import empty4Img from '../../icons/empty4.png';
+import empty4Img from '../../public/icons/empty4.png';
 
 interface Props {
   type: TrackerType;

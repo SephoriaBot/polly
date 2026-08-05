@@ -31,7 +31,7 @@ import {
 } from "./battle";
 import type { WildHamster, AttackOutcome, TrainedStats } from "./battle";
 import EmptyState from '../components/EmptyState';
-import empty3Img from '../../icons/empty3.png';
+import empty3Img from '../../public/icons/empty3.png';
 
 
 interface FighterEntry {
