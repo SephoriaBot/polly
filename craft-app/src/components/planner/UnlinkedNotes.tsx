@@ -5,7 +5,7 @@ import notesStyles from './AppointmentNotes.module.css';
 import styles from './UnlinkedNotes.module.css';
 import Icon, { type IconName } from '../Icon';
 import EmptyState from '../EmptyState';
-import empty10Img from '../assets/icons/empty10.png';
+import empty10Img from '../../assets/icons/empty10.png';
 
 interface UnlinkedNotesProps {
   items: AppointmentNoteItem[];
