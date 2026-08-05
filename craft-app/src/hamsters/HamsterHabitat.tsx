@@ -3,6 +3,7 @@ import { useHamsterGrowth } from "./HamsterGrowthContext";
 import { HAMSTERS, imageForForm } from "./hamsters";
 import Icon, { type IconName } from "../components/Icon";
 import HamsterStatTraining from "./HamsterStatTraining";
+import EmptyState from '../components/EmptyState';
 
 function imageFor(hamsterId: string) {
   return HAMSTERS.find((h) => h.id === hamsterId)?.image;

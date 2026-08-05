@@ -5,6 +5,7 @@ import Icon from '../components/Icon';
 import Lantern from "../components/Lantern";
 import walletPouchImg from '../assets/illustrations/wallet_pouch.png';
 import celebrationImg from '../assets/illustrations/celebration.png';
+import EmptyState from '../components/EmptyState';
 
 interface Debt {
   id: number;

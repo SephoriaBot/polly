@@ -15,6 +15,7 @@ import {
 } from 'recharts';
 import { getTrackerLogsInRange, deleteTrackerLog } from '../../lib/trackerApi';
 import type { TrackerType, TrackerLog, PeriodValue } from '../../types/tracker';
+import EmptyState from '../components/EmptyState';
 
 interface Props {
   type: TrackerType;

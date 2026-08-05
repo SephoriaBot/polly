@@ -6,6 +6,7 @@ import sleepingNestImg from '../assets/illustrations/sleeping_nest.png';
 import WeatherBadge from '../components/WeatherBadge';
 import TroubleshooterGroq from '../components/suggest/TroubleshooterGroq';
 import Icon, { type IconName } from '../components/Icon';
+import EmptyState from '../components/EmptyState';
 
 interface Focus {
   id: string;

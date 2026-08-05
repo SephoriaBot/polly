@@ -30,6 +30,8 @@ import {
   rollsFirst,
 } from "./battle";
 import type { WildHamster, AttackOutcome, TrainedStats } from "./battle";
+import EmptyState from '../components/EmptyState';
+
 
 interface FighterEntry {
   id: number;
