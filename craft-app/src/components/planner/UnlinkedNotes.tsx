@@ -64,7 +64,7 @@ export default function UnlinkedNotes({
   if (items.length === 0) {
     return (
       
-        <EmptyState icon="empty10" title="No unlinked notes yet." />
+        <EmptyState image="empty10" message="No unlinked notes yet." />
       
     );
   }

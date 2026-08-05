@@ -347,7 +347,7 @@ function WeekTab({
             <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
               {savedMeals.length === 0 && (
                 
-        <EmptyState icon="empty2" title="No saved meals yet." />
+        <EmptyState image="empty2" message="No saved meals yet." />
 
     
               )}

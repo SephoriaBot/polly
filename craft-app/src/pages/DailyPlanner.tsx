@@ -543,7 +543,7 @@ export default function DailyPlanner() {
 
               {appointments.length === 0 ? (
               
-        <EmptyState icon="empty7" title="No appointments scheduled yet" />
+        <EmptyState image="empty7" message="No appointments scheduled yet" />
     
             ) : (
 

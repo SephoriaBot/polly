@@ -295,7 +295,7 @@ export default function WildEncounter() {
         </div>
 
         {fighters.length ? (
-        <EmptyState icon="empty3" title="No hamsters are old enough to battle yet!" />
+        <EmptyState image="empty3" message="No hamsters are old enough to battle yet!" />
 ) : (
           <>
             {(phase === "pick" || phase === "scouting" || phase === "found") && (

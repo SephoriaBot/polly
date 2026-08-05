@@ -171,7 +171,7 @@ async function loadAll() {
 
           {focuses.length === 0 && !addingFocus ? (
             
-        <EmptyState icon="empty8" title="No focuses set for today yet." />
+        <EmptyState image="empty8" message="No focuses set for today yet." />
     
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>

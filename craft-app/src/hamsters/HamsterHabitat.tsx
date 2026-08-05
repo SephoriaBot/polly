@@ -92,7 +92,7 @@ export default function HamsterHabitat() {
         )}
 
         {collection.length === 0 ? (
-        <EmptyState icon="empty3" title="No hamsters in the habitat yet." />
+        <EmptyState image="empty3" message="No hamsters in the habitat yet." />
         ) : (
           <>
             <div
