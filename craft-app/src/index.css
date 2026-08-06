@@ -8,7 +8,7 @@
   --surface: #FFFDF9;
   --text: #3E3B37;
 
-  --primary: #E3BCC3;
+  --primary: #F6D9E0;
   --secondary: #C9A574;
   --accent: #94AC93;
   --mint: #A9C0A5;
@@ -49,7 +49,7 @@
   --surface: #2A2926;
   --text: #EFEBE3;
 
-  --primary: #D9AAB2;
+  --primary: #F1CFD8;
   --secondary: #C7A876;
   --accent: #8FAB8D;
   --mint: #A0BA9E;
@@ -411,7 +411,7 @@ input, textarea, select {
 
 input:focus {
   border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(227, 188, 195, 0.4);
+  box-shadow: 0 0 0 3px rgba(246, 217, 224, 0.5);
 }
 
 /* ================= BUTTONS ================= */
