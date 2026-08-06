@@ -4,6 +4,7 @@ import Icon from './Icon';
 interface EmptyStateProps {
   image: string;
   message: string;
+  size?: int;
   subMessage?: string;
 }
 
