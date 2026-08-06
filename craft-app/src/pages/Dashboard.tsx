@@ -247,14 +247,17 @@ async function loadAll() {
           )}
         </section>
 
-        <Icon name="pagedivider" size={60} style: {alignItems: 'center'} />
-
+       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+  <Icon name="pagedivider" size={60} />
+</div>
         {/* ── DAILY ALMANAC ── */}
         <section>
           <DailyAlmanac />
         </section>
 
-        <Icon name="pagedivider" />
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+  <Icon name="pagedivider" size={60} />
+</div>
 
          {/* ── TROUBLESHOOTER GROQ ── */}
           <section>
