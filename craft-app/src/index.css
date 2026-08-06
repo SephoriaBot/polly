@@ -4,41 +4,41 @@
 
 [data-theme='light'],
 :root {
-  --bg: #F7E9D2;
-  --surface: #FFFBF3;
-  --text: #5A6670;
+  --bg: #F6E2BE;
+  --surface: #FFF6E6;
+  --text: #5C4F42;
 
-  --primary: #F3C9A9;
-  --secondary: #F4DFA8;
-  --accent: #7896A8;
-  --mint: #AFC9D8;
+  --primary: #EFB088;
+  --secondary: #EFCB7E;
+  --accent: #6F8DA0;
+  --mint: #9DBACB;
 
-  --border: rgba(90, 102, 112, .16);
-  --shadow: 0 10px 26px rgba(90, 102, 112, .10);
+  --border: rgba(92, 79, 66, .16);
+  --shadow: 0 10px 26px rgba(92, 79, 66, .12);
 
-  --ink: #5A6670;
-  --ink-soft: #7C8791;
-  --ink-muted: #A2ABB2;
+  --ink: #5C4F42;
+  --ink-soft: #80725F;
+  --ink-muted: #A9977E;
 
-  --white: #FFFBF3;
-  --cream: #F7E9D2;
-  --blush: #F8DCC9;
+  --white: #FFF6E6;
+  --cream: #F6E2BE;
+  --blush: #F6D2B8;
 
-  --green-dark: #7896A8;
-  --citrus-blue: #7896A8;
-  --sage: #AFC9D8;
-  --sage-dark: #7896A8;
-  --sage-light: #E7F0F4;
+  --green-dark: #6F8DA0;
+  --citrus-blue: #6F8DA0;
+  --sage: #9DBACB;
+  --sage-dark: #6F8DA0;
+  --sage-light: #EAF1F0;
 
-  --pink: #F3C9A9;
-  --pink-dark: #D99A7A;
+  --pink: #EFB088;
+  --pink-dark: #CB8A63;
   --pink-light: #FBEAE0;
 
-  --sky: #AFC9D8;
+  --sky: #9DBACB;
 
-  --gold: #F4DFA8;
-  --gold-dark: #C9A550;
-  --gold-light: #FBF3DC;
+  --gold: #EFCB7E;
+  --gold-dark: #B98D3E;
+  --gold-light: #FBEFD0;
 
   --danger: #B5615B;
   --danger-bg: #F5E6E3;
@@ -192,28 +192,6 @@ a {
   background: var(--surface);
   border-top: 1px solid var(--border);
   box-shadow: 0 -8px 24px rgba(55, 52, 48, .08);
-}
-
-.bottombar::before {
-  content: '';
-  position: absolute;
-  top: -5px;
-  left: 8px;
-  right: 8px;
-  width: auto;
-  height: 11px;
-  background: repeating-linear-gradient(
-    128deg,
-    rgba(226, 205, 158, 0.45) 0,
-rgba(226, 205, 158, 0.45) 7px,
-rgba(247, 230, 195, 0.4) 7px,
-rgba(247, 230, 195, 0.4) 14px
-  );
-  border-radius: 1px;
-  box-shadow: 0 1px 3px rgba(150, 105, 20, 0.28);
-  opacity: 0.9;
-  pointer-events: none;
-  transform: rotate(-0.7deg);
 }
 
 .bottombar-tab {
@@ -414,7 +392,7 @@ input, textarea, select {
 
 input:focus {
   border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(244, 223, 168, 0.5);
+  box-shadow: 0 0 0 3px rgba(239, 203, 126, 0.5);
 }
 
 /* ================= BUTTONS ================= */
