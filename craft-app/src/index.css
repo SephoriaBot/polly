@@ -8,10 +8,10 @@
   --surface: #FFFDF9;
   --text: #3E3B37;
 
-  --primary: #A47A8C;
+  --primary: #E3BCC3;
   --secondary: #C9A574;
-  --accent: #8B93AC;
-  --mint: #A3B39D;
+  --accent: #94AC93;
+  --mint: #A9C0A5;
 
   --border: rgba(90, 84, 74, .16);
   --shadow: 0 10px 26px rgba(70, 64, 54, .10);
@@ -22,17 +22,17 @@
 
   --white: #FFFDF9;
   --cream: #F4F1EA;
-  --blush: #EFE6E5;
+  --blush: #EFE6E2;
 
-  --green-dark: #6B7A6C;
-  --citrus-blue: #7188A0;
-  --sage: #B9C4B4;
-  --sage-dark: #7E9182;
-  --sage-light: #E9EEE6;
+  --green-dark: #5E7860;
+  --citrus-blue: #7A94A0;
+  --sage: #B9CBB6;
+  --sage-dark: #7E9682;
+  --sage-light: #E9F0E6;
 
-  --pink: #C99AA0;
-  --pink-dark: #93677A;
-  --pink-light: #F1E3E6;
+  --pink: #CBA0A6;
+  --pink-dark: #9C6B76;
+  --pink-light: #F2E4E6;
 
   --sky: #A9BFC9;
 
@@ -49,10 +49,10 @@
   --surface: #2A2926;
   --text: #EFEBE3;
 
-  --primary: #B593A2;
+  --primary: #D9AAB2;
   --secondary: #C7A876;
-  --accent: #9BA3B8;
-  --mint: #A9B8A3;
+  --accent: #8FAB8D;
+  --mint: #A0BA9E;
 
   --border: rgba(220, 213, 200, .14);
   --shadow: 0 14px 30px rgba(0,0,0,.38);
@@ -63,16 +63,16 @@
 
   --white: #2A2926;
   --cream: #322F2A;
-  --blush: #382F31;
+  --blush: #382E2C;
 
   --green-dark: #9BAA9C;
   --citrus-blue: #9CACC0;
-  --sage: #8A9B8B;
-  --sage-dark: #A9B8A3;
+  --sage: #7E9682;
+  --sage-dark: #9DBB9A;
   --sage-light: #333A32;
 
-  --pink: #C494A0;
-  --pink-dark: #D6A9B6;
+  --pink: #C79AA0;
+  --pink-dark: #D9AEB6;
   --pink-light: #3B2E31;
 
   --sky: #A6C0C9;
@@ -114,7 +114,7 @@
 
 body {
   margin: 0;
-  background: radial-gradient(circle at top, var(--surface), var(--bg));
+  background: var(--bg);
   color: var(--text);
   font-family: 'Nunito Sans', ui-sans-serif, system-ui, sans-serif;
   overflow-x: hidden;
@@ -411,7 +411,7 @@ input, textarea, select {
 
 input:focus {
   border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(164, 122, 140, 0.3);
+  box-shadow: 0 0 0 3px rgba(227, 188, 195, 0.4);
 }
 
 /* ================= BUTTONS ================= */
@@ -422,7 +422,7 @@ input:focus {
   padding: 10px 14px;
   font-weight: 600;
   cursor: pointer;
-  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  background: var(--primary);
   color: var(--ink);
   box-shadow: 0 8px 18px rgba(0,0,0,0.08);
   transition: 0.15s ease;
@@ -439,7 +439,7 @@ input:focus {
   padding: 10px 14px;
   font-weight: 600;
   cursor: pointer;
-  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  background: var(--primary);
   color: var(--ink);
   box-shadow: 0 8px 18px rgba(0,0,0,0.08);
   transition: 0.15s ease;
@@ -511,11 +511,10 @@ p {
 /* ================= DASHBOARD — COZY DETAILS ================= */
 
 body {
-  background-image:
-    radial-gradient(circle, var(--border) 1px, transparent 1.4px),
-    radial-gradient(circle at top, var(--surface), var(--bg));
-  background-size: 20px 20px, 100% 100%;
-  background-repeat: repeat, no-repeat;
+  background-color: var(--bg);
+  background-image: radial-gradient(circle, var(--border) 1px, transparent 1.4px);
+  background-size: 20px 20px;
+  background-repeat: repeat;
 }
 
 .dash-greeting {
