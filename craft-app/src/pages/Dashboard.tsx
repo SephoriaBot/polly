@@ -247,14 +247,14 @@ async function loadAll() {
           )}
         </section>
 
-        <Icon name="page-divider" />
+        <Icon name="pagedivider" />
 
         {/* ── DAILY ALMANAC ── */}
         <section>
           <DailyAlmanac />
         </section>
 
-        <Icon name="page-divider" />
+        <Icon name="pagedivider" />
 
          {/* ── TROUBLESHOOTER GROQ ── */}
           <section>
