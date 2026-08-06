@@ -45,44 +45,44 @@
 }
 
 [data-theme='dark'] {
-  --bg: #201F1C;
-  --surface: #2A2926;
-  --text: #EFEBE3;
+  --bg: #16211E;
+  --surface: #1F2E29;
+  --text: #EDEAE3;
 
-  --primary: #F1CFD8;
-  --secondary: #C7A876;
-  --accent: #8FAB8D;
-  --mint: #A0BA9E;
+  --primary: #BD5D77;
+  --secondary: #C2985F;
+  --accent: #4F8C68;
+  --mint: #6FAE85;
 
-  --border: rgba(220, 213, 200, .14);
-  --shadow: 0 14px 30px rgba(0,0,0,.38);
+  --border: rgba(180, 205, 198, .16);
+  --shadow: 0 14px 30px rgba(0,0,0,.5);
 
-  --ink: #EFEBE3;
-  --ink-soft: #C6C0B6;
-  --ink-muted: #948C82;
+  --ink: #EDEAE3;
+  --ink-soft: #C3C7C0;
+  --ink-muted: #8C948D;
 
-  --white: #2A2926;
-  --cream: #322F2A;
-  --blush: #382E2C;
+  --white: #1F2E29;
+  --cream: #24332E;
+  --blush: #2E2530;
 
-  --green-dark: #9BAA9C;
-  --citrus-blue: #9CACC0;
-  --sage: #7E9682;
-  --sage-dark: #9DBB9A;
-  --sage-light: #333A32;
+  --green-dark: #7FCB93;
+  --citrus-blue: #5B93A8;
+  --sage: #3E5B48;
+  --sage-dark: #7FCB93;
+  --sage-light: #22332A;
 
-  --pink: #C79AA0;
-  --pink-dark: #365B42;
-  --pink-light: #3B2E31;
+  --pink: #C97C90;
+  --pink-dark: #E7A8B8;
+  --pink-light: #33232A;
 
-  --sky: #A6C0C9;
+  --sky: #6FA6B8;
 
-  --gold: #C1AC82;
-  --gold-dark: #D2BC8E;
-  --gold-light: #3B3428;
+  --gold: #C9A574;
+  --gold-dark: #E0C08A;
+  --gold-light: #2E2A1E;
 
-  --danger: #D28A81;
-  --danger-bg: #402B29;
+  --danger: #E08A82;
+  --danger-bg: #3B2320;
 }
 
 /* Light mode: soft gold-tinted glow on hover */
