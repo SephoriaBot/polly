@@ -247,7 +247,7 @@ async function loadAll() {
           )}
         </section>
 
-        <Icon name="pagedivider" />
+        <Icon name="pagedivider" size={60} alignItems: 'center' />
 
         {/* ── DAILY ALMANAC ── */}
         <section>
