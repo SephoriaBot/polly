@@ -248,7 +248,7 @@ async function loadAll() {
         </section>
 
        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-  <Icon name="pagedivider" size={60} />
+  <Icon name="pagedivider" size={85} />
 </div>
         {/* ── DAILY ALMANAC ── */}
         <section>
@@ -256,7 +256,7 @@ async function loadAll() {
         </section>
 
         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-  <Icon name="pagedivider" size={60} />
+  <Icon name="pagedivider" size={85} />
 </div>
 
          {/* ── TROUBLESHOOTER GROQ ── */}
