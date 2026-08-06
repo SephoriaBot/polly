@@ -8,7 +8,7 @@
   --surface: #FFFDF9;
   --text: #3E3B37;
 
-  --primary: #E8D6D9;       /* soft pastel pink */
+  --primary: #F6D9E0;       /* soft pastel pink */
 --secondary: #C9A574;     /* warm gold */
 --accent: #496B52;        /* deep emerald */
 --mint: #A9C0A5;          /* soft sage */
@@ -30,9 +30,11 @@
 --sage-dark: #587A61;
 --sage-light: #E5EEE6;
 
---pink: #D6AEB5;          /* dusty pastel pink */
---pink-dark: #A66F7A;     /* muted rose */
---pink-light: #F3E3E5;    /* very soft pink */
+--pink: #CBA0A6;
+
+--pink-dark: #9C6B76;
+
+--pink-light: #F2E4E6;
 
 --sky: #A9BFC9;
 
@@ -49,7 +51,7 @@
   --surface: #2A2926;
   --text: #EFEBE3;
 
- --primary: #E5C8CE;       /* pastel pink */
+ --primary: #F6D9E0;       /* pastel pink */
 --secondary: #C7A876;     /* gold */
 --accent: #789B80;        /* muted emerald */
 --mint: #91AF96;
@@ -71,9 +73,11 @@
 --sage-dark: #A7C1AA;
 --sage-light: #303A32;
 
---pink: #D3AAB1;
---pink-dark: #E0B9C0;
---pink-light: #3D3033;
+--pink: #CBA0A6;
+
+--pink-dark: #9C6B76;
+
+--pink-light: #F2E4E6;
 
 --sky: #A6C0C9;
 
