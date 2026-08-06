@@ -8,10 +8,10 @@
   --surface: #FFFDF9;
   --text: #3E3B37;
 
-  --primary: #7C9484;
+  --primary: #A47A8C;
   --secondary: #C9A574;
-  --accent: #8B9DAC;
-  --mint: #9FB39F;
+  --accent: #8B93AC;
+  --mint: #A3B39D;
 
   --border: rgba(90, 84, 74, .16);
   --shadow: 0 10px 26px rgba(70, 64, 54, .10);
@@ -22,19 +22,19 @@
 
   --white: #FFFDF9;
   --cream: #F4F1EA;
-  --blush: #EDE7DC;
+  --blush: #EFE6E5;
 
-  --green-dark: #5C7360;
-  --citrus-blue: #62798A;
-  --sage: #B7C4B3;
-  --sage-dark: #7C9484;
-  --sage-light: #E8EDE5;
+  --green-dark: #6B7A6C;
+  --citrus-blue: #7188A0;
+  --sage: #B9C4B4;
+  --sage-dark: #7E9182;
+  --sage-light: #E9EEE6;
 
-  --pink: #CBA9A2;
-  --pink-dark: #8C6A63;
-  --pink-light: #F0E4DF;
+  --pink: #C99AA0;
+  --pink-dark: #93677A;
+  --pink-light: #F1E3E6;
 
-  --sky: #ADC2C9;
+  --sky: #A9BFC9;
 
   --gold: #D6BE8C;
   --gold-dark: #A98A55;
@@ -49,10 +49,10 @@
   --surface: #2A2926;
   --text: #EFEBE3;
 
-  --primary: #8FA391;
+  --primary: #B593A2;
   --secondary: #C7A876;
-  --accent: #93A5AF;
-  --mint: #8FA391;
+  --accent: #9BA3B8;
+  --mint: #A9B8A3;
 
   --border: rgba(220, 213, 200, .14);
   --shadow: 0 14px 30px rgba(0,0,0,.38);
@@ -63,19 +63,19 @@
 
   --white: #2A2926;
   --cream: #322F2A;
-  --blush: #383530;
+  --blush: #382F31;
 
-  --green-dark: #9FB49F;
-  --citrus-blue: #9DB0B8;
-  --sage: #7E9280;
-  --sage-dark: #8FA391;
+  --green-dark: #9BAA9C;
+  --citrus-blue: #9CACC0;
+  --sage: #8A9B8B;
+  --sage-dark: #A9B8A3;
   --sage-light: #333A32;
 
-  --pink: #B99B90;
-  --pink-dark: #CBA599;
-  --pink-light: #3B342F;
+  --pink: #C494A0;
+  --pink-dark: #D6A9B6;
+  --pink-light: #3B2E31;
 
-  --sky: #91A8AE;
+  --sky: #A6C0C9;
 
   --gold: #C1AC82;
   --gold-dark: #D2BC8E;
@@ -411,7 +411,7 @@ input, textarea, select {
 
 input:focus {
   border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(124, 148, 132, 0.3);
+  box-shadow: 0 0 0 3px rgba(164, 122, 140, 0.3);
 }
 
 /* ================= BUTTONS ================= */
