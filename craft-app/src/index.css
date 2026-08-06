@@ -8,40 +8,40 @@
   --surface: #FFFDF9;
   --text: #3E3B37;
 
-  --primary: #F6D9E0;
-  --secondary: #C9A574;
-  --accent: #94AC93;
-  --mint: #A9C0A5;
+  --primary: #E8D6D9;       /* soft pastel pink */
+--secondary: #C9A574;     /* warm gold */
+--accent: #496B52;        /* deep emerald */
+--mint: #A9C0A5;          /* soft sage */
 
-  --border: rgba(90, 84, 74, .16);
-  --shadow: 0 10px 26px rgba(70, 64, 54, .10);
+--border: rgba(70, 82, 70, .16);
+--shadow: 0 10px 26px rgba(55, 65, 55, .10);
 
-  --ink: #3E3B37;
-  --ink-soft: #6B655D;
-  --ink-muted: #9C948A;
+--ink: #3E3B37;
+--ink-soft: #6B655D;
+--ink-muted: #9C948A;
 
-  --white: #FFFDF9;
-  --cream: #F4F1EA;
-  --blush: #EFE6E2;
+--white: #FFFDF9;
+--cream: #F4F1EA;
+--blush: #F1E4E5;         /* pastel pink background */
 
-  --green-dark: #5E7860;
-  --citrus-blue: #7A94A0;
-  --sage: #B9CBB6;
-  --sage-dark: #7E9682;
-  --sage-light: #E9F0E6;
+--green-dark: #365B42;    /* primary emerald */
+--citrus-blue: #7A94A0;
+--sage: #B9CBB6;
+--sage-dark: #587A61;
+--sage-light: #E5EEE6;
 
-  --pink: #CBA0A6;
-  --pink-dark: #9C6B76;
-  --pink-light: #F2E4E6;
+--pink: #D6AEB5;          /* dusty pastel pink */
+--pink-dark: #A66F7A;     /* muted rose */
+--pink-light: #F3E3E5;    /* very soft pink */
 
-  --sky: #A9BFC9;
+--sky: #A9BFC9;
 
-  --gold: #D6BE8C;
-  --gold-dark: #A98A55;
-  --gold-light: #F5EEDE;
+--gold: #D6BE8C;
+--gold-dark: #A98A55;
+--gold-light: #F5EEDE;
 
-  --danger: #B5615B;
-  --danger-bg: #F5E6E3;
+--danger: #B5615B;
+--danger-bg: #F5E6E3;
 }
 
 [data-theme='dark'] {
@@ -49,40 +49,40 @@
   --surface: #2A2926;
   --text: #EFEBE3;
 
-  --primary: #F1CFD8;
-  --secondary: #C7A876;
-  --accent: #8FAB8D;
-  --mint: #A0BA9E;
+ --primary: #E5C8CE;       /* pastel pink */
+--secondary: #C7A876;     /* gold */
+--accent: #789B80;        /* muted emerald */
+--mint: #91AF96;
 
-  --border: rgba(220, 213, 200, .14);
-  --shadow: 0 14px 30px rgba(0,0,0,.38);
+--border: rgba(220, 213, 200, .14);
+--shadow: 0 14px 30px rgba(0,0,0,.38);
 
-  --ink: #EFEBE3;
-  --ink-soft: #C6C0B6;
-  --ink-muted: #948C82;
+--ink: #EFEBE3;
+--ink-soft: #C6C0B6;
+--ink-muted: #948C82;
 
-  --white: #2A2926;
-  --cream: #322F2A;
-  --blush: #382E2C;
+--white: #2A2926;
+--cream: #322F2A;
+--blush: #3D3033;
 
-  --green-dark: #9BAA9C;
-  --citrus-blue: #9CACC0;
-  --sage: #7E9682;
-  --sage-dark: #9DBB9A;
-  --sage-light: #333A32;
+--green-dark: #A1BDA5;
+--citrus-blue: #9CACC0;
+--sage: #789B80;
+--sage-dark: #A7C1AA;
+--sage-light: #303A32;
 
-  --pink: #C79AA0;
-  --pink-dark: #D9AEB6;
-  --pink-light: #3B2E31;
+--pink: #D3AAB1;
+--pink-dark: #E0B9C0;
+--pink-light: #3D3033;
 
-  --sky: #A6C0C9;
+--sky: #A6C0C9;
 
-  --gold: #C1AC82;
-  --gold-dark: #D2BC8E;
-  --gold-light: #3B3428;
+--gold: #C1AC82;
+--gold-dark: #D2BC8E;
+--gold-light: #3B3428;
 
-  --danger: #D28A81;
-  --danger-bg: #402B29;
+--danger: #D28A81;
+--danger-bg: #402B29;
 }
 
 /* Light mode: soft gold-tinted glow on hover */
@@ -570,7 +570,7 @@ body {
   left: 0;
   width: 100%;
   height: 2px;
-  background: var(--pink-dark);
+  background: var(--green-dark);
   border-radius: 1px;
 }
 
