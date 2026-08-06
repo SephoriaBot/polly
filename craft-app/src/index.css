@@ -19,6 +19,7 @@
   --ink: #5C4F42;
   --ink-soft: #80725F;
   --ink-muted: #A9977E;
+  --btn-ink: #5C4F42;
 
   --white: #FFF6E6;
   --cream: #F6E2BE;
@@ -57,9 +58,10 @@
   --border: rgba(169, 183, 201, .18);
   --shadow: 0 14px 30px rgba(0,0,0,.5);
 
-  --ink: #5C4F42;
+  --ink: #F3D7B1;
   --ink-soft: #C9B79A;
   --ink-muted: #93887A;
+  --btn-ink: #3A2C1E;
 
   --white: #293951;
   --cream: #26364A;
@@ -404,7 +406,7 @@ input:focus {
   font-weight: 600;
   cursor: pointer;
   background: var(--primary);
-  color: var(--ink);
+  color: var(--btn-ink);
   box-shadow: 0 8px 18px rgba(0,0,0,0.08);
   transition: 0.15s ease;
   font-family: 'Nunito Sans', sans-serif;
@@ -421,7 +423,7 @@ input:focus {
   font-weight: 600;
   cursor: pointer;
   background: var(--primary);
-  color: var(--ink);
+  color: var(--btn-ink);
   box-shadow: 0 8px 18px rgba(0,0,0,0.08);
   transition: 0.15s ease;
   font-family: 'Nunito Sans', sans-serif;
