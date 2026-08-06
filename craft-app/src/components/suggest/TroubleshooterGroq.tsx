@@ -602,7 +602,7 @@ className="btn btn-ghost"
 style={{width:'100%',justifyContent:'center'}}
 onClick={reset}
 >
-<Icon name="groq_4" size={13}/>
+<Icon name="icon-recur" size={13}/>
 Start Over
 </button>
 

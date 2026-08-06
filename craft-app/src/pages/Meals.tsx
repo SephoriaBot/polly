@@ -5,8 +5,10 @@ import { supabase } from '../lib/supabase';
 import DrDietGroq from '../components/suggest/DrDietGroq';
 import RecipeModal from '../components/meals/RecipeModal';
 import teaCupImg from '../assets/illustrations/tea_cup.png';
+import empty2Img from '../assets/icons/empty2.png';
 import errorDizzyImg from '../assets/illustrations/error_dizzy.png';
 import Lantern from "../components/Lantern";
+import EmptyState from '../components/EmptyState';
 
 const DAYS = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun']
 const MEAL_TYPES_WEEK = ['breakfast','lunch','dinner'] as const
@@ -342,13 +344,14 @@ function WeekTab({
           <div className="modal" style={{ maxWidth: 340, maxHeight: '70vh' }} onClick={e => e.stopPropagation()}>
             <div className="modal-header" style={{ background: 'var(--blush)', color: 'var(--pink-dark)' }}>
               <span style={{ fontSize: '0.85rem', fontWeight: 700 }}>Pick a meal for {selecting.day} {selecting.type}</span>
-              <button className="close-btn" onClick={onCloseSelect}><Icon name="groq_3" size={16} /></button>
+              <button className="close-btn" onClick={onCloseSelect}><Icon name="icon-clear" size={16} /></button>
             </div>
             <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
               {savedMeals.length === 0 && (
-                <p style={{ fontSize: '0.78rem', color: 'var(--ink-muted)', padding: '1rem', textAlign: 'center' }}>
-                  No saved meals yet — visit Discover to add some
-                </p>
+                
+        <EmptyState image={empty2Img} message="No saved meals yet." />
+
+    
               )}
               {savedMeals.map(m => (
                 <div
@@ -644,7 +647,7 @@ function DiscoverTab({ onOpenRecipe, onSaved }: { onOpenRecipe: (id: number) => 
                     disabled={saved.has(m.id) || savingId === m.id}
                   >
                     {saved.has(m.id)
-                      ? <><Icon name="groq_8" size={12} /> Saved!</>
+                      ? <><Icon name="flowerfull" size={12} /> Saved!</>
                       : savingId === m.id
                         ? <><Icon name="icon-loader2" size={12} style={{ animation: 'mealsSpin 0.7s linear infinite' }} /> Saving...</>
                         : <><Icon name="icon-plus" size={12} /> Save to My Meals</>}
@@ -687,7 +690,7 @@ function SavedTab({
   if (savedMeals.length === 0) {
     return (
       <div className="empty-state">
-        <Icon name="groq_9" size={20} />
+        <Icon name="empty2" size={20} />
         No saved meals yet
         <button className="btn btn-secondary btn-sm" style={{ marginLeft: 8 }} onClick={onGoDiscover}>Find some</button>
       </div>
@@ -733,7 +736,7 @@ function SavedTab({
                 title={!hasIngredients ? 'No ingredients saved for this meal' : ''}
               >
                 {addedId === m.id
-                  ? <><Icon name="groq_8" size={12} /> Added!</>
+                  ? <><Icon name="flowerfull" size={12} /> Added!</>
                   : addingId === m.id
                     ? <><Icon name="icon-loader2" size={12} style={{ animation: 'mealsSpin 0.7s linear infinite' }} /> Adding...</>
                     : <><Icon name="icon-plus" size={12} /> Add to List</>}

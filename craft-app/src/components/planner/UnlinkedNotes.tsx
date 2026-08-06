@@ -4,6 +4,8 @@ import type { AppointmentNoteItem } from '../../types/appointmentNotes';
 import notesStyles from './AppointmentNotes.module.css';
 import styles from './UnlinkedNotes.module.css';
 import Icon, { type IconName } from '../Icon';
+import EmptyState from '../EmptyState';
+import empty10Img from '../../assets/icons/empty10.png';
 
 interface UnlinkedNotesProps {
   items: AppointmentNoteItem[];
@@ -63,10 +65,9 @@ export default function UnlinkedNotes({
 
   if (items.length === 0) {
     return (
-      <div className={styles.emptyState}>
-        <Icon name="icon-inbox" size={22} className={styles.emptyIcon} />
-        <p>No unlinked notes — nothing orphaned right now.</p>
-      </div>
+      
+        <EmptyState image={empty10Img} message="No unlinked notes yet." />
+      
     );
   }
 
@@ -171,7 +172,7 @@ export default function UnlinkedNotes({
                       aria-label="Delete"
                       type="button"
                     >
-                      <Icon name="groq_3" size={15} />
+                      <Icon name="icon-clear" size={15} />
                     </button>
                   </div>
                 ))}
@@ -203,7 +204,7 @@ export default function UnlinkedNotes({
                         aria-label="Delete"
                         type="button"
                       >
-                        <Icon name="groq_3" size={15} />
+                        <Icon name="icon-clear" size={15} />
                       </button>
                     </div>
                     <div className={notesStyles.resolutionRow}>
@@ -259,7 +260,7 @@ export default function UnlinkedNotes({
                       aria-label="Delete"
                       type="button"
                     >
-                      <Icon name="groq_3" size={15} />
+                      <Icon name="icon-clear" size={15} />
                     </button>
                   </div>
                 ))}

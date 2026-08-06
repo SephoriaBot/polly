@@ -3,6 +3,8 @@ import { useHamsterGrowth } from "./HamsterGrowthContext";
 import { HAMSTERS, imageForForm } from "./hamsters";
 import Icon, { type IconName } from "../components/Icon";
 import HamsterStatTraining from "./HamsterStatTraining";
+import EmptyState from '../components/EmptyState';
+import empty3Img from '../assets/icons/empty3.png';
 
 function imageFor(hamsterId: string) {
   return HAMSTERS.find((h) => h.id === hamsterId)?.image;
@@ -92,9 +94,7 @@ export default function HamsterHabitat() {
         )}
 
         {collection.length === 0 ? (
-          <div style={{ fontSize: 12, color: "var(--ink-muted)", textAlign: "center", padding: "16px 0" }}>
-            No hamsters yet — fill the nest to hatch your first one.
-          </div>
+        <EmptyState image={empty3Img} message="No hamsters in the habitat yet." />
         ) : (
           <>
             <div

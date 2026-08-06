@@ -106,7 +106,7 @@ Include 4–8 supplies, a realistic time estimate, and 6–10 steps in logical c
         </div>
         {wizardState === 'plan' && (
           <button className="btn btn-ghost" onClick={reset}>
-            <Icon name="groq_4" size={14} /> New Room
+            <Icon name="icon-recur" size={14} /> New Room
           </button>
         )}
       </div>

@@ -247,7 +247,7 @@ Never mention calories, macros, or specific weight numbers. If the goal involves
           <span style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 700, fontSize: '0.95rem' }}>
             <Icon name="groq_9" size={17} /> Ask Dr. Groq — Diet Check-In
           </span>
-          <button className="close-btn" onClick={onClose}><Icon name="groq_3" size={16} /></button>
+          <button className="close-btn" onClick={onClose}><Icon name="icon-clear" size={16} /></button>
         </div>
 
         <div className="modal-body" style={{ maxHeight: '70vh', overflowY: 'auto' }}>
@@ -495,14 +495,14 @@ Never mention calories, macros, or specific weight numbers. If the goal involves
                 disabled={selectedPicks.size === 0 || addingToCart || addedToCart}
               >
                 {addedToCart
-                  ? <><Icon name="groq_8" size={14} /> Added to Grocery List!</>
+                  ? <><Icon name="flowerfull" size={14} /> Added to Grocery List!</>
                   : addingToCart
                     ? 'Adding…'
-                    : <><Icon name="groq_10" size={14} /> Add {selectedPicks.size} Item{selectedPicks.size === 1 ? '' : 's'} to Grocery List</>}
+                    : <><Icon name="shopping-cart" size={14} /> Add {selectedPicks.size} Item{selectedPicks.size === 1 ? '' : 's'} to Grocery List</>}
               </button>
 
               <button className="btn btn-ghost" style={{ width: '100%', justifyContent: 'center', marginTop: 8 }} onClick={reset}>
-                <Icon name="groq_4" size={13} /> Start Over
+                <Icon name="icon-recur" size={13} /> Start Over
               </button>
             </div>
           )}

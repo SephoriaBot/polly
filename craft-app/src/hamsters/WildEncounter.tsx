@@ -30,6 +30,9 @@ import {
   rollsFirst,
 } from "./battle";
 import type { WildHamster, AttackOutcome, TrainedStats } from "./battle";
+import EmptyState from '../components/EmptyState';
+import empty3Img from '../assets/icons/empty3.png';
+
 
 interface FighterEntry {
   id: number;
@@ -295,10 +298,8 @@ export default function WildEncounter() {
         </div>
 
         {fighters.length === 0 ? (
-          <div style={{ fontSize: 12, color: "var(--ink-muted)", textAlign: "center", padding: "10px 0" }}>
-            No teen or final hamsters yet — evolve one before it can battle.
-          </div>
-        ) : (
+        <EmptyState image={empty3Img} message="No hamsters are old enough to battle yet!" />
+) : (
           <>
             {(phase === "pick" || phase === "scouting" || phase === "found") && (
               <>

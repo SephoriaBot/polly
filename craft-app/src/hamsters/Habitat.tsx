@@ -22,14 +22,18 @@ export default function Habitat() {
         <HamsterNest />
       </section>
 
-      <Lantern variant="divider" />
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+  <Icon name="pagedivider" size={85} />
+</div>
 
       <section>
         <div className="section-label">Wild Encounter</div>
         <WildEncounter />
       </section>
 
-      <Lantern variant="divider" />
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+  <Icon name="pagedivider" size={85} />
+</div>
 
       <section>
         <div className="section-label">Collection</div>

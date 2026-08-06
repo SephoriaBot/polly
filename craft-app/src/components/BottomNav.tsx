@@ -23,9 +23,9 @@ const PRIMARY_TABS = [
     icon: <Icon name="icon-planner" size={35} />,
   },
   {
-    id: 'habitat',
-    label: 'Habitat',
-    icon: <Icon name="icon-habitat" size={35} />,
+    id: 'grocery',
+    label: 'Grocery',
+    icon: <Icon name="icon-grocery" size={35} />,
   },
 ];
 
@@ -43,11 +43,6 @@ const MORE_ITEMS = [
     icon: <Icon name="icon-meals" size={35} />,
   },
   {
-    id: 'grocery',
-    label: 'Grocery',
-    icon: <Icon name="icon-grocery" size={35} />,
-  },
-  {
     id: 'decisions',
     label: 'Decisions',
     icon: <Icon name="icon-decisions" size={35} />,
@@ -56,6 +51,11 @@ const MORE_ITEMS = [
     id: 'maidwizard',
     label: 'Maid Wizard',
     icon: <Icon name="icon-maidwizard" size={35} />,
+  },
+  {
+    id: 'habitat',
+    label: 'Habitat',
+    icon: <Icon name="icon-habitat" size={35} />,
   },
 ];
 

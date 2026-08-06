@@ -1,7 +1,10 @@
+import Icon from './Icon';
+
 // src/components/EmptyState.tsx
 interface EmptyStateProps {
   image: string;
   message: string;
+  size?: int;
   subMessage?: string;
 }
 
@@ -14,7 +17,7 @@ export default function EmptyState({ image, message, subMessage }: EmptyStatePro
       textAlign: 'center',
       padding: '2rem 1rem',
     }}>
-      <img src={image} alt="" style={{ width: '180px', marginBottom: '1rem' }} />
+      <img   src={image}   alt=""   style={{     width: '80px',     height: 'auto',     marginBottom: '1rem',     display: 'block',   }} />
       <p style={{
         fontFamily: 'var(--font-heading)',
         fontSize: '1.1rem',

@@ -15,12 +15,16 @@ import {
 } from 'recharts';
 import { getTrackerLogsInRange, deleteTrackerLog } from '../../lib/trackerApi';
 import type { TrackerType, TrackerLog, PeriodValue } from '../../types/tracker';
+import EmptyState from '../EmptyState';
+import empty4Img from '../../assets/icons/empty4.png';
 
 interface Props {
   type: TrackerType;
   startDate: string;
   endDate: string;
   refreshKey?: number;
+  label?: string; // used for custom tracker types, ignored for built-ins
+  unit?: string;  // used for custom tracker types, ignored for built-ins
 }
 
 function parseValue(raw: unknown): any {
@@ -50,7 +54,7 @@ function iconRefLabel(iconName: string) {
   };
 }
 
-export default function TrackerChart({ type, startDate, endDate, refreshKey }: Props) {
+export default function TrackerChart({ type, startDate, endDate, refreshKey, label, unit }: Props) {
   const [logs, setLogs] = useState<TrackerLog[]>([]);
   const [deletingDate, setDeletingDate] = useState<string | null>(null);
 
@@ -69,7 +73,9 @@ export default function TrackerChart({ type, startDate, endDate, refreshKey }: P
     loadLogs();
   }
 
-  <Lantern variant="divider" />
+  <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+  <Icon name="pagedivider" size={85} />
+</div>
 
   {/* ENTRIES LIST */}
 
@@ -127,7 +133,11 @@ export default function TrackerChart({ type, startDate, endDate, refreshKey }: P
   
 
   if (logs.length === 0) {
-    return <p className="card">No data logged for this range yet.</p>;
+    return (
+      
+        <EmptyState image={empty4Img} message="No data logged yet." />
+      
+    );
   }
 
   if (type === 'sleep') {
@@ -215,22 +225,50 @@ export default function TrackerChart({ type, startDate, endDate, refreshKey }: P
     );
   }
 
-  const weightData = logs.map((l) => ({
+  if (type === 'weight') {
+    const weightData = logs.map((l) => ({
+      date: l.log_date.slice(5),
+      weight: parseValue(l.value).weight_lbs ?? 0,
+    }));
+
+    return (
+      <>
+        <div className="card">
+          <h3><Icon name="calculator" size={18} /> Weight</h3>
+          <ResponsiveContainer width="100%" height={220}>
+            <LineChart data={weightData}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="date" fontSize={12} />
+              <YAxis fontSize={12} />
+              <Tooltip />
+              <Line type="monotone" dataKey="weight" stroke="var(--ink)" strokeWidth={2} dot={{ r: 4 }} />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+        <EntriesList />
+      </>
+    );
+  }
+
+  // Generic fallback for any user-defined custom tracker — reads the plain
+  // `value` field rather than a type-specific key like sleep/period/weight do.
+  const customLabel = label ?? 'Value';
+  const customData = logs.map((l) => ({
     date: l.log_date.slice(5),
-    weight: parseValue(l.value).weight_lbs ?? 0,
+    value: parseValue(l.value).value ?? 0,
   }));
 
   return (
     <>
       <div className="card">
-        <h3><Icon name="calculator" size={18} /> Weight</h3>
+        <h3>{customLabel}{unit ? ` (${unit})` : ''}</h3>
         <ResponsiveContainer width="100%" height={220}>
-          <LineChart data={weightData}>
+          <LineChart data={customData}>
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="date" fontSize={12} />
             <YAxis fontSize={12} />
             <Tooltip />
-            <Line type="monotone" dataKey="weight" stroke="var(--ink)" strokeWidth={2} dot={{ r: 4 }} />
+            <Line type="monotone" dataKey="value" stroke="var(--pink-dark)" strokeWidth={2} dot={{ r: 4 }} />
           </LineChart>
         </ResponsiveContainer>
       </div>

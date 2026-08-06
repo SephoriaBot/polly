@@ -7,7 +7,7 @@ export interface TrackerTypeConfig {
   label: string;
   icon?: IconName; // preferred - illustrated icon
   emoji?: string; // fallback for types with no matching illustrated icon yet (e.g. weight/scale)
-  color: string; // CSS var, matches Homebody's cottagecore palette
+  color: string; // CSS var, matches pollys cottagecore palette
   chartType: 'line' | 'bar';
   yAxisLabel: string;
   getChartValue: (log: TrackerLog) => number | null;

@@ -6,6 +6,8 @@ import Lantern from "../components/Lantern";
 import EmptyState from '../components/EmptyState';
 import breadBasketImg from '../assets/illustrations/bread_basket.png';
 import hourglassImg from '../assets/illustrations/hourglass.png';
+import empty9Img from '../assets/icons/empty9.png';
+import empty4Img from '../assets/icons/empty4.png';
 
 
 interface GroceryList { id: string; name: string; created_at: string }
@@ -16,6 +18,18 @@ interface PriceEntry {
   store: string
   price: number
   updated_at: string
+}
+
+interface PriceWatch {
+  id: string
+  item_name: string
+  store: string
+  baseline_price: number
+  lowest_price: number
+  current_price: number
+  dropped: boolean
+  last_checked_at: string | null
+  created_at: string
 }
 
 interface BasicItem { name: string; qty: string }
@@ -179,7 +193,11 @@ const BASICS_PRESETS: Record<string, BasicsPreset> = {
 // substrings that identify that chain in a raw seller string (SerpAPI
 // results show things like "Walmart.com", "Walmart Supercenter", etc, so
 // aliases need to be loose substrings, not exact matches).
-const ALLOWED_STORES: Record<string, string[]> = {
+//
+// This is only the *default* seed list — every user's actual whitelist is
+// stored in grocery_settings and editable from Settings, since which chains
+// exist near you depends entirely on where you live.
+const DEFAULT_ALLOWED_STORES: Record<string, string[]> = {
   'Walmart': ['walmart'],
   'Kroger': ['kroger'],
   'Target': ['target'],
@@ -191,15 +209,15 @@ const ALLOWED_STORES: Record<string, string[]> = {
   'Aldi': ['aldi'],
 }
 
-// Matches a raw seller/store string against ALLOWED_STORES and returns the
-// canonical chain name, or null if it's not on the whitelist. Normalizing
-// to the canonical name (rather than just filtering) means "Walmart" and
-// "Walmart.com" get grouped together in the tally instead of counted as
-// two different stores.
-function normalizeStoreName(raw: string | undefined | null): string | null {
+// Matches a raw seller/store string against the user's store whitelist and
+// returns the canonical chain name, or null if it's not on the whitelist.
+// Normalizing to the canonical name (rather than just filtering) means
+// "Walmart" and "Walmart.com" get grouped together in the tally instead of
+// counted as two different stores.
+function normalizeStoreName(raw: string | undefined | null, allowedStores: Record<string, string[]>): string | null {
   if (!raw) return null
   const lower = raw.toLowerCase()
-  for (const [canonical, aliases] of Object.entries(ALLOWED_STORES)) {
+  for (const [canonical, aliases] of Object.entries(allowedStores)) {
     if (aliases.some(alias => lower.includes(alias))) return canonical
   }
   return null
@@ -209,12 +227,18 @@ function normalizeStoreName(raw: string | undefined | null): string | null {
 // (or from cache). Anything that doesn't match a known chain is dropped
 // entirely rather than shown under its raw name — this is what keeps
 // random marketplace sellers / instacart-only listings out of the cart.
-function filterToAllowedStores(results: any[]): any[] {
+function filterToAllowedStores(results: any[], allowedStores: Record<string, string[]>): any[] {
   if (!Array.isArray(results)) return []
   return results
-    .map(r => ({ ...r, store: normalizeStoreName(r.store) }))
+    .map(r => ({ ...r, store: normalizeStoreName(r.store, allowedStores) }))
     .filter(r => r.store !== null)
 }
+
+// Deep search (store-specific backfill) caps — this is opt-in specifically
+// because it multiplies SerpAPI calls, so keep both a per-item and a
+// per-build ceiling rather than trusting the list size to stay small.
+const MAX_BACKFILL_STORES_PER_ITEM = 3
+const MAX_TOTAL_BACKFILL_CALLS = 20
 
 export default function Grocery() {
   const [items, setItems] = useState<GroceryItem[]>([])
@@ -229,17 +253,64 @@ export default function Grocery() {
   const [loadingCart, setLoadingCart] = useState(false)
   const [cartError, setCartError] = useState<string | null>(null)
   const [prices, setPrices] = useState<PriceEntry[]>([])
+  const [watches, setWatches] = useState<PriceWatch[]>([])
   const [expandedItem, setExpandedItem] = useState<string | null>(null)
   const [priceForm, setPriceForm] = useState<{ store: string; price: string }>({ store: '', price: '' })
   const [location, setLocation] = useState(() => localStorage.getItem('grocery_location') || '')
+  const [deepSearch, setDeepSearch] = useState(() => localStorage.getItem('grocery_deep_search') === 'true')
+
+  const [showSplitTrip, setShowSplitTrip] = useState(false)
 
   const [showBasicsModal, setShowBasicsModal] = useState(false)
   const [basicsPreset, setBasicsPreset] = useState<string | null>(null)
   const [basicsChecked, setBasicsChecked] = useState<Set<string>>(new Set())
   const [addingBasics, setAddingBasics] = useState(false)
 
+  const [allowedStores, setAllowedStores] = useState<Record<string, string[]>>(DEFAULT_ALLOWED_STORES)
+  const [showStoreSettings, setShowStoreSettings] = useState(false)
+  const [newStoreName, setNewStoreName] = useState('')
+  const [newStoreAliases, setNewStoreAliases] = useState('')
+  const [storeSettingsLoaded, setStoreSettingsLoaded] = useState(false)
+
+  useEffect(() => {
+    supabase.from('grocery_settings').select('*').eq('id', 1).maybeSingle().then(({ data }) => {
+      if (data?.allowed_stores && Object.keys(data.allowed_stores).length > 0) {
+        setAllowedStores(data.allowed_stores)
+      }
+      setStoreSettingsLoaded(true)
+    })
+  }, [])
+
+  useEffect(() => {
+    if (!storeSettingsLoaded) return // don't overwrite DB with the default seed before initial load completes
+    const timer = setTimeout(() => {
+      supabase.from('grocery_settings').upsert({ id: 1, allowed_stores: allowedStores }).then(({ error }) => {
+        if (error) console.error('grocery_settings save failed:', error)
+      })
+    }, 800)
+    return () => clearTimeout(timer)
+  }, [allowedStores, storeSettingsLoaded])
+
+  function addAllowedStore() {
+    const name = newStoreName.trim()
+    const aliases = newStoreAliases.trim().toLowerCase()
+    if (!name || !aliases) return
+    setAllowedStores(prev => ({ ...prev, [name]: aliases.split(',').map(a => a.trim()).filter(Boolean) }))
+    setNewStoreName('')
+    setNewStoreAliases('')
+  }
+
+  function removeAllowedStore(name: string) {
+    setAllowedStores(prev => {
+      const next = { ...prev }
+      delete next[name]
+      return next
+    })
+  }
+
   useEffect(() => {
     fetchLists()
+    fetchWatches()
   }, [])
 
   useEffect(() => {
@@ -328,6 +399,68 @@ export default function Grocery() {
       .select('*')
       .order('price', { ascending: true })
     setPrices(data ?? [])
+  }
+
+  async function fetchWatches() {
+    const { data } = await supabase
+      .from('price_watches')
+      .select('*')
+      .order('created_at', { ascending: false })
+    setWatches(data ?? [])
+  }
+
+  function findWatch(itemName: string, store: string) {
+    return watches.find(w => w.item_name === itemName && w.store === store)
+  }
+
+  // Toggling a watch just records the item/store/price as a baseline — the
+  // daily cron (api/check-price-drops) is what actually re-checks it and
+  // flags a drop. Re-clicking an already-watched item removes the watch
+  // rather than resetting its baseline, since that's the more obviously
+  // reversible behavior for a toggle button.
+  async function toggleWatch(itemName: string, store: string, price: number) {
+    const existing = findWatch(itemName, store)
+    if (existing) {
+      await supabase.from('price_watches').delete().eq('id', existing.id)
+      setWatches(prev => prev.filter(w => w.id !== existing.id))
+      return
+    }
+
+    const { data } = await supabase
+      .from('price_watches')
+      .upsert(
+        {
+          item_name: itemName,
+          store,
+          baseline_price: price,
+          lowest_price: price,
+          current_price: price,
+          dropped: false,
+          last_checked_at: new Date().toISOString(),
+        },
+        { onConflict: 'item_name,store' }
+      )
+      .select()
+      .single()
+    if (data) setWatches(prev => [data, ...prev])
+  }
+
+  // Dismissing a drop resets the baseline to the current (lower) price, so
+  // the watch keeps working going forward instead of flagging the same
+  // drop forever or getting deleted outright.
+  async function dismissDrop(watch: PriceWatch) {
+    const { data } = await supabase
+      .from('price_watches')
+      .update({ baseline_price: watch.current_price, dropped: false })
+      .eq('id', watch.id)
+      .select()
+      .single()
+    if (data) setWatches(prev => prev.map(w => (w.id === watch.id ? data : w)))
+  }
+
+  async function deleteWatch(id: string) {
+    await supabase.from('price_watches').delete().eq('id', id)
+    setWatches(prev => prev.filter(w => w.id !== id))
   }
 
   async function addItem() {
@@ -449,6 +582,8 @@ export default function Grocery() {
     }
 
     try {
+      const backfillBudget = { remaining: MAX_TOTAL_BACKFILL_CALLS }
+
       for (let i = 0; i < needItems.length; i += 3) {
         const batch = needItems.slice(i, i + 3)
 
@@ -459,36 +594,35 @@ export default function Grocery() {
             }
 
             const key = item.name.toLowerCase().trim()
+            let resultsArr: any[] = []
+            let apiError: string | undefined
+
             const cachedResults = persistedCache.get(key)
             if (cachedResults) {
               // Cache stores the RAW (unfiltered) result set on purpose —
               // see note below on why filtering happens at display/tally
               // time instead of before caching.
-              const result = { item: item.name, results: cachedResults, cached: true }
-              cache.set(item.name, result)
-              return result
+              resultsArr = cachedResults
+            } else {
+              const controller = new AbortController()
+              const timeout = setTimeout(() => controller.abort(), 4000)
+
+              try {
+                const res = await fetch(
+                  `/api/product-search?q=${encodeURIComponent(item.name)}${location ? `&zip=${encodeURIComponent(location)}` : ''}`,
+                  { signal: controller.signal }
+                )
+                const data = await res.json()
+                if (data.error && !firstError) firstError = data.error
+                resultsArr = Array.isArray(data.results) ? data.results : []
+                apiError = data.error
+              } catch (e) {
+                apiError = 'Could not reach the price search service'
+                if (!firstError) firstError = apiError
+              } finally {
+                clearTimeout(timeout)
+              }
             }
-
-            const controller = new AbortController()
-            const timeout = setTimeout(() => controller.abort(), 4000)
-
-            let data: { results?: any[]; error?: string } = {}
-
-            try {
-              const res = await fetch(
-                `/api/product-search?q=${encodeURIComponent(item.name)}${location ? `&zip=${encodeURIComponent(location)}` : ''}`,
-                { signal: controller.signal }
-              )
-              data = await res.json()
-              if (data.error && !firstError) firstError = data.error
-            } catch (e) {
-              data = { error: 'Could not reach the price search service' }
-              if (!firstError) firstError = data.error!
-            } finally {
-              clearTimeout(timeout)
-            }
-
-            const resultsArr = Array.isArray(data.results) ? data.results : []
             // NOTE: results are intentionally kept RAW (unfiltered) here —
             // whitelist filtering happens later, at display/tally time via
             // filterToAllowedStores(). Filtering this early was tried and
@@ -501,16 +635,78 @@ export default function Grocery() {
             // possible pool to fill gaps from, while the UI still only ever
             // *shows* whitelisted stores.
 
+            // Deep search: the generic query is one search across all
+            // sellers, so a whitelisted store can easily miss the top
+            // results even when it does carry the item. Backfill any
+            // whitelisted store missing from this item's results with a
+            // targeted "{item} {store}" query. Capped per item and per
+            // build — this is opt-in specifically because it multiplies
+            // SerpAPI calls.
+            if (deepSearch && !apiError && backfillBudget.remaining > 0) {
+              const covered = new Set(filterToAllowedStores(resultsArr, allowedStores).map((r: any) => r.store))
+              const missingStores = Object.keys(allowedStores).filter(s => !covered.has(s))
+
+              for (const store of missingStores.slice(0, MAX_BACKFILL_STORES_PER_ITEM)) {
+                if (backfillBudget.remaining <= 0) break
+                backfillBudget.remaining--
+
+                const backfillKey = `${key}__${store.toLowerCase().replace(/\s+/g, '-')}`
+
+                const { data: cachedBackfill } = await supabase
+                  .from('product_search_cache')
+                  .select('results, fetched_at')
+                  .eq('item_name', backfillKey)
+                  .gte('fetched_at', cacheCutoff)
+                  .maybeSingle()
+
+                if (cachedBackfill?.results) {
+                  resultsArr = resultsArr.concat(cachedBackfill.results)
+                  continue
+                }
+
+                const controller = new AbortController()
+                const timeout = setTimeout(() => controller.abort(), 4000)
+                try {
+                  const res = await fetch(
+                    `/api/product-search?q=${encodeURIComponent(`${item.name} ${store}`)}${location ? `&zip=${encodeURIComponent(location)}` : ''}`,
+                    { signal: controller.signal }
+                  )
+                  const data = await res.json()
+                  // Only keep results that actually match the store we
+                  // targeted — a "{item} {store}" query can still return
+                  // sellers other than the one we asked about.
+                  const storeResults = (Array.isArray(data.results) ? data.results : [])
+                    .filter((r: any) => normalizeStoreName(r.store, allowedStores) === store)
+
+                  if (storeResults.length) {
+                    resultsArr = resultsArr.concat(storeResults)
+                    supabase.from('product_search_cache')
+                      .upsert({ item_name: backfillKey, results: storeResults, fetched_at: new Date().toISOString() })
+                      .then(() => {})
+                  }
+                } catch (e) {
+                  // A targeted backfill failing silently is fine — the
+                  // generic result (or median estimate) still covers this
+                  // item, just without this one store's real price.
+                } finally {
+                  clearTimeout(timeout)
+                }
+              }
+            }
+
             // Only persist successful lookups. A real API failure shouldn't
             // get cached as if it were a confirmed "nothing found" — that
             // would hide the failure behind a 24h cache hit next time.
-            if (!data.error) {
+            // Persisting here also means any deep-search backfill gets
+            // folded into the main item cache, so future non-deep-search
+            // builds inherit the improved coverage for free.
+            if (!apiError) {
               supabase.from('product_search_cache')
                 .upsert({ item_name: key, results: resultsArr, fetched_at: new Date().toISOString() })
                 .then(() => {})
             }
 
-            const result = { item: item.name, results: resultsArr, error: data.error }
+            const result = { item: item.name, results: resultsArr, error: apiError }
             cache.set(item.name, result)
             return result
           })
@@ -578,6 +774,14 @@ export default function Grocery() {
     localStorage.setItem('grocery_location', val)
   }
 
+  function toggleDeepSearch() {
+    setDeepSearch(prev => {
+      const next = !prev
+      localStorage.setItem('grocery_deep_search', String(next))
+      return next
+    })
+  }
+
   function pricesFor(itemName: string) {
     return prices
       .filter(p => p.item_name.toLowerCase() === itemName.toLowerCase())
@@ -631,13 +835,14 @@ export default function Grocery() {
   //   direct result for a given item; if it only drew from the whitelisted
   //   subset, one item with zero whitelisted hits would have no median to
   //   fall back on and would knock every store out of the ranking.
-  function computeTally(cartData: any[]) {
-    const totalTracked = cartData.length
-    if (totalTracked === 0) return []
-
+  // Shared by computeTally and computeSplitTrip so both work off the exact
+  // same pricing data — one pass over the cart's raw search results builds
+  // every map either function needs, instead of each re-deriving its own
+  // (and risking the two drifting out of sync with each other).
+  function buildPriceMaps(cartData: any[]) {
     const allStores = new Set<string>()
     cartData.forEach(c => {
-      filterToAllowedStores(c.results ?? []).forEach((r: any) => {
+      filterToAllowedStores(c.results ?? [], allowedStores).forEach((r: any) => {
         if (r.store && r.price != null) allStores.add(r.store)
       })
     })
@@ -649,7 +854,7 @@ export default function Grocery() {
 
     cartData.forEach(c => {
       // Real prices: only from whitelisted stores, since that's all we rank
-      const whitelisted = filterToAllowedStores(c.results ?? [])
+      const whitelisted = filterToAllowedStores(c.results ?? [], allowedStores)
       const byStore = new Map<string, number>()
       whitelisted.forEach((r: any) => {
         if (!r.store || r.price == null) return
@@ -675,6 +880,15 @@ export default function Grocery() {
         perItemMedian.set(c.item, median)
       }
     })
+
+    return { allStores, perItemStorePrice, perItemMedian }
+  }
+
+  function computeTally(cartData: any[]) {
+    const totalTracked = cartData.length
+    if (totalTracked === 0) return []
+
+    const { allStores, perItemStorePrice, perItemMedian } = buildPriceMaps(cartData)
 
     const storeResults = Array.from(allStores).map(store => {
       let total = 0
@@ -707,6 +921,66 @@ export default function Grocery() {
     return storeResults
       .filter(s => s.missingCount === 0)
       .sort((a, b) => a.total - b.total)
+  }
+
+  // Split-trip: instead of picking one store for the whole list, send each
+  // item to whichever whitelisted store has the lowest REAL price for it.
+  // Items with no real price anywhere get parked at the single cheapest
+  // store (from computeTally) using the same median estimate that store
+  // would've gotten anyway — so a gap in the data never becomes its own
+  // phantom stop. Only worth showing if it actually beats the best
+  // single-store total and doesn't fragment the list too much.
+  function computeSplitTrip(cartData: any[]) {
+    if (cartData.length === 0) return null
+
+    const { perItemStorePrice, perItemMedian } = buildPriceMaps(cartData)
+    const singleStore = computeTally(cartData)[0]
+    if (!singleStore) return null
+
+    const stops = new Map<string, { store: string; items: { name: string; price: number; estimated: boolean }[]; subtotal: number }>()
+
+    cartData.forEach(c => {
+      const byStore = perItemStorePrice.get(c.item)
+      let bestStore: string | null = null
+      let bestPrice = Infinity
+      byStore?.forEach((price, store) => {
+        if (price < bestPrice) { bestPrice = price; bestStore = store }
+      })
+
+      let store: string
+      let price: number
+      let estimated: boolean
+      if (bestStore != null) {
+        store = bestStore
+        price = bestPrice
+        estimated = false
+      } else {
+        // No real price anywhere for this item — park it at the single
+        // cheapest store using its median estimate rather than inventing
+        // a new stop for one unpriced item.
+        store = singleStore.store
+        price = perItemMedian.get(c.item) ?? 0
+        estimated = true
+      }
+
+      if (!stops.has(store)) stops.set(store, { store, items: [], subtotal: 0 })
+      const stop = stops.get(store)!
+      stop.items.push({ name: c.item, price, estimated })
+      stop.subtotal += price
+    })
+
+    const stopList = Array.from(stops.values()).sort((a, b) => b.subtotal - a.subtotal)
+    const total = stopList.reduce((sum, s) => sum + s.subtotal, 0)
+    const savings = singleStore.total - total
+
+    return {
+      stops: stopList,
+      total,
+      singleStoreName: singleStore.store,
+      singleStoreTotal: singleStore.total,
+      savings,
+      worthIt: stopList.length > 1 && savings > 0.5,
+    }
   }
 
   const needs = items.filter(i => !i.checked)
@@ -746,13 +1020,13 @@ export default function Grocery() {
             <Icon name="icon-listchecks" size={20} /> Build Basics List
           </button>
           <button className="btn btn-primary" onClick={buildSmartCart}>
-            <Icon name="groq_10" size={20} /> Build Smart Cart
+            <Icon name="shopping-cart" size={20} /> Build Smart Cart
           </button>
           <button className="btn btn-secondary" onClick={refreshSmartCart}>
-            <Icon name="groq_4" size={20} /> Refresh
+            <Icon name="icon-recur" size={20} /> Refresh
           </button>
           <button className="btn btn-ghost" onClick={clearSmartCart}>
-            <Icon name="groq_3" size={20} /> Clear
+            <Icon name="icon-clear" size={20} /> Clear
           </button>
           <button className="btn btn-primary" onClick={openDoorDashList} disabled={!needs.length}>
           <Icon name="icon-externallink" size={20} /> Copy List &amp; Open DoorDash
@@ -829,7 +1103,7 @@ export default function Grocery() {
                               color: 'var(--ink)',
                             }}
                           >
-                            <Icon name={checked ? 'heartfull' : 'heartempty'} size={18} />
+                            <Icon name={checked ? 'flowerfull' : 'flowerempty'} size={18} />
                             <span style={{ flex: 1, fontSize: '0.86rem', color: 'var(--ink)' }}>{item.name}</span>
                             <span style={{ fontSize: '0.76rem', color: 'var(--ink-muted)' }}>{item.qty}</span>
                             {alreadyOnList && <span style={{ fontSize: '0.7rem', color: 'var(--ink-muted)' }}>on list</span>}
@@ -858,7 +1132,7 @@ export default function Grocery() {
           <input
             className="form-input"
             type="text"
-            placeholder="City, state (e.g. Richmond, Virginia)…"
+            placeholder="City, state (e.g. your city, your state)…"
             value={location}
             onChange={e => saveLocation(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && buildSmartCart()}
@@ -867,7 +1141,56 @@ export default function Grocery() {
           <button className="btn btn-primary" onClick={buildSmartCart} disabled={!location}>
             Build Smart Cart for {location}
           </button>
+          <button className="btn btn-ghost" onClick={() => setShowStoreSettings(s => !s)}>
+            <Icon name="icon-slidershorizontal" size={14} /> Stores ({Object.keys(allowedStores).length})
+          </button>
+          <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.74rem', color: 'var(--ink-muted)', cursor: 'pointer' }}>
+            <input type="checkbox" checked={deepSearch} onChange={toggleDeepSearch} />
+            Deep search
+          </label>
         </div>
+        {deepSearch && (
+          <p style={{ fontSize: '0.68rem', color: 'var(--ink-muted)', margin: '4px 0 0' }}>
+            Runs extra targeted searches for stores missing from results — more accurate, but uses more API calls.
+          </p>
+        )}
+
+        {showStoreSettings && (
+          <div className="card" style={{ marginTop: 8 }}>
+            <div className="section-label">Stores Smart Cart Will Search</div>
+            <div style={{ fontSize: 11, color: 'var(--ink-muted)', marginBottom: 10 }}>
+              Only chains on this list are matched against search results — everything else gets filtered out. Add whatever's actually near you; remove ones that aren't.
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 12 }}>
+              {Object.entries(allowedStores).map(([name, aliases]) => (
+                <div key={name} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                  <div>
+                    <div style={{ fontSize: 13, fontWeight: 600 }}>{name}</div>
+                    <div style={{ fontSize: 10, color: 'var(--ink-muted)' }}>matches: {aliases.join(', ')}</div>
+                  </div>
+                  <button className="btn btn-ghost" onClick={() => removeAllowedStore(name)}>
+                    <Icon name="icon-trash2" size={14} />
+                  </button>
+                </div>
+              ))}
+            </div>
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+              <input
+                className="form-input" type="text" placeholder="Store name (e.g. H-E-B)"
+                value={newStoreName} onChange={e => setNewStoreName(e.target.value)}
+                style={{ width: 160 }}
+              />
+              <input
+                className="form-input" type="text" placeholder="Match text, comma-separated (e.g. heb, h-e-b)"
+                value={newStoreAliases} onChange={e => setNewStoreAliases(e.target.value)}
+                style={{ width: 220 }}
+              />
+              <button className="btn btn-primary" onClick={addAllowedStore} disabled={!newStoreName.trim() || !newStoreAliases.trim()}>
+                Add
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* my lists — every list here is a real, live list you can switch
             to, add/check off items on, and come back to later. nothing is
@@ -938,7 +1261,9 @@ export default function Grocery() {
           </div>
         </div>
 
-        <Lantern variant="divider" />
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+  <Icon name="pagedivider" size={85} />
+</div>
 
         {have.length > 0 && (
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
@@ -970,9 +1295,9 @@ export default function Grocery() {
             return (
               <div className="card">
                 <div className="section-label">Best Store for Your Whole List</div>
-                <p style={{ fontSize: '0.8rem', color: 'var(--ink-muted)', padding: '4px 0' }}>
-                  At least one item on your list had zero search results anywhere (not just at whitelisted stores), so no store total could be estimated yet.
-                </p>
+<EmptyState image={empty9Img} message="No products found...Refresh or try again." />
+      
+    
               </div>
             )
           }
@@ -1007,6 +1332,92 @@ export default function Grocery() {
           )
         })()}
 
+        {/* split-trip mode — spread the list across stores if it actually saves money */}
+        {(() => {
+          if (cart.length === 0 || cartError) return null
+          const split = computeSplitTrip(cart)
+          if (!split || !split.worthIt) return null
+
+          return (
+            <div className="card">
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                <div className="section-label" style={{ marginBottom: 0 }}>Split Trip Saves ${split.savings.toFixed(2)}</div>
+                <button className="btn btn-ghost" onClick={() => setShowSplitTrip(s => !s)} style={{ fontSize: '0.72rem', padding: '4px 10px' }}>
+                  {showSplitTrip ? 'Hide' : 'Show'}
+                </button>
+              </div>
+              <p style={{ fontSize: '0.72rem', color: 'var(--ink-muted)', margin: '4px 0 0' }}>
+                Buying everything at {split.singleStoreName} runs ${split.singleStoreTotal.toFixed(2)}. Splitting across {split.stops.length} stores brings it to ${split.total.toFixed(2)}.
+              </p>
+              {showSplitTrip && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 10 }}>
+                  {split.stops.map(stop => (
+                    <div key={stop.store} style={{ border: '1px solid var(--border)', borderRadius: 10, padding: '8px 10px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontWeight: 600, color: 'var(--ink)', fontSize: '0.82rem' }}>{stop.store}</span>
+                        <span style={priceBadgeStyle(false)}>${stop.subtotal.toFixed(2)}</span>
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 2, marginTop: 6 }}>
+                        {stop.items.map(it => (
+                          <div key={it.name} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.74rem', color: 'var(--ink-muted)' }}>
+                            <span>{it.name}{it.estimated ? ' (est.)' : ''}</span>
+                            <span>${it.price.toFixed(2)}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )
+        })()}
+
+        {/* price drops — flagged by the daily api/check-price-drops cron, not live */}
+        {watches.some(w => w.dropped) && (
+          <div className="card" style={{ borderColor: 'var(--pink-dark)' }}>
+            <div className="section-label">Price Drops</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 6 }}>
+              {watches.filter(w => w.dropped).map(w => (
+                <div key={w.id} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.78rem' }}>
+                  <span style={{ flex: 1, minWidth: 0, color: 'var(--ink)', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {w.item_name} @ {w.store}
+                  </span>
+                  <span style={{ color: 'var(--ink-muted)', textDecoration: 'line-through', fontSize: '0.72rem' }}>
+                    ${w.baseline_price.toFixed(2)}
+                  </span>
+                  <span style={priceBadgeStyle(false)}>${w.current_price.toFixed(2)}</span>
+                  <button className="btn btn-ghost" style={{ fontSize: '0.68rem', padding: '3px 8px' }} onClick={() => dismissDrop(w)}>
+                    Dismiss
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* watched items — always visible so watches can be managed even with no active drop */}
+        {watches.length > 0 && (
+          <div className="card">
+            <div className="section-label">Watching ({watches.length})</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 6 }}>
+              {watches.map(w => (
+                <div key={w.id} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.76rem' }}>
+                  <span style={{ flex: 1, minWidth: 0, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {w.item_name} @ {w.store}
+                  </span>
+                  <span style={{ color: 'var(--ink-muted)', fontSize: '0.7rem' }}>
+                    baseline ${w.baseline_price.toFixed(2)} · now ${w.current_price.toFixed(2)}
+                  </span>
+                  <button onClick={() => deleteWatch(w.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-muted)', opacity: 0.5, display: 'flex', flexShrink: 0 }}>
+                    <Icon name="icon-trash2" size={12} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {loading ? (
           <p style={{ color: 'var(--ink-muted)', fontSize: '0.8rem' }}>Loading…</p>
         ) : (
@@ -1016,13 +1427,13 @@ export default function Grocery() {
                 <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Icon name="icon-clipboardlist" size={13} /> Need to Buy</span>
                 <span style={{ fontWeight: 500 }}>{needs.length} items</span>
               </div>
+    <p className="daily-tasks-subtitle">Tap the flower to check it off...</p>
+
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 420, overflowY: 'auto', marginBottom: 12 }}>
                 {needs.length === 0
-                  ? <EmptyState
-                  image={breadBasketImg}
-                  message="List is empty!"
-                  subMessage="Add an item to get started."
-                />
+                  ? 
+      <EmptyState image={empty4Img} message="Nothing here yet." />
+    
                   : needs.map(item => {
                     const cheapest = cheapestFor(item.name)
                     const itemPrices = pricesFor(item.name)
@@ -1031,7 +1442,7 @@ export default function Grocery() {
                       <div key={item.id}>
                         <div style={itemRowStyle(false)}>
                           <button onClick={() => toggle(item.id, item.checked)} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', display: 'flex', flexShrink: 0 }}>
-                            <Icon name="heartempty" size={20} />
+                            <Icon name="flowerempty" size={20} />
                           </button>
                           <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--ink)' }}>{item.name}</span>
                           <span style={{ fontSize: '0.72rem', color: 'var(--ink-muted)', whiteSpace: 'nowrap' }}>{item.qty}</span>
@@ -1062,7 +1473,7 @@ export default function Grocery() {
                                     <span style={{ flex: 1, color: 'var(--pink-dark)', fontWeight: 600 }}>${p.price.toFixed(2)}</span>
                                     <span style={{ flex: 1, color: isStale(p.updated_at) ? 'var(--gold-dark)' : 'var(--ink-muted)', fontSize: '0.66rem' }}>{p.updated_at}</span>
                                     <button onClick={() => deletePrice(p.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-muted)', opacity: 0.5 }}>
-                                      <Icon name="groq_3" size={12} />
+                                      <Icon name="icon-clear" size={12} />
                                     </button>
                                   </div>
                                 ))}
@@ -1124,7 +1535,7 @@ export default function Grocery() {
                   : have.map(item => (
                     <div key={item.id} style={itemRowStyle(true)}>
                       <button onClick={() => toggle(item.id, item.checked)} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', display: 'flex', flexShrink: 0 }}>
-                        <Icon name="heartfull" size={20} />
+                        <Icon name="flowerfull" size={20} />
                       </button>
                       <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--ink-muted)', textDecoration: 'line-through' }}>{item.name}</span>
                       <span style={{ fontSize: '0.72rem', color: 'var(--ink-muted)', whiteSpace: 'nowrap' }}>{item.qty}</span>
@@ -1140,12 +1551,14 @@ export default function Grocery() {
           </div>
         )}
 
-        <Lantern variant="divider" />
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+  <Icon name="pagedivider" size={85} />
+</div>
 
         {/* smart cart */}
         <div className="card">
           <div className="section-label" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Icon name="groq_10" size={20} /> Smart Cart</span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Icon name="shopping-cart" size={20} /> Smart Cart</span>
             <span style={{ fontWeight: 500 }}>{cart.length} items</span>
           </div>
 
@@ -1175,11 +1588,12 @@ export default function Grocery() {
                 // for the median estimator) — filter to whitelisted stores
                 // here so the visible per-item list only shows chains from
                 // ALLOWED_STORES, same as the leaderboard above.
-                const sorted = filterToAllowedStores(c.results ?? [])
+                const sorted = filterToAllowedStores(c.results ?? [], allowedStores)
                   .sort((a: any, b: any) => Number(a.price ?? 9999) - Number(b.price ?? 9999))
                 const cheapest = sorted[0]
                 const priciest = sorted[sorted.length - 1]
                 const bigDiff = cheapest && priciest && (priciest.price - cheapest.price) >= 1
+                const watched = cheapest && findWatch(c.item, cheapest.store)
 
                 return (
                   <div key={i}>
@@ -1197,6 +1611,22 @@ export default function Grocery() {
                               save ${(priciest.price - cheapest.price).toFixed(2)} vs {priciest.store}
                             </span>
                           )}
+                          <button
+                            onClick={() => toggleWatch(c.item, cheapest.store, Number(cheapest.price))}
+                            title={watched ? 'Stop watching this price' : 'Watch this price for drops'}
+                            style={{
+                              background: 'none',
+                              border: 'none',
+                              cursor: 'pointer',
+                              padding: 0,
+                              fontSize: '0.9rem',
+                              color: watched ? 'var(--pink-dark)' : 'var(--ink-muted)',
+                              opacity: watched ? 1 : 0.45,
+                              flexShrink: 0,
+                            }}
+                          >
+                            {watched ? '★' : '☆'}
+                          </button>
                         </>
                       )}
                       {!cheapest && c.error && (

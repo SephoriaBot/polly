@@ -5,6 +5,7 @@ import Icon from '../components/Icon';
 import Lantern from "../components/Lantern";
 import walletPouchImg from '../assets/illustrations/wallet_pouch.png';
 import celebrationImg from '../assets/illustrations/celebration.png';
+import EmptyState from '../components/EmptyState';
 
 interface Debt {
   id: number;
@@ -61,6 +62,9 @@ interface DailyLog {
   notes: string;
 }
 
+type DebtStrategy = "snowball" | "avalanche";
+
+
 interface MonthSnap {
   month: number;
   target: string;
@@ -86,25 +90,32 @@ interface ListItem {
 
 const MONTH_NAMES = ["January","February","March","April","May","June","July","August","September","October","November","December"];
 
-function runSnowball(debts: Debt[], takeHome: number, fixedExpenses: number) {
+function runDebtPlan(
+  debts: Debt[],
+  takeHome: number,
+  fixedExpenses: number,
+  strategy: DebtStrategy
+) {
   const active = debts
     .filter(d => !d.deferred && !d.paid_off && d.balance > 0)
-    .map(d => ({ ...d, balance: Number(d.balance) || 0 }))
-    .sort((a, b) => a.balance - b.balance);
+    .map(d => ({ ...d, balance: Number(d.balance) || 0 }));
   const deferred = debts
     .filter(d => d.deferred)
     .map(d => ({ ...d, balance: Number(d.balance) || 0 }));
   const totalMins = active.reduce((s, d) => s + (Number(d.min_payment) || 0), 0);
-  const snowballExtra = takeHome - fixedExpenses - totalMins;
+  const extraDebtPayment = takeHome - fixedExpenses - totalMins;
   const months: MonthSnap[] = [];
   let state = active.map(d => ({ ...d }));
   let defState = deferred.map(d => ({ ...d }));
   for (let m = 1; m <= 120; m++) {
     const remaining = state.filter(d => d.balance > 0.01);
     if (remaining.length === 0) break;
-    const target = remaining.reduce((a, b) => a.balance < b.balance ? a : b);
+    const target =
+  strategy === "avalanche"
+    ? remaining.reduce((a, b) => a.apr > b.apr ? a : b)
+    : remaining.reduce((a, b) => a.balance < b.balance ? a : b);
     const otherMins = remaining.filter(d => d.id !== target.id).reduce((s, d) => s + (Number(d.min_payment) || 0), 0);
-    const extraForTarget = snowballExtra - otherMins;
+    const extraForTarget = extraDebtPayment - otherMins;
     const snap: MonthSnap = { month: m, target: target.name, balances: {}, deferredBalances: {}, activeTotal: 0, deferredTotal: 0 };
     state = state.map(d => {
       if (d.balance <= 0.01) { snap.balances[d.id] = 0; return { ...d, balance: 0 }; }
@@ -124,7 +135,7 @@ function runSnowball(debts: Debt[], takeHome: number, fixedExpenses: number) {
     snap.deferredTotal = defState.reduce((s, d) => s + d.balance, 0);
     months.push(snap);
   }
-  return { months, snowballExtra, totalMins };
+  return { months, extraDebtPayment, totalMins };
 }
 
 function fmt(n: number) {
@@ -159,25 +170,54 @@ function hoursOfWork(amount: number, wage: number) {
   return (amount / wage).toFixed(1);
 }
 
-// ── ANYTIME PAY ELIGIBLE PERCENTAGE (Amazon's real formula) ──
-const ANYTIME_PAY_GARNISHMENTS = 0;
-const ANYTIME_PAY_SAFETY_BUFFER_NORMAL = 0.02;
-const ANYTIME_PAY_SAFETY_BUFFER_HIGH_HOURS = 0.08;
-const ANYTIME_PAY_HIGH_HOURS_THRESHOLD = 55;
+// ── EARLY PAY ELIGIBLE PERCENTAGE ──
+// Employer presets for early-pay/advance-pay eligibility formulas. "Amazon"
+// mirrors Amazon's real Anytime Pay math (garnishments, a 2% safety buffer
+// that steps up to 8% past 55 hours in a week). "Custom" lets anyone using
+// a different employer's early-pay program plug in their own numbers.
+export type EarlyPayPresetId = "amazon" | "custom";
 
-function getSafetyBuffer(hoursSoFar: number) {
-  return hoursSoFar >= ANYTIME_PAY_HIGH_HOURS_THRESHOLD
-    ? ANYTIME_PAY_SAFETY_BUFFER_HIGH_HOURS
-    : ANYTIME_PAY_SAFETY_BUFFER_NORMAL;
+export interface EarlyPayPreset {
+  id: EarlyPayPresetId;
+  label: string;
+  garnishments: number;
+  safetyBufferNormal: number;
+  safetyBufferHighHours: number;
+  highHoursThreshold: number;
 }
 
-function eligiblePercent(preTaxEarnedSoFar: number, netToGrossRatio: number, flatDeductionsPrev: number, hoursSoFar: number) {
+export const EARLY_PAY_PRESETS: Record<EarlyPayPresetId, EarlyPayPreset> = {
+  amazon: {
+    id: "amazon",
+    label: "Amazon Anytime Pay",
+    garnishments: 0,
+    safetyBufferNormal: 0.02,
+    safetyBufferHighHours: 0.08,
+    highHoursThreshold: 55,
+  },
+  custom: {
+    id: "custom",
+    label: "Custom / Other Employer",
+    garnishments: 0,
+    safetyBufferNormal: 0.02,
+    safetyBufferHighHours: 0.02,
+    highHoursThreshold: 999,
+  },
+};
+
+function getSafetyBuffer(hoursSoFar: number, preset: EarlyPayPreset) {
+  return hoursSoFar >= preset.highHoursThreshold
+    ? preset.safetyBufferHighHours
+    : preset.safetyBufferNormal;
+}
+
+function eligiblePercent(preTaxEarnedSoFar: number, netToGrossRatio: number, flatDeductionsPrev: number, hoursSoFar: number, preset: EarlyPayPreset) {
   if (preTaxEarnedSoFar <= 0 || netToGrossRatio <= 0) return 0;
-  const availableAnytimePay = preTaxEarnedSoFar * netToGrossRatio;
-  const afterFlatDeductions = availableAnytimePay - flatDeductionsPrev;
-  const afterGarnishments = afterFlatDeductions - ANYTIME_PAY_GARNISHMENTS;
+  const availableEarlyPay = preTaxEarnedSoFar * netToGrossRatio;
+  const afterFlatDeductions = availableEarlyPay - flatDeductionsPrev;
+  const afterGarnishments = afterFlatDeductions - preset.garnishments;
   const rawPct = afterGarnishments / preTaxEarnedSoFar;
-  return Math.max(0, rawPct - getSafetyBuffer(hoursSoFar));
+  return Math.max(0, rawPct - getSafetyBuffer(hoursSoFar, preset));
 }
 
 const PERIOD_MULTIPLIERS: Record<string, number> = {
@@ -244,7 +284,9 @@ function EditableCell({ value, onChange, type = "number", style, className, plac
 
 export default function Wallet() {
   const [debts, setDebts] = useState<Debt[]>([]);
-  const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, hourly_wage: 0, current_balance: 0, net_to_gross_ratio: 0, flat_deductions_prev: 0 });
+  const [debtStrategy, setDebtStrategy] =
+  useState<DebtStrategy>("snowball");
+const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, hourly_wage: 0, current_balance: 0, net_to_gross_ratio: 0, flat_deductions_prev: 0 });
   const [bills, setBills] = useState<Bill[]>([]);
   const [payments, setPayments] = useState<BillPayment[]>([]);
   const [nextId, setNextId] = useState(20);
@@ -270,18 +312,27 @@ export default function Wallet() {
   const [taxRate, setTaxRate] = useState<number>(20);
   const [otWageOverride, setOtWageOverride] = useState<string>("");
   const [walletSettingsLoaded, setWalletSettingsLoaded] = useState(false);
+  const [earlyPayPresetId, setEarlyPayPresetId] = useState<EarlyPayPresetId>("amazon");
+  const [customEarlyPayPreset, setCustomEarlyPayPreset] = useState<EarlyPayPreset>(EARLY_PAY_PRESETS.custom);
+  const earlyPayPreset: EarlyPayPreset = earlyPayPresetId === "custom" ? customEarlyPayPreset : EARLY_PAY_PRESETS[earlyPayPresetId];
 
   const walletSettingsSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
     if (!walletSettingsLoaded) return; // don't overwrite DB with defaults before initial load completes
     if (walletSettingsSaveTimer.current) clearTimeout(walletSettingsSaveTimer.current);
     walletSettingsSaveTimer.current = setTimeout(() => {
-      supabase.from("wallet_settings").upsert({ id: 1, tax_rate: taxRate, ot_wage_override: otWageOverride }).then(({ error }) => {
+      supabase.from("wallet_settings").upsert({
+        id: 1,
+        tax_rate: taxRate,
+        ot_wage_override: otWageOverride,
+        early_pay_preset_id: earlyPayPresetId,
+        custom_early_pay_preset: customEarlyPayPreset,
+      }).then(({ error }) => {
         if (error) console.error("wallet_settings save failed:", error);
       });
     }, 800);
     return () => { if (walletSettingsSaveTimer.current) clearTimeout(walletSettingsSaveTimer.current); };
-  }, [taxRate, otWageOverride, walletSettingsLoaded]);
+  }, [taxRate, otWageOverride, earlyPayPresetId, customEarlyPayPreset, walletSettingsLoaded]);
 
 
   const [calcRegWage, setCalcRegWage] = useState("");
@@ -374,6 +425,10 @@ export default function Wallet() {
         if (walletSettingsData) {
           setTaxRate(typeof walletSettingsData.tax_rate === "number" ? walletSettingsData.tax_rate : 20);
           setOtWageOverride(walletSettingsData.ot_wage_override || "");
+          setEarlyPayPresetId(walletSettingsData.early_pay_preset_id === "custom" ? "custom" : "amazon");
+          if (walletSettingsData.custom_early_pay_preset) {
+            setCustomEarlyPayPreset({ ...EARLY_PAY_PRESETS.custom, ...walletSettingsData.custom_early_pay_preset });
+          }
         }
         setWalletSettingsLoaded(true);
 
@@ -439,12 +494,21 @@ export default function Wallet() {
     ensurePaymentsExist();
   }, [bills, availableMonths]);
 
-  const { months, snowballExtra, totalMins } = useMemo(
-    () => runSnowball(debts, budget.take_home, budget.fixed_expenses),
-    [debts, budget]
-  );
+  const { months, extraDebtPayment, totalMins } = useMemo(
+  () =>
+    runDebtPlan(
+      debts,
+      budget.take_home,
+      budget.fixed_expenses,
+      debtStrategy
+    ));
 
-  const activeDebts = useMemo(() => debts.filter(d => !d.deferred).sort((a, b) => a.balance - b.balance), [debts]);
+    const activeDebts = useMemo(
+    () => debts.filter(d => !d.deferred).sort((a, b) =>
+      debtStrategy === "avalanche" ? b.apr - a.apr : a.balance - b.balance
+    ),
+    [debts, debtStrategy]
+  );
   const deferredDebts = debts.filter(d => d.deferred);
   const activeList = lists.find(l => l.id === activeListId) || null;
   const activeListItems = useMemo(
@@ -601,7 +665,7 @@ export default function Wallet() {
     const priorHours = priorReg + priorOt;
     periodEarnedGross = priorGross;
     periodHoursSoFar = priorHours;
-    periodWithdrawnGross = priorGross * eligiblePercent(priorGross, budget.net_to_gross_ratio, budget.flat_deductions_prev, priorHours);
+    periodWithdrawnGross = priorGross * eligiblePercent(priorGross, budget.net_to_gross_ratio, budget.flat_deductions_prev, priorHours, earlyPayPreset);
   }
 
   const firstSaturdayIdx = allDays.findIndex(d => d.getDay() === 6);
@@ -619,7 +683,7 @@ export default function Wallet() {
       const closedOt = parseFloat(closedWeekHours.ot) || 0;
       const closedEarnedGross = closedReg * grossHourlyWage + closedOt * grossOtWage;
       const closedHours = closedReg + closedOt;
-      const closedWithdrawnGross = closedEarnedGross * eligiblePercent(closedEarnedGross, budget.net_to_gross_ratio, budget.flat_deductions_prev, closedHours);
+      const closedWithdrawnGross = closedEarnedGross * eligiblePercent(closedEarnedGross, budget.net_to_gross_ratio, budget.flat_deductions_prev, closedHours, earlyPayPreset);
       const closedTaxableGross = Math.max(0, closedEarnedGross - budget.flat_deductions_prev);
       const closedNetOwed = closedTaxableGross * (1 - taxRate / 100);
       pendingPayout = Math.max(0, closedNetOwed - closedWithdrawnGross);
@@ -652,7 +716,7 @@ export default function Wallet() {
     periodEarnedGross += fullEarnedToday;
     periodHoursSoFar += hoursToday;
 
-    const eligiblePct = eligiblePercent(periodEarnedGross, budget.net_to_gross_ratio, budget.flat_deductions_prev, periodHoursSoFar);
+    const eligiblePct = eligiblePercent(periodEarnedGross, budget.net_to_gross_ratio, budget.flat_deductions_prev, periodHoursSoFar, earlyPayPreset);
     const maxWithdrawableGrossSoFar = periodEarnedGross * eligiblePct;
     const withdrawnBeforeToday = periodWithdrawnGross;
     const availableToday = Math.max(0, maxWithdrawableGrossSoFar - periodWithdrawnGross);
@@ -756,7 +820,7 @@ export default function Wallet() {
     const needsFloor = Math.min(afterBills, NEEDS_FLOOR);
     const afterFloor = Math.max(0, afterBills - needsFloor);
 
-    unifiedSnowball = snowballExtra > 0 ? Math.min(afterFloor * 0.25, snowballExtra / 30) : 0;
+    unifiedSnowball = extraDebtPayment > 0 ? Math.min(afterFloor * 0.25, extraDebtPayment / 30) : 0;
     const afterSnowball = Math.max(0, afterFloor - unifiedSnowball);
     unifiedBuffer = Math.min(22, afterSnowball);
     const afterBuffer = Math.max(0, afterSnowball - unifiedBuffer);
@@ -1227,7 +1291,9 @@ export default function Wallet() {
               </div>
             </div>
 
-            <Lantern variant="divider" />
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+  <Icon name="pagedivider" size={85} />
+</div>
 
             {/* ── LISTS ── */}
             <div className="card">
@@ -1236,6 +1302,9 @@ export default function Wallet() {
                   <div className="section-label" style={{ marginBottom: 0 }}><Icon name="clipboard-list" size={16} /> Lists</div>
                   <button className="btn btn-primary btn-sm" onClick={() => setShowNewListInput(v => !v)}>+ New List</button>
                 </div>
+
+    <p className="daily-tasks-subtitle">Tap the flower to check it off...</p>
+
 
                 {showNewListInput && (
                   <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
@@ -1290,8 +1359,8 @@ export default function Wallet() {
                                 }}
                               >
                                 {item.done
-                                  ? <Icon name="groq_8" size={17} style={{ color: "var(--pink-dark)" }} />
-                                  : <Icon name="icon-circle" size={17} style={{ color: "var(--border)" }} />
+                                  ? <Icon name="flowerfull" size={17} style={{ color: "var(--pink-dark)" }} />
+                                  : <Icon name="flowerempty" size={17} style={{ color: "var(--border)" }} />
                                 }
                               </button>
                               <div style={{ flex: 1, fontSize: 13, color: item.done ? "var(--ink-muted)" : "var(--ink)", textDecoration: item.done ? "line-through" : "none" }}>
@@ -1333,7 +1402,61 @@ export default function Wallet() {
                 <div style={{ fontSize: 24, lineHeight: 1 }}><Icon name="calendar" size={24} /></div>
                 <div style={{ fontSize: 14, fontWeight: 800, color: "var(--ink)" }}>Money Calendar</div>
                 <div style={{ fontSize: 11, color: "var(--pink-dark)", marginBottom: 14 }}>
-                  Runs from today forward. Log the hours you're working (or plan to work) each day. Anytime Pay eligible percentage comes from your last paycheck's net-to-gross ratio (post-tax ÷ pre-tax), applied against your cumulative pool for the week, minus that check's flat deductions and a growing 2% safety buffer — whatever's unclaimed by Saturday night lands as a lump catch-up the following Wednesday.
+                  Runs from today forward. Log the hours you're working (or plan to work) each day. Your early-pay eligible percentage comes from your last paycheck's net-to-gross ratio (post-tax ÷ pre-tax), applied against your cumulative pool for the week, minus that check's flat deductions and a growing safety buffer — whatever's unclaimed by Saturday night lands as a lump catch-up the following Wednesday.
+                </div>
+
+                <div style={{ marginBottom: 14 }}>
+                  <div className="form-label">Early Pay Formula</div>
+                  <select
+                    className="form-input"
+                    value={earlyPayPresetId}
+                    onChange={e => setEarlyPayPresetId(e.target.value as EarlyPayPresetId)}
+                  >
+                    {Object.values(EARLY_PAY_PRESETS).map(p => (
+                      <option key={p.id} value={p.id}>{p.label}</option>
+                    ))}
+                  </select>
+                  <div style={{ fontSize: 10, color: "var(--ink-muted)", marginTop: 4 }}>
+                    {earlyPayPresetId === "amazon"
+                      ? "Mirrors Amazon's Anytime Pay math: a 2% safety buffer that steps up to 8% once you've logged 55+ hours in the week."
+                      : "Set your own safety buffer and hours threshold below to match your employer's early-pay program."}
+                  </div>
+                  {earlyPayPresetId === "custom" && (
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginTop: 8 }}>
+                      <div>
+                        <div className="form-label" style={{ fontSize: 10 }}>Safety Buffer (%)</div>
+                        <input
+                          type="number" className="form-input"
+                          value={customEarlyPayPreset.safetyBufferNormal * 100}
+                          onChange={e => setCustomEarlyPayPreset(prev => ({ ...prev, safetyBufferNormal: (parseFloat(e.target.value) || 0) / 100 }))}
+                        />
+                      </div>
+                      <div>
+                        <div className="form-label" style={{ fontSize: 10 }}>High-Hours Buffer (%)</div>
+                        <input
+                          type="number" className="form-input"
+                          value={customEarlyPayPreset.safetyBufferHighHours * 100}
+                          onChange={e => setCustomEarlyPayPreset(prev => ({ ...prev, safetyBufferHighHours: (parseFloat(e.target.value) || 0) / 100 }))}
+                        />
+                      </div>
+                      <div>
+                        <div className="form-label" style={{ fontSize: 10 }}>High-Hours Threshold</div>
+                        <input
+                          type="number" className="form-input"
+                          value={customEarlyPayPreset.highHoursThreshold}
+                          onChange={e => setCustomEarlyPayPreset(prev => ({ ...prev, highHoursThreshold: parseFloat(e.target.value) || 0 }))}
+                        />
+                      </div>
+                      <div>
+                        <div className="form-label" style={{ fontSize: 10 }}>Garnishments ($)</div>
+                        <input
+                          type="number" className="form-input"
+                          value={customEarlyPayPreset.garnishments}
+                          onChange={e => setCustomEarlyPayPreset(prev => ({ ...prev, garnishments: parseFloat(e.target.value) || 0 }))}
+                        />
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {new Date().getDay() !== 0 && (
@@ -1457,14 +1580,18 @@ export default function Wallet() {
                     <div className="form-label">Net-to-Gross Ratio</div>
                     <EditableCell type="number" className="form-input" value={budget.net_to_gross_ratio || ""} placeholder="e.g. 0.77" onChange={v => updateBudget("net_to_gross_ratio", parseFloat(v) || 0)} />
                     <div style={{ fontSize: 10, color: "var(--ink-muted)", marginTop: 4 }}>
-                      From payroll.amazon.work: previous paycheck's post-tax ÷ pre-tax earnings. Update it each payday.
+                      {earlyPayPresetId === "amazon"
+                        ? "From payroll.amazon.work: previous paycheck's post-tax ÷ pre-tax earnings. Update it each payday."
+                        : "Previous paycheck's post-tax ÷ pre-tax earnings, from your pay portal. Update it each payday."}
                     </div>
                   </div>
                   <div>
                     <div className="form-label">Flat Deductions ($)</div>
                     <EditableCell type="number" className="form-input" value={budget.flat_deductions_prev || ""} placeholder="e.g. 62.84" onChange={v => updateBudget("flat_deductions_prev", parseFloat(v) || 0)} />
                     <div style={{ fontSize: 10, color: "var(--ink-muted)", marginTop: 4 }}>
-                      Flat deductions from your previous paycheck (per the Amazon app) — for most people this is just the health premium.
+                      {earlyPayPresetId === "amazon"
+                        ? "Flat deductions from your previous paycheck (per the Amazon app) — for most people this is just the health premium."
+                        : "Flat deductions from your previous paycheck — for most people this is just the health premium."}
                     </div>
                   </div>
                 </div>
@@ -1641,9 +1768,8 @@ export default function Wallet() {
                   <button className="btn btn-primary btn-sm" onClick={() => setShowBillForm(v => !v)}>+ Add Bill</button>
                 </div>
 
-                <div style={{ fontSize: 11, color: "var(--ink-muted)", marginBottom: 12 }}>
-                  <Icon name="lightning" size={12} /> Tap any bill, amount, or due day to edit it — changes only apply to {MONTH_NAMES[selectedMonth - 1]}. Recurring bills still show up automatically in new months.
-                </div>
+<p className="daily-tasks-subtitle">Tap the jar to give it some sugar...</p>
+
 
                 {showBillForm && (
                   <div style={{ background: "var(--accent)", borderRadius: 16, padding: 14, marginBottom: 14, display: "flex", flexDirection: "column", gap: 10 }}>
@@ -1755,12 +1881,12 @@ export default function Wallet() {
                 <div style={{ fontSize: 11, color: "var(--ink-muted)", marginTop: 6 }}>rent + transport + non-debt bills — used to calculate your snowball extra</div>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 16, paddingTop: 14, borderTop: "1px solid var(--border)" }}>
                   <div>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: snowballExtra >= 0 ? "var(--green-dark)" : "var(--danger)" }}>True Snowball Extra</div>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: extraDebtPayment >= 0 ? "var(--green-dark)" : "var(--danger)" }}>True Debt Payment Extra</div>
                     <div style={{ fontSize: 11, color: "var(--ink-muted)" }}>take-home ({fmt(budget.take_home)}) minus fixed expenses and {fmt(totalMins)} in minimums</div>
                   </div>
-                  <div style={{ fontSize: 20, fontWeight: 800, color: snowballExtra >= 0 ? "var(--green-dark)" : "var(--danger)" }}>{fmt(snowballExtra)}</div>
+                  <div style={{ fontSize: 20, fontWeight: 800, color: extraDebtPayment >= 0 ? "var(--green-dark)" : "var(--danger)" }}>{fmt(extraDebtPayment)}</div>
                 </div>
-                {snowballExtra < 0 && (
+                {extraDebtPayment < 0 && (
                   <div style={{ marginTop: 10, fontSize: 12, color: "var(--danger)", fontWeight: 600 }}>
                     <Icon name="lightning" size={13} /> Minimums + fixed expenses exceed your take-home pay. Update your Budget Calculator on the home page.
                   </div>
@@ -1768,10 +1894,53 @@ export default function Wallet() {
               </div>
             </div>
 
-            <div className="card">
+
+
+
+
+           
+<div className="card" style={{ marginBottom: 12 }}>
+  <div className="card-body">
+    <div style={{ fontWeight: 700, marginBottom: 10 }}>
+      Select Debt Payoff Strategy
+    </div>
+
+        <label
+      style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8, cursor: "pointer" }}
+      onClick={() => setDebtStrategy("snowball")}
+    >
+      <Icon name={debtStrategy === "snowball" ? "heartfull" : "heartempty"} size={18} />
+      <div>
+        Snowball
+        <div style={{ fontSize: 12, opacity: .7 }}>
+          Pay the smallest balance first.
+        </div>
+      </div>
+    </label>
+
+
+       <label
+      style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}
+      onClick={() => setDebtStrategy("avalanche")}
+    >
+      <Icon name={debtStrategy === "avalanche" ? "heartfull" : "heartempty"} size={18} />
+      <div>
+        Avalanche
+        <div style={{ fontSize: 12, opacity: .7 }}>
+          Pay the highest APR first.
+        </div>
+      </div>
+    </label>
+
+  </div>
+</div>
+ <div className="card">
               <div className="card-body">
                 <div className="section-header">
-                  <div className="section-label">Active Debts — Snowball Order</div>
+
+                  <div className="section-label">Active Debts</div>
+<p className="daily-tasks-subtitle">Tap the shell to give it some color...</p>
+
                   <button className="btn btn-primary btn-sm" onClick={() => addDebt(false)}>
                     + Add
                   </button>
@@ -1909,10 +2078,11 @@ export default function Wallet() {
               </div>
             </div>
 
+
             <div className="section-label" style={{ marginTop: 4 }}><Icon name="clipboard-list" size={16} /> Payoff Schedule</div>
-            {snowballExtra < 0 && (
+            {extraDebtPayment < 0 && (
               <div style={{ background: "var(--danger-bg)", border: "1.5px solid var(--danger)", borderRadius: 16, padding: "12px 16px", fontSize: 13, color: "var(--danger)", fontWeight: 600 }}>
-                <Icon name="lightning" size={13} /> Snowball extra is negative — minimums exceed your budget!
+                <Icon name="lightning" size={13} /> Extra debt payment is negative — minimum payments exceed your budget!
               </div>
             )}
 

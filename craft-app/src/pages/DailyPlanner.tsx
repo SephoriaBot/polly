@@ -7,6 +7,7 @@ import Lantern from "../components/Lantern";
 import EmptyState from '../components/EmptyState';
 import checklistImg from '../assets/illustrations/checklist.png';
 import celebrationImg from '../assets/illustrations/celebration.png';
+import empty7Img from '../assets/icons/empty7.png';
 import Icon, { type IconName } from '../components/Icon';
 
 interface DailyTask {
@@ -14,7 +15,19 @@ interface DailyTask {
   label: string;
   done: boolean;
   created_at: string;
+  task_date: string; // YYYY-MM-DD — the day this instance belongs to
+  template_id: string | null; // set if this instance was generated from a recurring template
 }
+
+interface DailyTaskTemplate {
+  id: string;
+  label: string;
+  days_of_week: number[]; // 0=Sun .. 6=Sat (matches JS Date#getDay())
+  active: boolean;
+  created_at: string;
+}
+
+const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 interface Appointment {
   id: string;
@@ -52,16 +65,26 @@ function StitchDivider() {
   );
 }
 
+function todayISO() {
+  return new Date().toISOString().slice(0, 10);
+}
+
 export default function DailyPlanner() {
   const [tasks, setTasks] = useState<DailyTask[]>([]);
+  const [templates, setTemplates] = useState<DailyTaskTemplate[]>([]);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
   const [newTask, setNewTask] = useState('');
+  const [newTaskDate, setNewTaskDate] = useState(todayISO());
+  const [upcomingTasks, setUpcomingTasks] = useState<DailyTask[]>([]);
   const [newApptTitle, setNewApptTitle] = useState('');
   const [newApptDate, setNewApptDate] = useState('');
   const [sparks, setSparks] = useState<Spark[]>([]);
   const [focusNote, setFocusNote] = useState<AppointmentNoteSelection | null>(null);
   const [showAllDoneCelebration, setShowAllDoneCelebration] = useState(false);
+  const [repeatMode, setRepeatMode] = useState(false); // false = one-off (date picker), true = recurring (day chips)
+  const [newTaskDays, setNewTaskDays] = useState<number[]>([]);
+  const [savingTemplate, setSavingTemplate] = useState(false);
 
   const { map: noteMap, refresh: refreshNoteMap } = useAppointmentNoteMap(appointments.map(a => a.id));
 
@@ -71,25 +94,64 @@ export default function DailyPlanner() {
 
   async function loadAll() {
     setLoading(true);
-    const [tasksRes, apptsRes] = await Promise.all([
-      supabase.from('daily_tasks').select('*').order('created_at'),
+    const today = todayISO();
+    const [tasksRes, upcomingRes, templatesRes, apptsRes] = await Promise.all([
+      supabase.from('daily_tasks').select('*').eq('task_date', today).order('created_at'),
+      supabase.from('daily_tasks').select('*').gt('task_date', today).order('task_date'),
+      supabase.from('daily_task_templates').select('*').order('created_at'),
       supabase.from('appointments').select('*').order('date_time'),
     ]);
-    setTasks(tasksRes.data ?? []);
+
+    const todaysTemplates: DailyTaskTemplate[] = templatesRes.data ?? [];
+    const todaysTasks: DailyTask[] = tasksRes.data ?? [];
+    setTemplates(todaysTemplates);
+    setUpcomingTasks(upcomingRes.data ?? []);
     setAppointments(apptsRes.data ?? []);
+
+    // Generate today's instances for any active template that applies to
+    // today's weekday and doesn't already have an instance for today.
+    const todayWeekday = new Date().getDay();
+    const alreadyGenerated = new Set(todaysTasks.filter(t => t.template_id).map(t => t.template_id));
+    const dueTemplates = todaysTemplates.filter(
+      t => t.active && t.days_of_week.includes(todayWeekday) && !alreadyGenerated.has(t.id)
+    );
+
+    if (dueTemplates.length > 0) {
+      const { data: inserted } = await supabase
+        .from('daily_tasks')
+        .insert(dueTemplates.map(t => ({ label: t.label, done: false, task_date: today, template_id: t.id })))
+        .select();
+      setTasks([...todaysTasks, ...(inserted ?? [])]);
+    } else {
+      setTasks(todaysTasks);
+    }
+
     setLoading(false);
   }
 
   async function addTask() {
+    if (repeatMode) return addTemplate();
+
     const label = newTask.trim();
     if (!label) return;
+    const targetDate = newTaskDate || todayISO();
     const { data } = await supabase
       .from('daily_tasks')
-      .insert({ label, done: false })
+      .insert({ label, done: false, task_date: targetDate, template_id: null })
       .select()
       .single();
-    if (data) setTasks(prev => [...prev, data]);
+    // Only add to today's visible list if it was actually scheduled for
+    // today — anything scheduled for a future date shows up in the
+    // "Scheduled" list instead, and moves into the main checklist on its day.
+    if (data) {
+      if (targetDate === todayISO()) {
+        setTasks(prev => [...prev, data]);
+      } else {
+        setUpcomingTasks(prev => [...prev, data].sort((a, b) => a.task_date.localeCompare(b.task_date)));
+      }
+    }
     setNewTask('');
+    setNewTaskDate(todayISO());
   }
 
   async function toggleTask(task: DailyTask, e: React.MouseEvent) {
@@ -124,6 +186,17 @@ export default function DailyPlanner() {
     setTasks(prev => prev.filter(t => t.id !== id));
   }
 
+  async function deleteUpcomingTask(id: string) {
+    await supabase.from('daily_tasks').delete().eq('id', id);
+    setUpcomingTasks(prev => prev.filter(t => t.id !== id));
+  }
+
+  function formatScheduledDate(dateStr: string) {
+    return new Date(`${dateStr}T12:00:00`).toLocaleDateString(undefined, {
+      weekday: 'short', month: 'short', day: 'numeric',
+    });
+  }
+
   async function resetAll() {
     const { error } = await supabase
       .from('daily_tasks')
@@ -131,6 +204,56 @@ export default function DailyPlanner() {
       .in('id', tasks.map(t => t.id));
     if (error) { console.error(error); return; }
     setTasks(prev => prev.map(t => ({ ...t, done: false })));
+  }
+
+  function toggleNewTaskDay(day: number) {
+    setNewTaskDays(prev =>
+      prev.includes(day) ? prev.filter(d => d !== day) : [...prev, day]
+    );
+  }
+
+  async function addTemplate() {
+    const label = newTask.trim();
+    if (!label || newTaskDays.length === 0) return;
+    setSavingTemplate(true);
+    try {
+      const { data, error } = await supabase
+        .from('daily_task_templates')
+        .insert({ label, days_of_week: [...newTaskDays].sort((a, b) => a - b), active: true })
+        .select()
+        .single();
+      if (error) throw error;
+      setTemplates(prev => [...prev, data]);
+
+      // If today matches the new template's days, generate today's instance
+      // immediately instead of waiting for the next page load.
+      if (data.days_of_week.includes(new Date().getDay())) {
+        const { data: inserted } = await supabase
+          .from('daily_tasks')
+          .insert({ label: data.label, done: false, task_date: todayISO(), template_id: data.id })
+          .select()
+          .single();
+        if (inserted) setTasks(prev => [...prev, inserted]);
+      }
+
+      setNewTask('');
+      setNewTaskDays([]);
+      setRepeatMode(false);
+    } catch (e) {
+      console.error('failed to add recurring task', e);
+    } finally {
+      setSavingTemplate(false);
+    }
+  }
+
+  async function stopRecurring(templateId: string) {
+    if (!window.confirm("Stop this task from repeating? Today's checklist entry stays — it just won't regenerate.")) return;
+    // Only stops future generation — today's already-generated instance (if
+    // any) sticks around, same as any other task, since template_id is
+    // ON DELETE SET NULL.
+    await supabase.from('daily_task_templates').delete().eq('id', templateId);
+    setTemplates(prev => prev.filter(t => t.id !== templateId));
+    setTasks(prev => prev.map(t => t.template_id === templateId ? { ...t, template_id: null } : t));
   }
 
   async function addAppointment() {
@@ -219,11 +342,13 @@ export default function DailyPlanner() {
             {allDone ? 'All done! Good job.' : `${doneCount} of ${tasks.length} done today`}
           </p>
         </div>
-        {tasks.length > 0 && (
-          <button className="btn btn-ghost" onClick={resetAll}>
-            <Icon name="groq_4" size={14} /> Reset
-          </button>
-        )}
+        <div style={{ display: 'flex', gap: 8 }}>
+          {tasks.length > 0 && (
+            <button className="btn btn-ghost" onClick={resetAll}>
+              <Icon name="icon-recur" size={14} /> Reset
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="page-body">
@@ -257,23 +382,14 @@ export default function DailyPlanner() {
               <div className="section-label" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <span>Daily Tasks</span>
               </div>
+             <p className="daily-tasks-subtitle">Tap the toast to give it some jam...</p>
 
               {loading ? (
                 <p style={{ fontSize: 13, color: 'var(--ink-muted)' }}>Loading…</p>
               ) : tasks.length === 0 ? (
-                <div style={{
-                  display: 'flex', flexDirection: 'column', alignItems: 'center',
-                  gap: 8, padding: '28px 16px', marginBottom: 16,
-                  border: '1.5px dashed var(--border)', borderRadius: 'var(--radius-md)',
-                }}>
-                  <Icon name="icon-heart" size={26} style={{ color: 'var(--pink-light)' }} strokeWidth={1.5} />
-                  <p style={{
-                    fontSize: '0.85rem', color: 'var(--ink-muted)', margin: 0,
-                    lineHeight: 1.6, textAlign: 'center',
-                  }}>
-                    No tasks yet — add your first one below
-                  </p>
-                </div>
+                
+        <EmptyState icon="empty2" title="No tasks yet. Add one to get started." />
+    
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 16 }}>
                   {sortedTasks.map(task => (
@@ -298,8 +414,8 @@ export default function DailyPlanner() {
                         }}
                       >
                         {task.done
-                          ? <Icon name="pinkhamster" size={25} style={{ color: 'var(--pink-dark)' }} />
-                          : <Icon name="creamhamster" size={25} style={{ color: 'var(--border)' }} />
+                          ? <Icon name="toastfull" size={22} style={{ color: 'var(--pink-dark)' }} />
+                          : <Icon name="toastempty" size={22} style={{ color: 'var(--border)' }} />
                         }
                       </button>
 
@@ -308,42 +424,118 @@ export default function DailyPlanner() {
                         letterSpacing: '0.01em', lineHeight: 1.4,
                         color: task.done ? 'var(--ink-muted)' : 'var(--ink)',
                         textDecoration: task.done ? 'line-through' : 'none',
+                        display: 'flex', alignItems: 'center', gap: 6,
                       }}>
                         {task.label}
+                        {task.template_id && (
+                          <button
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); stopRecurring(task.template_id!); }}
+                            title="Repeats — tap to stop"
+                            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', color: 'var(--ink-muted)', opacity: 0.6, flexShrink: 0 }}
+                          >
+                            <Icon name="icon-recur" size={11} />
+                          </button>
+                        )}
                       </span>
 
                       <button
                         onClick={() => deleteTask(task.id)}
                         style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-muted)', padding: 0, display: 'flex', alignItems: 'center', opacity: 0.4 }}
                       >
-                        <Icon name="groq_3" size={13} />
+                        <Icon name="icon-clear" size={13} />
                       </button>
                     </div>
                   ))}
                 </div>
               )}
 
-              <div style={{ display: 'flex', gap: 8 }}>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                 <input
                   className="form-input"
-                  placeholder="Add a daily task…"
+                  placeholder="Add a task…"
                   value={newTask}
                   onChange={e => setNewTask(e.target.value)}
                   onKeyDown={e => e.key === 'Enter' && addTask()}
-                  style={{ flex: 1 }}
+                  style={{ flex: 1, minWidth: 140 }}
                 />
+                <button
+                  type="button"
+                  className={repeatMode ? 'btn btn-primary' : 'btn btn-ghost'}
+                  onClick={() => setRepeatMode(r => !r)}
+                  title="Repeat on specific days instead of a one-time date"
+                  style={{ padding: '10px 12px' }}
+                >
+                  <Icon name="icon-calendar" size={14} /> Repeat
+                </button>
+                {!repeatMode && (
+                  <input
+                    className="form-input"
+                    type="date"
+                    value={newTaskDate}
+                    min={todayISO()}
+                    onChange={e => setNewTaskDate(e.target.value)}
+                    title="Defaults to today — pick a future date to schedule it instead"
+                    style={{ width: 150 }}
+                  />
+                )}
                 <button
                   className="btn btn-primary"
                   style={{ padding: '10px 14px' }}
                   onClick={addTask}
+                  disabled={savingTemplate || !newTask.trim() || (repeatMode && newTaskDays.length === 0)}
                 >
                   <Icon name="icon-plus" size={14} />
                 </button>
               </div>
+
+              {repeatMode && (
+                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 8 }}>
+                  {DAY_LABELS.map((label, day) => (
+                    <button
+                      key={day}
+                      type="button"
+                      onClick={() => toggleNewTaskDay(day)}
+                      className={newTaskDays.includes(day) ? 'btn btn-primary btn-sm' : 'btn btn-ghost btn-sm'}
+                      style={{ minWidth: 44 }}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {upcomingTasks.length > 0 && (
+                <div style={{ marginTop: 16 }}>
+                  <div className="section-label" style={{ fontSize: 11, marginBottom: 8 }}>Scheduled</div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    {upcomingTasks.map(task => (
+                      <div key={task.id} style={{
+                        display: 'flex', alignItems: 'center', gap: 10,
+                        padding: '8px 10px', borderRadius: 'var(--radius-sm)',
+                        border: '1.5px dashed var(--border)',
+                      }}>
+                        <span style={{ flex: 1, fontSize: 13 }}>{task.label}</span>
+                        <span style={{ fontSize: 10, color: 'var(--ink-muted)', fontFamily: "'IBM Plex Mono', monospace" }}>
+                          {formatScheduledDate(task.task_date)}
+                        </span>
+                        <button
+                          onClick={() => deleteUpcomingTask(task.id)}
+                          style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-muted)', padding: 0, display: 'flex', alignItems: 'center', opacity: 0.4 }}
+                        >
+                          <Icon name="icon-clear" size={12} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
-          <Lantern variant="divider" />
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+  <Icon name="pagedivider" size={85} />
+</div>
 
           {/* Appointments */}
           <div className="card">
@@ -353,11 +545,9 @@ export default function DailyPlanner() {
               </div>
 
               {appointments.length === 0 ? (
-              <EmptyState
-                image={checklistImg}
-                message="Nothing scheduled yet"
-                subMessage="Add your first appointment below"
-              />
+              
+        <EmptyState image={empty7Img} message="No appointments scheduled yet" />
+    
             ) : (
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16 }}>
@@ -401,7 +591,7 @@ export default function DailyPlanner() {
                           onClick={() => deleteAppointment(appt.id)}
                           style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-muted)', padding: 0, display: 'flex', alignItems: 'center', opacity: 0.4 }}
                         >
-                          <Icon name="groq_3" size={13} />
+                          <Icon name="icon-clear" size={13} />
                         </button>
                       </div>
                     );
@@ -441,7 +631,9 @@ export default function DailyPlanner() {
 
         </section>
 
-        <Lantern variant="divider" />
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+  <Icon name="pagedivider" size={85} />
+</div>
 
         {/* APPOINTMENT NOTES PANEL */}
 

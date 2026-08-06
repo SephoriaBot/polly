@@ -3,9 +3,11 @@ import { supabase } from '../lib/supabase';
 import Lantern from "../components/Lantern";
 import DailyAlmanac from "../components/DailyAlmanac";
 import sleepingNestImg from '../assets/illustrations/sleeping_nest.png';
+import empty8Img from '../assets/icons/empty8.png';
 import WeatherBadge from '../components/WeatherBadge';
 import TroubleshooterGroq from '../components/suggest/TroubleshooterGroq';
 import Icon, { type IconName } from '../components/Icon';
+import EmptyState from '../components/EmptyState';
 
 interface Focus {
   id: string;
@@ -126,6 +128,7 @@ async function loadAll() {
                 </span>
               )}
             </div>
+
             <button
               onClick={() => setAddingFocus(true)}
               style={{
@@ -169,17 +172,14 @@ async function loadAll() {
           )}
 
           {focuses.length === 0 && !addingFocus ? (
-            <div style={{
-              background: 'var(--white)', border: '1.5px dashed var(--border)',
-              borderRadius: 18, padding: '18px 16px', textAlign: 'center',
-              color: 'var(--ink-muted)', fontSize: '0.82rem',
-              display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6,
-            }}>
-              <img src={sleepingNestImg} alt="" style={{ width: 80 }} />
-              No focuses set for today — add one to get started
-            </div>
+            
+        <EmptyState image={empty8Img} message="No focuses set for today." size={65} />
+    
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+
+  <p className="daily-tasks-subtitle">Tap the basket to fill it up...</p>
+
               {focuses.map(f => (
                 <div
                   key={f.id}
@@ -247,14 +247,17 @@ async function loadAll() {
           )}
         </section>
 
-        <Lantern variant="divider" />
-
+       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+  <Icon name="pagedivider" size={85} />
+</div>
         {/* ── DAILY ALMANAC ── */}
         <section>
           <DailyAlmanac />
         </section>
 
-        <Lantern variant="divider" />
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+  <Icon name="pagedivider" size={85} />
+</div>
 
          {/* ── TROUBLESHOOTER GROQ ── */}
           <section>

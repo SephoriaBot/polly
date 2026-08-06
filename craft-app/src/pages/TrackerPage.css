@@ -1,6 +1,6 @@
 /* ============================================================
    Tracker Page — cottagecore styling
-   Uses var(--token, fallback) so it inherits Homebody's existing
+   Uses var(--token, fallback) so it inherits pollys existing
    CSS variables automatically if the names match, and otherwise
    falls back to a self-contained palette.
    ============================================================ */
