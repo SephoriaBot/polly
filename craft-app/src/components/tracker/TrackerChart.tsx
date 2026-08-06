@@ -73,7 +73,9 @@ export default function TrackerChart({ type, startDate, endDate, refreshKey, lab
     loadLogs();
   }
 
-  <Lantern variant="divider" />
+  <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+  <Icon name="pagedivider" size={85} />
+</div>
 
   {/* ENTRIES LIST */}
 

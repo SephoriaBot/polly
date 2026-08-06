@@ -533,7 +533,9 @@ export default function DailyPlanner() {
             </div>
           </div>
 
-          <Lantern variant="divider" />
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+  <Icon name="pagedivider" size={85} />
+</div>
 
           {/* Appointments */}
           <div className="card">
@@ -629,7 +631,9 @@ export default function DailyPlanner() {
 
         </section>
 
-        <Lantern variant="divider" />
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+  <Icon name="pagedivider" size={85} />
+</div>
 
         {/* APPOINTMENT NOTES PANEL */}
 

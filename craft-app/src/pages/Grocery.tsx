@@ -1261,7 +1261,9 @@ export default function Grocery() {
           </div>
         </div>
 
-        <Lantern variant="divider" />
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+  <Icon name="pagedivider" size={85} />
+</div>
 
         {have.length > 0 && (
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
@@ -1549,7 +1551,9 @@ export default function Grocery() {
           </div>
         )}
 
-        <Lantern variant="divider" />
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+  <Icon name="pagedivider" size={85} />
+</div>
 
         {/* smart cart */}
         <div className="card">

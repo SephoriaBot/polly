@@ -1291,7 +1291,9 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
               </div>
             </div>
 
-            <Lantern variant="divider" />
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+  <Icon name="pagedivider" size={85} />
+</div>
 
             {/* ── LISTS ── */}
             <div className="card">
