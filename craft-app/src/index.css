@@ -305,7 +305,7 @@ rgba(247, 230, 195, 0.4) 14px
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: var(--ink-muted);
+  color: var(--green-dark);
   margin-bottom: 10px;
 }
 
@@ -393,7 +393,10 @@ rgba(247, 230, 195, 0.4) 14px
   padding: 4px 10px;
   border-radius: 999px;
   font-size: 12px;
-  background: var(--accent);
+  font-weight: 600;
+  background: var(--sage-light);
+  color: var(--green-dark);
+  border: 1px solid var(--sage);
 }
 
 /* ================= INPUTS ================= */
@@ -448,7 +451,7 @@ input:focus {
 .btn-primary:hover { transform: translateY(-2px); }
 
 .btn-secondary {
-  border: 1px solid var(--border);
+  border: 1px solid var(--sage-dark);
   border-radius: 999px;
   padding: 10px 14px;
   font-weight: 600;
@@ -458,7 +461,7 @@ input:focus {
   transition: 0.15s ease;
   font-family: 'Nunito Sans', sans-serif;
 }
-.btn-secondary:hover { transform: translateY(-2px); background: var(--sage-light); }
+.btn-secondary:hover { transform: translateY(-2px); background: var(--sage-light); color: var(--green-dark); }
 
 .btn-danger {
   border: 1px solid var(--danger);
