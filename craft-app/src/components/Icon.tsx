@@ -57,6 +57,7 @@ export default function Icon({ name, size = 20, alt = '', className, style }: Ic
         verticalAlign: '-0.2em',
         objectFit: 'contain',
         maxWidth: 'none',
+        alignItems: 'center',
         ...style,
       }}
     />
