@@ -13,13 +13,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(500).json({ error: 'Price search is not configured (missing API key)', results: [] })
   }
 
-  try {
+    try {
     let url = `https://serpapi.com/search.json?engine=google_shopping&q=${encodeURIComponent(q)}&api_key=${process.env.SERPAPI_KEY}&gl=us&hl=en`
 
     if (location) url += `&location=${encodeURIComponent(location)}`
 
+    const start = Date.now()
     const r = await fetch(url)
     const data = await r.json()
+    console.log(`product-search: SerpAPI responded in ${Date.now() - start}ms for q="${q}"`)
 
     // SerpAPI returns 200 with an `error` field (bad/expired key, exhausted
     // account searches, rate limited, etc.) rather than an HTTP error status,
