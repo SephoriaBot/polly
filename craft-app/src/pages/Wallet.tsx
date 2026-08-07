@@ -1623,7 +1623,7 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                                   {row.date.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })}
                                   {isToday && <span style={{ color: "var(--pink-dark)", marginLeft: 6, fontSize: 10 }}>TODAY</span>}
                                 </div>
-                                <div style={{ fontSize: 13, fontWeight: 800, color: row.balance < 0 ? "var(--danger)" : "var(--green-dark)" }}>
+                                <div style={{ fontSize: 13, fontWeight: 800, color: row.balance < 0 ? "var(--danger)" : (isToday ? "var(--pink-dark)" : "var(--green-dark)") }}>
                                   {fmt(row.balance)}
                                 </div>
                               </div>
