@@ -15,7 +15,7 @@ export type IconName =
   | 'sparkle-single' | 'sparkles-cluster' | 'spellbook' | 'sun-cloud' | 'trash-can'
   | 'trophy' | 'washing-machine' | 'aries' | 'taurus' | 'gemini' | 'cancer' | 'leo' | 'virgo' | 'libra' | 'scorpio'
   | 'sagittarius' | 'capricorn' | 'aquarius' | 'pisces'
-  | 'groq_1' | 'groq_2' | 'groq_3' | 'groq_4' | 'groq_5' | 'groq_6' | 'groq_7' | 'groq_8' | 'groq_9' | 'groq_10'
+  | 'groq_1' | 'groq_2' | 'groq_4' | 'groq_5' | 'groq_6' | 'groq_7' | 'groq_9' | 'groq_10'
   | 'empty_jar'
   | 'icon-alertcircle' | 'icon-archive' | 'icon-arrowleft' | 'icon-calendar'
   | 'icon-calendardays' | 'icon-chefhat' | 'icon-chevrondown' | 'icon-chevronup'
