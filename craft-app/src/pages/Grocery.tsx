@@ -6,7 +6,7 @@ import Lantern from "../components/Lantern";
 import EmptyState from '../components/EmptyState';
 import breadBasketImg from '../assets/illustrations/bread_basket.png';
 import hourglassImg from '../assets/illustrations/hourglass.png';
-import empty9Img from '../assets/icons/empty9.png';
+import dizzyImg from '../assets/illustrations/error_dizzy.png';
 import empty4Img from '../assets/icons/empty4.png';
 
 
@@ -1295,7 +1295,7 @@ export default function Grocery() {
             return (
               <div className="card">
                 <div className="section-label">Best Store for Your Whole List</div>
-<EmptyState image={empty9Img} message="No products found...Refresh or try again." />
+<EmptyState image={dizzyImg} message="No products found...Refresh or try again." />
       
     
               </div>
