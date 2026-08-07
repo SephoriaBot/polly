@@ -1134,7 +1134,7 @@ export default function Grocery() {
           <input
             className="form-input"
             type="text"
-            placeholder="City, state (e.g. your city, your state)…"
+            placeholder="ZIP"
             value={location}
             onChange={e => saveLocation(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && buildSmartCart()}
