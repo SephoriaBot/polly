@@ -690,8 +690,7 @@ function SavedTab({
   if (savedMeals.length === 0) {
     return (
       <div className="empty-state">
-        <Icon name="empty2" size={20} />
-        No saved meals yet
+        <EmptyState image={empty2Img} message="No saved meals yet." />
         <button className="btn btn-secondary btn-sm" style={{ marginLeft: 8 }} onClick={onGoDiscover}>Find some</button>
       </div>
     )
