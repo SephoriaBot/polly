@@ -550,6 +550,51 @@ export default function Grocery() {
     setBasicsChecked(new Set())
   }
 
+  // SerpAPI's live Google Shopping scrape is occasionally just slow (10-20s+),
+  // not actually broken — a single client-side timeout was getting treated as
+  // "the whole service is down" even when a retry a few seconds later would
+  // have succeeded. This gives a transient failure a couple of automatic
+  // second chances before we give up on that item for this build.
+  //
+  // A genuine config problem (missing/invalid API key) is NOT transient, so
+  // it skips retries and surfaces immediately instead of burning 3 attempts
+  // on something that will never succeed.
+  async function fetchProductSearchWithRetry(
+    query: string,
+    zip: string,
+    maxAttempts = 3
+  ): Promise<{ results: any[]; error?: string }> {
+    let lastError: string | undefined
+
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      const controller = new AbortController()
+      const timeout = setTimeout(() => controller.abort(), 15000)
+
+      try {
+        const res = await fetch(
+          `/api/product-search?q=${encodeURIComponent(query)}${zip ? `&zip=${encodeURIComponent(zip)}` : ''}`,
+          { signal: controller.signal }
+        )
+        const data = await res.json()
+
+        if (data.error) {
+          if (data.error.includes('not configured')) {
+            return { results: [], error: data.error }
+          }
+          lastError = data.error
+        } else {
+          return { results: Array.isArray(data.results) ? data.results : [] }
+        }
+      } catch (e) {
+        lastError = 'Could not reach the price search service'
+      } finally {
+        clearTimeout(timeout)
+      }
+    }
+
+    return { results: [], error: lastError }
+  }
+
   async function buildSmartCart() {
     const needItems = items.filter(i => !i.checked)
 
@@ -604,25 +649,10 @@ export default function Grocery() {
               // time instead of before caching.
               resultsArr = cachedResults
             } else {
-                            const controller = new AbortController()
-              const timeout = setTimeout(() => controller.abort(), 15000)
-
-              try {
-                const res = await fetch(
-                  `/api/product-search?q=${encodeURIComponent(item.name)}${location ? `&zip=${encodeURIComponent(location)}` : ''}`,
-                  { signal: controller.signal }
-                )
-
-                const data = await res.json()
-                if (data.error && !firstError) firstError = data.error
-                resultsArr = Array.isArray(data.results) ? data.results : []
-                apiError = data.error
-              } catch (e) {
-                apiError = 'Could not reach the price search service'
-                if (!firstError) firstError = apiError
-              } finally {
-                clearTimeout(timeout)
-              }
+              const { results: fetchedResults, error: fetchError } = await fetchProductSearchWithRetry(item.name, location)
+              resultsArr = fetchedResults
+              apiError = fetchError
+              if (apiError && !firstError) firstError = apiError
             }
             // NOTE: results are intentionally kept RAW (unfiltered) here —
             // whitelist filtering happens later, at display/tally time via
@@ -719,7 +749,13 @@ export default function Grocery() {
       }
     } finally {
       setLoadingCart(false)
-      if (firstError) setCartError(firstError)
+      // A single item still failing after 3 retry attempts doesn't mean the
+      // service is "down" — it just means that one item didn't come back in
+      // time. Only show the big banner when NOTHING came back, since that's
+      // the actual outage case. Individual failed items still show their own
+      // inline "tap to retry" below.
+      const allFailed = results.length > 0 && results.every(r => r.error)
+      setCartError(allFailed ? firstError : null)
     }
   }
 
@@ -1632,7 +1668,13 @@ export default function Grocery() {
                         </>
                       )}
                       {!cheapest && c.error && (
-                        <span style={{ fontSize: '0.72rem', color: 'var(--danger)' }}>lookup failed</span>
+                        <button
+                          onClick={refreshSmartCart}
+                          title={c.error}
+                          style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontSize: '0.72rem', color: 'var(--danger)', textDecoration: 'underline' }}
+                        >
+                          couldn't find a price — tap to retry
+                        </button>
                       )}
                       {!cheapest && !c.error && (
                         <span style={{ fontSize: '0.72rem', color: 'var(--ink-muted)' }}>no matches at whitelisted stores</span>
