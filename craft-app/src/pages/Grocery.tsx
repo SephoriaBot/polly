@@ -604,14 +604,15 @@ export default function Grocery() {
               // time instead of before caching.
               resultsArr = cachedResults
             } else {
-              const controller = new AbortController()
-              const timeout = setTimeout(() => controller.abort(), 4000)
+                            const controller = new AbortController()
+              const timeout = setTimeout(() => controller.abort(), 15000)
 
               try {
                 const res = await fetch(
                   `/api/product-search?q=${encodeURIComponent(item.name)}${location ? `&zip=${encodeURIComponent(location)}` : ''}`,
                   { signal: controller.signal }
                 )
+
                 const data = await res.json()
                 if (data.error && !firstError) firstError = data.error
                 resultsArr = Array.isArray(data.results) ? data.results : []
@@ -664,13 +665,14 @@ export default function Grocery() {
                   continue
                 }
 
-                const controller = new AbortController()
-                const timeout = setTimeout(() => controller.abort(), 4000)
+                                const controller = new AbortController()
+                const timeout = setTimeout(() => controller.abort(), 15000)
                 try {
                   const res = await fetch(
                     `/api/product-search?q=${encodeURIComponent(`${item.name} ${store}`)}${location ? `&zip=${encodeURIComponent(location)}` : ''}`,
                     { signal: controller.signal }
                   )
+
                   const data = await res.json()
                   // Only keep results that actually match the store we
                   // targeted — a "{item} {store}" query can still return
