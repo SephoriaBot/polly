@@ -8,6 +8,7 @@ import breadBasketImg from '../assets/illustrations/bread_basket.png';
 import hourglassImg from '../assets/illustrations/hourglass.png';
 import dizzyImg from '../assets/illustrations/error_dizzy.png';
 import empty4Img from '../assets/icons/empty4.png';
+import RecipeBox from '../components/meals/RecipeBox';
 
 
 interface GroceryList { id: string; name: string; created_at: string }
@@ -1073,6 +1074,12 @@ export default function Grocery() {
       </div>
 
       <div className="page-body">
+
+        <RecipeBox
+          currentList={currentList}
+          existingItemNames={items.map(i => i.name)}
+          onItemsAdded={newRows => setItems(prev => [...prev, ...(newRows as GroceryItem[])])}
+        />
 
         {/* Build Basics List modal */}
         {showBasicsModal && (
