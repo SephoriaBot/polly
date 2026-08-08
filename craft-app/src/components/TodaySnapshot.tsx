@@ -1,9 +1,12 @@
 // TodaySnapshot.tsx
 // Tier 1, Step 1 (part 2): makes Dashboard pull live from the sections that
 // used to be isolated from each other — Planner (chores + appointments) and
-// Wallet — so "Today" actually answers "what matters right now" instead of
-// just holding a manually-typed focus list. Each row is read-only and
-// tap-through only; editing still happens on the source page.
+// Wallet (bills) — so "Today" actually answers "what matters right now"
+// instead of just holding a manually-typed focus list. Each row is
+// read-only and tap-through only; editing still happens on the source page.
+// Money reads from `bills` (the live bill definitions), cross-checked
+// against `bill_payments` for this month's paid status — bill_payments
+// alone can hold stale/orphaned rows once a bill's been edited or deleted.
 
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
@@ -31,19 +34,28 @@ export default function TodaySnapshot({ onNavigate }: { onNavigate?: (page: stri
       const today = todayISO();
       const now = new Date();
 
-      const [choresRes, apptRes, paymentsRes] = await Promise.all([
+      const [choresRes, apptRes, billsRes, paymentsRes] = await Promise.all([
         supabase.from('daily_tasks').select('id,label,done').eq('task_date', today).eq('done', false).order('created_at'),
         supabase.from('appointments').select('id,title,date_time').order('date_time'),
-        supabase.from('bills')
-          .select('id,name,amount,due_day,paid,month,year')
-          .eq('paid', false)
-          .eq('month', now.getMonth() + 1)
-          .eq('year', now.getFullYear())
-          .order('due_day'),
+        supabase.from('bills').select('id,name,amount,due_day,recurring,bill_month,bill_year').order('due_day'),
+        supabase.from('bill_payments').select('bill_id,month,year,paid').eq('month', now.getMonth() + 1).eq('year', now.getFullYear()),
       ]);
 
       const chores = choresRes.data ?? [];
       const payments = paymentsRes.data ?? [];
+
+      // Same staleness rule Wallet uses: a one-off bill from a past month is
+      // done and gone, only recurring bills or the current/future one-offs count.
+      const isPastMonth = (m: number | null | undefined, y: number | null | undefined) =>
+        y != null && m != null && (y < now.getFullYear() || (y === now.getFullYear() && m < now.getMonth() + 1));
+      const activeBills = (billsRes.data ?? []).filter(b => b.recurring || !isPastMonth(b.bill_month, b.bill_year));
+
+      // A bill counts as unpaid this month unless there's a bill_payments row
+      // for it saying otherwise.
+      const unpaidBills = activeBills.filter(b => {
+        const payment = payments.find(p => p.bill_id === b.id);
+        return !payment || !payment.paid;
+      });
 
       // Window is local-midnight-today through local-midnight-day-after-tomorrow,
       // so "today/tomorrow" respects the user's clock rather than UTC.
@@ -60,7 +72,7 @@ export default function TodaySnapshot({ onNavigate }: { onNavigate?: (page: stri
       // the earliest unpaid one this month (i.e. already overdue) if none.
       const currentDay = now.getDate();
       const nextBill =
-        payments.find(p => (p.due_day ?? 0) >= currentDay) ?? payments[0] ?? null;
+        unpaidBills.find(b => (b.due_day ?? 0) >= currentDay) ?? unpaidBills[0] ?? null;
 
       const next: SnapshotRow[] = [
         chores.length > 0
