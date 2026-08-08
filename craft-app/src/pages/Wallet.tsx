@@ -1811,7 +1811,7 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                         </div>
                       </td></tr>
                     ) : ( 
-                  <p className="daily-tasks-subtitle">Tap the jar to give it some sugar...</p>
+                  <p className="daily-tasks-subtitle">Tap the jar to give it some sugar...</p>,
                   <tbody>
                     {monthBills.map((b, i) => (
                       <tr key={b.id} style={{ background: b.late ? "var(--danger-bg)" : b.paid ? "var(--sage-light)" : i % 2 === 0 ? "transparent" : "var(--accent)" }}>
