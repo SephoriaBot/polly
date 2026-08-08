@@ -4,9 +4,10 @@
 // Wallet (bills) — so "Today" actually answers "what matters right now"
 // instead of just holding a manually-typed focus list. Each row is
 // read-only and tap-through only; editing still happens on the source page.
-// Money reads from `bills` (the live bill definitions), cross-checked
-// against `bill_payments` for this month's paid status — bill_payments
-// alone can hold stale/orphaned rows once a bill's been edited or deleted.
+// Money reads from `bills` for the base name/amount/due_day, then applies
+// this month's override from `bill_payments` when one exists (recurring
+// bills only) — matching Wallet's own effectiveDueDay logic, so this card
+// never shows an out-of-date due day for a bill you've adjusted this month.
 
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
@@ -38,7 +39,7 @@ export default function TodaySnapshot({ onNavigate }: { onNavigate?: (page: stri
         supabase.from('daily_tasks').select('id,label,done').eq('task_date', today).eq('done', false).order('created_at'),
         supabase.from('appointments').select('id,title,date_time').order('date_time'),
         supabase.from('bills').select('id,name,amount,due_day,recurring,bill_month,bill_year').order('due_day'),
-        supabase.from('bill_payments').select('bill_id,month,year,paid').eq('month', now.getMonth() + 1).eq('year', now.getFullYear()),
+        supabase.from('bill_payments').select('bill_id,month,year,paid,name,amount,due_day').eq('month', now.getMonth() + 1).eq('year', now.getFullYear()),
       ]);
 
       const chores = choresRes.data ?? [];
@@ -50,12 +51,27 @@ export default function TodaySnapshot({ onNavigate }: { onNavigate?: (page: stri
         y != null && m != null && (y < now.getFullYear() || (y === now.getFullYear() && m < now.getMonth() + 1));
       const activeBills = (billsRes.data ?? []).filter(b => b.recurring || !isPastMonth(b.bill_month, b.bill_year));
 
+      // Recurring bills can have this month's due day/amount/name overridden
+      // from the monthly view — that override lives on bill_payments, not on
+      // the bill itself. Mirror Wallet's own effectiveDueDay logic here so
+      // this card shows whatever the user actually set for this month.
+      const withEffectiveFields = activeBills.map(b => {
+        const payment = payments.find(p => p.bill_id === b.id);
+        const useOverride = b.recurring && !!payment;
+        return {
+          id: b.id,
+          name: useOverride ? (payment!.name ?? b.name) : b.name,
+          amount: useOverride ? (payment!.amount ?? b.amount) : b.amount,
+          due_day: useOverride ? (payment!.due_day ?? b.due_day) : b.due_day,
+          paid: payment?.paid ?? false,
+        };
+      });
+
       // A bill counts as unpaid this month unless there's a bill_payments row
       // for it saying otherwise.
-      const unpaidBills = activeBills.filter(b => {
-        const payment = payments.find(p => p.bill_id === b.id);
-        return !payment || !payment.paid;
-      });
+      const unpaidBills = withEffectiveFields
+        .filter(b => !b.paid)
+        .sort((a, b) => (a.due_day ?? 0) - (b.due_day ?? 0));
 
       // Window is local-midnight-today through local-midnight-day-after-tomorrow,
       // so "today/tomorrow" respects the user's clock rather than UTC.
