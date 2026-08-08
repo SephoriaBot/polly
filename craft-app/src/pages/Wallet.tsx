@@ -1319,7 +1319,7 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                 )}
 
                 {lists.length === 0 ? (
-                  <EmptyState image={empty3Img} text="No lists yet. Create one to get started." />
+                  <EmptyState image={empty3Img} message="No lists yet. Create one to get started." />
                 ) : (
                   <>
                     {activeListItems.length >= 0 && (
