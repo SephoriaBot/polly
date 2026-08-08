@@ -392,9 +392,7 @@ export default function DailyPlanner() {
         <EmptyState image={empty2Img} message="No tasks yet. Add a new or recurring one below to get started." />
     
               ) : (
-
-              <p className="daily-tasks-subtitle">Tap the toast to give it some jam...</p>
-
+                <p className="daily-tasks-subtitle">Tap the toast to give it some jam</p>,
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 16 }}>
                   {sortedTasks.map(task => (
                     <div
