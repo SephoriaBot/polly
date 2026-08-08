@@ -1963,7 +1963,7 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
 
                   {activeDebts.length === 0 ? (
 
-                      <EmptyState image={empty3Img} text="No debts listed yet. Add one to start tracking." /> 
+                      <EmptyState image={empty3Img} message="No debts listed yet. Add one to start tracking." /> 
                   ) : (
                     <tbody>
                       {activeDebts.filter(d => !d.paid_off).map((d, i) => {
