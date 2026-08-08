@@ -42,7 +42,7 @@ type Page = 'dashboard' | 'grocery' | 'dailyplanner' | 'maidwizard' | 'wallet' |
             </header>
             <main className="main">
               <Suspense fallback={<div className="page-loading">Loading…</div>}>
-                {page === 'dashboard'    && <Dashboard />}
+                {page === 'dashboard'    && <Dashboard onNavigate={navigate} />}
                 {page === 'grocery'      && <Grocery />}
                 {page === 'dailyplanner' && <DailyPlanner />}
                 {page === 'wallet'       && <Wallet />}
