@@ -5,6 +5,7 @@ import Icon from '../components/Icon';
 import Lantern from "../components/Lantern";
 import walletPouchImg from '../assets/illustrations/wallet_pouch.png';
 import celebrationImg from '../assets/illustrations/celebration.png';
+import empty3Img from '../assets/icons/empty3.png';
 import EmptyState from '../components/EmptyState';
 
 interface Debt {
@@ -1302,10 +1303,6 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                   <div className="section-label" style={{ marginBottom: 0 }}><Icon name="clipboard-list" size={16} /> Lists</div>
                   <button className="btn btn-primary btn-sm" onClick={() => setShowNewListInput(v => !v)}>+ New List</button>
                 </div>
-
-    <p className="daily-tasks-subtitle">Tap the flower to check it off...</p>
-
-
                 {showNewListInput && (
                   <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
                     <input
@@ -1322,9 +1319,12 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                 )}
 
                 {lists.length === 0 ? (
-                  <div style={{ fontSize: 12, color: "var(--ink-muted)" }}>No lists yet — create one to start tracking things you need.</div>
+                  <EmptyState image={empty3Img} text="No lists yet. Create one to get started." />
                 ) : (
                   <>
+                    {activeListItems.length >= 0 && (
+                      <p className="daily-tasks-subtitle">Tap the flower to check it off...</p>
+                    )}
                     <div style={{ display: "flex", gap: 6, overflowX: "auto", paddingBottom: 8, marginBottom: 8 }}>
                       {lists.map(l => (
                         <button
@@ -1768,8 +1768,6 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                   <button className="btn btn-primary btn-sm" onClick={() => setShowBillForm(v => !v)}>+ Add Bill</button>
                 </div>
 
-<p className="daily-tasks-subtitle">Tap the jar to give it some sugar...</p>
-
 
                 {showBillForm && (
                   <div style={{ background: "var(--accent)", borderRadius: 16, padding: 14, marginBottom: 14, display: "flex", flexDirection: "column", gap: 10 }}>
@@ -1797,6 +1795,9 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                   </div>
                 )}
 
+                {monthBills.length > 0 && (
+                  <p className="daily-tasks-subtitle">Tap the jar to give it some sugar...</p>
+                )}
                 <div style={{ overflowX: "auto" }}>
                 <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
                   <thead>
@@ -1806,6 +1807,15 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                       ))}
                     </tr>
                   </thead>
+
+                    {monthBills.length === 0 ? (
+                      <tr><td colSpan={6} style={{ padding: 24, textAlign: "center", color: "var(--ink-muted)" }}>
+                        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
+                          <img src={walletPouchImg} alt="" style={{ width: 100 }} />
+                          No bills yet — click + Add Bill to get started.
+                        </div>
+                      </td></tr>
+                    ) : (
                   <tbody>
                     {monthBills.map((b, i) => (
                       <tr key={b.id} style={{ background: b.late ? "var(--danger-bg)" : b.paid ? "var(--sage-light)" : i % 2 === 0 ? "transparent" : "var(--accent)" }}>
@@ -1848,15 +1858,9 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                         </td>
                       </tr>
                     ))}
-                    {monthBills.length === 0 && (
-                      <tr><td colSpan={6} style={{ padding: 24, textAlign: "center", color: "var(--ink-muted)" }}>
-                        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
-                          <img src={walletPouchImg} alt="" style={{ width: 100 }} />
-                          No bills yet — click + Add Bill to get started.
-                        </div>
-                      </td></tr>
-                    )}
+                    
                   </tbody>
+                )}
                 </table>
                 </div>
               </div>
@@ -1939,12 +1943,14 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                 <div className="section-header">
 
                   <div className="section-label">Active Debts</div>
-<p className="daily-tasks-subtitle">Tap the shell to give it some color...</p>
 
                   <button className="btn btn-primary btn-sm" onClick={() => addDebt(false)}>
                     + Add
                   </button>
                 </div>
+                {activeDebts.length > 0 && (
+                  <p className="daily-tasks-subtitle">Tap the shell to give it some color.</p>
+                )}
                 <div style={{ overflowX: "auto" }}>
                   <table className="table">
                     <thead>
@@ -1954,6 +1960,11 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                         ))}
                       </tr>
                     </thead>
+
+                  {activeDebts.length === 0 ? (
+
+                      <EmptyState image={empty3Img} text="No debts listed yet. Add one to start tracking." /> 
+                  ) : (
                     <tbody>
                       {activeDebts.filter(d => !d.paid_off).map((d, i) => {
                         const origBal = d.original_balance || d.balance;
@@ -1996,6 +2007,7 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                         );
                       })}
                     </tbody>
+                  )}
                   </table>
                 </div>
               </div>
