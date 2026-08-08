@@ -13,13 +13,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(500).json({ error: 'Price search is not configured (missing API key)', results: [] })
   }
 
-  try {
+    try {
     let url = `https://serpapi.com/search.json?engine=google_shopping&q=${encodeURIComponent(q)}&api_key=${process.env.SERPAPI_KEY}&gl=us&hl=en`
 
     if (location) url += `&location=${encodeURIComponent(location)}`
 
+    const start = Date.now()
     const r = await fetch(url)
     const data = await r.json()
+    console.log(`product-search: SerpAPI responded in ${Date.now() - start}ms for q="${q}"`)
 
     // SerpAPI returns 200 with an `error` field (bad/expired key, exhausted
     // account searches, rate limited, etc.) rather than an HTTP error status,
@@ -29,25 +31,31 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(502).json({ error: data.error || 'Price search service returned an error', results: [] })
     }
 
-    const results = (data.shopping_results || [])
-      .filter((item: any) => {
-        const source = (item.source || '').toLowerCase()
-        if (source === 'instacart') return false
-        // Filter out websites masquerading as stores
-        if (source.includes('.com') || source.includes('.net') || source.includes('.org') || source.includes('.co')) return false
-        return true
-      })
-      .map((item: any) => ({
-        name: item.title,
-        price: item.extracted_price ?? null,
-        store: item.source ?? 'unknown',
-        image: item.thumbnail ?? null
-      }))
+   const results = (data.shopping_results || [])
+  .filter((item: any) => {
+    const source = (item.source || '').toLowerCase()
 
-    results.sort((a: any, b: any) => Number(a.price || 9999) - Number(b.price || 9999))
+    // Remove marketplace/aggregator results that aren't useful
+    // for Smart Cart. Do NOT filter based on ".com" — legitimate
+    // grocery chains can be returned as Walmart.com, Target.com, etc.
+    if (source === 'instacart') return false
+    if (source.includes('amazon')) return false
+    if (source.includes('ebay')) return false
+
+    return true
+  })
+  .map((item: any) => ({
+    name: item.title,
+    price: item.extracted_price ?? null,
+    store: item.source ?? 'unknown',
+    image: item.thumbnail ?? null
+  }))
+  .filter((item: any) => item.store !== 'unknown' && item.price != null)
+
+results.sort((a: any, b: any) => Number(a.price) - Number(b.price))
     // No `error` field here — this is a legitimate "nothing matched this
     // particular search" result, distinct from the service failing outright.
-    return res.status(200).json({ results: results.slice(0, 5) })
+    return res.status(200).json({ results: results.slice(0, 20) })
   } catch (e) {
     console.error('product-search: handler error:', e)
     return res.status(502).json({ error: 'Could not reach the price search service', results: [] })

@@ -38,19 +38,9 @@ const MORE_ITEMS = [
     icon: <Icon name="icon-trackers" size={35} />,
   },
   {
-    id: 'meals',
-    label: 'Meals',
-    icon: <Icon name="icon-meals" size={35} />,
-  },
-  {
     id: 'decisions',
     label: 'Decisions',
     icon: <Icon name="icon-decisions" size={35} />,
-  },
-  {
-    id: 'maidwizard',
-    label: 'Maid Wizard',
-    icon: <Icon name="icon-maidwizard" size={35} />,
   },
   {
     id: 'habitat',
