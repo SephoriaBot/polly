@@ -12,39 +12,13 @@ import { useToast } from '../../hooks/useToast';
 import Icon, { type IconName } from '../Icon';
 import EmptyState from '../EmptyState';
 import checklistImg from '../../assets/illustrations/checklist.png';
+import { type Chore as ChoreBase, statusFor } from '../../lib/chores';
 
-interface Chore {
-  id: string;
-  name: string;
-  interval_days: number;
-  last_done_at: string | null;
+interface Chore extends ChoreBase {
   icon: IconName;
-  created_at: string;
 }
 
 const CHORE_ICONS: IconName[] = ['cleaning-spray', 'washing-machine', 'sparkle-single', 'trash-can', 'clipboard-check'];
-const MS_PER_DAY = 1000 * 60 * 60 * 24;
-
-function daysSince(iso: string, now: Date): number {
-  return Math.floor((now.getTime() - new Date(iso).getTime()) / MS_PER_DAY);
-}
-
-function statusFor(chore: Chore, now: Date) {
-  if (!chore.last_done_at) {
-    return { label: 'Never done', overdueDays: Infinity, tone: 'due' as const };
-  }
-  const since = daysSince(chore.last_done_at, now);
-  const remaining = chore.interval_days - since;
-  if (remaining <= 0) {
-    const overdueDays = -remaining;
-    return {
-      label: overdueDays === 0 ? 'Due today' : `${overdueDays}d overdue`,
-      overdueDays,
-      tone: 'due' as const,
-    };
-  }
-  return { label: `Due in ${remaining}d`, overdueDays: remaining - 9999, tone: 'ok' as const };
-}
 
 export default function Chores() {
   const { showToast } = useToast();
