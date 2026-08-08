@@ -1319,7 +1319,7 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                 )}
 
                 {lists.length === 0 ? (
-                  <EmptyState image={empty3Img} text="No lists yet. Create one to get started." />
+                  <EmptyState image={empty3Img} message="No lists yet. Create one to get started." />
                 ) : (
                   <>
                     {activeListItems.length >= 0 && (
@@ -1962,9 +1962,14 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                     </thead>
 
                   {activeDebts.length === 0 ? (
-
-                      <EmptyState image={empty3Img} text="No debts listed yet. Add one to start tracking." /> 
-                  ) : (
+  <tbody>
+    <tr>
+      <td colSpan={8} style={{ padding: 24, textAlign: "center" }}>
+        <EmptyState image={empty3Img} message="No debts listed yet. Add one to start tracking." />
+      </td>
+    </tr>
+  </tbody>
+) : (
                     <tbody>
                       {activeDebts.filter(d => !d.paid_off).map((d, i) => {
                         const origBal = d.original_balance || d.balance;
