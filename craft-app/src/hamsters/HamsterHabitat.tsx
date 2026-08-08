@@ -100,7 +100,8 @@ export default function HamsterHabitat() {
             <div
               style={{
                 display: "grid",
-                gridTemplateColumns: "repeat(auto-fill, minmax(56px, 1fr))",
+gridTemplateColumns: "repeat(auto-fill, minmax(80px, 1fr))",
+
                 gap: 8,
               }}
             >
@@ -118,7 +119,7 @@ export default function HamsterHabitat() {
                       borderRadius: 12, padding: 4, cursor: "pointer", position: "relative",
                     }}
                   >
-                    {img && <img src={img} alt={entry.name || entry.hamsterId} style={{ width: 48, height: 48, objectFit: "contain" }} />}
+                    {img && <img src={img} alt={entry.name || entry.hamsterId} style={{ width: 72, height: 72, objectFit: "contain" }} />}
                     {entry.stage !== "baby" && (
                       <span style={{ position: "absolute", top: 0, right: 0, fontSize: 10 }}>
                         <Icon name={entry.stage === "final" ? "medal-wings" : "potted-plant"} size={12} />
