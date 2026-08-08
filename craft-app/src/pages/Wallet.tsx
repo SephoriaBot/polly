@@ -1965,7 +1965,7 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
   <tbody>
     <tr>
       <td colSpan={8} style={{ padding: 24, textAlign: "center" }}>
-        <EmptyState image={empty3Img} text="No debts listed yet. Add one to start tracking." />
+        <EmptyState image={empty3Img} message="No debts listed yet. Add one to start tracking." />
       </td>
     </tr>
   </tbody>
