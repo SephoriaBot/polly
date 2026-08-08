@@ -1,9 +1,13 @@
 // TodaySnapshot.tsx
-// Tier 1, Step 1 (part 2): makes Dashboard pull live from the sections that
-// used to be isolated from each other — Planner (chores + appointments) and
-// Wallet (bills) — so "Today" actually answers "what matters right now"
-// instead of just holding a manually-typed focus list. Each row is
-// read-only and tap-through only; editing still happens on the source page.
+// Tier 1, Step 1 (part 2) + item 4: makes Dashboard pull live from the
+// sections that used to be isolated from each other — Planner (tasks,
+// interval-based chores, appointments) and Wallet (bills) — so "Today"
+// actually answers "what matters right now" instead of just holding a
+// manually-typed focus list. Each row is read-only and tap-through only;
+// editing still happens on the source page.
+// Chores due status is computed with the same statusFor() logic the
+// Chores planner card uses (see lib/chores.ts) so the two never disagree
+// on what's overdue.
 // Money reads from `bills` for the base name/amount/due_day, then applies
 // this month's override from `bill_payments` when one exists (recurring
 // bills only) — matching Wallet's own effectiveDueDay logic, so this card
@@ -12,6 +16,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import Icon from './Icon';
+import { type Chore, statusFor } from '../lib/chores';
 
 interface SnapshotRow {
   key: string;
@@ -35,15 +40,22 @@ export default function TodaySnapshot({ onNavigate }: { onNavigate?: (page: stri
       const today = todayISO();
       const now = new Date();
 
-      const [choresRes, apptRes, billsRes, paymentsRes] = await Promise.all([
+      const [choresRes, dueChoresRes, apptRes, billsRes, paymentsRes] = await Promise.all([
         supabase.from('daily_tasks').select('id,label,done').eq('task_date', today).eq('done', false).order('created_at'),
+        supabase.from('chores').select('id,name,interval_days,last_done_at,icon,created_at'),
         supabase.from('appointments').select('id,title,date_time').order('date_time'),
         supabase.from('bills').select('id,name,amount,due_day,recurring,bill_month,bill_year').order('due_day'),
         supabase.from('bill_payments').select('bill_id,month,year,paid,name,amount,due_day').eq('month', now.getMonth() + 1).eq('year', now.getFullYear()),
       ]);
 
-      const chores = choresRes.data ?? [];
+      const tasks = choresRes.data ?? [];
       const payments = paymentsRes.data ?? [];
+
+      // Due status is derived, not stored — same rule the Chores card uses.
+      const dueChores = ((dueChoresRes.data ?? []) as Chore[])
+        .map(c => ({ chore: c, status: statusFor(c, now) }))
+        .filter(x => x.status.tone === 'due')
+        .sort((a, b) => b.status.overdueDays - a.status.overdueDays);
 
       // Same staleness rule Wallet uses: a one-off bill from a past month is
       // done and gone, only recurring bills or the current/future one-offs count.
@@ -91,9 +103,13 @@ export default function TodaySnapshot({ onNavigate }: { onNavigate?: (page: stri
         unpaidBills.find(b => (b.due_day ?? 0) >= currentDay) ?? unpaidBills[0] ?? null;
 
       const next: SnapshotRow[] = [
-        chores.length > 0
-          ? { key: 'chores', icon: 'clipboard-check', label: `${chores.length} quick chore${chores.length === 1 ? '' : 's'}`, detail: chores.slice(0, 2).map(c => c.label).join(', '), page: 'dailyplanner' }
-          : { key: 'chores', icon: 'clipboard-check', label: 'No chores left today', detail: 'All caught up', page: 'dailyplanner', empty: true },
+        tasks.length > 0
+          ? { key: 'tasks', icon: 'clipboard-check', label: `${tasks.length} quick task${tasks.length === 1 ? '' : 's'}`, detail: tasks.slice(0, 2).map(t => t.label).join(', '), page: 'dailyplanner' }
+          : { key: 'tasks', icon: 'clipboard-check', label: 'No tasks left today', detail: 'All caught up', page: 'dailyplanner', empty: true },
+
+        dueChores.length > 0
+          ? { key: 'chores', icon: 'cleaning-spray', label: `${dueChores.length} chore${dueChores.length === 1 ? '' : 's'} due`, detail: dueChores.slice(0, 2).map(x => x.chore.name).join(', '), page: 'dailyplanner' }
+          : { key: 'chores', icon: 'cleaning-spray', label: 'Chores are caught up', detail: 'Nothing due yet', page: 'dailyplanner', empty: true },
 
         appointments.length > 0
           ? { key: 'appointments', icon: 'calendar', label: `${appointments.length} appointment${appointments.length === 1 ? '' : 's'} coming up`, detail: appointments.slice(0, 2).map(a => `${a.title} (${apptWhen(a.date_time, startOfTomorrow)})`).join(', '), page: 'dailyplanner' }
