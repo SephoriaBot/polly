@@ -1322,7 +1322,9 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                   <EmptyState image={empty3Img} text="No lists yet. Create one to get started." />
                 ) : (
                   <>
-              <p className="daily-tasks-subtitle">Tap the flower to check it off...</p>,
+                    {activeListItems.length >= 0 && (
+                      <p className="daily-tasks-subtitle">Tap the flower to check it off...</p>
+                    )}
                     <div style={{ display: "flex", gap: 6, overflowX: "auto", paddingBottom: 8, marginBottom: 8 }}>
                       {lists.map(l => (
                         <button
@@ -1793,6 +1795,9 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                   </div>
                 )}
 
+                {monthBills.length > 0 && (
+                  <p className="daily-tasks-subtitle">Tap the jar to give it some sugar...</p>
+                )}
                 <div style={{ overflowX: "auto" }}>
                 <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
                   <thead>
@@ -1810,8 +1815,7 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                           No bills yet — click + Add Bill to get started.
                         </div>
                       </td></tr>
-                    ) : ( 
-                  <p className="daily-tasks-subtitle">Tap the jar to give it some sugar...</p>,
+                    ) : (
                   <tbody>
                     {monthBills.map((b, i) => (
                       <tr key={b.id} style={{ background: b.late ? "var(--danger-bg)" : b.paid ? "var(--sage-light)" : i % 2 === 0 ? "transparent" : "var(--accent)" }}>
@@ -1856,12 +1860,13 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                     ))}
                     
                   </tbody>
+                )}
                 </table>
                 </div>
               </div>
             </div>
           </>
-        )})}
+        )}
 
         {view === "debts" && (
           <>
@@ -1943,6 +1948,9 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                     + Add
                   </button>
                 </div>
+                {activeDebts.length > 0 && (
+                  <p className="daily-tasks-subtitle">Tap the shell to give it some color.</p>
+                )}
                 <div style={{ overflowX: "auto" }}>
                   <table className="table">
                     <thead>
@@ -1957,8 +1965,6 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
 
                       <EmptyState image={empty3Img} text="No debts listed yet. Add one to start tracking." /> 
                   ) : (
-
-                    <p className="daily-tasks-subtitle">Tap the shell to give it some color.</p>
                     <tbody>
                       {activeDebts.filter(d => !d.paid_off).map((d, i) => {
                         const origBal = d.original_balance || d.balance;
@@ -2001,6 +2007,7 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                         );
                       })}
                     </tbody>
+                  )}
                   </table>
                 </div>
               </div>
@@ -2043,7 +2050,7 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                   </table>
                 </div>
               </div>
-            )})}
+            )}
 
             <div className="card" style={{ opacity: 0.85 }}>
               <div className="card-body">
