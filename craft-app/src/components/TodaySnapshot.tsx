@@ -34,7 +34,7 @@ export default function TodaySnapshot({ onNavigate }: { onNavigate?: (page: stri
       const [choresRes, apptRes, paymentsRes] = await Promise.all([
         supabase.from('daily_tasks').select('id,label,done').eq('task_date', today).eq('done', false).order('created_at'),
         supabase.from('appointments').select('id,title,date_time').order('date_time'),
-        supabase.from('bill_payments')
+        supabase.from('bills')
           .select('id,name,amount,due_day,paid,month,year')
           .eq('paid', false)
           .eq('month', now.getMonth() + 1)
