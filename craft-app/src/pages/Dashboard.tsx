@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import Lantern from "../components/Lantern";
-import DailyAlmanac from "../components/DailyAlmanac";
+import MoonWidget from "../components/MoonWidget";
+import TodaySnapshot from "../components/TodaySnapshot";
 import sleepingNestImg from '../assets/illustrations/sleeping_nest.png';
 import empty9Img from '../assets/icons/empty9.png';
 import WeatherBadge from '../components/WeatherBadge';
-import TroubleshooterGroq from '../components/suggest/TroubleshooterGroq';
 import Icon, { type IconName } from '../components/Icon';
 import EmptyState from '../components/EmptyState';
 
@@ -41,7 +41,7 @@ function StitchDivider() {
   );
 }
 
-export default function Dashboard() {
+export default function Dashboard({ onNavigate }: { onNavigate?: (page: string) => void }) {
   const [focuses, setFocuses] = useState<Focus[]>([]);
   const [newFocus, setNewFocus] = useState('');
   const [newFocusMins, setNewFocusMins] = useState('');
@@ -250,19 +250,21 @@ async function loadAll() {
        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
   <Icon name="pagedivider" size={85} />
 </div>
-        {/* ── DAILY ALMANAC ── */}
+
+        {/* ── TODAY SNAPSHOT ── pulls live from chores, grocery, meals, money */}
         <section>
-          <DailyAlmanac />
+          <div className="section-label" style={{ marginBottom: 10 }}>Right Now</div>
+          <TodaySnapshot onNavigate={onNavigate} />
         </section>
 
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
   <Icon name="pagedivider" size={85} />
 </div>
 
-         {/* ── TROUBLESHOOTER GROQ ── */}
-          <section>
-          <TroubleshooterGroq />
-          </section>
+        {/* ── MOON + ZODIAC ── */}
+        <section>
+          <MoonWidget />
+        </section>
       </div>
     </div>
   );
