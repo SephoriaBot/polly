@@ -1,0 +1,277 @@
+// BrainDump.tsx
+// Tier 1, item 2: "Get it out of my head." A global, always-available dump
+// box. Free text goes to Groq, comes back sorted into the two buckets Polly
+// actually has structured storage for — Tasks and Grocery — then the user
+// reviews/edits before anything is saved. Money, errands, and meal-planning
+// notes land in Tasks, since there's no safe way to auto-create a structured
+// bill or a scheduled meal from loose text; the user can move them from
+// there.
+
+import { useState } from 'react';
+import { supabase } from '../lib/supabase';
+import { useToast } from '../hooks/useToast';
+import Icon from './Icon';
+
+interface DraftItem {
+  id: string;
+  text: string;
+  category: 'task' | 'grocery';
+  include: boolean;
+}
+
+function todayISO(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+function buildPrompt(dump: string): string {
+  return `Sort this free-form brain dump into two buckets: "task" (chores, errands, calls, bills to pay, things to plan, anything action-shaped) and "grocery" (specific items to buy at a store). Split run-on sentences into separate short items. Keep each item's wording short and plain — a to-do label, not a sentence.
+
+Brain dump:
+"${dump.trim()}"
+
+Respond ONLY with a valid JSON object, no markdown, no backticks, no explanation. Use this exact shape:
+{
+  "items": [
+    { "text": "short item label", "category": "task" },
+    { "text": "short item label", "category": "grocery" }
+  ]
+}`;
+}
+
+async function categorize(dump: string): Promise<{ text: string; category: 'task' | 'grocery' }[]> {
+  const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${import.meta.env.VITE_GROQ_API_KEY}`,
+    },
+    body: JSON.stringify({
+      model: 'llama-3.3-70b-versatile',
+      max_tokens: 600,
+      messages: [{ role: 'user', content: buildPrompt(dump) }],
+    }),
+  });
+  const data = await response.json();
+  const raw = data.choices?.[0]?.message?.content ?? '';
+  const clean = raw.replace(/```json|```/g, '').trim();
+  const parsed = JSON.parse(clean);
+  if (!Array.isArray(parsed.items)) throw new Error('bad shape');
+  return parsed.items
+    .filter((i: any) => typeof i.text === 'string' && i.text.trim())
+    .map((i: any) => ({ text: i.text.trim(), category: i.category === 'grocery' ? 'grocery' : 'task' }));
+}
+
+export default function BrainDump({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const { showToast } = useToast();
+  const [dump, setDump] = useState('');
+  const [drafts, setDrafts] = useState<DraftItem[] | null>(null);
+  const [sorting, setSorting] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+
+  if (!open) return null;
+
+  function reset() {
+    setDump('');
+    setDrafts(null);
+    setError('');
+  }
+
+  function handleClose() {
+    reset();
+    onClose();
+  }
+
+  async function handleSort() {
+    if (!dump.trim()) return;
+    setSorting(true);
+    setError('');
+    try {
+      const items = await categorize(dump);
+      if (items.length === 0) {
+        setError("Couldn't find anything in there — try adding a bit more detail.");
+        setSorting(false);
+        return;
+      }
+      setDrafts(items.map((i, idx) => ({ id: `${idx}-${i.text}`, text: i.text, category: i.category, include: true })));
+    } catch {
+      setError('Something went wrong sorting that. Please try again.');
+    } finally {
+      setSorting(false);
+    }
+  }
+
+  function updateDraft(id: string, patch: Partial<DraftItem>) {
+    setDrafts(prev => prev ? prev.map(d => d.id === id ? { ...d, ...patch } : d) : prev);
+  }
+
+  function removeDraft(id: string) {
+    setDrafts(prev => prev ? prev.filter(d => d.id !== id) : prev);
+  }
+
+  async function handleSave() {
+    if (!drafts) return;
+    const toSave = drafts.filter(d => d.include && d.text.trim());
+    if (toSave.length === 0) { handleClose(); return; }
+
+    setSaving(true);
+    try {
+      const tasks = toSave.filter(d => d.category === 'task');
+      const groceries = toSave.filter(d => d.category === 'grocery');
+      const today = todayISO();
+
+      await Promise.all([
+        tasks.length > 0
+          ? supabase.from('daily_tasks').insert(tasks.map(t => ({ label: t.text, done: false, task_date: today, template_id: null })))
+          : Promise.resolve(),
+        groceries.length > 0
+          ? supabase.from('grocery_items').insert(groceries.map(g => ({ name: g.text, qty: '', checked: false, list_name: 'Default' })))
+          : Promise.resolve(),
+      ]);
+
+      showToast(`Sorted ${toSave.length} thing${toSave.length === 1 ? '' : 's'} out of your head 🌱`);
+      handleClose();
+    } catch {
+      setError('Saving hit a snag — please try again.');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  const taskCount = drafts?.filter(d => d.category === 'task').length ?? 0;
+  const groceryCount = drafts?.filter(d => d.category === 'grocery').length ?? 0;
+
+  return (
+    <div
+      style={{
+        position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.35)',
+        display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
+        zIndex: 1000,
+      }}
+      onClick={handleClose}
+    >
+      <div
+        onClick={e => e.stopPropagation()}
+        style={{
+          background: 'var(--surface)', borderRadius: '24px 24px 0 0',
+          border: '1.5px solid var(--border)', borderBottom: 'none',
+          padding: 20, width: '100%', maxWidth: 520, maxHeight: '85vh',
+          overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 14,
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div className="section-label" style={{ marginBottom: 0 }}>
+            <Icon name="notebook-pen" size={16} /> Get it out of your head
+          </div>
+          <button
+            onClick={handleClose}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-muted)', fontSize: '1.1rem', padding: 4 }}
+            aria-label="Close"
+          >
+            ✕
+          </button>
+        </div>
+
+        {!drafts ? (
+          <>
+            <textarea
+              className="form-input"
+              value={dump}
+              onChange={e => setDump(e.target.value)}
+              placeholder="Need to call the dentist, buy detergent, pay the electric bill, clean the bathroom..."
+              rows={5}
+              style={{ fontSize: '0.9rem', resize: 'vertical', fontFamily: 'inherit' }}
+              autoFocus
+            />
+            {error && <div style={{ fontSize: '0.75rem', color: 'var(--pink-dark)', fontWeight: 600 }}>{error}</div>}
+            <button
+              className="btn btn-primary"
+              onClick={handleSort}
+              disabled={sorting || !dump.trim()}
+              style={{ opacity: sorting || !dump.trim() ? 0.6 : 1 }}
+            >
+              {sorting ? 'Sorting…' : 'Sort it out'}
+            </button>
+          </>
+        ) : (
+          <>
+            <div style={{ fontSize: '0.75rem', color: 'var(--ink-muted)' }}>
+              {taskCount} task{taskCount === 1 ? '' : 's'} · {groceryCount} grocery item{groceryCount === 1 ? '' : 's'}. Uncheck or edit anything before saving.
+            </div>
+
+            {(['task', 'grocery'] as const).map(cat => {
+              const items = drafts.filter(d => d.category === cat);
+              if (items.length === 0) return null;
+              return (
+                <div key={cat}>
+                  <div style={{ fontSize: '0.68rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--ink-muted)', marginBottom: 6 }}>
+                    {cat === 'task' ? 'Tasks' : 'Grocery'}
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    {items.map(d => (
+                      <div
+                        key={d.id}
+                        style={{
+                          display: 'flex', alignItems: 'center', gap: 8,
+                          background: 'var(--white)', border: '1.5px solid var(--border)',
+                          borderRadius: 14, padding: '8px 10px',
+                        }}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={d.include}
+                          onChange={e => updateDraft(d.id, { include: e.target.checked })}
+                          style={{ flexShrink: 0 }}
+                        />
+                        <input
+                          value={d.text}
+                          onChange={e => updateDraft(d.id, { text: e.target.value })}
+                          style={{
+                            flex: 1, border: 'none', background: 'transparent', outline: 'none',
+                            fontSize: '0.85rem', fontFamily: 'inherit',
+                            color: d.include ? 'var(--ink)' : 'var(--ink-muted)',
+                            textDecoration: d.include ? 'none' : 'line-through',
+                          }}
+                        />
+                        <select
+                          value={d.category}
+                          onChange={e => updateDraft(d.id, { category: e.target.value as 'task' | 'grocery' })}
+                          style={{ fontSize: '0.7rem', border: '1px solid var(--border)', borderRadius: 8, background: 'var(--cream)', color: 'var(--ink-muted)' }}
+                        >
+                          <option value="task">Task</option>
+                          <option value="grocery">Grocery</option>
+                        </select>
+                        <button
+                          onClick={() => removeDraft(d.id)}
+                          style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-muted)', fontSize: '0.9rem', flexShrink: 0 }}
+                          aria-label="Remove"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+
+            {error && <div style={{ fontSize: '0.75rem', color: 'var(--pink-dark)', fontWeight: 600 }}>{error}</div>}
+
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button className="btn btn-ghost btn-sm" onClick={reset}>Start over</button>
+              <button
+                className="btn btn-primary"
+                onClick={handleSave}
+                disabled={saving}
+                style={{ flex: 1, opacity: saving ? 0.6 : 1 }}
+              >
+                {saving ? 'Saving…' : 'Add it all'}
+              </button>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
