@@ -247,13 +247,11 @@ async function loadAll() {
           )}
         </section>
 
-       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-  <Icon name="pagedivider" size={85} />
-</div>
-
-        {/* ── TODAY SNAPSHOT ── pulls live from chores, grocery, meals, money */}
-        <section>
-          <div className="section-label" style={{ marginBottom: 10 }}>Right Now</div>
+        {/* ── TODAY SNAPSHOT ── pulls live from chores, appointments, and money */}
+        <section style={{ marginTop: 4 }}>
+          <div style={{ fontSize: '0.68rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--ink-muted)', marginBottom: 8 }}>
+            Also on your radar
+          </div>
           <TodaySnapshot onNavigate={onNavigate} />
         </section>
 
