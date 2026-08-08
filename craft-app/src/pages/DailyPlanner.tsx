@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import AppointmentNotesPanel from '../components/planner/AppointmentNotesPanel';
 import type { AppointmentNoteSelection } from '../components/planner/AppointmentNotesPanel';
+import Chores from '../components/planner/Chores';
 import { useAppointmentNoteMap } from '../hooks/useAppointmentNoteMap';
 import Lantern from "../components/Lantern";
 import EmptyState from '../components/EmptyState';
@@ -631,6 +632,15 @@ export default function DailyPlanner() {
             </div>
           </div>
 
+        </section>
+
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+  <Icon name="pagedivider" size={85} />
+</div>
+
+        {/* CHORES — interval-based, time-since-last-done */}
+        <section>
+          <Chores />
         </section>
 
         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
