@@ -1660,7 +1660,7 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                                 />
 
                                 {row.hoursToday > 0 && (
-                                  <span style={{ fontSize: 11, color: "var(--green-dark)", fontWeight: 700, whiteSpace: "nowrap" }}>+{fmt(row.availableToday)}</span>
+                                  <span style={{ fontSize: 11, color: isToday ? "var(--pink-dark)" : "var(--green-dark)", fontWeight: 700, whiteSpace: "nowrap" }}>+{fmt(row.availableToday)}</span>
                                 )}
                               </div>
 
