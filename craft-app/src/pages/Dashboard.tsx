@@ -3,6 +3,9 @@ import { supabase } from '../lib/supabase';
 import Lantern from "../components/Lantern";
 import MoonWidget from "../components/MoonWidget";
 import TodaySnapshot from "../components/TodaySnapshot";
+import LowEnergyChecklist from "../components/LowEnergyChecklist";
+import EnergyModeSwitch from "../components/EnergyModeSwitch";
+import { useEnergy } from "../context/EnergyContext";
 import sleepingNestImg from '../assets/illustrations/sleeping_nest.png';
 import empty9Img from '../assets/icons/empty9.png';
 import WeatherBadge from '../components/WeatherBadge';
@@ -42,6 +45,7 @@ function StitchDivider() {
 }
 
 export default function Dashboard({ onNavigate }: { onNavigate?: (page: string) => void }) {
+  const { mode } = useEnergy();
   const [focuses, setFocuses] = useState<Focus[]>([]);
   const [newFocus, setNewFocus] = useState('');
   const [newFocusMins, setNewFocusMins] = useState('');
@@ -112,10 +116,39 @@ async function loadAll() {
         {/* WEATHER BADGE MINI WIDGET */}
         <WeatherBadge />
 
+        <EnergyModeSwitch />
+
         </div>
       </div>
 
       <div className="page-body">
+
+        {mode !== 'normal' ? (
+          <>
+            {/* ── LOW ENERGY / BARE MINIMUM ── the whole list is 4 items */}
+            <section>
+              <LowEnergyChecklist />
+            </section>
+
+            {mode === 'low' && (
+              <>
+                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                  <Icon name="pagedivider" size={85} />
+                </div>
+                {/* Kept visible in Low Energy (just not Bare Minimum) since
+                    knowing what's outstanding can still be reassuring —
+                    it's Bare Minimum that hides it entirely. */}
+                <section style={{ marginTop: 4 }}>
+                  <div style={{ fontSize: '0.68rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--ink-muted)', marginBottom: 8 }}>
+                    Also on your radar
+                  </div>
+                  <TodaySnapshot onNavigate={onNavigate} />
+                </section>
+              </>
+            )}
+          </>
+        ) : (
+        <>
 
                 {/* ── TODAY'S FOCUS ── */}
         <section>
@@ -263,6 +296,8 @@ async function loadAll() {
         <section>
           <MoonWidget />
         </section>
+        </>
+        )}
       </div>
     </div>
   );
