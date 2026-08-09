@@ -3,6 +3,7 @@ import BottomNav from './components/BottomNav';
 import ThemeToggle from './components/ThemeToggle';
 import BrainDump from './components/BrainDump';
 import { ThemeProvider } from './context/ThemeContext';
+import { EnergyProvider } from './context/EnergyContext';
 import ShapeDefs from './components/ShapeDefs';
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const Grocery = lazy(() => import('./pages/Grocery'));
@@ -27,6 +28,7 @@ type Page = 'dashboard' | 'grocery' | 'dailyplanner' | 'maidwizard' | 'wallet' |
   }
   return (
     <ThemeProvider>
+    <EnergyProvider>
       <ShapeDefs />
       <ToastProvider>
         {/* Lives at the app root (not just on the Habitat page) so the
@@ -71,6 +73,7 @@ type Page = 'dashboard' | 'grocery' | 'dailyplanner' | 'maidwizard' | 'wallet' |
           </div>
         </HamsterGrowthProvider>
       </ToastProvider>
+    </EnergyProvider>
     </ThemeProvider>
   );
 }
