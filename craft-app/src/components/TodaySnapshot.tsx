@@ -17,6 +17,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import Icon from './Icon';
 import { type Chore, statusFor } from '../lib/chores';
+import { getUnpaidBillsThisMonth, pickNextBill, daySuffix } from '../lib/money';
 
 interface SnapshotRow {
   key: string;
@@ -40,50 +41,20 @@ export default function TodaySnapshot({ onNavigate }: { onNavigate?: (page: stri
       const today = todayISO();
       const now = new Date();
 
-      const [choresRes, dueChoresRes, apptRes, billsRes, paymentsRes] = await Promise.all([
+      const [choresRes, dueChoresRes, apptRes, unpaidBills] = await Promise.all([
         supabase.from('daily_tasks').select('id,label,done').eq('task_date', today).eq('done', false).order('created_at'),
         supabase.from('chores').select('id,name,interval_days,last_done_at,icon,created_at'),
         supabase.from('appointments').select('id,title,date_time').order('date_time'),
-        supabase.from('bills').select('id,name,amount,due_day,recurring,bill_month,bill_year').order('due_day'),
-        supabase.from('bill_payments').select('bill_id,month,year,paid,name,amount,due_day').eq('month', now.getMonth() + 1).eq('year', now.getFullYear()),
+        getUnpaidBillsThisMonth(),
       ]);
 
       const tasks = choresRes.data ?? [];
-      const payments = paymentsRes.data ?? [];
 
       // Due status is derived, not stored — same rule the Chores card uses.
       const dueChores = ((dueChoresRes.data ?? []) as Chore[])
         .map(c => ({ chore: c, status: statusFor(c, now) }))
         .filter(x => x.status.tone === 'due')
         .sort((a, b) => b.status.overdueDays - a.status.overdueDays);
-
-      // Same staleness rule Wallet uses: a one-off bill from a past month is
-      // done and gone, only recurring bills or the current/future one-offs count.
-      const isPastMonth = (m: number | null | undefined, y: number | null | undefined) =>
-        y != null && m != null && (y < now.getFullYear() || (y === now.getFullYear() && m < now.getMonth() + 1));
-      const activeBills = (billsRes.data ?? []).filter(b => b.recurring || !isPastMonth(b.bill_month, b.bill_year));
-
-      // Recurring bills can have this month's due day/amount/name overridden
-      // from the monthly view — that override lives on bill_payments, not on
-      // the bill itself. Mirror Wallet's own effectiveDueDay logic here so
-      // this card shows whatever the user actually set for this month.
-      const withEffectiveFields = activeBills.map(b => {
-        const payment = payments.find(p => p.bill_id === b.id);
-        const useOverride = b.recurring && !!payment;
-        return {
-          id: b.id,
-          name: useOverride ? (payment!.name ?? b.name) : b.name,
-          amount: useOverride ? (payment!.amount ?? b.amount) : b.amount,
-          due_day: useOverride ? (payment!.due_day ?? b.due_day) : b.due_day,
-          paid: payment?.paid ?? false,
-        };
-      });
-
-      // A bill counts as unpaid this month unless there's a bill_payments row
-      // for it saying otherwise.
-      const unpaidBills = withEffectiveFields
-        .filter(b => !b.paid)
-        .sort((a, b) => (a.due_day ?? 0) - (b.due_day ?? 0));
 
       // Window is local-midnight-today through local-midnight-day-after-tomorrow,
       // so "today/tomorrow" respects the user's clock rather than UTC.
@@ -96,11 +67,7 @@ export default function TodaySnapshot({ onNavigate }: { onNavigate?: (page: stri
         return t >= startOfToday && t < startOfDayAfter;
       });
 
-      // Prefer the next bill that hasn't hit its due day yet; fall back to
-      // the earliest unpaid one this month (i.e. already overdue) if none.
-      const currentDay = now.getDate();
-      const nextBill =
-        unpaidBills.find(b => (b.due_day ?? 0) >= currentDay) ?? unpaidBills[0] ?? null;
+      const nextBill = pickNextBill(unpaidBills, now);
 
       const next: SnapshotRow[] = [
         tasks.length > 0
@@ -162,13 +129,6 @@ export default function TodaySnapshot({ onNavigate }: { onNavigate?: (page: stri
       ))}
     </div>
   );
-}
-
-function daySuffix(day: number): string {
-  if (day % 10 === 1 && day !== 11) return 'st';
-  if (day % 10 === 2 && day !== 12) return 'nd';
-  if (day % 10 === 3 && day !== 13) return 'rd';
-  return 'th';
 }
 
 function apptWhen(dateTime: string, startOfTomorrow: Date): string {
