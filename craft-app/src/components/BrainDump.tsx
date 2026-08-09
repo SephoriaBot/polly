@@ -15,7 +15,7 @@ import Icon from './Icon';
 interface DraftItem {
   id: string;
   text: string;
-  category: 'task' | 'grocery';
+  category: 'task' | 'grocery' | 'notes';
   include: boolean;
 }
 
@@ -25,7 +25,7 @@ function todayISO(): string {
 }
 
 function buildPrompt(dump: string): string {
-  return `Sort this free-form brain dump into two buckets: "task" (chores, errands, calls, bills to pay, things to plan, anything action-shaped) and "grocery" (specific items to buy at a store). Split run-on sentences into separate short items. Keep each item's wording short and plain — a to-do label, not a sentence.
+  return `Sort this free-form brain dump into three buckets: "task" (chores, errands, calls, bills to pay, things to plan, anything action-shaped), "notes"(any messages that need to be relayed to another person/doctor), and "grocery" (specific items to buy at a store). Split run-on sentences into separate short items. Keep each item's wording short and plain — a to-do label, not a sentence.
 
 Brain dump:
 "${dump.trim()}"
@@ -34,12 +34,13 @@ Respond ONLY with a valid JSON object, no markdown, no backticks, no explanation
 {
   "items": [
     { "text": "short item label", "category": "task" },
-    { "text": "short item label", "category": "grocery" }
+    { "text": "short item label", "category": "grocery" },
+    { "text": "short item label", "category": "notes" } 
   ]
 }`;
 }
 
-async function categorize(dump: string): Promise<{ text: string; category: 'task' | 'grocery' }[]> {
+async function categorize(dump: string): Promise<{ text: string; category: 'task' | 'grocery' | 'notes' }[]> {
   const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
     method: 'POST',
     headers: {
@@ -59,7 +60,15 @@ async function categorize(dump: string): Promise<{ text: string; category: 'task
   if (!Array.isArray(parsed.items)) throw new Error('bad shape');
   return parsed.items
     .filter((i: any) => typeof i.text === 'string' && i.text.trim())
-    .map((i: any) => ({ text: i.text.trim(), category: i.category === 'grocery' ? 'grocery' : 'task' }));
+    .map((i: any) => ({
+  text: i.text.trim(),
+  category:
+    i.category === 'grocery'
+      ? 'grocery'
+      : i.category === 'notes'
+        ? 'notes'
+        : 'task',
+}));
 }
 
 export default function BrainDump({ open, onClose }: { open: boolean; onClose: () => void }) {
@@ -119,6 +128,7 @@ export default function BrainDump({ open, onClose }: { open: boolean; onClose: (
     try {
       const tasks = toSave.filter(d => d.category === 'task');
       const groceries = toSave.filter(d => d.category === 'grocery');
+      const notes = toSave.filter(d => d.category === 'notes');
       const today = todayISO();
 
       await Promise.all([
@@ -128,6 +138,19 @@ export default function BrainDump({ open, onClose }: { open: boolean; onClose: (
         groceries.length > 0
           ? supabase.from('grocery_items').insert(groceries.map(g => ({ name: g.text, qty: '', checked: false, list_name: 'Default' })))
           : Promise.resolve(),
+        notes.length > 0
+  ? supabase.from('appointment_note_items').insert(
+      notes.map(n => ({
+        appointment_id: null,
+        note_type: 'general',
+        kind: 'bring_up',
+        content: n.text,
+        status: 'open',
+        resolution: null,
+        carried_from_id: null,
+      }))
+    )
+  : Promise.resolve(),
       ]);
 
       showToast(`Sorted ${toSave.length} thing${toSave.length === 1 ? '' : 's'} out of your head 🌱`);
@@ -141,6 +164,7 @@ export default function BrainDump({ open, onClose }: { open: boolean; onClose: (
 
   const taskCount = drafts?.filter(d => d.category === 'task').length ?? 0;
   const groceryCount = drafts?.filter(d => d.category === 'grocery').length ?? 0;
+  const notesCount = drafts?.filter(d => d.category === 'notes').length ?? 0;
 
   return (
     <div
@@ -197,16 +221,16 @@ export default function BrainDump({ open, onClose }: { open: boolean; onClose: (
         ) : (
           <>
             <div style={{ fontSize: '0.75rem', color: 'var(--ink-muted)' }}>
-              {taskCount} task{taskCount === 1 ? '' : 's'} · {groceryCount} grocery item{groceryCount === 1 ? '' : 's'}. Uncheck or edit anything before saving.
+              {taskCount} task{taskCount === 1 ? '' : 's'} · {groceryCount} grocery item{groceryCount === 1 ? '' : 's'} · {notesCount} note{notesCount === 1 ? '' : 's'}. Uncheck or edit anything before saving.
             </div>
 
-            {(['task', 'grocery'] as const).map(cat => {
+            {(['task', 'grocery', 'notes'] as const).map(cat => {
               const items = drafts.filter(d => d.category === cat);
               if (items.length === 0) return null;
               return (
                 <div key={cat}>
                   <div style={{ fontSize: '0.68rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--ink-muted)', marginBottom: 6 }}>
-                    {cat === 'task' ? 'Tasks' : 'Grocery'}
+                    {cat === 'task' ? 'Tasks' : cat === 'grocery' ? 'Grocery' : 'Notes'}
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                     {items.map(d => (
@@ -235,12 +259,13 @@ export default function BrainDump({ open, onClose }: { open: boolean; onClose: (
                           }}
                         />
                         <select
-                          value={d.category}
-                          onChange={e => updateDraft(d.id, { category: e.target.value as 'task' | 'grocery' })}
+  value={d.category}
+  onChange={e => updateDraft(d.id, { category: e.target.value as 'task' | 'grocery' | 'notes' })}
                           style={{ fontSize: '0.7rem', border: '1px solid var(--border)', borderRadius: 8, background: 'var(--cream)', color: 'var(--ink-muted)' }}
                         >
                           <option value="task">Task</option>
-                          <option value="grocery">Grocery</option>
+<option value="grocery">Grocery</option>
+<option value="notes">Notes</option>
                         </select>
                         <button
                           onClick={() => removeDraft(d.id)}
