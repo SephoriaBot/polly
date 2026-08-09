@@ -371,6 +371,7 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
           { data: walletSettingsData },
           { data: dailyHoursData },
           { data: extraFundsData },
+          { data: extraExpensesData },
           { data: payPeriodData },
         ] = await Promise.all([
           supabase.from("debts").select("*"),
@@ -382,6 +383,7 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
           supabase.from("wallet_settings").select("*").eq("id", 1).maybeSingle(),
           supabase.from("daily_hours_log").select("*"),
           supabase.from("extra_funds_log").select("*"),
+          supabase.from("extra_expenses_log").select("*"),
           supabase.from("wallet_pay_period").select("*").eq("id", 1).maybeSingle(),
         ]);
 
@@ -447,6 +449,14 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
             map[row.date] = row.amount || "";
           });
           setExtraFunds(map);
+        }
+
+        if (extraExpensesData && extraExpensesData.length > 0) {
+          const map: Record<string, string> = {};
+          extraExpensesData.forEach((row: { date: string; amount: string }) => {
+            map[row.date] = row.amount || "";
+          });
+          setExtraExpenses(map);
         }
 
         if (payPeriodData) {
@@ -643,6 +653,21 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
     return () => { if (extraFundsSaveTimer.current) clearTimeout(extraFundsSaveTimer.current); };
   }, [extraFunds, walletSettingsLoaded]);
 
+  const [extraExpenses, setExtraExpenses] = useState<Record<string, string>>({});
+  const extraExpensesSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (!walletSettingsLoaded) return;
+    if (extraExpensesSaveTimer.current) clearTimeout(extraExpensesSaveTimer.current);
+    extraExpensesSaveTimer.current = setTimeout(() => {
+      const rows = Object.entries(extraExpenses).map(([date, amount]) => ({ date, amount: amount || "" }));
+      if (rows.length === 0) return;
+      supabase.from("extra_expenses_log").upsert(rows, { onConflict: "date" }).then(({ error }) => {
+        if (error) console.error("extra_expenses_log save failed:", error);
+      });
+    }, 800);
+    return () => { if (extraExpensesSaveTimer.current) clearTimeout(extraExpensesSaveTimer.current); };
+  }, [extraExpenses, walletSettingsLoaded]);
+
   const effectiveOtWage = parseFloat(otWageOverride) > 0 ? parseFloat(otWageOverride) : budget.hourly_wage * 1.5;
   const netHourlyWage = budget.hourly_wage > 0 ? budget.hourly_wage * (1 - taxRate / 100) : 0;
   const netOtWage = effectiveOtWage > 0 ? effectiveOtWage * (1 - taxRate / 100) : 0;
@@ -702,6 +727,7 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
     }
 
     const extraToday = parseFloat(extraFunds[key]) || 0;
+    const extraExpenseToday = parseFloat(extraExpenses[key]) || 0;
     const billsToday = billsByDate[key] || [];
     const billsTotal = billsToday.reduce((s, b) => s + b.amount, 0);
 
@@ -736,13 +762,13 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
       pendingPayout = 0;
     }
 
-    runningBalance += availableToday + releasedToday + extraToday - billsTotal;
+    runningBalance += availableToday + releasedToday + extraToday - extraExpenseToday - billsTotal;
     const heldInPool = Math.max(0, periodEarnedGross - periodWithdrawnGross);
 
     return {
       date: d, key, billsToday, billsTotal, regHoursToday, otHoursToday,
       hoursToday, earnedToday: fullEarnedToday, availableToday, releasedToday,
-      eligiblePct, heldInPool, extraToday, balance: runningBalance,
+      eligiblePct, heldInPool, extraToday, extraExpenseToday, balance: runningBalance,
       ceilingToday: maxWithdrawableGrossSoFar, withdrawnBeforeToday,
     };
   });
@@ -753,7 +779,7 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
 
   const moneyCalendarResult = useMemo(
     () => buildMoneyCalendarRows([...calendarWeeks.week1, ...calendarWeeks.week2], budget.current_balance || 0),
-    [calendarWeeks, billsByDate, dailyHours, extraFunds, netHourlyWage, netOtWage, budget.current_balance, budget.net_to_gross_ratio, budget.flat_deductions_prev, priorWeekHours, closedWeekHours]
+    [calendarWeeks, billsByDate, dailyHours, extraFunds, extraExpenses, netHourlyWage, netOtWage, budget.current_balance, budget.net_to_gross_ratio, budget.flat_deductions_prev, priorWeekHours, closedWeekHours]
   );
   const week1Result = { rows: moneyCalendarResult.rows.slice(0, 7) };
   const week2Result = { rows: moneyCalendarResult.rows.slice(7, 14) };
@@ -1711,6 +1737,38 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                                   }}
                                 >
                                   +{fmt(row.extraToday)} expected
+                                </div>
+                              )}
+
+                              <div style={{ marginTop: 8 }}>
+                                <span style={{ fontSize: 10, color: "var(--ink-muted)" }}>
+                                  Expected Purchase / Expense
+                                </span>
+
+                                <input
+                                  type="number"
+                                  className="form-input"
+                                  placeholder="0"
+                                  value={extraExpenses[row.key] || ""}
+                                  onChange={e =>
+                                    setExtraExpenses(prev => ({
+                                      ...prev,
+                                      [row.key]: e.target.value,
+                                    }))
+                                  }
+                                />
+                              </div>
+
+                              {row.extraExpenseToday > 0 && (
+                                <div
+                                  style={{
+                                    fontSize: 11,
+                                    color: "var(--danger)",
+                                    fontWeight: 700,
+                                    marginTop: 4,
+                                  }}
+                                >
+                                  -{fmt(row.extraExpenseToday)} expected
                                 </div>
                               )}
 
