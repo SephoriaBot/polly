@@ -11,6 +11,7 @@ export interface Chore {
   last_done_at: string | null;
   icon: string;
   created_at: string;
+  estimated_minutes: number;
 }
 
 const MS_PER_DAY = 1000 * 60 * 60 * 24;

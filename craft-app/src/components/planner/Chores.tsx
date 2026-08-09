@@ -26,6 +26,7 @@ export default function Chores() {
   const [loading, setLoading] = useState(true);
   const [name, setName] = useState('');
   const [intervalDays, setIntervalDays] = useState('7');
+  const [estimatedMinutes, setEstimatedMinutes] = useState('10');
   const [icon, setIcon] = useState<IconName>('cleaning-spray');
   const [adding, setAdding] = useState(false);
 
@@ -41,11 +42,12 @@ export default function Chores() {
   async function addChore() {
     const trimmed = name.trim();
     const interval = parseInt(intervalDays, 10);
+    const minutes = parseInt(estimatedMinutes, 10) || 10;
     if (!trimmed || !interval || interval < 1) return;
     setAdding(true);
     const { data, error } = await supabase
       .from('chores')
-      .insert({ name: trimmed, interval_days: interval, icon, last_done_at: null })
+      .insert({ name: trimmed, interval_days: interval, icon, last_done_at: null, estimated_minutes: minutes })
       .select()
       .single();
     setAdding(false);
@@ -53,6 +55,7 @@ export default function Chores() {
     if (data) setChores(prev => [...prev, data as Chore]);
     setName('');
     setIntervalDays('7');
+    setEstimatedMinutes('10');
   }
 
   async function markDone(chore: Chore) {
@@ -105,7 +108,7 @@ export default function Chores() {
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--ink)' }}>{chore.name}</div>
                     <div style={{ fontSize: '0.72rem', marginTop: 2, fontWeight: status.tone === 'due' ? 700 : 500, color: status.tone === 'due' ? 'var(--pink-dark)' : 'var(--ink-muted)' }}>
-                      {status.label} · every {chore.interval_days}d
+                      {status.label} · every {chore.interval_days}d · ~{chore.estimated_minutes}min
                     </div>
                   </div>
                   <button
@@ -154,26 +157,35 @@ export default function Chores() {
               min={1}
               value={intervalDays}
               onChange={e => setIntervalDays(e.target.value)}
-              style={{ width: 64 }}
+              style={{ width: 56 }}
             />
-            <span style={{ fontSize: 12, color: 'var(--ink-muted)' }}>days</span>
-            <div style={{ display: 'flex', gap: 4, marginLeft: 'auto' }}>
-              {CHORE_ICONS.map(i => (
-                <button
-                  key={i}
-                  onClick={() => setIcon(i)}
-                  style={{
-                    width: 26, height: 26, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    background: icon === i ? 'var(--blush)' : 'transparent',
-                    border: icon === i ? '1.5px solid var(--pink-dark)' : '1.5px solid var(--border)',
-                    cursor: 'pointer',
-                  }}
-                  aria-label={i}
-                >
-                  <Icon name={i} size={13} style={{ color: 'var(--pink-dark)' }} />
-                </button>
-              ))}
-            </div>
+            <span style={{ fontSize: 12, color: 'var(--ink-muted)' }}>days,</span>
+            <input
+              className="form-input"
+              type="number"
+              min={1}
+              value={estimatedMinutes}
+              onChange={e => setEstimatedMinutes(e.target.value)}
+              style={{ width: 56 }}
+            />
+            <span style={{ fontSize: 12, color: 'var(--ink-muted)' }}>min</span>
+          </div>
+          <div style={{ display: 'flex', gap: 4 }}>
+            {CHORE_ICONS.map(i => (
+              <button
+                key={i}
+                onClick={() => setIcon(i)}
+                style={{
+                  width: 26, height: 26, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  background: icon === i ? 'var(--blush)' : 'transparent',
+                  border: icon === i ? '1.5px solid var(--pink-dark)' : '1.5px solid var(--border)',
+                  cursor: 'pointer',
+                }}
+                aria-label={i}
+              >
+                <Icon name={i} size={13} style={{ color: 'var(--pink-dark)' }} />
+              </button>
+            ))}
           </div>
         </div>
       </div>

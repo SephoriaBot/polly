@@ -5,6 +5,7 @@ import Icon from '../components/Icon';
 import Lantern from "../components/Lantern";
 import EmptyState from '../components/EmptyState';
 import thinkingHamsterImg from '../assets/illustrations/thinking_hamster.png';
+import QuickDecide from '../components/decisions/QuickDecide';
 
 
 
@@ -367,11 +368,7 @@ const DecisionTreeList: FC<{ onSelect: (id: string) => void; onNew: () => void; 
 
   return (
     <div style={styles.page}>
-      <div style={styles.listHeaderRow}>
-        <div className="title-row">
-          <h2 style={styles.pageTitle}>Decisions</h2>
-          <Lantern />
-        </div>
+      <div style={{ ...styles.listHeaderRow, justifyContent: 'flex-end' }}>
         <button style={styles.newBtn} onClick={onNew}>+ New decision</button>
       </div>
       {status === 'loading' && <p>Loading saved decisions...</p>}
@@ -391,7 +388,7 @@ const DecisionTreeList: FC<{ onSelect: (id: string) => void; onNew: () => void; 
   );
 };
 
-const DecisionPage: FC = () => {
+const DeepDiveDecisions: FC = () => {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [mode, setMode] = useState<'list' | 'editor'>('list');
   const [refreshKey, setRefreshKey] = useState(0);
@@ -421,6 +418,41 @@ const DecisionPage: FC = () => {
         setMode('editor');
       }}
     />
+  );
+};
+
+type TopTab = 'quick' | 'deep';
+
+const DecisionPage: FC = () => {
+  const [tab, setTab] = useState<TopTab>('quick');
+
+  return (
+    <div style={styles.page}>
+      <div className="title-row" style={{ marginBottom: 12 }}>
+        <h2 style={styles.pageTitle}>Decisions</h2>
+        <Lantern />
+      </div>
+
+      <div style={{ display: 'flex', gap: 6, marginBottom: 16 }}>
+        {(['quick', 'deep'] as const).map(t => (
+          <button
+            key={t}
+            onClick={() => setTab(t)}
+            style={{
+              padding: '6px 12px', borderRadius: 12,
+              background: tab === t ? 'var(--blush)' : 'transparent',
+              border: `1.5px solid ${tab === t ? 'var(--pink-dark)' : 'var(--border)'}`,
+              color: tab === t ? 'var(--pink-dark)' : 'var(--ink-muted)',
+              fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer',
+            }}
+          >
+            {t === 'quick' ? 'Help me decide' : 'Deep dive'}
+          </button>
+        ))}
+      </div>
+
+      {tab === 'quick' ? <QuickDecide /> : <DeepDiveDecisions />}
+    </div>
   );
 };
 
