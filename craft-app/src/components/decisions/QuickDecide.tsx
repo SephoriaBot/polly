@@ -12,8 +12,9 @@ import { supabase } from '../../lib/supabase';
 import { useEnergy } from '../../context/EnergyContext';
 import Icon from '../Icon';
 import { type Chore, statusFor } from '../../lib/chores';
+import ResetMyLife from '../ResetMyLife';
 
-type Preset = 'cook-or-order' | 'what-to-eat' | 'what-to-clean';
+type Preset = 'reset' | 'cook-or-order' | 'what-to-eat' | 'what-to-clean';
 
 const ENERGY_LABEL: Record<string, string> = {
   normal: 'Normal',
@@ -32,6 +33,22 @@ export default function QuickDecide() {
           <p style={{ fontSize: '0.78rem', color: 'var(--ink-muted)', marginTop: 0, marginBottom: 14 }}>
             A few quick questions, then a real recommendation — not just "up to you."
           </p>
+          <button
+            onClick={() => setPreset('reset')}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 12, textAlign: 'left', width: '100%',
+              background: 'var(--blush)', border: '1.5px solid var(--pink-dark)',
+              borderRadius: 18, padding: '14px 16px', cursor: 'pointer', fontFamily: 'inherit',
+              marginBottom: 12,
+            }}
+          >
+            <span style={{ fontSize: '1.4rem', lineHeight: 1 }}>🫠</span>
+            <div>
+              <div style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--pink-dark)' }}>Reset my life</div>
+              <div style={{ fontSize: '0.68rem', color: 'var(--pink-dark)', opacity: 0.8 }}>Had a rough one? Get a tiny plan, not a full list.</div>
+            </div>
+          </button>
+
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             <PresetButton icon="cooking-pot" title="Should I cook or order food?" onClick={() => setPreset('cook-or-order')} />
             <PresetButton icon="icon-meals" title="What should I eat?" onClick={() => setPreset('what-to-eat')} />
@@ -45,6 +62,14 @@ export default function QuickDecide() {
     );
   }
 
+  if (preset === 'reset') {
+    return (
+      <div>
+        <BackButton onClick={() => setPreset(null)} />
+        <ResetMyLife />
+      </div>
+    );
+  }
   if (preset === 'cook-or-order') return <CookOrOrder onBack={() => setPreset(null)} />;
   if (preset === 'what-to-eat') return <WhatToEat onBack={() => setPreset(null)} />;
   if (preset === 'what-to-clean') return <WhatToClean onBack={() => setPreset(null)} />;
