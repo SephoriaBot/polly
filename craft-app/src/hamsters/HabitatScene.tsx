@@ -5,6 +5,8 @@ import { imageForForm, HAMSTERS } from './hamsters';
 
 const HABITAT_PATH = '/habitat';
 const MAX_DECOR = 3;
+const REGULAR_COST = 15;
+const LARGE_COST = 25;
 
 type HabitatSlot = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
 
@@ -247,7 +249,8 @@ const STAGE_RANK: Record<string, number> = {
   final: 2,
 };
 
-// Items that read visually "bigger" and need a larger footprint on the shelf
+// Items that read visually "bigger" and need a larger footprint on the
+// shelf — and cost more points to unlock.
 const LARGE_ITEMS = new Set([
   'spring-mushroom-house',
   'spring-daisy-bed',
@@ -264,6 +267,10 @@ const LARGE_ITEMS = new Set([
   'winter-snowy-hammock',
   'winter-snowy-tunnel',
 ]);
+
+function costFor(key: string): number {
+  return LARGE_ITEMS.has(key) ? LARGE_COST : REGULAR_COST;
+}
 
 // Shared floor line so every item sits on the same "ground" instead of
 // floating at inconsistent heights (the "sticker" look).
@@ -309,27 +316,32 @@ function getCurrentSeason(): Season {
 }
 
 export default function HabitatScene() {
-  const { loading, collection } = useHamsterGrowth();
+  const { loading, collection, points, spendPoints } = useHamsterGrowth();
   const [decor, setDecor] = useState<string[]>([]);
+  const [unlocked, setUnlocked] = useState<string[]>([]);
   const [themeLoaded, setThemeLoaded] = useState(false);
+  const [unlockingKey, setUnlockingKey] = useState<string | null>(null);
+  const [unlockError, setUnlockError] = useState<string | null>(null);
   const selectedSeason = getCurrentSeason();
 
-  // Load the saved theme once on mount. This was previously missing, so
-  // themeLoaded never became true and the whole scene rendered nothing.
+  // Load the saved theme + unlocked items once on mount. themeLoaded was
+  // previously never set true anywhere, so the whole scene rendered nothing.
   useEffect(() => {
     let cancelled = false;
 
     async function loadTheme() {
       try {
-        const { data, error } = await supabase
-          .from('habitat_theme')
-          .select('decor_keys')
-          .eq('id', 1)
-          .maybeSingle();
+        const [themeRes, unlockedRes] = await Promise.all([
+          supabase.from('habitat_theme').select('decor_keys').eq('id', 1).maybeSingle(),
+          supabase.from('habitat_unlocked_items').select('item_key'),
+        ]);
 
         if (!cancelled) {
-          if (!error && data?.decor_keys) {
-            setDecor(data.decor_keys);
+          if (!themeRes.error && themeRes.data?.decor_keys) {
+            setDecor(themeRes.data.decor_keys);
+          }
+          if (!unlockedRes.error && unlockedRes.data) {
+            setUnlocked(unlockedRes.data.map(r => r.item_key));
           }
           setThemeLoaded(true);
         }
@@ -355,6 +367,8 @@ export default function HabitatScene() {
   }
 
   function toggleDecor(key: string) {
+    if (!unlocked.includes(key)) return;
+
     const item = HABITAT_ITEMS.find(i => i.key === key);
     if (!item) return;
 
@@ -364,8 +378,8 @@ export default function HabitatScene() {
       if (prev.includes(key)) {
         next = prev.filter(k => k !== key);
       } else {
-        // Cap is per-season now, so picking spring items doesn't evict
-        // decor you already placed for other seasons.
+        // Cap is per-season, so picking spring items doesn't evict decor
+        // you already placed for other seasons.
         const sameSeasonKeys = prev.filter(k => {
           const other = HABITAT_ITEMS.find(h => h.key === k);
           return other?.season === item.season;
@@ -384,6 +398,34 @@ export default function HabitatScene() {
     });
   }
 
+  async function unlockItem(key: string) {
+    if (unlocked.includes(key) || unlockingKey) return;
+    setUnlockError(null);
+    setUnlockingKey(key);
+
+    const cost = costFor(key);
+    const result = await spendPoints(cost);
+
+    if (!result.ok) {
+      setUnlockError(result.reason || "Couldn't unlock that yet");
+      setUnlockingKey(null);
+      return;
+    }
+
+    const { error } = await supabase
+      .from('habitat_unlocked_items')
+      .upsert({ item_key: key }, { onConflict: 'item_key' });
+
+    if (error) {
+      setUnlockError('Unlock saved points but failed to record — try again');
+      setUnlockingKey(null);
+      return;
+    }
+
+    setUnlocked(prev => [...prev, key]);
+    setUnlockingKey(null);
+  }
+
   if (loading || !themeLoaded) {
     return null;
   }
@@ -396,10 +438,13 @@ export default function HabitatScene() {
     return new Date(b.hatchedAt).getTime() - new Date(a.hatchedAt).getTime();
   })[0];
 
-  // Only show decor that belongs to the current season, even if it's
-  // still saved from a previous season's picks.
+  // Only show decor that's unlocked AND belongs to the current season,
+  // even if it's still saved from a previous season's picks.
   const activeDecor = HABITAT_ITEMS.filter(
-    item => decor.includes(item.key) && item.season === selectedSeason
+    item =>
+      decor.includes(item.key) &&
+      item.season === selectedSeason &&
+      unlocked.includes(item.key)
   );
 
   const visibleItems = HABITAT_ITEMS.filter(
@@ -411,8 +456,24 @@ export default function HabitatScene() {
   return (
     <div className="card">
       <div className="card-body">
-        <div className="section-label" style={{ marginBottom: 10 }}>
-          Decorate the habitat
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginBottom: 10,
+          }}
+        >
+          <div className="section-label">Decorate the habitat</div>
+          <div
+            style={{
+              fontSize: '0.68rem',
+              fontWeight: 700,
+              color: 'var(--ink-muted)',
+            }}
+          >
+            {points} pts
+          </div>
         </div>
         <div
           style={{
@@ -513,8 +574,20 @@ export default function HabitatScene() {
             marginBottom: 8,
           }}
         >
-          Pick up to {MAX_DECOR} items
+          Pick up to {MAX_DECOR} unlocked items. Locked items cost points to
+          unlock — same points that hatch and train your hamsters.
         </div>
+        {unlockError && (
+          <div
+            style={{
+              fontSize: '0.6rem',
+              color: 'var(--pink-dark)',
+              marginBottom: 8,
+            }}
+          >
+            {unlockError}
+          </div>
+        )}
         <div
           style={{
             display: 'grid',
@@ -523,13 +596,21 @@ export default function HabitatScene() {
           }}
         >
           {visibleItems.map(item => {
+            const isUnlocked = unlocked.includes(item.key);
             const active = decor.includes(item.key);
+            const cost = costFor(item.key);
+            const busy = unlockingKey === item.key;
+
             return (
               <button
                 key={item.key}
-                onClick={() => toggleDecor(item.key)}
-                title={item.label}
+                onClick={() =>
+                  isUnlocked ? toggleDecor(item.key) : unlockItem(item.key)
+                }
+                disabled={busy}
+                title={isUnlocked ? item.label : `${item.label} — ${cost} pts to unlock`}
                 style={{
+                  position: 'relative',
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'center',
@@ -538,13 +619,16 @@ export default function HabitatScene() {
                   minHeight: 76,
                   padding: '6px 4px',
                   borderRadius: 12,
-                  background: active ? 'var(--blush)' : 'var(--white)',
+                  background: active
+                    ? 'var(--blush)'
+                    : 'var(--white)',
                   border: `1.5px solid ${
                     active ? 'var(--pink-dark)' : 'var(--border)'
                   }`,
-                  cursor: 'pointer',
+                  cursor: busy ? 'wait' : 'pointer',
                   fontFamily: 'inherit',
                   overflow: 'hidden',
+                  opacity: isUnlocked ? 1 : 0.55,
                 }}
               >
                 <img
@@ -554,6 +638,7 @@ export default function HabitatScene() {
                     width: 48,
                     height: 48,
                     objectFit: 'contain',
+                    filter: isUnlocked ? 'none' : 'grayscale(60%)',
                   }}
                 />
                 <span
@@ -565,7 +650,7 @@ export default function HabitatScene() {
                     lineHeight: 1.1,
                   }}
                 >
-                  {item.label}
+                  {isUnlocked ? item.label : `🔒 ${cost} pts`}
                 </span>
               </button>
             );
