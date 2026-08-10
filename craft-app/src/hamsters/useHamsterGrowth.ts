@@ -713,6 +713,39 @@ export function useHamsterGrowthState() {
     [refreshCollection]
   );
 
+  // Spends points from the same shared balance that drives hatching, e.g.
+  // for unlocking a habitat item. Re-reads the row fresh from Supabase
+  // first (rather than trusting local state) so two quick spends can't
+  // both succeed against a stale balance. Returns a reason string when the
+  // spend can't happen at all; never partially spends.
+  const spendPoints = useCallback(
+    async (amount: number): Promise<{ ok: boolean; reason?: string }> => {
+      const { data: row } = await supabase
+        .from("hamster_growth")
+        .select("points, threshold")
+        .eq("id", 1)
+        .maybeSingle();
+
+      const current = Number(row?.points) || 0;
+      if (current < amount) {
+        return { ok: false, reason: "Not enough points yet" };
+      }
+
+      const newPoints = current - amount;
+      const { error } = await supabase
+        .from("hamster_growth")
+        .upsert({ id: 1, points: newPoints, threshold: Number(row?.threshold) || threshold });
+
+      if (reportError("Spend points", error)) {
+        return { ok: false, reason: error.message || "Save failed" };
+      }
+
+      setPoints(newPoints);
+      return { ok: true };
+    },
+    [threshold, reportError]
+  );
+
   return {
     loading,
     refreshing,
@@ -730,6 +763,7 @@ export function useHamsterGrowthState() {
     clearWildEncounter,
     renameHamster,
     allocateStat,
+    spendPoints,
     growthError,
     clearGrowthError,
   };
