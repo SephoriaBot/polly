@@ -2,7 +2,7 @@ import { useEnergy, type EnergyMode } from '../context/EnergyContext';
 
 const OPTIONS: { mode: EnergyMode; label: string }[] = [
   { mode: 'normal', label: 'Normal' },
-  { mode: 'low', label: '🫠 Low Energy' },
+  { mode: 'noEnergy', label: '🫠 No Energy' },
 ];
 
 export default function EnergyModeSwitch() {

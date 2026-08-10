@@ -1,24 +1,26 @@
 // LowEnergyChecklist.tsx
-// Tier 1, item 5. Per the doc: instead of showing everything due, ask for
-// one important thing, plus three basics. The "pick my one thing" button
-// reuses the same chore due-status logic as Chores.tsx/TodaySnapshot.tsx —
-// most-overdue chore first, then the oldest open task — so it's grounded in
-// what's actually outstanding rather than inventing a suggestion.
+// No Energy Mode. Per the doc: instead of showing everything due, reduce
+// the day down to what's actually starred as priority in the Planner, plus
+// three basics. Priority tasks are real daily_tasks rows — checking one off
+// here marks it done for real, same as checking it off in the Planner.
 
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import Icon from './Icon';
-import { type Chore, statusFor } from '../lib/chores';
 
-const CHECKLIST_KEY = 'polly-low-energy-checklist';
+const CHECKLIST_KEY = 'polly-no-energy-checklist';
 
-interface CheckState {
+interface BasicsState {
   date: string;
   ate: boolean;
   water: boolean;
   reset: boolean;
-  oneThing: string;
-  oneThingDone: boolean;
+}
+
+interface PriorityTask {
+  id: string;
+  label: string;
+  done: boolean;
 }
 
 function todayISO(): string {
@@ -26,51 +28,46 @@ function todayISO(): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
-function loadState(): CheckState {
+function loadBasics(): BasicsState {
   const today = todayISO();
   try {
     const stored = JSON.parse(localStorage.getItem(CHECKLIST_KEY) || 'null');
     if (stored && stored.date === today) return stored;
   } catch { /* ignore */ }
-  return { date: today, ate: false, water: false, reset: false, oneThing: '', oneThingDone: false };
+  return { date: today, ate: false, water: false, reset: false };
 }
 
-export default function LowEnergyChecklist() {
-  const [state, setState] = useState<CheckState>(loadState);
-  const [picking, setPicking] = useState(false);
+export default function LowEnergyChecklist({ onNavigate }: { onNavigate?: (page: string) => void }) {
+  const [basics, setBasics] = useState<BasicsState>(loadBasics);
+  const [priorityTasks, setPriorityTasks] = useState<PriorityTask[] | null>(null);
 
   useEffect(() => {
-    localStorage.setItem(CHECKLIST_KEY, JSON.stringify(state));
-  }, [state]);
+    localStorage.setItem(CHECKLIST_KEY, JSON.stringify(basics));
+  }, [basics]);
 
-  async function pickOneThing() {
-    setPicking(true);
-    const now = new Date();
-    const today = todayISO();
-    const [choresRes, tasksRes] = await Promise.all([
-      supabase.from('chores').select('id,name,interval_days,last_done_at,icon,created_at'),
-      supabase.from('daily_tasks').select('id,label,done').eq('task_date', today).eq('done', false).order('created_at').limit(1),
-    ]);
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase
+        .from('daily_tasks')
+        .select('id,label,done')
+        .eq('task_date', todayISO())
+        .eq('priority', true)
+        .order('created_at');
+      setPriorityTasks((data as PriorityTask[]) ?? []);
+    })();
+  }, []);
 
-    const dueChores = ((choresRes.data ?? []) as Chore[])
-      .map(c => ({ chore: c, status: statusFor(c, now) }))
-      .filter(x => x.status.tone === 'due')
-      .sort((a, b) => b.status.overdueDays - a.status.overdueDays);
-
-    const pick = dueChores.length > 0
-      ? dueChores[0].chore.name
-      : (tasksRes.data ?? [])[0]?.label ?? '';
-
-    setState(prev => ({ ...prev, oneThing: pick || 'Pick anything small — you get to choose', oneThingDone: false }));
-    setPicking(false);
+  async function togglePriorityTask(task: PriorityTask) {
+    const newDone = !task.done;
+    setPriorityTasks(prev => prev ? prev.map(t => t.id === task.id ? { ...t, done: newDone } : t) : prev);
+    await supabase.from('daily_tasks').update({ done: newDone }).eq('id', task.id);
   }
 
-  function toggle(key: 'ate' | 'water' | 'reset' | 'oneThingDone') {
-    setState(prev => ({ ...prev, [key]: !prev[key] }));
+  function toggleBasic(key: 'ate' | 'water' | 'reset') {
+    setBasics(prev => ({ ...prev, [key]: !prev[key] }));
   }
 
-  const items: { key: 'oneThingDone' | 'ate' | 'water' | 'reset'; label: string; sub?: string }[] = [
-    { key: 'oneThingDone', label: state.oneThing || 'Do one important thing', sub: state.oneThing ? undefined : "Tap \"pick for me\" below, or just decide" },
+  const basicItems: { key: 'ate' | 'water' | 'reset'; label: string }[] = [
     { key: 'ate', label: 'Eat something' },
     { key: 'water', label: 'Drink water' },
     { key: 'reset', label: '5-minute reset — tidy one small spot, then stop' },
@@ -86,50 +83,77 @@ export default function LowEnergyChecklist() {
           Everything else can wait. This is the whole list.
         </p>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 12 }}>
-          {items.map(item => {
-            const done = state[item.key];
-            return (
-              <div
-                key={item.key}
-                onClick={() => toggle(item.key)}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer',
-                  background: done ? 'var(--blush)' : 'var(--white)',
-                  border: `1.5px solid ${done ? 'var(--pink-light)' : 'var(--border)'}`,
-                  borderRadius: 18, padding: '12px 14px',
-                }}
-              >
-                <Icon
-                  name={done ? 'picnicfull' : 'picnicempty'}
-                  size={22}
-                  style={{ color: done ? 'var(--pink-dark)' : 'var(--border)', flexShrink: 0 }}
-                />
-                <div style={{ flex: 1 }}>
-                  <div style={{
-                    fontSize: '0.88rem', fontWeight: 600,
-                    color: done ? 'var(--ink-muted)' : 'var(--ink)',
-                    textDecoration: done ? 'line-through' : 'none',
-                  }}>
-                    {item.label}
-                  </div>
-                  {item.sub && (
-                    <div style={{ fontSize: '0.72rem', color: 'var(--ink-muted)', marginTop: 2 }}>{item.sub}</div>
-                  )}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: priorityTasks && priorityTasks.length > 0 ? 12 : 6 }}>
+          {priorityTasks === null ? (
+            <p style={{ fontSize: '0.78rem', color: 'var(--ink-muted)' }}>Loading…</p>
+          ) : priorityTasks.length > 0 ? (
+            priorityTasks.map(task => (
+              <ChecklistRow
+                key={task.id}
+                label={task.label}
+                done={task.done}
+                onToggle={() => togglePriorityTask(task)}
+              />
+            ))
+          ) : (
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 12,
+              background: 'var(--cream)', border: '1.5px dashed var(--border)',
+              borderRadius: 18, padding: '12px 14px',
+            }}>
+              <span style={{ fontSize: '1.2rem' }}>★</span>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: '0.82rem', color: 'var(--ink-muted)', fontWeight: 600 }}>
+                  Nothing starred as priority yet
                 </div>
+                <button
+                  onClick={() => onNavigate?.('dailyplanner')}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--pink-dark)', fontSize: '0.72rem', fontWeight: 700, padding: 0, marginTop: 2 }}
+                >
+                  Star one in the Planner →
+                </button>
               </div>
-            );
-          })}
+            </div>
+          )}
         </div>
 
-        <button
-          className="btn btn-ghost btn-sm"
-          onClick={pickOneThing}
-          disabled={picking}
-          style={{ width: '100%', justifyContent: 'center', opacity: picking ? 0.6 : 1 }}
-        >
-          {picking ? 'Thinking…' : state.oneThing ? 'Pick something else for me' : 'Want me to pick your one thing?'}
-        </button>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {basicItems.map(item => (
+            <ChecklistRow
+              key={item.key}
+              label={item.label}
+              done={basics[item.key]}
+              onToggle={() => toggleBasic(item.key)}
+            />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ChecklistRow({ label, done, onToggle }: { label: string; done: boolean; onToggle: () => void }) {
+  return (
+    <div
+      onClick={onToggle}
+      style={{
+        display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer',
+        background: done ? 'var(--blush)' : 'var(--white)',
+        border: `1.5px solid ${done ? 'var(--pink-light)' : 'var(--border)'}`,
+        borderRadius: 18, padding: '12px 14px',
+      }}
+    >
+      <Icon
+        name={done ? 'picnicfull' : 'picnicempty'}
+        size={22}
+        style={{ color: done ? 'var(--pink-dark)' : 'var(--border)', flexShrink: 0 }}
+      />
+      <div style={{
+        flex: 1, fontSize: '0.88rem', fontWeight: 600,
+        color: done ? 'var(--ink-muted)' : 'var(--ink)',
+        textDecoration: done ? 'line-through' : 'none',
+      }}>
+        {label}
       </div>
     </div>
   );
