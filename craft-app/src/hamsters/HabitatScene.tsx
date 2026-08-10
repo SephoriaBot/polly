@@ -6,256 +6,231 @@ import { imageForForm, HAMSTERS } from './hamsters';
 const HABITAT_PATH = '/habitat';
 const MAX_DECOR = 3;
 
-type Season = 'spring' | 'summer' | 'fall' | 'winter';
+type HabitatSlot = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
 
-type Placement =
-  | 'backLeft'
-  | 'backCenter'
-  | 'backRight'
-  | 'left'
-  | 'center'
-  | 'right'
-  | 'frontLeft'
-  | 'frontCenter'
-  | 'frontRight';
+type Season = 'spring' | 'summer' | 'fall' | 'winter';
 
 interface HabitatItem {
   key: string;
   label: string;
   image: string;
   season: Season;
-  placement: Placement;
+  slot: HabitatSlot;
 }
 
 const HABITAT_ITEMS: HabitatItem[] = [
-  // =========================
-  // SPRING
-  // =========================
-
   {
     key: 'spring-daisy-bed',
     label: 'Daisy Bed',
     image: `${HABITAT_PATH}/item_spring_daisy-bed.png`,
     season: 'spring',
-    placement: 'left',
+    slot: 1,
   },
   {
     key: 'spring-floral-bridge',
     label: 'Floral Bridge',
     image: `${HABITAT_PATH}/item_spring_floral-bridge.png`,
     season: 'spring',
-    placement: 'backCenter',
+    slot: 2,
   },
   {
     key: 'spring-floral-swing',
     label: 'Floral Swing',
     image: `${HABITAT_PATH}/item_spring_floral-swing.png`,
     season: 'spring',
-    placement: 'right',
+    slot: 3,
   },
   {
     key: 'spring-mushroom-house',
     label: 'Mushroom House',
     image: `${HABITAT_PATH}/item_spring_mushroom-house.png`,
     season: 'spring',
-    placement: 'backLeft',
+    slot: 4,
   },
   {
     key: 'spring-nest-bed',
     label: 'Nest Bed',
     image: `${HABITAT_PATH}/item_spring_nest-bed.png`,
     season: 'spring',
-    placement: 'right',
+    slot: 5,
   },
   {
     key: 'spring-teacup-bath',
     label: 'Teacup Bath',
     image: `${HABITAT_PATH}/item_spring_teacup-bath.png`,
     season: 'spring',
-    placement: 'frontRight',
+    slot: 6,
   },
   {
     key: 'spring-tulip-bed',
     label: 'Tulip Bed',
     image: `${HABITAT_PATH}/item_spring_tulip-bed.png`,
     season: 'spring',
-    placement: 'frontLeft',
+    slot: 7,
   },
-
-  // =========================
-  // SUMMER
-  // =========================
 
   {
     key: 'summer-beach-chair-umbrella',
     label: 'Beach Chair',
     image: `${HABITAT_PATH}/item_summer_beach-chair-umbrella.png`,
     season: 'summer',
-    placement: 'right',
+    slot: 1,
   },
   {
     key: 'summer-coconut-hut',
     label: 'Coconut Hut',
     image: `${HABITAT_PATH}/item_summer_coconut-hut.png`,
     season: 'summer',
-    placement: 'backLeft',
+    slot: 2,
   },
   {
     key: 'summer-hammock-palms',
     label: 'Palm Hammock',
     image: `${HABITAT_PATH}/item_summer_hammock-palms.png`,
     season: 'summer',
-    placement: 'backRight',
+    slot: 3,
   },
   {
     key: 'summer-pineapple-house',
     label: 'Pineapple House',
     image: `${HABITAT_PATH}/item_summer_pineapple-house.png`,
     season: 'summer',
-    placement: 'backLeft',
+    slot: 4,
   },
   {
     key: 'summer-sandcastle-house',
     label: 'Sandcastle House',
     image: `${HABITAT_PATH}/item_summer_sandcastle-house.png`,
     season: 'summer',
-    placement: 'backCenter',
+    slot: 5,
   },
   {
     key: 'summer-shell-bed',
     label: 'Shell Bed',
     image: `${HABITAT_PATH}/item_summer_shell-bed.png`,
     season: 'summer',
-    placement: 'left',
+    slot: 6,
   },
   {
     key: 'summer-surfboard-rocks',
     label: 'Surfboard',
     image: `${HABITAT_PATH}/item_summer_surfboard-rocks.png`,
     season: 'summer',
-    placement: 'frontRight',
+    slot: 7,
   },
   {
     key: 'summer-watermelon-bed',
     label: 'Watermelon Bed',
     image: `${HABITAT_PATH}/item_summer_watermelon-bed.png`,
     season: 'summer',
-    placement: 'frontLeft',
+    slot: 8,
   },
-
-  // =========================
-  // FALL
-  // =========================
 
   {
     key: 'fall-book-stack-den',
     label: 'Book Stack Den',
     image: `${HABITAT_PATH}/item_fall_book-stack-den.png`,
     season: 'fall',
-    placement: 'left',
+    slot: 1,
   },
   {
     key: 'fall-campfire',
     label: 'Campfire',
     image: `${HABITAT_PATH}/item_fall_campfire.png`,
     season: 'fall',
-    placement: 'frontLeft',
+    slot: 2,
   },
   {
     key: 'fall-log-mushroom-house',
     label: 'Log Mushroom House',
     image: `${HABITAT_PATH}/item_fall_log-mushroom-house.png`,
     season: 'fall',
-    placement: 'backLeft',
+    slot: 3,
   },
   {
     key: 'fall-mushroom-table',
     label: 'Mushroom Table',
     image: `${HABITAT_PATH}/item_fall_mushroom-table.png`,
     season: 'fall',
-    placement: 'center',
+    slot: 4,
   },
   {
     key: 'fall-plaid-armchair',
     label: 'Plaid Armchair',
     image: `${HABITAT_PATH}/item_fall_plaid-armchair.png`,
     season: 'fall',
-    placement: 'right',
+    slot: 5,
   },
   {
     key: 'fall-plaid-loveseat',
     label: 'Plaid Loveseat',
     image: `${HABITAT_PATH}/item_fall_plaid-loveseat.png`,
     season: 'fall',
-    placement: 'left',
+    slot: 6,
   },
   {
     key: 'fall-pumpkin-house',
     label: 'Pumpkin House',
     image: `${HABITAT_PATH}/item_fall_pumpkin-house.png`,
     season: 'fall',
-    placement: 'backRight',
+    slot: 7,
   },
   {
     key: 'fall-wagon-wheel',
     label: 'Wagon Wheel',
     image: `${HABITAT_PATH}/item_fall_wagon-wheel.png`,
     season: 'fall',
-    placement: 'backRight',
+    slot: 8,
   },
-
-  // =========================
-  // WINTER
-  // =========================
 
   {
     key: 'winter-igloo',
     label: 'Igloo',
     image: `${HABITAT_PATH}/item_winter_igloo.png`,
     season: 'winter',
-    placement: 'backLeft',
+    slot: 1,
   },
   {
     key: 'winter-sled',
     label: 'Sled',
     image: `${HABITAT_PATH}/item_winter_sled.png`,
     season: 'winter',
-    placement: 'frontRight',
+    slot: 2,
   },
   {
     key: 'winter-snowflake-teacup',
     label: 'Snowflake Teacup',
     image: `${HABITAT_PATH}/item_winter_snowflake-teacup.png`,
     season: 'winter',
-    placement: 'frontLeft',
+    slot: 3,
   },
   {
     key: 'winter-snowglobe-bed',
     label: 'Snowglobe Bed',
     image: `${HABITAT_PATH}/item_winter_snowglobe-bed.png`,
     season: 'winter',
-    placement: 'left',
+    slot: 4,
   },
   {
     key: 'winter-snowman',
     label: 'Snowman',
     image: `${HABITAT_PATH}/item_winter_snowman.png`,
     season: 'winter',
-    placement: 'frontRight',
+    slot: 5,
   },
   {
     key: 'winter-snowy-hammock',
     label: 'Snowy Hammock',
     image: `${HABITAT_PATH}/item_winter_snowy-hammock.png`,
     season: 'winter',
-    placement: 'right',
+    slot: 6,
   },
   {
     key: 'winter-snowy-tunnel',
     label: 'Snowy Tunnel',
     image: `${HABITAT_PATH}/item_winter_snowy-tunnel.png`,
     season: 'winter',
-    placement: 'backCenter',
+    slot: 7,
   },
 ];
 
@@ -266,89 +241,54 @@ const SEASONS: { key: Season; label: string }[] = [
   { key: 'winter', label: 'Winter' },
 ];
 
-/*
- * Each placement category has its own location, size and layer.
- *
- * This means selected objects are spread around the habitat instead
- * of being placed directly on top of one another.
- */
-const PLACEMENT_STYLES: Record<
-  Placement,
-  React.CSSProperties
-> = {
-  // Small objects toward the back
-  backLeft: {
+const SLOT_STYLES: Record<HabitatSlot, React.CSSProperties> = {
+  1: {
     left: '2%',
-    bottom: '12%',
-    width: '24%',
-    maxHeight: '42%',
-    zIndex: 2,
-  },
-
-  backCenter: {
-    left: '38%',
-    bottom: '14%',
-    width: '24%',
-    maxHeight: '40%',
-    zIndex: 2,
-  },
-
-  backRight: {
-    right: '2%',
-    bottom: '12%',
-    width: '24%',
-    maxHeight: '42%',
-    zIndex: 2,
-  },
-
-  // Main furniture
-  left: {
-    left: '3%',
-    bottom: '4%',
-    width: '27%',
-    maxHeight: '50%',
-    zIndex: 3,
-  },
-
-  center: {
-    left: '36.5%',
-    bottom: '4%',
-    width: '27%',
-    maxHeight: '50%',
-    zIndex: 3,
-  },
-
-  right: {
-    right: '3%',
-    bottom: '4%',
-    width: '27%',
-    maxHeight: '50%',
-    zIndex: 3,
-  },
-
-  // Small foreground pieces
-  frontLeft: {
-    left: '1%',
-    bottom: '1%',
+    top: '7%',
     width: '22%',
-    maxHeight: '38%',
-    zIndex: 4,
+    maxHeight: '42%',
   },
-
-  frontCenter: {
+  2: {
     left: '39%',
-    bottom: '1%',
+    top: '5%',
     width: '22%',
-    maxHeight: '38%',
-    zIndex: 4,
+    maxHeight: '40%',
   },
-
-  frontRight: {
-    right: '1%',
-    bottom: '1%',
+  3: {
+    right: '2%',
+    top: '7%',
+    width: '22%',
+    maxHeight: '42%',
+  },
+  4: {
+    left: '15%',
+    top: '32%',
+    width: '22%',
+    maxHeight: '43%',
+  },
+  5: {
+    right: '15%',
+    top: '32%',
+    width: '22%',
+    maxHeight: '43%',
+  },
+  6: {
+    left: '2%',
+    bottom: '2%',
     width: '22%',
     maxHeight: '38%',
-    zIndex: 4,
+  },
+  7: {
+    left: '39%',
+    bottom: '2%',
+    width: '22%',
+    maxHeight: '38%',
+  },
+  8: {
+    right: '2%',
+    bottom: '2%',
+    width: '22%',
+    maxHeight: '38%',
   },
 };
 
@@ -370,7 +310,6 @@ function baseImageFor(hamsterId: string): string {
 
 export default function HabitatScene() {
   const { loading, collection } = useHamsterGrowth();
-
   const [decor, setDecor] = useState<string[]>([]);
   const [themeLoaded, setThemeLoaded] = useState(false);
   const [selectedSeason, setSelectedSeason] =
@@ -419,7 +358,6 @@ export default function HabitatScene() {
       }
 
       void saveTheme(next);
-
       return next;
     });
   }
@@ -461,10 +399,6 @@ export default function HabitatScene() {
           Decorate the habitat
         </div>
 
-        {/* =========================
-            HABITAT SCENE
-           ========================= */}
-
         <div
           style={{
             position: 'relative',
@@ -478,7 +412,6 @@ export default function HabitatScene() {
             background: 'var(--cream)',
           }}
         >
-          {/* Base room */}
           <img
             src={`${HABITAT_PATH}/room_empty_base.png`}
             alt="Hamster habitat"
@@ -492,7 +425,6 @@ export default function HabitatScene() {
             }}
           />
 
-          {/* Selected habitat items */}
           {activeDecor.map(item => (
             <img
               key={item.key}
@@ -504,12 +436,11 @@ export default function HabitatScene() {
                 height: 'auto',
                 objectFit: 'contain',
                 pointerEvents: 'none',
-                ...PLACEMENT_STYLES[item.placement],
+                ...SLOT_STYLES[item.slot],
               }}
             />
           ))}
 
-          {/* Featured hamster */}
           {featured ? (
             <img
               src={imageForForm(
@@ -551,10 +482,6 @@ export default function HabitatScene() {
             </div>
           )}
         </div>
-
-        {/* =========================
-            SEASON SELECTOR
-           ========================= */}
 
         <div
           style={{
@@ -615,10 +542,6 @@ export default function HabitatScene() {
         >
           Pick up to {MAX_DECOR} items
         </div>
-
-        {/* =========================
-            ITEM PICKER
-           ========================= */}
 
         <div
           style={{
@@ -684,5 +607,5 @@ export default function HabitatScene() {
         </div>
       </div>
     </div>
-  )
+  );
 }
