@@ -425,22 +425,45 @@ export default function HabitatScene() {
             }}
           />
 
-          {activeDecor.map(item => (
-            <img
-              key={item.key}
-              src={item.image}
-              alt={item.label}
-              title={item.label}
-              style={{
-                position: 'absolute',
-                height: 'auto',
-                objectFit: 'contain',
-                pointerEvents: 'none',
-                zIndex: 2,
-                ...SLOT_STYLES[item.slot],
-              }}
-            />
-          ))}
+         {activeDecor.map((item, index) => {
+  const positions: React.CSSProperties[] = [
+    {
+      left: '5%',
+      bottom: '3%',
+      width: '27%',
+      maxHeight: '38%',
+    },
+    {
+      left: '36.5%',
+      bottom: '3%',
+      width: '27%',
+      maxHeight: '38%',
+    },
+    {
+      right: '5%',
+      bottom: '3%',
+      width: '27%',
+      maxHeight: '38%',
+    },
+  ];
+
+  return (
+    <img
+      key={item.key}
+      src={item.image}
+      alt={item.label}
+      title={item.label}
+      style={{
+        position: 'absolute',
+        height: 'auto',
+        objectFit: 'contain',
+        pointerEvents: 'none',
+        zIndex: 2,
+        ...positions[index],
+      }}
+    />
+  );
+})}
 
           {featured ? (
             <img
