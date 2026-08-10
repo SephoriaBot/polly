@@ -425,34 +425,110 @@ export default function HabitatScene() {
             }}
           />
 
-        {activeDecor.map((item, index) => {
-  const positions: React.CSSProperties[] = [
-    {
-      left: '16%',
-      bottom: '5%',
-      width: '27%',
-      maxHeight: '36%',
-      transform: 'translateX(-50%) scale(0.92)',
-      zIndex: 2,
-    },
-    {
-      left: '50%',
-      bottom: '4%',
-      width: '27%',
-      maxHeight: '38%',
-      transform: 'translateX(-50%) scale(1)',
-      zIndex: 3,
-    },
-    {
-      left: '84%',
-      bottom: '5%',
-      width: '27%',
-      maxHeight: '36%',
-      transform: 'translateX(-50%) scale(0.92)',
-      zIndex: 2,
-    },
+       {activeDecor.map((item, index) => {
+  const LARGE_ITEMS = [
+    'spring-mushroom-house',
+    'spring-daisy-bed',
+    'spring-floral-bridge',
+    'summer-coconut-hut',
+    'summer-pineapple-house',
+    'summer-sandcastle-house',
+    'summer-watermelon-bed',
+    'fall-log-mushroom-house',
+    'fall-plaid-loveseat',
+    'fall-pumpkin-house',
+    'winter-igloo',
+    'winter-snowglobe-bed',
+    'winter-snowy-hammock',
+    'winter-snowy-tunnel',
   ];
+
+  const SMALL_ITEMS = [
+    'spring-floral-swing',
+    'spring-nest-bed',
+    'spring-teacup-bath',
+    'spring-tulip-bed',
+    'summer-beach-chair-umbrella',
+    'summer-hammock-palms',
+    'summer-shell-bed',
+    'summer-surfboard-rocks',
+    'fall-book-stack-den',
+    'fall-campfire',
+    'fall-mushroom-table',
+    'fall-plaid-armchair',
+    'fall-wagon-wheel',
+    'winter-sled',
+    'winter-snowflake-teacup',
+    'winter-snowman',
+  ];
+
+  const large = LARGE_ITEMS.includes(item.key);
+  const small = SMALL_ITEMS.includes(item.key);
+
+  /*
+   * Large furniture gets more room.
+   * Small pieces can sit farther apart without dominating the scene.
+   */
+  const positions =
+    activeDecor.length === 1
+      ? [
+          {
+            left: '50%',
+            bottom: '4%',
+            width: large ? '38%' : small ? '27%' : '31%',
+            maxHeight: large ? '40%' : '35%',
+            transform: 'translateX(-50%)',
+            zIndex: 3,
+          },
+        ]
+      : activeDecor.length === 2
+        ? [
+            {
+              left: large ? '25%' : '22%',
+              bottom: '4%',
+              width: large ? '32%' : '25%',
+              maxHeight: large ? '39%' : '34%',
+              transform: 'translateX(-50%)',
+              zIndex: 2,
+            },
+            {
+              left: large ? '75%' : '78%',
+              bottom: '4%',
+              width: large ? '32%' : '25%',
+              maxHeight: large ? '39%' : '34%',
+              transform: 'translateX(-50%)',
+              zIndex: 2,
+            },
+          ]
+        : [
+            {
+              left: '18%',
+              bottom: '5%',
+              width: large ? '30%' : '23%',
+              maxHeight: large ? '39%' : '33%',
+              transform: 'translateX(-50%)',
+              zIndex: 2,
+            },
+            {
+              left: '50%',
+              bottom: '4%',
+              width: large ? '30%' : '23%',
+              maxHeight: large ? '40%' : '34%',
+              transform: 'translateX(-50%)',
+              zIndex: 3,
+            },
+            {
+              left: '82%',
+              bottom: '5%',
+              width: large ? '30%' : '23%',
+              maxHeight: large ? '39%' : '33%',
+              transform: 'translateX(-50%)',
+              zIndex: 2,
+            },
+          ];
+
   const position = positions[index];
+
   return (
     <div
       key={item.key}
@@ -467,14 +543,15 @@ export default function HabitatScene() {
           position: 'absolute',
           left: '50%',
           bottom: '1%',
-          width: '65%',
-          height: '9%',
+          width: large ? '72%' : '58%',
+          height: large ? '10%' : '8%',
           transform: 'translateX(-50%)',
           background: 'rgba(70, 55, 45, 0.14)',
           filter: 'blur(5px)',
           borderRadius: '50%',
         }}
       />
+
       <img
         src={item.image}
         alt={item.label}
