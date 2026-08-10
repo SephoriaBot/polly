@@ -125,27 +125,20 @@ async function loadAll() {
 
         {mode !== 'normal' ? (
           <>
-            {/* ── LOW ENERGY / BARE MINIMUM ── the whole list is 4 items */}
+            {/* ── NO ENERGY MODE ── reduced to starred priority tasks + basics */}
             <section>
-              <LowEnergyChecklist />
+              <LowEnergyChecklist onNavigate={onNavigate} />
             </section>
 
-            {mode === 'low' && (
-              <>
-                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                  <Icon name="pagedivider" size={85} />
-                </div>
-                {/* Kept visible in Low Energy (just not Bare Minimum) since
-                    knowing what's outstanding can still be reassuring —
-                    it's Bare Minimum that hides it entirely. */}
-                <section style={{ marginTop: 4 }}>
-                  <div style={{ fontSize: '0.68rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--ink-muted)', marginBottom: 8 }}>
-                    Also on your radar
-                  </div>
-                  <TodaySnapshot onNavigate={onNavigate} />
-                </section>
-              </>
-            )}
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+              <Icon name="pagedivider" size={85} />
+            </div>
+            <section style={{ marginTop: 4 }}>
+              <div style={{ fontSize: '0.68rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--ink-muted)', marginBottom: 8 }}>
+                Also on your radar
+              </div>
+              <TodaySnapshot onNavigate={onNavigate} />
+            </section>
           </>
         ) : (
         <>

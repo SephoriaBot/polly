@@ -19,6 +19,7 @@ interface DailyTask {
   created_at: string;
   task_date: string; // YYYY-MM-DD — the day this instance belongs to
   template_id: string | null; // set if this instance was generated from a recurring template
+  priority: boolean; // starred — what No Energy Mode reduces the day down to
 }
 
 interface DailyTaskTemplate {
@@ -183,6 +184,12 @@ export default function DailyPlanner() {
     }
   }
 
+  async function togglePriority(task: DailyTask) {
+    const newPriority = !task.priority;
+    await supabase.from('daily_tasks').update({ priority: newPriority }).eq('id', task.id);
+    setTasks(prev => prev.map(t => t.id === task.id ? { ...t, priority: newPriority } : t));
+  }
+
   async function deleteTask(id: string) {
     await supabase.from('daily_tasks').delete().eq('id', id);
     setTasks(prev => prev.filter(t => t.id !== id));
@@ -297,7 +304,7 @@ export default function DailyPlanner() {
 
   // Incomplete tasks first, completed tasks sink to the bottom.
   // Array.prototype.sort is stable, so order within each group is preserved.
-  const sortedTasks = [...tasks].sort((a, b) => Number(a.done) - Number(b.done));
+  const sortedTasks = [...tasks].sort((a, b) => Number(a.done) - Number(b.done) || Number(b.priority) - Number(a.priority));
 
   return (
     <div>
@@ -441,6 +448,20 @@ export default function DailyPlanner() {
                           </button>
                         )}
                       </span>
+
+                      <button
+                        onClick={() => togglePriority(task)}
+                        aria-label={task.priority ? 'Unstar priority' : 'Mark as priority'}
+                        title={task.priority ? 'Priority — shows in No Energy Mode' : 'Mark as priority for No Energy Mode'}
+                        style={{
+                          background: 'none', border: 'none', cursor: 'pointer', padding: 0,
+                          display: 'flex', alignItems: 'center', flexShrink: 0,
+                          fontSize: '1.05rem', lineHeight: 1,
+                          color: task.priority ? 'var(--gold)' : 'var(--border)',
+                        }}
+                      >
+                        {task.priority ? '★' : '☆'}
+                      </button>
 
                       <button
                         onClick={() => deleteTask(task.id)}
