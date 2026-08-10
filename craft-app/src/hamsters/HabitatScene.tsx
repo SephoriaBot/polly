@@ -425,43 +425,70 @@ export default function HabitatScene() {
             }}
           />
 
-         {activeDecor.map((item, index) => {
+        {activeDecor.map((item, index) => {
   const positions: React.CSSProperties[] = [
     {
-      left: '5%',
-      bottom: '3%',
+      left: '16%',
+      bottom: '5%',
       width: '27%',
-      maxHeight: '38%',
+      maxHeight: '36%',
+      transform: 'translateX(-50%) scale(0.92)',
+      zIndex: 2,
     },
     {
-      left: '36.5%',
-      bottom: '3%',
+      left: '50%',
+      bottom: '4%',
       width: '27%',
       maxHeight: '38%',
+      transform: 'translateX(-50%) scale(1)',
+      zIndex: 3,
     },
     {
-      right: '5%',
-      bottom: '3%',
+      left: '84%',
+      bottom: '5%',
       width: '27%',
-      maxHeight: '38%',
+      maxHeight: '36%',
+      transform: 'translateX(-50%) scale(0.92)',
+      zIndex: 2,
     },
   ];
-
+  const position = positions[index];
   return (
-    <img
+    <div
       key={item.key}
-      src={item.image}
-      alt={item.label}
-      title={item.label}
       style={{
         position: 'absolute',
-        height: 'auto',
-        objectFit: 'contain',
+        ...position,
         pointerEvents: 'none',
-        zIndex: 2,
-        ...positions[index],
       }}
-    />
+    >
+      <div
+        style={{
+          position: 'absolute',
+          left: '50%',
+          bottom: '1%',
+          width: '65%',
+          height: '9%',
+          transform: 'translateX(-50%)',
+          background: 'rgba(70, 55, 45, 0.14)',
+          filter: 'blur(5px)',
+          borderRadius: '50%',
+        }}
+      />
+      <img
+        src={item.image}
+        alt={item.label}
+        title={item.label}
+        style={{
+          display: 'block',
+          width: '100%',
+          height: 'auto',
+          maxHeight: '100%',
+          objectFit: 'contain',
+          position: 'relative',
+        }}
+      />
+    </div>
   );
 })}
         </div>
