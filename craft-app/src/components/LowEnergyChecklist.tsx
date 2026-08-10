@@ -67,12 +67,6 @@ export default function LowEnergyChecklist({ onNavigate }: { onNavigate?: (page:
     setBasics(prev => ({ ...prev, [key]: !prev[key] }));
   }
 
-  const basicItems: { key: 'ate' | 'water' | 'reset'; label: string }[] = [
-    { key: 'ate', label: 'Eat something' },
-    { key: 'water', label: 'Drink water' },
-    { key: 'reset', label: '5-minute reset — tidy one small spot, then stop' },
-  ];
-
   return (
     <div className="card">
       <div className="card-body">
@@ -115,17 +109,6 @@ export default function LowEnergyChecklist({ onNavigate }: { onNavigate?: (page:
               </div>
             </div>
           )}
-        </div>
-
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {basicItems.map(item => (
-            <ChecklistRow
-              key={item.key}
-              label={item.label}
-              done={basics[item.key]}
-              onToggle={() => toggleBasic(item.key)}
-            />
-          ))}
         </div>
       </div>
     </div>
