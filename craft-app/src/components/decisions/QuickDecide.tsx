@@ -18,8 +18,7 @@ type Preset = 'reset' | 'cook-or-order' | 'what-to-eat' | 'what-to-clean';
 
 const ENERGY_LABEL: Record<string, string> = {
   normal: 'Normal',
-  low: 'Low',
-  bare: 'Very low',
+  noEnergy: 'No energy',
 };
 
 export default function QuickDecide() {
