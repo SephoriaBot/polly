@@ -324,21 +324,7 @@ export default function HabitatScene() {
  const [decor, setDecor] = useState<string[]>([]);
 const [themeLoaded, setThemeLoaded] = useState(false);
 const selectedSeason = getCurrentSeason();
-useEffect(() => {
-  async function loadTheme() {
-    const { data } = await supabase
-      .from('habitat_theme')
-      .select('*')
-      .eq('id', 1)
-      .maybeSingle();
-    const row = data as HabitatThemeRow | null;
-    if (row) {
-      setDecor(row.decor_keys || []);
-    }
-    setThemeLoaded(true);
-  }
-  void loadTheme();
-}, []);
+
 async function saveTheme(nextDecor: string[]) {
   await supabase
     .from('habitat_theme')
@@ -348,6 +334,24 @@ async function saveTheme(nextDecor: string[]) {
       decor_keys: nextDecor,
     });
 }
+
+useEffect(() => {
+  setDecor(prev => {
+    const currentSeasonDecor = prev.filter(key => {
+      const item = HABITAT_ITEMS.find(
+        habitatItem => habitatItem.key === key
+      );
+
+      return item?.season === selectedSeason;
+    });
+
+    if (currentSeasonDecor.length !== prev.length) {
+      void saveTheme(currentSeasonDecor);
+    }
+
+    return currentSeasonDecor;
+  });
+}, [selectedSeason]);
 function toggleDecor(key: string) {
   setDecor(prev => {
     let next: string[];
