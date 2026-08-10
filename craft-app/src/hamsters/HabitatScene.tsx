@@ -436,6 +436,7 @@ export default function HabitatScene() {
                 height: 'auto',
                 objectFit: 'contain',
                 pointerEvents: 'none',
+                zIndex: 2,
                 ...SLOT_STYLES[item.slot],
               }}
             />
