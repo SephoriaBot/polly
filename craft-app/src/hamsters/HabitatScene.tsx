@@ -1,20 +1,10 @@
 ```tsx
-// HabitatScene.tsx
-// Tier 3, item 2: habitat customization using the actual illustrated
-// habitat assets from public/habitat.
-//
-// The room uses room_empty_base.png as the base.
-// Furniture/decor are transparent PNGs layered over the room.
-// The featured hamster is whichever hamster in the collection has
-// evolved furthest, with most recently hatched breaking ties.
-
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { useHamsterGrowth } from './HamsterGrowthContext';
 import { imageForForm, HAMSTERS } from './hamsters';
 
 const HABITAT_PATH = '/habitat';
-
 const MAX_DECOR = 3;
 
 interface HabitatItem {
@@ -25,7 +15,7 @@ interface HabitatItem {
 }
 
 const HABITAT_ITEMS: HabitatItem[] = [
-  // SPRING
+  // Spring
   {
     key: 'spring-daisy-bed',
     label: 'Daisy Bed',
@@ -69,7 +59,7 @@ const HABITAT_ITEMS: HabitatItem[] = [
     season: 'spring',
   },
 
-  // SUMMER
+  // Summer
   {
     key: 'summer-beach-chair-umbrella',
     label: 'Beach Chair',
@@ -119,7 +109,7 @@ const HABITAT_ITEMS: HabitatItem[] = [
     season: 'summer',
   },
 
-  // FALL
+  // Fall
   {
     key: 'fall-book-stack-den',
     label: 'Book Stack Den',
@@ -169,7 +159,7 @@ const HABITAT_ITEMS: HabitatItem[] = [
     season: 'fall',
   },
 
-  // WINTER
+  // Winter
   {
     key: 'winter-igloo',
     label: 'Igloo',
@@ -249,7 +239,7 @@ export default function HabitatScene() {
     useState<HabitatItem['season']>('spring');
 
   useEffect(() => {
-    (async () => {
+    async function loadTheme() {
       const { data } = await supabase
         .from('habitat_theme')
         .select('*')
@@ -263,7 +253,9 @@ export default function HabitatScene() {
       }
 
       setThemeLoaded(true);
-    })();
+    }
+
+    loadTheme();
   }, []);
 
   async function saveTheme(nextDecor: string[]) {
@@ -281,26 +273,30 @@ export default function HabitatScene() {
       let next: string[];
 
       if (prev.includes(key)) {
-        next = prev.filter(d => d !== key);
+        next = prev.filter(item => item !== key);
       } else if (prev.length >= MAX_DECOR) {
         next = [...prev.slice(1), key];
       } else {
         next = [...prev, key];
       }
 
-      saveTheme(next);
+      void saveTheme(next);
       return next;
     });
   }
 
-  if (loading || !themeLoaded) return null;
+  if (loading || !themeLoaded) {
+    return null;
+  }
 
   const featured = [...collection].sort((a, b) => {
     const stageDiff =
       (STAGE_RANK[b.stage] ?? 0) -
       (STAGE_RANK[a.stage] ?? 0);
 
-    if (stageDiff !== 0) return stageDiff;
+    if (stageDiff !== 0) {
+      return stageDiff;
+    }
 
     return (
       new Date(b.hatchedAt).getTime() -
@@ -319,7 +315,6 @@ export default function HabitatScene() {
   return (
     <div className="card">
       <div className="card-body">
-
         <div
           className="section-label"
           style={{ marginBottom: 10 }}
@@ -327,7 +322,7 @@ export default function HabitatScene() {
           Decorate the habitat
         </div>
 
-        {/* HABITAT SCENE */}
+        {/* Habitat scene */}
         <div
           style={{
             position: 'relative',
@@ -341,7 +336,7 @@ export default function HabitatScene() {
             background: 'var(--cream)',
           }}
         >
-          {/* Actual room background */}
+          {/* Room */}
           <img
             src={`${HABITAT_PATH}/room_empty_base.png`}
             alt="Hamster habitat"
@@ -354,7 +349,7 @@ export default function HabitatScene() {
             }}
           />
 
-          {/* Furniture / habitat items */}
+          {/* Selected habitat items */}
           {activeDecor.map(item => (
             <img
               key={item.key}
@@ -419,7 +414,7 @@ export default function HabitatScene() {
           )}
         </div>
 
-        {/* SEASON SELECTOR */}
+        {/* Seasons */}
         <div
           style={{
             fontSize: '0.68rem',
@@ -480,7 +475,7 @@ export default function HabitatScene() {
           Pick up to {MAX_DECOR} items
         </div>
 
-        {/* ITEM PICKER */}
+        {/* Item picker */}
         <div
           style={{
             display: 'grid',
@@ -543,7 +538,6 @@ export default function HabitatScene() {
             );
           })}
         </div>
-
       </div>
     </div>
   );
