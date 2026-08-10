@@ -335,26 +335,7 @@ async function saveTheme(nextDecor: string[]) {
     });
 }
 
-useEffect(() => {
-  const cleanSeasonDecor = async () => {
-    const currentSeasonDecor = decor.filter(key => {
-      const item = HABITAT_ITEMS.find(
-        habitatItem => habitatItem.key === key
-      );
 
-      return item?.season === selectedSeason;
-    });
-
-    if (currentSeasonDecor.length !== decor.length) {
-      setDecor(currentSeasonDecor);
-      await saveTheme(currentSeasonDecor);
-    }
-  };
-
-  if (themeLoaded) {
-    void cleanSeasonDecor();
-  }
-}, [selectedSeason, themeLoaded]);
 function toggleDecor(key: string) {
   setDecor(prev => {
     let next: string[];
