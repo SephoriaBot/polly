@@ -276,66 +276,78 @@ const PLACEMENT_STYLES: Record<
   Placement,
   React.CSSProperties
 > = {
+  // Small objects toward the back
   backLeft: {
-    left: '7%',
-    bottom: '8%',
-    width: '34%',
+    left: '2%',
+    bottom: '12%',
+    width: '24%',
+    maxHeight: '42%',
     zIndex: 2,
   },
 
   backCenter: {
-    left: '33%',
-    bottom: '10%',
-    width: '34%',
+    left: '38%',
+    bottom: '14%',
+    width: '24%',
+    maxHeight: '40%',
     zIndex: 2,
   },
 
   backRight: {
-    right: '7%',
-    bottom: '8%',
-    width: '34%',
+    right: '2%',
+    bottom: '12%',
+    width: '24%',
+    maxHeight: '42%',
     zIndex: 2,
   },
 
+  // Main furniture
   left: {
-    left: '5%',
-    bottom: '3%',
-    width: '38%',
+    left: '3%',
+    bottom: '4%',
+    width: '27%',
+    maxHeight: '50%',
     zIndex: 3,
   },
 
   center: {
-    left: '31%',
-    bottom: '3%',
-    width: '38%',
+    left: '36.5%',
+    bottom: '4%',
+    width: '27%',
+    maxHeight: '50%',
     zIndex: 3,
   },
 
   right: {
-    right: '5%',
-    bottom: '3%',
-    width: '38%',
+    right: '3%',
+    bottom: '4%',
+    width: '27%',
+    maxHeight: '50%',
     zIndex: 3,
   },
 
+  // Small foreground pieces
   frontLeft: {
-    left: '4%',
-    bottom: '-2%',
-    width: '30%',
+    left: '1%',
+    bottom: '1%',
+    width: '22%',
+    maxHeight: '38%',
     zIndex: 4,
   },
 
   frontCenter: {
-    left: '35%',
-    bottom: '-2%',
-    width: '30%',
+    left: '39%',
+    bottom: '1%',
+    width: '22%',
+    maxHeight: '38%',
     zIndex: 4,
   },
 
   frontRight: {
-    right: '4%',
-    bottom: '-2%',
-    width: '30%',
+    right: '1%',
+    bottom: '1%',
+    width: '22%',
+    maxHeight: '38%',
     zIndex: 4,
   },
 };
@@ -512,8 +524,8 @@ export default function HabitatScene() {
                 left: '50%',
                 bottom: '7%',
                 transform: 'translateX(-50%)',
-                width: 84,
-                height: 84,
+                width: 62,
+                height: 62,
                 objectFit: 'contain',
                 zIndex: 5,
                 pointerEvents: 'none',
