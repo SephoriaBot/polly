@@ -1,59 +1,239 @@
+```tsx
 // HabitatScene.tsx
-// Tier 3, item 2: habitat customization. Built from CSS gradient themes and
-// the existing icon set rather than new illustrated art (none exists yet
-// for room backgrounds/furniture) — still a genuine pick-and-arrange
-// customization layer, just a lighter-weight one than a fully illustrated
-// room. The featured hamster is whichever one in the collection has
-// evolved furthest (ties broken by most recently hatched), so the scene
-// reflects real progress rather than a static picture.
+// Tier 3, item 2: habitat customization using the actual illustrated
+// habitat assets from public/habitat.
+//
+// The room uses room_empty_base.png as the base.
+// Furniture/decor are transparent PNGs layered over the room.
+// The featured hamster is whichever hamster in the collection has
+// evolved furthest, with most recently hatched breaking ties.
 
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { useHamsterGrowth } from './HamsterGrowthContext';
 import { imageForForm, HAMSTERS } from './hamsters';
-import Icon, { type IconName } from '../components/Icon';
 
-interface BackgroundTheme {
-  key: string;
-  label: string;
-  css: string;
-}
-
-const BACKGROUNDS: BackgroundTheme[] = [
-  { key: 'meadow', label: 'Meadow', css: 'linear-gradient(180deg, #DCEFD8 0%, #B9E0A5 100%)' },
-  { key: 'sunset', label: 'Sunset', css: 'linear-gradient(180deg, #FCE1D0 0%, #F3B88A 100%)' },
-  { key: 'starry', label: 'Starry Night', css: 'linear-gradient(180deg, #2E2B4E 0%, #4A4570 100%)' },
-  { key: 'cotton-candy', label: 'Cotton Candy', css: 'linear-gradient(180deg, #F6D6E8 0%, #D8CFF2 100%)' },
-  { key: 'forest', label: 'Forest', css: 'linear-gradient(180deg, #CFE3C8 0%, #8FB884 100%)' },
-  { key: 'beach', label: 'Beach', css: 'linear-gradient(180deg, #BEE7F2 0%, #F2E6BE 100%)' },
-];
+const HABITAT_PATH = '/habitat';
 
 const MAX_DECOR = 3;
 
-const DECOR_OPTIONS: { key: string; icon: IconName; label: string; slot: 'bottomLeft' | 'bottomRight' | 'topRight' | 'topLeft' }[] = [
-  { key: 'plant', icon: 'potted-plant', label: 'Potted plant', slot: 'bottomLeft' },
-  { key: 'flowers', icon: 'flowerfull', label: 'Flowers', slot: 'bottomRight' },
-  { key: 'lavender', icon: 'lavender', label: 'Lavender', slot: 'bottomLeft' },
-  { key: 'sparkles', icon: 'sparkles-cluster', label: 'Sparkles', slot: 'topRight' },
-  { key: 'moon', icon: 'moon-full', label: 'Moon', slot: 'topLeft' },
-  { key: 'sun', icon: 'sun-cloud', label: 'Sun & clouds', slot: 'topLeft' },
-  { key: 'music', icon: 'music-note', label: 'Music notes', slot: 'topRight' },
-  { key: 'trophy', icon: 'trophy', label: 'Trophy shelf', slot: 'bottomRight' },
+interface HabitatItem {
+  key: string;
+  label: string;
+  image: string;
+  season: 'spring' | 'summer' | 'fall' | 'winter';
+}
+
+const HABITAT_ITEMS: HabitatItem[] = [
+  // SPRING
+  {
+    key: 'spring-daisy-bed',
+    label: 'Daisy Bed',
+    image: `${HABITAT_PATH}/item_spring_daisy-bed.png`,
+    season: 'spring',
+  },
+  {
+    key: 'spring-floral-bridge',
+    label: 'Floral Bridge',
+    image: `${HABITAT_PATH}/item_spring_floral-bridge.png`,
+    season: 'spring',
+  },
+  {
+    key: 'spring-floral-swing',
+    label: 'Floral Swing',
+    image: `${HABITAT_PATH}/item_spring_floral-swing.png`,
+    season: 'spring',
+  },
+  {
+    key: 'spring-mushroom-house',
+    label: 'Mushroom House',
+    image: `${HABITAT_PATH}/item_spring_mushroom-house.png`,
+    season: 'spring',
+  },
+  {
+    key: 'spring-nest-bed',
+    label: 'Nest Bed',
+    image: `${HABITAT_PATH}/item_spring_nest-bed.png`,
+    season: 'spring',
+  },
+  {
+    key: 'spring-teacup-bath',
+    label: 'Teacup Bath',
+    image: `${HABITAT_PATH}/item_spring_teacup-bath.png`,
+    season: 'spring',
+  },
+  {
+    key: 'spring-tulip-bed',
+    label: 'Tulip Bed',
+    image: `${HABITAT_PATH}/item_spring_tulip-bed.png`,
+    season: 'spring',
+  },
+
+  // SUMMER
+  {
+    key: 'summer-beach-chair-umbrella',
+    label: 'Beach Chair',
+    image: `${HABITAT_PATH}/item_summer_beach-chair-umbrella.png`,
+    season: 'summer',
+  },
+  {
+    key: 'summer-coconut-hut',
+    label: 'Coconut Hut',
+    image: `${HABITAT_PATH}/item_summer_coconut-hut.png`,
+    season: 'summer',
+  },
+  {
+    key: 'summer-hammock-palms',
+    label: 'Palm Hammock',
+    image: `${HABITAT_PATH}/item_summer_hammock-palms.png`,
+    season: 'summer',
+  },
+  {
+    key: 'summer-pineapple-house',
+    label: 'Pineapple House',
+    image: `${HABITAT_PATH}/item_summer_pineapple-house.png`,
+    season: 'summer',
+  },
+  {
+    key: 'summer-sandcastle-house',
+    label: 'Sandcastle House',
+    image: `${HABITAT_PATH}/item_summer_sandcastle-house.png`,
+    season: 'summer',
+  },
+  {
+    key: 'summer-shell-bed',
+    label: 'Shell Bed',
+    image: `${HABITAT_PATH}/item_summer_shell-bed.png`,
+    season: 'summer',
+  },
+  {
+    key: 'summer-surfboard-rocks',
+    label: 'Surfboard',
+    image: `${HABITAT_PATH}/item_summer_surfboard-rocks.png`,
+    season: 'summer',
+  },
+  {
+    key: 'summer-watermelon-bed',
+    label: 'Watermelon Bed',
+    image: `${HABITAT_PATH}/item_summer_watermelon-bed.png`,
+    season: 'summer',
+  },
+
+  // FALL
+  {
+    key: 'fall-book-stack-den',
+    label: 'Book Stack Den',
+    image: `${HABITAT_PATH}/item_fall_book-stack-den.png`,
+    season: 'fall',
+  },
+  {
+    key: 'fall-campfire',
+    label: 'Campfire',
+    image: `${HABITAT_PATH}/item_fall_campfire.png`,
+    season: 'fall',
+  },
+  {
+    key: 'fall-log-mushroom-house',
+    label: 'Log Mushroom House',
+    image: `${HABITAT_PATH}/item_fall_log-mushroom-house.png`,
+    season: 'fall',
+  },
+  {
+    key: 'fall-mushroom-table',
+    label: 'Mushroom Table',
+    image: `${HABITAT_PATH}/item_fall_mushroom-table.png`,
+    season: 'fall',
+  },
+  {
+    key: 'fall-plaid-armchair',
+    label: 'Plaid Armchair',
+    image: `${HABITAT_PATH}/item_fall_plaid-armchair.png`,
+    season: 'fall',
+  },
+  {
+    key: 'fall-plaid-loveseat',
+    label: 'Plaid Loveseat',
+    image: `${HABITAT_PATH}/item_fall_plaid-loveseat.png`,
+    season: 'fall',
+  },
+  {
+    key: 'fall-pumpkin-house',
+    label: 'Pumpkin House',
+    image: `${HABITAT_PATH}/item_fall_pumpkin-house.png`,
+    season: 'fall',
+  },
+  {
+    key: 'fall-wagon-wheel',
+    label: 'Wagon Wheel',
+    image: `${HABITAT_PATH}/item_fall_wagon-wheel.png`,
+    season: 'fall',
+  },
+
+  // WINTER
+  {
+    key: 'winter-igloo',
+    label: 'Igloo',
+    image: `${HABITAT_PATH}/item_winter_igloo.png`,
+    season: 'winter',
+  },
+  {
+    key: 'winter-sled',
+    label: 'Sled',
+    image: `${HABITAT_PATH}/item_winter_sled.png`,
+    season: 'winter',
+  },
+  {
+    key: 'winter-snowflake-teacup',
+    label: 'Snowflake Teacup',
+    image: `${HABITAT_PATH}/item_winter_snowflake-teacup.png`,
+    season: 'winter',
+  },
+  {
+    key: 'winter-snowglobe-bed',
+    label: 'Snowglobe Bed',
+    image: `${HABITAT_PATH}/item_winter_snowglobe-bed.png`,
+    season: 'winter',
+  },
+  {
+    key: 'winter-snowman',
+    label: 'Snowman',
+    image: `${HABITAT_PATH}/item_winter_snowman.png`,
+    season: 'winter',
+  },
+  {
+    key: 'winter-snowy-hammock',
+    label: 'Snowy Hammock',
+    image: `${HABITAT_PATH}/item_winter_snowy-hammock.png`,
+    season: 'winter',
+  },
+  {
+    key: 'winter-snowy-tunnel',
+    label: 'Snowy Tunnel',
+    image: `${HABITAT_PATH}/item_winter_snowy-tunnel.png`,
+    season: 'winter',
+  },
 ];
 
-const SLOT_POSITION: Record<string, React.CSSProperties> = {
-  bottomLeft: { left: 10, bottom: 8 },
-  bottomRight: { right: 10, bottom: 8 },
-  topLeft: { left: 10, top: 8 },
-  topRight: { right: 10, top: 8 },
-};
+const SEASONS: {
+  key: HabitatItem['season'];
+  label: string;
+}[] = [
+  { key: 'spring', label: 'Spring' },
+  { key: 'summer', label: 'Summer' },
+  { key: 'fall', label: 'Fall' },
+  { key: 'winter', label: 'Winter' },
+];
 
-const STAGE_RANK: Record<string, number> = { baby: 0, teen: 1, final: 2 };
+const STAGE_RANK: Record<string, number> = {
+  baby: 0,
+  teen: 1,
+  final: 2,
+};
 
 interface HabitatThemeRow {
   id: number;
-  background_key: string;
-  decor_keys: string[];
+  background_key: string | null;
+  decor_keys: string[] | null;
 }
 
 function baseImageFor(hamsterId: string): string {
@@ -62,42 +242,53 @@ function baseImageFor(hamsterId: string): string {
 
 export default function HabitatScene() {
   const { loading, collection } = useHamsterGrowth();
-  const [background, setBackground] = useState('meadow');
+
   const [decor, setDecor] = useState<string[]>([]);
   const [themeLoaded, setThemeLoaded] = useState(false);
+  const [selectedSeason, setSelectedSeason] =
+    useState<HabitatItem['season']>('spring');
 
   useEffect(() => {
     (async () => {
-      const { data } = await supabase.from('habitat_theme').select('*').eq('id', 1).maybeSingle();
+      const { data } = await supabase
+        .from('habitat_theme')
+        .select('*')
+        .eq('id', 1)
+        .maybeSingle();
+
       const row = data as HabitatThemeRow | null;
+
       if (row) {
-        setBackground(row.background_key || 'meadow');
         setDecor(row.decor_keys || []);
       }
+
       setThemeLoaded(true);
     })();
   }, []);
 
-  async function saveTheme(nextBackground: string, nextDecor: string[]) {
-    await supabase.from('habitat_theme').upsert({ id: 1, background_key: nextBackground, decor_keys: nextDecor });
-  }
-
-  function pickBackground(key: string) {
-    setBackground(key);
-    saveTheme(key, decor);
+  async function saveTheme(nextDecor: string[]) {
+    await supabase
+      .from('habitat_theme')
+      .upsert({
+        id: 1,
+        background_key: 'room_empty_base',
+        decor_keys: nextDecor,
+      });
   }
 
   function toggleDecor(key: string) {
     setDecor(prev => {
       let next: string[];
+
       if (prev.includes(key)) {
         next = prev.filter(d => d !== key);
       } else if (prev.length >= MAX_DECOR) {
-        next = [...prev.slice(1), key]; // drop the oldest, add the new one
+        next = [...prev.slice(1), key];
       } else {
         next = [...prev, key];
       }
-      saveTheme(background, next);
+
+      saveTheme(next);
       return next;
     });
   }
@@ -105,89 +296,256 @@ export default function HabitatScene() {
   if (loading || !themeLoaded) return null;
 
   const featured = [...collection].sort((a, b) => {
-    const stageDiff = (STAGE_RANK[b.stage] ?? 0) - (STAGE_RANK[a.stage] ?? 0);
+    const stageDiff =
+      (STAGE_RANK[b.stage] ?? 0) -
+      (STAGE_RANK[a.stage] ?? 0);
+
     if (stageDiff !== 0) return stageDiff;
-    return new Date(b.hatchedAt).getTime() - new Date(a.hatchedAt).getTime();
+
+    return (
+      new Date(b.hatchedAt).getTime() -
+      new Date(a.hatchedAt).getTime()
+    );
   })[0];
 
-  const bg = BACKGROUNDS.find(b => b.key === background) ?? BACKGROUNDS[0];
-  const activeDecor = DECOR_OPTIONS.filter(d => decor.includes(d.key));
+  const activeDecor = HABITAT_ITEMS.filter(item =>
+    decor.includes(item.key)
+  );
+
+  const visibleItems = HABITAT_ITEMS.filter(
+    item => item.season === selectedSeason
+  );
 
   return (
     <div className="card">
       <div className="card-body">
-        <div className="section-label" style={{ marginBottom: 10 }}>
-          <Icon name="icon-habitat" size={16} /> Decorate the habitat
+
+        <div
+          className="section-label"
+          style={{ marginBottom: 10 }}
+        >
+          Decorate the habitat
         </div>
 
-        <div style={{
-          position: 'relative', height: 160, borderRadius: 20,
-          background: bg.css, border: '1.5px solid var(--border)',
-          overflow: 'hidden', marginBottom: 14,
-          display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
-        }}>
-          {activeDecor.map(d => (
-            <div key={d.key} style={{ position: 'absolute', ...SLOT_POSITION[d.slot] }}>
-              <Icon name={d.icon} size={26} style={{ opacity: 0.9 }} />
-            </div>
+        {/* HABITAT SCENE */}
+        <div
+          style={{
+            position: 'relative',
+            width: '100%',
+            aspectRatio: '16 / 9',
+            maxHeight: 300,
+            borderRadius: 20,
+            overflow: 'hidden',
+            border: '1.5px solid var(--border)',
+            marginBottom: 14,
+            background: 'var(--cream)',
+          }}
+        >
+          {/* Actual room background */}
+          <img
+            src={`${HABITAT_PATH}/room_empty_base.png`}
+            alt="Hamster habitat"
+            style={{
+              position: 'absolute',
+              inset: 0,
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+            }}
+          />
+
+          {/* Furniture / habitat items */}
+          {activeDecor.map(item => (
+            <img
+              key={item.key}
+              src={item.image}
+              alt={item.label}
+              title={item.label}
+              style={{
+                position: 'absolute',
+                left: '50%',
+                bottom: 0,
+                transform: 'translateX(-50%)',
+                width: '42%',
+                height: '70%',
+                objectFit: 'contain',
+                objectPosition: 'bottom center',
+                pointerEvents: 'none',
+                zIndex: 2,
+              }}
+            />
           ))}
+
+          {/* Featured hamster */}
           {featured ? (
             <img
-              src={imageForForm(featured.stage, featured.teenFormId, featured.finalFormId, baseImageFor(featured.hamsterId))}
+              src={imageForForm(
+                featured.stage,
+                featured.teenFormId,
+                featured.finalFormId,
+                baseImageFor(featured.hamsterId)
+              )}
               alt={featured.name || featured.hamsterId}
-              style={{ width: 84, height: 84, objectFit: 'contain', marginBottom: 8 }}
+              style={{
+                position: 'absolute',
+                left: '50%',
+                bottom: '8%',
+                transform: 'translateX(-50%)',
+                width: 84,
+                height: 84,
+                objectFit: 'contain',
+                zIndex: 5,
+                pointerEvents: 'none',
+              }}
             />
           ) : (
-            <div style={{ fontSize: '0.75rem', color: 'rgba(0,0,0,0.5)', marginBottom: 16, fontWeight: 600 }}>
+            <div
+              style={{
+                position: 'absolute',
+                inset: 0,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                textAlign: 'center',
+                padding: 20,
+                fontSize: '0.75rem',
+                color: 'var(--ink-muted)',
+                fontWeight: 600,
+                zIndex: 6,
+              }}
+            >
               No hamster hatched yet — the nest is empty for now
             </div>
           )}
         </div>
 
-        <div style={{ fontSize: '0.68rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--ink-muted)', marginBottom: 8 }}>
-          Background
+        {/* SEASON SELECTOR */}
+        <div
+          style={{
+            fontSize: '0.68rem',
+            fontWeight: 700,
+            textTransform: 'uppercase',
+            letterSpacing: '0.06em',
+            color: 'var(--ink-muted)',
+            marginBottom: 8,
+          }}
+        >
+          Habitat items
         </div>
-        <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 4, marginBottom: 14 }}>
-          {BACKGROUNDS.map(b => (
+
+        <div
+          style={{
+            display: 'flex',
+            gap: 6,
+            overflowX: 'auto',
+            paddingBottom: 6,
+            marginBottom: 10,
+          }}
+        >
+          {SEASONS.map(season => (
             <button
-              key={b.key}
-              onClick={() => pickBackground(b.key)}
-              title={b.label}
+              key={season.key}
+              onClick={() => setSelectedSeason(season.key)}
               style={{
-                width: 40, height: 40, borderRadius: 12, flexShrink: 0,
-                background: b.css, cursor: 'pointer',
-                border: background === b.key ? '2.5px solid var(--pink-dark)' : '1.5px solid var(--border)',
+                padding: '7px 12px',
+                borderRadius: 12,
+                border:
+                  selectedSeason === season.key
+                    ? '1.5px solid var(--pink-dark)'
+                    : '1.5px solid var(--border)',
+                background:
+                  selectedSeason === season.key
+                    ? 'var(--blush)'
+                    : 'var(--white)',
+                color: 'var(--ink)',
+                cursor: 'pointer',
+                fontFamily: 'inherit',
+                fontSize: '0.68rem',
+                fontWeight: 700,
+                flexShrink: 0,
               }}
-            />
+            >
+              {season.label}
+            </button>
           ))}
         </div>
 
-        <div style={{ fontSize: '0.68rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--ink-muted)', marginBottom: 8 }}>
-          Decor (pick up to {MAX_DECOR})
+        <div
+          style={{
+            fontSize: '0.62rem',
+            color: 'var(--ink-muted)',
+            marginBottom: 8,
+          }}
+        >
+          Pick up to {MAX_DECOR} items
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 6 }}>
-          {DECOR_OPTIONS.map(d => {
-            const active = decor.includes(d.key);
+
+        {/* ITEM PICKER */}
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(4, 1fr)',
+            gap: 6,
+          }}
+        >
+          {visibleItems.map(item => {
+            const active = decor.includes(item.key);
+
             return (
               <button
-                key={d.key}
-                onClick={() => toggleDecor(d.key)}
-                title={d.label}
+                key={item.key}
+                onClick={() => toggleDecor(item.key)}
+                title={item.label}
                 style={{
-                  display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
-                  padding: '8px 4px', borderRadius: 12,
-                  background: active ? 'var(--blush)' : 'var(--white)',
-                  border: `1.5px solid ${active ? 'var(--pink-dark)' : 'var(--border)'}`,
-                  cursor: 'pointer', fontFamily: 'inherit',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 4,
+                  minHeight: 76,
+                  padding: '6px 4px',
+                  borderRadius: 12,
+                  background: active
+                    ? 'var(--blush)'
+                    : 'var(--white)',
+                  border: `1.5px solid ${
+                    active
+                      ? 'var(--pink-dark)'
+                      : 'var(--border)'
+                  }`,
+                  cursor: 'pointer',
+                  fontFamily: 'inherit',
+                  overflow: 'hidden',
                 }}
               >
-                <Icon name={d.icon} size={18} style={{ color: 'var(--pink-dark)' }} />
-                <span style={{ fontSize: '0.6rem', color: 'var(--ink-muted)', fontWeight: 600, textAlign: 'center' }}>{d.label}</span>
+                <img
+                  src={item.image}
+                  alt={item.label}
+                  style={{
+                    width: 48,
+                    height: 48,
+                    objectFit: 'contain',
+                  }}
+                />
+
+                <span
+                  style={{
+                    fontSize: '0.55rem',
+                    color: 'var(--ink-muted)',
+                    fontWeight: 600,
+                    textAlign: 'center',
+                    lineHeight: 1.1,
+                  }}
+                >
+                  {item.label}
+                </span>
               </button>
             );
           })}
         </div>
+
       </div>
     </div>
   );
 }
+```
