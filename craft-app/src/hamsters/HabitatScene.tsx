@@ -464,47 +464,6 @@ export default function HabitatScene() {
     />
   );
 })}
-
-          {featured ? (
-            <img
-              src={imageForForm(
-                featured.stage,
-                featured.teenFormId,
-                featured.finalFormId,
-                baseImageFor(featured.hamsterId)
-              )}
-              alt={featured.name || featured.hamsterId}
-              style={{
-                position: 'absolute',
-                left: '50%',
-                bottom: '7%',
-                transform: 'translateX(-50%)',
-                width: 62,
-                height: 62,
-                objectFit: 'contain',
-                zIndex: 5,
-                pointerEvents: 'none',
-              }}
-            />
-          ) : (
-            <div
-              style={{
-                position: 'absolute',
-                inset: 0,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                textAlign: 'center',
-                padding: 20,
-                fontSize: '0.75rem',
-                color: 'var(--ink-muted)',
-                fontWeight: 600,
-                zIndex: 6,
-              }}
-            >
-              No hamster hatched yet — the nest is empty for now
-            </div>
-          )}
         </div>
 
         <div
