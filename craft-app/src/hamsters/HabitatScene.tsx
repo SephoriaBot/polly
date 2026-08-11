@@ -92,8 +92,7 @@ const SHELF_BOTTOM: Record<ShelfNum, number> = {
 
 // Left-offset (as % of width) for up to MAX_PER_SHELF items placed
 // left-to-right along a shelf.
-const SLOT_LEFT = ['15%', '32.5%', '50%', '67.5%', '85%'];
-
+const SLOT_LEFT = ['25%', '37.5%', '50%', '62.5%', '75%'];
 // Small deterministic "hand-placed" tilt per item, based on its key, so
 // items don't all sit perfectly flat like stamped stickers.
 function tiltFor(key: string): number {
