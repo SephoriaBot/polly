@@ -288,7 +288,6 @@ export default function HabitatScene() {
               const large = LARGE_ITEMS.has(item.key);
               const left = SLOT_LEFT[index] ?? '50%';
               const width = large ? '19%' : '13%';
-              const maxHeight = large ? '17%' : '12%';
               const tilt = tiltFor(item.key);
 
               return (
@@ -299,7 +298,6 @@ export default function HabitatScene() {
                     left,
                     bottom,
                     width,
-                    maxHeight,
                     transform: 'translateX(-50%)',
                     zIndex: 10 + index,
                     pointerEvents: 'none',
