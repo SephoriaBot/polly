@@ -309,16 +309,28 @@ function costFor(key: string): number {
   return LARGE_ITEMS.has(key) ? LARGE_COST : REGULAR_COST;
 }
 
-// Shared floor line so every item sits on the same "ground" instead of
-// floating at inconsistent heights (the "sticker" look).
-const FLOOR_BOTTOM = '5%';
+// Each slot places an item at a different "depth" in the room: items
+// further back sit higher up (where the round floor is wider) and scale
+// down slightly, so the shelf reads as arranged in 3D space instead of
+// a flat row of stickers glued along one line — and never crosses the
+// curved edge of the floor art.
+interface FloorSlot {
+  left: string;
+  bottom: string;
+  scale: number;
+}
 
-// Left-position slots by how many items are currently placed, ordered
-// left-to-right so items read as arranged rather than stacked randomly.
-const FLOOR_SLOTS: Record<number, string[]> = {
-  1: ['50%'],
-  2: ['30%', '70%'],
-  3: ['20%', '50%', '80%'],
+const FLOOR_SLOTS: Record<number, FloorSlot[]> = {
+  1: [{ left: '50%', bottom: '5%', scale: 1 }],
+  2: [
+    { left: '30%', bottom: '8%', scale: 0.95 },
+    { left: '70%', bottom: '8%', scale: 0.95 },
+  ],
+  3: [
+    { left: '25%', bottom: '15%', scale: 0.82 },
+    { left: '50%', bottom: '4%', scale: 1.05 },
+    { left: '75%', bottom: '15%', scale: 0.82 },
+  ],
 };
 
 // Small deterministic "hand-placed" tilt per item, based on its key, so
@@ -488,7 +500,7 @@ export default function HabitatScene() {
     item => item.season === selectedSeason
   );
 
-  const slotLefts = FLOOR_SLOTS[activeDecor.length] ?? FLOOR_SLOTS[3];
+  const slots = FLOOR_SLOTS[activeDecor.length] ?? FLOOR_SLOTS[3];
 
   return (
     <div className="card">
@@ -539,22 +551,31 @@ export default function HabitatScene() {
           />
           {activeDecor.map((item, index) => {
             const large = LARGE_ITEMS.has(item.key);
-            const left = slotLefts[index] ?? '50%';
-            const width = large ? '26%' : '22%';
-            const maxHeight = large ? '40%' : '34%';
+            const slot = slots[index] ?? { left: '50%', bottom: '5%', scale: 1 };
+            const baseWidth = large ? 26 : 22;
+            const baseMaxHeight = large ? 40 : 34;
+            const width = `${baseWidth * slot.scale}%`;
+            const maxHeight = `${baseMaxHeight * slot.scale}%`;
             const tilt = tiltFor(item.key);
+            // Items placed further back (higher bottom offset) read as
+            // farther away — fade and blur them slightly and let closer
+            // items draw on top, reinforcing the depth illusion.
+            const depth = parseFloat(slot.bottom);
+            const opacity = Math.max(0.86, 1 - depth / 160);
+            const shadowBlur = 3 + depth / 6;
 
             return (
               <div
                 key={item.key}
                 style={{
                   position: 'absolute',
-                  left,
-                  bottom: FLOOR_BOTTOM,
+                  left: slot.left,
+                  bottom: slot.bottom,
                   width,
                   maxHeight,
                   transform: 'translateX(-50%)',
-                  zIndex: 2 + index,
+                  zIndex: Math.round(100 - depth),
+                  opacity,
                   pointerEvents: 'none',
                 }}
               >
@@ -568,7 +589,7 @@ export default function HabitatScene() {
                     height: large ? '9%' : '7%',
                     transform: 'translateX(-50%)',
                     background: 'rgba(70, 55, 45, 0.16)',
-                    filter: 'blur(4px)',
+                    filter: `blur(${shadowBlur}px)`,
                     borderRadius: '50%',
                   }}
                 />
@@ -586,6 +607,10 @@ export default function HabitatScene() {
                     position: 'relative',
                     transform: `rotate(${tilt}deg)`,
                     transformOrigin: 'bottom center',
+                    filter:
+                      depth > 10
+                        ? 'drop-shadow(0 1px 1px rgba(70,55,45,0.12))'
+                        : 'drop-shadow(0 2px 3px rgba(70,55,45,0.22))',
                   }}
                 />
               </div>
