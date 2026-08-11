@@ -87,7 +87,7 @@ const SHELF_BOTTOM: Record<ShelfNum, number> = {
   1: 70,
   2: 52,
   3: 34,
-  4: 5,
+  4: 16,
 };
 
 // Left-offset (as % of width) for up to MAX_PER_SHELF items placed
@@ -298,8 +298,8 @@ export default function HabitatScene() {
                     left,
                     bottom,
                     width,
-                    transform: 'translateX(-50%)',
-                    zIndex: 10 + index,
+transform: 'translate(-50%, 100%)',
+zIndex: 10 + index,
                     pointerEvents: 'none',
                   }}
                 >
