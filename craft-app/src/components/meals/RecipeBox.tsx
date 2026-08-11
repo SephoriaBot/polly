@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Salad } from 'lucide-react';
 import Icon from '../Icon';
 import { supabase } from '../../lib/supabase';
+import { useToast } from '../../hooks/useToast';
 import DrDietGroq from '../suggest/DrDietGroq';
 import RecipeModal from './RecipeModal';
 import empty2Img from '../../assets/icons/empty2.png';
@@ -131,6 +132,7 @@ interface RecipeBoxProps {
 }
 
 export default function RecipeBox({ currentList, existingItemNames, onItemsAdded }: RecipeBoxProps) {
+  const { showToast } = useToast()
   const [open, setOpen] = useState(false)
   const [tab, setTab] = useState<Tab>('discover')
   const [openRecipeId, setOpenRecipeId] = useState<number | null>(null)
@@ -139,6 +141,7 @@ export default function RecipeBox({ currentList, existingItemNames, onItemsAdded
   const [savedLoading, setSavedLoading] = useState(true)
   const [addingId, setAddingId] = useState<string | null>(null)
   const [addedId, setAddedId] = useState<string | null>(null)
+  const [planningId, setPlanningId] = useState<string | null>(null)
 
   useEffect(() => { if (open) loadSavedMeals() }, [open])
 
@@ -181,6 +184,23 @@ export default function RecipeBox({ currentList, existingItemNames, onItemsAdded
     setTimeout(() => setAddedId(null), 2000)
   }
 
+  // The interconnection piece: scheduling a meal writes a real Planner
+  // appointment (so it shows up on Today's "coming up" strip via the
+  // existing appointments pull), and — since it's already right there —
+  // optionally chains straight into the grocery list too.
+  async function planMealNight(meal: SavedMeal, dateStr: string, includeGroceries: boolean) {
+    if (!dateStr) return
+    const isoDateTime = new Date(`${dateStr}T18:00:00`).toISOString()
+    const { error } = await supabase.from('appointments').insert({ title: `🍽️ ${meal.name}`, date_time: isoDateTime })
+    if (error) {
+      showToast("Couldn't add that to your planner — try again?", 'error')
+      return
+    }
+    if (includeGroceries) await sendToGroceryList(meal)
+    setPlanningId(null)
+    showToast(`${meal.name} is on the calendar 🗓️`)
+  }
+
   return (
     <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
       <button
@@ -216,10 +236,14 @@ export default function RecipeBox({ currentList, existingItemNames, onItemsAdded
               loading={savedLoading}
               addingId={addingId}
               addedId={addedId}
+              planningId={planningId}
               onCook={setOpenRecipeId}
               onAddToCart={sendToGroceryList}
               onDelete={deleteMeal}
               onGoDiscover={() => setTab('discover')}
+              onStartPlan={setPlanningId}
+              onCancelPlan={() => setPlanningId(null)}
+              onConfirmPlan={planMealNight}
             />
           )}
         </div>
@@ -524,16 +548,21 @@ function DiscoverTab({ onOpenRecipe, onSaved }: { onOpenRecipe: (id: number) => 
 // ───────────────────────── SAVED TAB ─────────────────────────
 
 function SavedTab({
-  savedMeals, loading, addingId, addedId, onCook, onAddToCart, onDelete, onGoDiscover,
+  savedMeals, loading, addingId, addedId, planningId, onCook, onAddToCart, onDelete, onGoDiscover,
+  onStartPlan, onCancelPlan, onConfirmPlan,
 }: {
   savedMeals: SavedMeal[]
   loading: boolean
   addingId: string | null
   addedId: string | null
+  planningId: string | null
   onCook: (spoonacularId: number) => void
   onAddToCart: (meal: SavedMeal) => void
   onDelete: (id: string) => void
   onGoDiscover: () => void
+  onStartPlan: (id: string) => void
+  onCancelPlan: () => void
+  onConfirmPlan: (meal: SavedMeal, dateStr: string, includeGroceries: boolean) => void
 }) {
   if (loading) return <p style={{ color: 'var(--ink-muted)', fontSize: 13 }}>Loading…</p>
 
@@ -591,9 +620,118 @@ function SavedTab({
                     : <><Icon name="icon-plus" size={12} /> Add to List</>}
               </button>
             </div>
+            <button
+              className="btn btn-ghost"
+              style={{ fontSize: '0.68rem', padding: '4px 8px', width: '100%', justifyContent: 'center', marginTop: 6 }}
+              onClick={() => onStartPlan(planningId === m.id ? '' : m.id)}
+            >
+              <Icon name="calendar" size={12} /> Plan a Night
+            </button>
+            {planningId === m.id && (
+              <PlanNightForm
+                meal={m}
+                hasIngredients={hasIngredients}
+                onCancel={onCancelPlan}
+                onConfirm={onConfirmPlan}
+              />
+            )}
           </div>
         )
       })}
+    </div>
+  )
+}
+
+function PlanNightForm({
+  meal, hasIngredients, onCancel, onConfirm,
+}: {
+  meal: SavedMeal
+  hasIngredients: boolean
+  onCancel: () => void
+  onConfirm: (meal: SavedMeal, dateStr: string, includeGroceries: boolean) => void
+}) {
+  const todayStr = new Date().toISOString().slice(0, 10)
+  const [date, setDate] = useState(todayStr)
+  const [includeGroceries, setIncludeGroceries] = useState(hasIngredients)
+  const [saving, setSaving] = useState(false)
+  const [estimate, setEstimate] = useState<{ total: number; priced: number; of: number } | null>(null)
+  const [estimateLoading, setEstimateLoading] = useState(false)
+
+  // Completes the doc's "meal → grocery → budget" chain: once ingredients
+  // are going to the grocery list, look up whatever Smart Cart has already
+  // cached for those item names and total up the cheapest known price per
+  // ingredient. Partial coverage is expected and shown honestly — this is
+  // a ballpark from cached prices, not a live quote.
+  useEffect(() => {
+    if (!includeGroceries || !hasIngredients) { setEstimate(null); return }
+    let cancelled = false
+    setEstimateLoading(true)
+    ;(async () => {
+      const cleanedNames = Array.from(new Set((meal.ingredients ?? []).map(cleanIngredient).map(normalizeForDedup)))
+      const { data } = await supabase.from('grocery_prices').select('item_name,price')
+      if (cancelled) return
+      const cheapestByName = new Map<string, number>()
+      for (const row of data ?? []) {
+        const key = normalizeForDedup(row.item_name)
+        const current = cheapestByName.get(key)
+        if (current === undefined || row.price < current) cheapestByName.set(key, row.price)
+      }
+      let total = 0
+      let priced = 0
+      for (const name of cleanedNames) {
+        const price = cheapestByName.get(name)
+        if (price !== undefined) { total += price; priced += 1 }
+      }
+      setEstimate({ total, priced, of: cleanedNames.length })
+      setEstimateLoading(false)
+    })()
+    return () => { cancelled = true }
+  }, [includeGroceries, hasIngredients, meal.ingredients])
+
+  async function confirm() {
+    setSaving(true)
+    await onConfirm(meal, date, includeGroceries)
+    setSaving(false)
+  }
+
+  return (
+    <div style={{ marginTop: 8, padding: 8, borderRadius: 12, background: 'var(--cream)', border: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: 6 }}>
+      <input
+        type="date"
+        className="form-input"
+        value={date}
+        min={todayStr}
+        onChange={e => setDate(e.target.value)}
+        style={{ fontSize: '0.75rem', padding: '4px 6px' }}
+      />
+      {hasIngredients && (
+        <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.68rem', color: 'var(--ink-muted)' }}>
+          <input type="checkbox" checked={includeGroceries} onChange={e => setIncludeGroceries(e.target.checked)} />
+          Also add ingredients to grocery list
+        </label>
+      )}
+      {includeGroceries && hasIngredients && (
+        <div style={{ fontSize: '0.68rem', color: 'var(--pink-dark)', fontWeight: 600, paddingLeft: 2 }}>
+          {estimateLoading ? (
+            'Estimating cost…'
+          ) : estimate && estimate.priced > 0 ? (
+            `🛒 ~$${estimate.total.toFixed(2)} (${estimate.priced} of ${estimate.of} ingredients priced)`
+          ) : (
+            'No price history yet for these ingredients'
+          )}
+        </div>
+      )}
+      <div style={{ display: 'flex', gap: 6 }}>
+        <button className="btn btn-ghost btn-sm" style={{ flex: 1, fontSize: '0.68rem', justifyContent: 'center' }} onClick={onCancel}>Cancel</button>
+        <button
+          className="btn btn-primary btn-sm"
+          style={{ flex: 1, fontSize: '0.68rem', justifyContent: 'center', opacity: saving ? 0.6 : 1 }}
+          onClick={confirm}
+          disabled={saving || !date}
+        >
+          {saving ? 'Adding…' : 'Confirm'}
+        </button>
+      </div>
     </div>
   )
 }

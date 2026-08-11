@@ -1,11 +1,14 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import Lantern from "../components/Lantern";
-import DailyAlmanac from "../components/DailyAlmanac";
+import MoonWidget from "../components/MoonWidget";
+import TodaySnapshot from "../components/TodaySnapshot";
+import LowEnergyChecklist from "../components/LowEnergyChecklist";
+import EnergyModeSwitch from "../components/EnergyModeSwitch";
+import { useEnergy } from "../context/EnergyContext";
 import sleepingNestImg from '../assets/illustrations/sleeping_nest.png';
-import empty9Img from '../assets/icons/empty9.png';
+import empty2Img from '../assets/icons/empty2.png';
 import WeatherBadge from '../components/WeatherBadge';
-import TroubleshooterGroq from '../components/suggest/TroubleshooterGroq';
 import Icon, { type IconName } from '../components/Icon';
 import EmptyState from '../components/EmptyState';
 
@@ -41,7 +44,8 @@ function StitchDivider() {
   );
 }
 
-export default function Dashboard() {
+export default function Dashboard({ onNavigate }: { onNavigate?: (page: string) => void }) {
+  const { mode } = useEnergy();
   const [focuses, setFocuses] = useState<Focus[]>([]);
   const [newFocus, setNewFocus] = useState('');
   const [newFocusMins, setNewFocusMins] = useState('');
@@ -112,10 +116,32 @@ async function loadAll() {
         {/* WEATHER BADGE MINI WIDGET */}
         <WeatherBadge />
 
+        <EnergyModeSwitch />
+
         </div>
       </div>
 
       <div className="page-body">
+
+        {mode !== 'normal' ? (
+          <>
+            {/* ── NO ENERGY MODE ── reduced to starred priority tasks + basics */}
+            <section>
+              <LowEnergyChecklist onNavigate={onNavigate} />
+            </section>
+
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+              <Icon name="pagedivider" size={85} />
+            </div>
+            <section style={{ marginTop: 4 }}>
+              <div style={{ fontSize: '0.68rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--ink-muted)', marginBottom: 8 }}>
+                Also on your radar
+              </div>
+              <TodaySnapshot onNavigate={onNavigate} />
+            </section>
+          </>
+        ) : (
+        <>
 
                 {/* ── TODAY'S FOCUS ── */}
         <section>
@@ -173,7 +199,7 @@ async function loadAll() {
 
           {focuses.length === 0 && !addingFocus ? (
             
-        <EmptyState image={empty9Img} message="No focuses set for today." size={65} />
+        <EmptyState image={empty2Img} message="No focuses set for today." size={65} />
     
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -247,22 +273,24 @@ async function loadAll() {
           )}
         </section>
 
+        {/* ── TODAY SNAPSHOT ── pulls live from chores, appointments, and money */}
+        <section style={{ marginTop: 4 }}>
+          <div style={{ fontSize: '0.68rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--ink-muted)', marginBottom: 8 }}>
+            Also on your radar
+          </div>
+          <TodaySnapshot onNavigate={onNavigate} />
+        </section>
+
        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
   <Icon name="pagedivider" size={85} />
 </div>
-        {/* ── DAILY ALMANAC ── */}
+
+        {/* ── MOON + ZODIAC ── */}
         <section>
-          <DailyAlmanac />
+          <MoonWidget />
         </section>
-
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-  <Icon name="pagedivider" size={85} />
-</div>
-
-         {/* ── TROUBLESHOOTER GROQ ── */}
-          <section>
-          <TroubleshooterGroq />
-          </section>
+        </>
+        )}
       </div>
     </div>
   );

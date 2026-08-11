@@ -1,6 +1,7 @@
 import HamsterNest from "../hamsters/HamsterNest";
 import HamsterHabitat from "../hamsters/HamsterHabitat";
 import WildEncounter from "../hamsters/WildEncounter";
+import HabitatScene from "../hamsters/HabitatScene";
 import Lantern from "../components/Lantern";
 import Icon from "../components/Icon";
 
@@ -17,6 +18,14 @@ export default function Habitat() {
           <Lantern />
         </div>
       </div>
+
+      <section>
+        <HabitatScene />
+      </section>
+
+<div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+  <Icon name="pagedivider" size={85} />
+</div>
 
       <section>
         <div className="section-label">Hamster Nest</div>
