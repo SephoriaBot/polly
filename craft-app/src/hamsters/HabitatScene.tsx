@@ -1,337 +1,98 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { useHamsterGrowth } from './HamsterGrowthContext';
-import { imageForForm, HAMSTERS } from './hamsters';
 
-const HABITAT_PATH = '/habitat';
-const MAX_DECOR = 3;
+const SHELF_PATH = '/shelf';
+const MAX_PER_SHELF = 5;
 const REGULAR_COST = 15;
 const LARGE_COST = 25;
 
-type HabitatSlot = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
-
-type Season = 'spring' | 'summer' | 'fall' | 'winter';
+type ShelfNum = 1 | 2 | 3 | 4;
 
 interface HabitatItem {
   key: string;
   label: string;
   image: string;
-  season: Season;
-  slot: HabitatSlot;
+  shelf: ShelfNum;
 }
 
+// Every item that was cropped and dropped into public/shelf, sorted onto
+// one of the 4 physical shelves in shelf-empty.PNG. item-camera and
+// item-chest are the two "large" pieces — everything else is a regular
+// icon-*.png.
 const HABITAT_ITEMS: HabitatItem[] = [
-  {
-    key: 'spring-daisy-bed',
-    label: 'Daisy Bed',
-    image: `${HABITAT_PATH}/item_spring_daisy-bed.png`,
-    season: 'spring',
-    slot: 1,
-  },
-  {
-    key: 'spring-floral-bridge',
-    label: 'Floral Bridge',
-    image: `${HABITAT_PATH}/item_spring_floral-bridge.png`,
-    season: 'spring',
-    slot: 2,
-  },
-  {
-    key: 'spring-floral-swing',
-    label: 'Floral Swing',
-    image: `${HABITAT_PATH}/item_spring_floral-swing.png`,
-    season: 'spring',
-    slot: 3,
-  },
-  {
-    key: 'spring-mushroom-house',
-    label: 'Mushroom House',
-    image: `${HABITAT_PATH}/item_spring_mushroom-house.png`,
-    season: 'spring',
-    slot: 4,
-  },
-  {
-    key: 'spring-nest-bed',
-    label: 'Nest Bed',
-    image: `${HABITAT_PATH}/item_spring_nest-bed.png`,
-    season: 'spring',
-    slot: 5,
-  },
-  {
-    key: 'spring-teacup-bath',
-    label: 'Teacup Bath',
-    image: `${HABITAT_PATH}/item_spring_teacup-bath.png`,
-    season: 'spring',
-    slot: 6,
-  },
-  {
-    key: 'spring-tulip-bed',
-    label: 'Tulip Bed',
-    image: `${HABITAT_PATH}/item_spring_tulip-bed.png`,
-    season: 'spring',
-    slot: 7,
-  },
-  {
-    key: 'spring-floral-tunnel',
-    label: 'Floral Tunnel',
-    image: `${HABITAT_PATH}/item_spring_floral-tunnel.png`,
-    season: 'spring',
-    slot: 8,
-  },
-  {
-    key: 'spring-floral-wheel',
-    label: 'Floral Wheel',
-    image: `${HABITAT_PATH}/item_spring_floral-wheel.png`,
-    season: 'spring',
-    slot: 9,
-  },
+  // Shelf 1 (top) — sweets & snacks
+  { key: 'cup', label: 'Teacup', image: `${SHELF_PATH}/icon-cup.png`, shelf: 1 },
+  { key: 'cupcakes', label: 'Cupcakes', image: `${SHELF_PATH}/icon-cupcakes.png`, shelf: 1 },
+  { key: 'cookies', label: 'Cookies', image: `${SHELF_PATH}/icon-cookies.png`, shelf: 1 },
+  { key: 'candy', label: 'Candy', image: `${SHELF_PATH}/icon-candy.png`, shelf: 1 },
+  { key: 'donut-hut', label: 'Donut Hut', image: `${SHELF_PATH}/icon-donut-hut.png`, shelf: 1 },
+  { key: 'pancakes', label: 'Pancakes', image: `${SHELF_PATH}/icon-pancakes.png`, shelf: 1 },
+  { key: 'picnic', label: 'Picnic Basket', image: `${SHELF_PATH}/icon-picnic.png`, shelf: 1 },
+  { key: 'veggies', label: 'Veggies', image: `${SHELF_PATH}/icon-veggies.png`, shelf: 1 },
 
-  {
-    key: 'summer-beach-chair-umbrella',
-    label: 'Beach Chair',
-    image: `${HABITAT_PATH}/item_summer_beach-chair-umbrella.png`,
-    season: 'summer',
-    slot: 1,
-  },
-  {
-    key: 'summer-coconut-hut',
-    label: 'Coconut Hut',
-    image: `${HABITAT_PATH}/item_summer_coconut-hut.png`,
-    season: 'summer',
-    slot: 2,
-  },
-  {
-    key: 'summer-hammock-palms',
-    label: 'Palm Hammock',
-    image: `${HABITAT_PATH}/item_summer_hammock-palms.png`,
-    season: 'summer',
-    slot: 3,
-  },
-  {
-    key: 'summer-pineapple-house',
-    label: 'Pineapple House',
-    image: `${HABITAT_PATH}/item_summer_pineapple-house.png`,
-    season: 'summer',
-    slot: 4,
-  },
-  {
-    key: 'summer-sandcastle-house',
-    label: 'Sandcastle House',
-    image: `${HABITAT_PATH}/item_summer_sandcastle-house.png`,
-    season: 'summer',
-    slot: 5,
-  },
-  {
-    key: 'summer-shell-bed',
-    label: 'Shell Bed',
-    image: `${HABITAT_PATH}/item_summer_shell-bed.png`,
-    season: 'summer',
-    slot: 6,
-  },
-  {
-    key: 'summer-surfboard-rocks',
-    label: 'Surfboard',
-    image: `${HABITAT_PATH}/item_summer_surfboard-rocks.png`,
-    season: 'summer',
-    slot: 7,
-  },
-  {
-    key: 'summer-watermelon-bed',
-    label: 'Watermelon Bed',
-    image: `${HABITAT_PATH}/item_summer_watermelon-bed.png`,
-    season: 'summer',
-    slot: 8,
-  },
-  {
-    key: 'summer-float-bridge',
-    label: 'Float Bridge',
-    image: `${HABITAT_PATH}/item_summer_float-bridge.png`,
-    season: 'summer',
-    slot: 9,
-  },
+  // Shelf 2 — study & hobby corner
+  { key: 'books', label: 'Books', image: `${SHELF_PATH}/icon-books.png`, shelf: 2 },
+  { key: 'scroll', label: 'Scroll', image: `${SHELF_PATH}/icon-scroll.png`, shelf: 2 },
+  { key: 'fortune', label: 'Fortune Teller', image: `${SHELF_PATH}/icon-fortune.png`, shelf: 2 },
+  { key: 'globe', label: 'Globe', image: `${SHELF_PATH}/icon-globe.png`, shelf: 2 },
+  { key: 'record', label: 'Record', image: `${SHELF_PATH}/icon-record.png`, shelf: 2 },
+  { key: 'pic-board', label: 'Pinboard', image: `${SHELF_PATH}/icon-pic-board.png`, shelf: 2 },
+  { key: 'mirror', label: 'Mirror', image: `${SHELF_PATH}/icon-mirror.png`, shelf: 2 },
+  { key: 'instapix', label: 'Instapix', image: `${SHELF_PATH}/icon-instapix.png`, shelf: 2 },
+  { key: 'tv', label: 'TV', image: `${SHELF_PATH}/icon-tv.png`, shelf: 2 },
 
-  {
-    key: 'fall-book-stack-den',
-    label: 'Book Stack Den',
-    image: `${HABITAT_PATH}/item_fall_book-stack-den.png`,
-    season: 'fall',
-    slot: 1,
-  },
-  {
-    key: 'fall-campfire',
-    label: 'Campfire',
-    image: `${HABITAT_PATH}/item_fall_campfire.png`,
-    season: 'fall',
-    slot: 2,
-  },
-  {
-    key: 'fall-log-mushroom-house',
-    label: 'Log Mushroom House',
-    image: `${HABITAT_PATH}/item_fall_log-mushroom-house.png`,
-    season: 'fall',
-    slot: 3,
-  },
-  {
-    key: 'fall-mushroom-table',
-    label: 'Mushroom Table',
-    image: `${HABITAT_PATH}/item_fall_mushroom-table.png`,
-    season: 'fall',
-    slot: 4,
-  },
-  {
-    key: 'fall-plaid-armchair',
-    label: 'Plaid Armchair',
-    image: `${HABITAT_PATH}/item_fall_plaid-armchair.png`,
-    season: 'fall',
-    slot: 5,
-  },
-  {
-    key: 'fall-plaid-loveseat',
-    label: 'Plaid Loveseat',
-    image: `${HABITAT_PATH}/item_fall_plaid-loveseat.png`,
-    season: 'fall',
-    slot: 6,
-  },
-  {
-    key: 'fall-pumpkin-house',
-    label: 'Pumpkin House',
-    image: `${HABITAT_PATH}/item_fall_pumpkin-house.png`,
-    season: 'fall',
-    slot: 7,
-  },
-  {
-    key: 'fall-wagon-wheel',
-    label: 'Wagon Wheel',
-    image: `${HABITAT_PATH}/item_fall_wagon-wheel.png`,
-    season: 'fall',
-    slot: 8,
-  },
-  {
-    key: 'fall-leaf-swing',
-    label: 'Leaf Swing',
-    image: `${HABITAT_PATH}/item_fall_leaf-swing.png`,
-    season: 'fall',
-    slot: 9,
-  },
+  // Shelf 3 — cozy & botanical
+  { key: 'candle', label: 'Candle', image: `${SHELF_PATH}/icon-candle.png`, shelf: 3 },
+  { key: 'lantern', label: 'Lantern', image: `${SHELF_PATH}/icon-lantern.png`, shelf: 3 },
+  { key: 'lights', label: 'Fairy Lights', image: `${SHELF_PATH}/icon-lights.png`, shelf: 3 },
+  { key: 'fireflies', label: 'Fireflies Jar', image: `${SHELF_PATH}/icon-fireflies.png`, shelf: 3 },
+  { key: 'gem', label: 'Gem', image: `${SHELF_PATH}/icon-gem.png`, shelf: 3 },
+  { key: 'terrarium', label: 'Terrarium', image: `${SHELF_PATH}/icon-terrarium.png`, shelf: 3 },
+  { key: 'mushroom', label: 'Mushroom', image: `${SHELF_PATH}/icon-mushroom.png`, shelf: 3 },
+  { key: 'flowers', label: 'Flowers', image: `${SHELF_PATH}/icon-flowers.png`, shelf: 3 },
 
-  {
-    key: 'winter-igloo',
-    label: 'Igloo',
-    image: `${HABITAT_PATH}/item_winter_igloo.png`,
-    season: 'winter',
-    slot: 1,
-  },
-  {
-    key: 'winter-sled',
-    label: 'Sled',
-    image: `${HABITAT_PATH}/item_winter_sled.png`,
-    season: 'winter',
-    slot: 2,
-  },
-  {
-    key: 'winter-snowflake-teacup',
-    label: 'Snowflake Teacup',
-    image: `${HABITAT_PATH}/item_winter_snowflake-teacup.png`,
-    season: 'winter',
-    slot: 3,
-  },
-  {
-    key: 'winter-snowglobe-bed',
-    label: 'Snowglobe Bed',
-    image: `${HABITAT_PATH}/item_winter_snowglobe-bed.png`,
-    season: 'winter',
-    slot: 4,
-  },
-  {
-    key: 'winter-snowman',
-    label: 'Snowman',
-    image: `${HABITAT_PATH}/item_winter_snowman.png`,
-    season: 'winter',
-    slot: 5,
-  },
-  {
-    key: 'winter-snowy-hammock',
-    label: 'Snowy Hammock',
-    image: `${HABITAT_PATH}/item_winter_snowy-hammock.png`,
-    season: 'winter',
-    slot: 6,
-  },
-  {
-    key: 'winter-snowy-tunnel',
-    label: 'Snowy Tunnel',
-    image: `${HABITAT_PATH}/item_winter_snowy-tunnel.png`,
-    season: 'winter',
-    slot: 7,
-  },
-  {
-    key: 'winter-snowy-log',
-    label: 'Snowy Log',
-    image: `${HABITAT_PATH}/item_winter_snowy-log.png`,
-    season: 'winter',
-    slot: 8,
-  },
+  // Shelf 4 (bottom) — curiosities
+  { key: 'birdhouse', label: 'Birdhouse', image: `${SHELF_PATH}/icon-birdhouse.png`, shelf: 4 },
+  { key: 'boot', label: 'Boot', image: `${SHELF_PATH}/icon-boot.png`, shelf: 4 },
+  { key: 'fishbowl', label: 'Fishbowl', image: `${SHELF_PATH}/icon-fishbowl.png`, shelf: 4 },
+  { key: 'gumball-machine', label: 'Gumball Machine', image: `${SHELF_PATH}/icon-gumball-machine.png`, shelf: 4 },
+  { key: 'suitcases', label: 'Suitcases', image: `${SHELF_PATH}/icon-suitcases.png`, shelf: 4 },
+  { key: 'vase', label: 'Vase', image: `${SHELF_PATH}/icon-vase.png`, shelf: 4 },
+  { key: 'wheel', label: 'Wheel', image: `${SHELF_PATH}/icon-wheel.png`, shelf: 4 },
+  { key: 'camera', label: 'Camera', image: `${SHELF_PATH}/item-camera.png`, shelf: 4 },
+  { key: 'chest', label: 'Treasure Chest', image: `${SHELF_PATH}/item-chest.png`, shelf: 4 },
 ];
 
-const SEASONS: { key: Season; label: string }[] = [
-  { key: 'spring', label: 'Spring' },
-  { key: 'summer', label: 'Summer' },
-  { key: 'fall', label: 'Fall' },
-  { key: 'winter', label: 'Winter' },
+const SHELVES: { key: ShelfNum; label: string }[] = [
+  { key: 1, label: 'Top Shelf' },
+  { key: 2, label: 'Second Shelf' },
+  { key: 3, label: 'Third Shelf' },
+  { key: 4, label: 'Bottom Shelf' },
 ];
-
-const STAGE_RANK: Record<string, number> = {
-  baby: 0,
-  teen: 1,
-  final: 2,
-};
 
 // Items that read visually "bigger" and need a larger footprint on the
 // shelf — and cost more points to unlock.
-const LARGE_ITEMS = new Set([
-  'spring-mushroom-house',
-  'spring-daisy-bed',
-  'spring-floral-bridge',
-  'spring-floral-tunnel',
-  'summer-coconut-hut',
-  'summer-float-bridge',
-  'summer-pineapple-house',
-  'summer-sandcastle-house',
-  'summer-watermelon-bed',
-  'fall-log-mushroom-house',
-  'fall-plaid-loveseat',
-  'fall-pumpkin-house',
-  'winter-igloo',
-  'winter-snowglobe-bed',
-  'winter-snowy-hammock',
-  'winter-snowy-tunnel',
-]);
+const LARGE_ITEMS = new Set(['camera', 'chest']);
 
 function costFor(key: string): number {
   return LARGE_ITEMS.has(key) ? LARGE_COST : REGULAR_COST;
 }
 
-// Each slot places an item at a different "depth" in the room: items
-// further back sit higher up (where the round floor is wider) and scale
-// down slightly, so the shelf reads as arranged in 3D space instead of
-// a flat row of stickers glued along one line — and never crosses the
-// curved edge of the floor art.
-interface FloorSlot {
-  left: string;
-  bottom: string;
-  scale: number;
-}
-
-const FLOOR_SLOTS: Record<number, FloorSlot[]> = {
-  1: [{ left: '50%', bottom: '5%', scale: 1 }],
-  2: [
-    { left: '30%', bottom: '8%', scale: 0.95 },
-    { left: '70%', bottom: '8%', scale: 0.95 },
-  ],
-  3: [
-    { left: '25%', bottom: '15%', scale: 0.82 },
-    { left: '50%', bottom: '4%', scale: 1.05 },
-    { left: '75%', bottom: '15%', scale: 0.82 },
-  ],
+// Bottom-offset (as % of the shelf image's height) of each shelf's top
+// surface, measured off shelf-empty.PNG — this is where an item's base
+// should sit so it reads as resting on the wood, not floating above it
+// or sinking into the plank shadow below.
+const SHELF_BOTTOM: Record<ShelfNum, number> = {
+  1: 66,
+  2: 49,
+  3: 31,
+  4: 9,
 };
+
+// Left-offset (as % of width) for up to MAX_PER_SHELF items placed
+// left-to-right along a shelf.
+const SLOT_LEFT = ['15%', '32.5%', '50%', '67.5%', '85%'];
 
 // Small deterministic "hand-placed" tilt per item, based on its key, so
 // items don't all sit perfectly flat like stamped stickers.
@@ -340,7 +101,7 @@ function tiltFor(key: string): number {
   for (let i = 0; i < key.length; i++) {
     hash = key.charCodeAt(i) + ((hash << 5) - hash);
   }
-  const range = 7; // degrees, total spread
+  const range = 6; // degrees, total spread
   return (Math.abs(hash) % range) - range / 2;
 }
 
@@ -350,31 +111,16 @@ interface HabitatThemeRow {
   decor_keys: string[] | null;
 }
 
-function baseImageFor(hamsterId: string): string {
-  return HAMSTERS.find(h => h.id === hamsterId)?.image || '';
-}
-
-function getCurrentSeason(): Season {
-  const month = new Date().getMonth();
-
-  if (month >= 2 && month <= 4) return 'spring';
-  if (month >= 5 && month <= 7) return 'summer';
-  if (month >= 8 && month <= 10) return 'fall';
-
-  return 'winter';
-}
-
 export default function HabitatScene() {
-  const { loading, collection, points, spendPoints } = useHamsterGrowth();
+  const { loading, points, spendPoints } = useHamsterGrowth();
   const [decor, setDecor] = useState<string[]>([]);
   const [unlocked, setUnlocked] = useState<string[]>([]);
   const [themeLoaded, setThemeLoaded] = useState(false);
   const [unlockingKey, setUnlockingKey] = useState<string | null>(null);
   const [unlockError, setUnlockError] = useState<string | null>(null);
-  const selectedSeason = getCurrentSeason();
+  const [selectedShelf, setSelectedShelf] = useState<ShelfNum>(1);
 
-  // Load the saved theme + unlocked items once on mount. themeLoaded was
-  // previously never set true anywhere, so the whole scene rendered nothing.
+  // Load the saved theme + unlocked items once on mount.
   useEffect(() => {
     let cancelled = false;
 
@@ -410,7 +156,7 @@ export default function HabitatScene() {
   async function saveTheme(nextDecor: string[]) {
     await supabase.from('habitat_theme').upsert({
       id: 1,
-      background_key: 'room_empty_base',
+      background_key: 'shelf_empty',
       decor_keys: nextDecor,
     });
   }
@@ -427,16 +173,16 @@ export default function HabitatScene() {
       if (prev.includes(key)) {
         next = prev.filter(k => k !== key);
       } else {
-        // Cap is per-season, so picking spring items doesn't evict decor
-        // you already placed for other seasons.
-        const sameSeasonKeys = prev.filter(k => {
+        // Cap is per-shelf, so filling up the top shelf doesn't evict
+        // decor you already placed on the other shelves.
+        const sameShelfKeys = prev.filter(k => {
           const other = HABITAT_ITEMS.find(h => h.key === k);
-          return other?.season === item.season;
+          return other?.shelf === item.shelf;
         });
 
-        if (sameSeasonKeys.length >= MAX_DECOR) {
-          const oldestInSeason = sameSeasonKeys[0];
-          next = [...prev.filter(k => k !== oldestInSeason), key];
+        if (sameShelfKeys.length >= MAX_PER_SHELF) {
+          const oldestOnShelf = sameShelfKeys[0];
+          next = [...prev.filter(k => k !== oldestOnShelf), key];
         } else {
           next = [...prev, key];
         }
@@ -479,28 +225,14 @@ export default function HabitatScene() {
     return null;
   }
 
-  const featured = [...collection].sort((a, b) => {
-    const stageDiff = (STAGE_RANK[b.stage] ?? 0) - (STAGE_RANK[a.stage] ?? 0);
-    if (stageDiff !== 0) {
-      return stageDiff;
-    }
-    return new Date(b.hatchedAt).getTime() - new Date(a.hatchedAt).getTime();
-  })[0];
-
-  // Only show decor that's unlocked AND belongs to the current season,
-  // even if it's still saved from a previous season's picks.
+  // Everything placed and unlocked shows up on the shelf at once — the
+  // shelf tabs below only filter which items you're browsing/unlocking,
+  // not what's visible in the scene.
   const activeDecor = HABITAT_ITEMS.filter(
-    item =>
-      decor.includes(item.key) &&
-      item.season === selectedSeason &&
-      unlocked.includes(item.key)
+    item => decor.includes(item.key) && unlocked.includes(item.key)
   );
 
-  const visibleItems = HABITAT_ITEMS.filter(
-    item => item.season === selectedSeason
-  );
-
-  const slots = FLOOR_SLOTS[activeDecor.length] ?? FLOOR_SLOTS[3];
+  const visibleItems = HABITAT_ITEMS.filter(item => item.shelf === selectedShelf);
 
   return (
     <div className="card">
@@ -513,7 +245,7 @@ export default function HabitatScene() {
             marginBottom: 10,
           }}
         >
-          <div className="section-label">Decorate the habitat</div>
+          <div className="section-label">Decorate the shelf</div>
           <div
             style={{
               fontSize: '0.68rem',
@@ -528,8 +260,8 @@ export default function HabitatScene() {
           style={{
             position: 'relative',
             width: '100%',
-            aspectRatio: '1524 / 1024',
-            maxHeight: 300,
+            aspectRatio: '1 / 1',
+            maxHeight: 340,
             borderRadius: 20,
             overflow: 'hidden',
             border: '1.5px solid var(--border)',
@@ -538,8 +270,8 @@ export default function HabitatScene() {
           }}
         >
           <img
-            src={`${HABITAT_PATH}/room_empty_base.png`}
-            alt="Hamster habitat"
+            src={`${SHELF_PATH}/shelf-empty.PNG`}
+            alt="Hamster shelf"
             style={{
               position: 'absolute',
               inset: 0,
@@ -549,85 +281,96 @@ export default function HabitatScene() {
               zIndex: 1,
             }}
           />
-          {activeDecor.map((item, index) => {
-            const large = LARGE_ITEMS.has(item.key);
-            const slot = slots[index] ?? { left: '50%', bottom: '5%', scale: 1 };
-            const baseWidth = large ? 26 : 22;
-            const baseMaxHeight = large ? 40 : 34;
-            const width = `${baseWidth * slot.scale}%`;
-            const maxHeight = `${baseMaxHeight * slot.scale}%`;
-            const tilt = tiltFor(item.key);
-            // Items placed further back (higher bottom offset) read as
-            // farther away — fade and blur them slightly and let closer
-            // items draw on top, reinforcing the depth illusion.
-            const depth = parseFloat(slot.bottom);
-            const opacity = Math.max(0.86, 1 - depth / 160);
-            const shadowBlur = 3 + depth / 6;
+          {SHELVES.map(({ key: shelfNum }) => {
+            const shelfItems = activeDecor.filter(item => item.shelf === shelfNum);
+            const bottom = `${SHELF_BOTTOM[shelfNum]}%`;
 
-            return (
-              <div
-                key={item.key}
-                style={{
-                  position: 'absolute',
-                  left: slot.left,
-                  bottom: slot.bottom,
-                  width,
-                  maxHeight,
-                  transform: 'translateX(-50%)',
-                  zIndex: Math.round(100 - depth),
-                  opacity,
-                  pointerEvents: 'none',
-                }}
-              >
-                {/* Flat, unrotated shadow anchored to the floor line */}
+            return shelfItems.map((item, index) => {
+              const large = LARGE_ITEMS.has(item.key);
+              const left = SLOT_LEFT[index] ?? '50%';
+              const width = large ? '19%' : '13%';
+              const maxHeight = large ? '17%' : '12%';
+              const tilt = tiltFor(item.key);
+
+              return (
                 <div
+                  key={item.key}
                   style={{
                     position: 'absolute',
-                    left: '50%',
-                    bottom: 0,
-                    width: large ? '72%' : '58%',
-                    height: large ? '9%' : '7%',
+                    left,
+                    bottom,
+                    width,
+                    maxHeight,
                     transform: 'translateX(-50%)',
-                    background: 'rgba(70, 55, 45, 0.16)',
-                    filter: `blur(${shadowBlur}px)`,
-                    borderRadius: '50%',
+                    zIndex: 10 + index,
+                    pointerEvents: 'none',
                   }}
-                />
-                {/* Item gets a slight hand-placed tilt, anchored at its base */}
-                <img
-                  src={item.image}
-                  alt={item.label}
-                  title={item.label}
-                  style={{
-                    display: 'block',
-                    width: '100%',
-                    height: 'auto',
-                    maxHeight: '100%',
-                    objectFit: 'contain',
-                    position: 'relative',
-                    transform: `rotate(${tilt}deg)`,
-                    transformOrigin: 'bottom center',
-                    filter:
-                      depth > 10
-                        ? 'drop-shadow(0 1px 1px rgba(70,55,45,0.12))'
-                        : 'drop-shadow(0 2px 3px rgba(70,55,45,0.22))',
-                  }}
-                />
-              </div>
-            );
+                >
+                  {/* Flat, unrotated shadow anchored to the shelf line */}
+                  <div
+                    style={{
+                      position: 'absolute',
+                      left: '50%',
+                      bottom: 0,
+                      width: large ? '70%' : '58%',
+                      height: large ? '10%' : '8%',
+                      transform: 'translateX(-50%)',
+                      background: 'rgba(70, 55, 45, 0.16)',
+                      filter: 'blur(3px)',
+                      borderRadius: '50%',
+                    }}
+                  />
+                  {/* Item gets a slight hand-placed tilt, anchored at its base */}
+                  <img
+                    src={item.image}
+                    alt={item.label}
+                    title={item.label}
+                    style={{
+                      display: 'block',
+                      width: '100%',
+                      height: 'auto',
+                      maxHeight: '100%',
+                      objectFit: 'contain',
+                      position: 'relative',
+                      transform: `rotate(${tilt}deg)`,
+                      transformOrigin: 'bottom center',
+                      filter: 'drop-shadow(0 2px 3px rgba(70,55,45,0.22))',
+                    }}
+                  />
+                </div>
+              );
+            });
           })}
         </div>
         <div
           style={{
-            fontSize: '0.68rem',
-            fontWeight: 700,
-            textTransform: 'uppercase',
-            letterSpacing: '0.06em',
-            color: 'var(--ink-muted)',
-            marginBottom: 8,
+            display: 'flex',
+            gap: 6,
+            marginBottom: 10,
+            flexWrap: 'wrap',
           }}
         >
-          {SEASONS.find(season => season.key === selectedSeason)?.label} items
+          {SHELVES.map(shelf => (
+            <button
+              key={shelf.key}
+              onClick={() => setSelectedShelf(shelf.key)}
+              style={{
+                padding: '5px 10px',
+                borderRadius: 999,
+                fontSize: '0.62rem',
+                fontWeight: 700,
+                fontFamily: 'inherit',
+                cursor: 'pointer',
+                border: `1.5px solid ${
+                  selectedShelf === shelf.key ? 'var(--pink-dark)' : 'var(--border)'
+                }`,
+                background: selectedShelf === shelf.key ? 'var(--blush)' : 'var(--white)',
+                color: 'var(--ink)',
+              }}
+            >
+              {shelf.label}
+            </button>
+          ))}
         </div>
         <div
           style={{
@@ -636,8 +379,8 @@ export default function HabitatScene() {
             marginBottom: 8,
           }}
         >
-          Pick up to {MAX_DECOR} unlocked items. Locked items cost points to
-          unlock — same points that hatch and train your hamsters.
+          Pick up to {MAX_PER_SHELF} unlocked items per shelf. Locked items cost
+          points to unlock — same points that hatch and train your hamsters.
         </div>
         {unlockError && (
           <div
