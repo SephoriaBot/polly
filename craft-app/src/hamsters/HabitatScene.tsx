@@ -516,7 +516,7 @@ export default function HabitatScene() {
           style={{
             position: 'relative',
             width: '100%',
-            aspectRatio: '16 / 9',
+            aspectRatio: '1524 / 1024',
             maxHeight: 300,
             borderRadius: 20,
             overflow: 'hidden',
@@ -533,7 +533,7 @@ export default function HabitatScene() {
               inset: 0,
               width: '100%',
               height: '100%',
-              objectFit: 'cover',
+              objectFit: 'contain',
               zIndex: 1,
             }}
           />
