@@ -317,8 +317,8 @@ const FLOOR_BOTTOM = '5%';
 // left-to-right so items read as arranged rather than stacked randomly.
 const FLOOR_SLOTS: Record<number, string[]> = {
   1: ['50%'],
-  2: ['28%', '72%'],
-  3: ['15%', '50%', '85%'],
+  2: ['30%', '70%'],
+  3: ['20%', '50%', '80%'],
 };
 
 // Small deterministic "hand-placed" tilt per item, based on its key, so
@@ -540,7 +540,7 @@ export default function HabitatScene() {
           {activeDecor.map((item, index) => {
             const large = LARGE_ITEMS.has(item.key);
             const left = slotLefts[index] ?? '50%';
-            const width = large ? '30%' : '24%';
+            const width = large ? '26%' : '22%';
             const maxHeight = large ? '40%' : '34%';
             const tilt = tiltFor(item.key);
 
