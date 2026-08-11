@@ -84,10 +84,10 @@ function costFor(key: string): number {
 // should sit so it reads as resting on the wood, not floating above it
 // or sinking into the plank shadow below.
 const SHELF_BOTTOM: Record<ShelfNum, number> = {
-  1: 66,
-  2: 49,
-  3: 31,
-  4: 9,
+  1: 67,
+  2: 50.5,
+  3: 33,
+  4: 16,
 };
 
 // Left-offset (as % of width) for up to MAX_PER_SHELF items placed
