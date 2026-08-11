@@ -84,16 +84,15 @@ function costFor(key: string): number {
 // should sit so it reads as resting on the wood, not floating above it
 // or sinking into the plank shadow below.
 const SHELF_BOTTOM: Record<ShelfNum, number> = {
-  1: 70,
-  2: 52,
-  3: 34,
+  1: 67,
+  2: 50,
+  3: 33,
   4: 16,
 };
 
 // Left-offset (as % of width) for up to MAX_PER_SHELF items placed
 // left-to-right along a shelf.
-const SLOT_LEFT = ['25%', '37.5%', '50%', '62.5%', '75%'];
-// Small deterministic "hand-placed" tilt per item, based on its key, so
+const SLOT_LEFT = ['27%', '37.5%', '50%', '62.5%', '75%'];// Small deterministic "hand-placed" tilt per item, based on its key, so
 // items don't all sit perfectly flat like stamped stickers.
 function tiltFor(key: string): number {
   let hash = 0;
@@ -298,7 +297,7 @@ export default function HabitatScene() {
                     left,
                     bottom,
                     width,
-transform: 'translate(-50%, 100%)',
+transform: 'translate(-50%)',
 zIndex: 10 + index,
                     pointerEvents: 'none',
                   }}
