@@ -8,7 +8,7 @@ const MAX_DECOR = 3;
 const REGULAR_COST = 15;
 const LARGE_COST = 25;
 
-type HabitatSlot = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
+type HabitatSlot = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
 
 type Season = 'spring' | 'summer' | 'fall' | 'winter';
 
@@ -70,6 +70,20 @@ const HABITAT_ITEMS: HabitatItem[] = [
     season: 'spring',
     slot: 7,
   },
+  {
+    key: 'spring-floral-tunnel',
+    label: 'Floral Tunnel',
+    image: `${HABITAT_PATH}/item_spring_floral-tunnel.png`,
+    season: 'spring',
+    slot: 8,
+  },
+  {
+    key: 'spring-floral-wheel',
+    label: 'Floral Wheel',
+    image: `${HABITAT_PATH}/item_spring_floral-wheel.png`,
+    season: 'spring',
+    slot: 9,
+  },
 
   {
     key: 'summer-beach-chair-umbrella',
@@ -126,6 +140,13 @@ const HABITAT_ITEMS: HabitatItem[] = [
     image: `${HABITAT_PATH}/item_summer_watermelon-bed.png`,
     season: 'summer',
     slot: 8,
+  },
+  {
+    key: 'summer-float-bridge',
+    label: 'Float Bridge',
+    image: `${HABITAT_PATH}/item_summer_float-bridge.png`,
+    season: 'summer',
+    slot: 9,
   },
 
   {
@@ -184,6 +205,13 @@ const HABITAT_ITEMS: HabitatItem[] = [
     season: 'fall',
     slot: 8,
   },
+  {
+    key: 'fall-leaf-swing',
+    label: 'Leaf Swing',
+    image: `${HABITAT_PATH}/item_fall_leaf-swing.png`,
+    season: 'fall',
+    slot: 9,
+  },
 
   {
     key: 'winter-igloo',
@@ -234,6 +262,13 @@ const HABITAT_ITEMS: HabitatItem[] = [
     season: 'winter',
     slot: 7,
   },
+  {
+    key: 'winter-snowy-log',
+    label: 'Snowy Log',
+    image: `${HABITAT_PATH}/item_winter_snowy-log.png`,
+    season: 'winter',
+    slot: 8,
+  },
 ];
 
 const SEASONS: { key: Season; label: string }[] = [
@@ -255,7 +290,9 @@ const LARGE_ITEMS = new Set([
   'spring-mushroom-house',
   'spring-daisy-bed',
   'spring-floral-bridge',
+  'spring-floral-tunnel',
   'summer-coconut-hut',
+  'summer-float-bridge',
   'summer-pineapple-house',
   'summer-sandcastle-house',
   'summer-watermelon-bed',
