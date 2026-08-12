@@ -148,10 +148,6 @@ async function loadAll() {
           <MoonWidget />
         </section>
 
-     <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-  <Icon name="pagedivider" size={85} />
-</div>
-
                 {/* ── TODAY'S FOCUS ── */}
         <section>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
