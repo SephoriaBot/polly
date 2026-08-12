@@ -427,6 +427,7 @@ export default function BrainDump({ open, onClose }: { open: boolean; onClose: (
       <option value="true">Yes</option>
       <option value="false">No</option>
     </select>
+</div>
   )}
 
                         <button
