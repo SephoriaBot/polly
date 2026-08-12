@@ -286,7 +286,7 @@ export default function HabitatScene() {
             return shelfItems.map((item, index) => {
               const large = LARGE_ITEMS.has(item.key);
               const left = SLOT_LEFT[index] ?? '50%';
-              const width = large ? '16%' : '11%';
+              const width = large ? '14%' : '9%';
               const tilt = tiltFor(item.key);
 
               return (
