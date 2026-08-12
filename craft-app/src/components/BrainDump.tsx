@@ -49,7 +49,13 @@ Respond ONLY with a valid JSON object, no markdown, no backticks, no explanation
 }`;
 }
 
-async function categorize(dump: string): Promise<{ text: string; category: 'task' | 'grocery' | 'bills' | 'notes' }[]> {
+async function categorize(dump: string): Promise<{
+  text: string;
+  category: 'task' | 'grocery' | 'bills' | 'notes';
+  amount: number | null;
+  dueDay: number | null;
+  recurring: boolean | null;
+}[]> {
   const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
     method: 'POST',
     headers: {
