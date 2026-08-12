@@ -37,7 +37,7 @@ const HABITAT_ITEMS: HabitatItem[] = [
   { key: 'pancakes', label: 'Pancakes', image: `${SHELF_PATH}/icon-pancakes.png`, shelf: 1 },
   // Was reading too small on the shelf — icon-picnic.png appears to have
   // extra transparent margin around the basket vs. its neighbors.
-  { key: 'picnic', label: 'Picnic Basket', image: `${SHELF_PATH}/icon-picnic.png`, shelf: 1, scale: 1.3 },
+  { key: 'picnic', label: 'Picnic Basket', image: `${SHELF_PATH}/icon-picnic.png`, shelf: 1, scale: 1.6 },
   { key: 'veggies', label: 'Veggies', image: `${SHELF_PATH}/icon-veggies.png`, shelf: 1 },
 
   // Shelf 2 — study & hobby corner
@@ -91,14 +91,16 @@ function costFor(key: string): number {
 }
 
 // Bottom-offset (as % of the shelf image's height) of each shelf's top
-// surface, measured off shelf-empty.PNG — this is where an item's base
-// should sit so it reads as resting on the wood, not floating above it
-// or sinking into the plank shadow below.
+// surface, measured off the close-up shelf-closeup.png crop (no outer
+// cabinet frame, 4 compartments edge-to-edge). Shelves 1–3 anchor to the
+// visible plank highlight line below each compartment; shelf 4's own
+// floor board is cropped out of frame, so its items are anchored near
+// the bottom edge instead.
 const SHELF_BOTTOM: Record<ShelfNum, number> = {
-  1: 67,
-  2: 50,
-  3: 33,
-  4: 16,
+  1: 81,
+  2: 52,
+  3: 23,
+  4: 4,
 };
 
 // Left-offset (as % of width) for up to MAX_PER_SHELF items placed
