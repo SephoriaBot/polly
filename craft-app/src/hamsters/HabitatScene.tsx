@@ -14,6 +14,13 @@ interface HabitatItem {
   label: string;
   image: string;
   shelf: ShelfNum;
+  // Visual size multiplier applied on top of the base width. Source PNGs
+  // don't all have the same amount of transparent padding around the
+  // object, so two icons at the same base width can render very
+  // differently sized on the shelf. Default 1 = no correction. Nudge up
+  // for icons that read too small (lots of padding in the crop), down
+  // for icons that read too big (object fills most of the canvas).
+  scale?: number;
 }
 
 // Every item that was cropped and dropped into public/shelf, sorted onto
@@ -28,7 +35,9 @@ const HABITAT_ITEMS: HabitatItem[] = [
   { key: 'candy', label: 'Candy', image: `${SHELF_PATH}/icon-candy.png`, shelf: 1 },
   { key: 'donut-hut', label: 'Donut Hut', image: `${SHELF_PATH}/icon-donut-hut.png`, shelf: 1 },
   { key: 'pancakes', label: 'Pancakes', image: `${SHELF_PATH}/icon-pancakes.png`, shelf: 1 },
-  { key: 'picnic', label: 'Picnic Basket', image: `${SHELF_PATH}/icon-picnic.png`, shelf: 1 },
+  // Was reading too small on the shelf — icon-picnic.png appears to have
+  // extra transparent margin around the basket vs. its neighbors.
+  { key: 'picnic', label: 'Picnic Basket', image: `${SHELF_PATH}/icon-picnic.png`, shelf: 1, scale: 1.6 },
   { key: 'veggies', label: 'Veggies', image: `${SHELF_PATH}/icon-veggies.png`, shelf: 1 },
 
   // Shelf 2 — study & hobby corner
@@ -56,7 +65,9 @@ const HABITAT_ITEMS: HabitatItem[] = [
   { key: 'birdhouse', label: 'Birdhouse', image: `${SHELF_PATH}/icon-birdhouse.png`, shelf: 4 },
   { key: 'boot', label: 'Boot', image: `${SHELF_PATH}/icon-boot.png`, shelf: 4 },
   { key: 'fishbowl', label: 'Fishbowl', image: `${SHELF_PATH}/icon-fishbowl.png`, shelf: 4 },
-  { key: 'gumball-machine', label: 'Gumball Machine', image: `${SHELF_PATH}/icon-gumball-machine.png`, shelf: 4 },
+  // Was reading too big on the shelf — icon-gumball-machine.png appears
+  // to be cropped tight to the object, unlike its neighbors.
+  { key: 'gumball-machine', label: 'Gumball Machine', image: `${SHELF_PATH}/icon-gumball-machine.png`, shelf: 4, scale: 0.80 },
   { key: 'suitcases', label: 'Suitcases', image: `${SHELF_PATH}/icon-suitcases.png`, shelf: 4 },
   { key: 'vase', label: 'Vase', image: `${SHELF_PATH}/icon-vase.png`, shelf: 4 },
   { key: 'wheel', label: 'Wheel', image: `${SHELF_PATH}/icon-wheel.png`, shelf: 4 },
@@ -80,19 +91,27 @@ function costFor(key: string): number {
 }
 
 // Bottom-offset (as % of the shelf image's height) of each shelf's top
-// surface, measured off shelf-empty.PNG — this is where an item's base
-// should sit so it reads as resting on the wood, not floating above it
-// or sinking into the plank shadow below.
+// surface, measured off the close-up shelf-closeup.png crop (no outer
+// cabinet frame, 4 compartments edge-to-edge). Shelves 1–3 anchor to the
+// visible plank highlight line below each compartment; shelf 4's own
+// floor board is cropped out of frame, so its items are anchored near
+// the bottom edge instead.
 const SHELF_BOTTOM: Record<ShelfNum, number> = {
-  1: 67,
-  2: 50,
-  3: 33,
-  4: 16,
+  1: 81,
+  2: 52,
+  3: 23,
+  4: 0.5,
 };
 
 // Left-offset (as % of width) for up to MAX_PER_SHELF items placed
-// left-to-right along a shelf.
-const SLOT_LEFT = ['27%', '37.5%', '50%', '62.5%', '75%'];// Small deterministic "hand-placed" tilt per item, based on its key, so
+// left-to-right along a shelf. Evenly spaced at 19% intervals (12%–88%)
+// so two full-width neighbors (large items at 14%, or scaled-up items
+// up to ~14.4%) still clear each other with ~4-5% of breathing room
+// between edges, rather than the old 10.5–12.5% gaps which could
+// overlap once an item's half-width exceeded ~6.25%.
+const SLOT_LEFT = ['20%', '35%', '50%', '65%', '80%'];
+
+// Small deterministic "hand-placed" tilt per item, based on its key, so
 // items don't all sit perfectly flat like stamped stickers.
 function tiltFor(key: string): number {
   let hash = 0;
@@ -101,6 +120,18 @@ function tiltFor(key: string): number {
   }
   const range = 6; // degrees, total spread
   return (Math.abs(hash) % range) - range / 2;
+}
+
+// Base shelf-slot width (before per-item scale correction) as a % of
+// the scene container width.
+function baseWidthFor(item: HabitatItem): number {
+  return LARGE_ITEMS.has(item.key) ? 14 : 9;
+}
+
+// Final rendered width, after applying the item's scale correction to
+// its base width.
+function widthFor(item: HabitatItem): string {
+  return `${baseWidthFor(item) * (item.scale ?? 1)}%`;
 }
 
 interface HabitatThemeRow {
@@ -286,7 +317,7 @@ export default function HabitatScene() {
             return shelfItems.map((item, index) => {
               const large = LARGE_ITEMS.has(item.key);
               const left = SLOT_LEFT[index] ?? '50%';
-              const width = large ? '16%' : '11%';
+              const width = widthFor(item);
               const tilt = tiltFor(item.key);
 
               return (
@@ -297,8 +328,8 @@ export default function HabitatScene() {
                     left,
                     bottom,
                     width,
-transform: 'translate(-50%)',
-zIndex: 10 + index,
+                    transform: 'translate(-50%)',
+                    zIndex: 10 + index,
                     pointerEvents: 'none',
                   }}
                 >

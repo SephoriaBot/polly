@@ -143,6 +143,11 @@ async function loadAll() {
         ) : (
         <>
 
+        {/* ── MOON + ZODIAC ── */}
+        <section>
+          <MoonWidget />
+        </section>
+
                 {/* ── TODAY'S FOCUS ── */}
         <section>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
@@ -248,8 +253,6 @@ async function loadAll() {
     Not finished!
   </div>
 )}
-
-
                     {f.estimated_minutes && (
                       <div style={{ fontSize: '0.72rem', color: 'var(--ink-muted)', marginTop: 2, fontFamily: 'IBM Plex Mono, monospace' }}>
                         Est. {f.estimated_minutes} min
@@ -273,21 +276,16 @@ async function loadAll() {
           )}
         </section>
 
+     <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+  <Icon name="pagedivider" size={85} />
+</div>
+
         {/* ── TODAY SNAPSHOT ── pulls live from chores, appointments, and money */}
         <section style={{ marginTop: 4 }}>
           <div style={{ fontSize: '0.68rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--ink-muted)', marginBottom: 8 }}>
             Also on your radar
           </div>
           <TodaySnapshot onNavigate={onNavigate} />
-        </section>
-
-       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-  <Icon name="pagedivider" size={85} />
-</div>
-
-        {/* ── MOON + ZODIAC ── */}
-        <section>
-          <MoonWidget />
         </section>
         </>
         )}
