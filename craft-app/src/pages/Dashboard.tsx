@@ -7,7 +7,7 @@ import LowEnergyChecklist from "../components/LowEnergyChecklist";
 import EnergyModeSwitch from "../components/EnergyModeSwitch";
 import { useEnergy } from "../context/EnergyContext";
 import sleepingNestImg from '../assets/illustrations/sleeping_nest.png';
-import empty2Img from '../assets/icons/empty2.png';
+import emptyDash from '../assets/icons/empty-dashboard.png';
 import WeatherBadge from '../components/WeatherBadge';
 import Icon, { type IconName } from '../components/Icon';
 import EmptyState from '../components/EmptyState';
@@ -204,7 +204,7 @@ async function loadAll() {
 
           {focuses.length === 0 && !addingFocus ? (
             
-        <EmptyState image={empty2Img} message="No focuses set for today." size={65} />
+        <EmptyState image={emptyDash} message="No focuses set for today." size={65} />
     
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
