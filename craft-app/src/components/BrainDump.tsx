@@ -18,6 +18,9 @@ interface DraftItem {
   text: string;
   category: 'task' | 'grocery' | 'bills' | 'notes';
   include: boolean;
+  amount?: number | null;
+  dueDay?: number | null;
+  recurring?: boolean | null;
 }
 
 function todayISO(): string {
@@ -26,7 +29,11 @@ function todayISO(): string {
 }
 
 function buildPrompt(dump: string): string {
-  return `Sort this free-form brain dump into four buckets: "task" (chores, errands, calls, things to plan, anything action-shaped), "grocery" (specific items to buy at a store), "bills" (money owed, bills to pay, invoices, subscriptions, rent, utilities, credit card payments, debt payments, or other financial obligations), and "notes" (any messages that need to be relayed to another person/doctor). Split run-on sentences into separate short items. Keep each item's wording short and plain — a to-do label, not a sentence.
+  return `Sort this free-form brain dump into four buckets: "task" (chores, errands, calls, things to plan, anything action-shaped), "grocery" (specific items to buy at a store), "bills" (money owed, bills to pay, invoices, subscriptions, rent, utilities, credit card payments, debt payments, or other financial obligations), and "notes" (any messages that need to be relayed to another person/doctor).
+
+For bills, extract the amount, due day of the month, and whether it is recurring ONLY when the user explicitly provides that information. Never guess missing values. Use null for information that was not provided.
+
+Split run-on sentences into separate short items. Keep each item's wording short and plain — a to-do label, not a sentence.
 
 Brain dump:
 "${dump.trim()}"
@@ -36,8 +43,8 @@ Respond ONLY with a valid JSON object, no markdown, no backticks, no explanation
   "items": [
     { "text": "short item label", "category": "task" },
     { "text": "short item label", "category": "grocery" },
-    { "text": "short item label", "category": "bills" },
-    { "text": "short item label", "category": "notes" } 
+    { "text": "short bill label", "category": "bills", "amount": null, "dueDay": null, "recurring": null },
+    { "text": "short item label", "category": "notes" }
   ]
 }`;
 }
@@ -66,16 +73,19 @@ async function categorize(dump: string): Promise<{ text: string; category: 'task
   return parsed.items
     .filter((i: any) => typeof i.text === 'string' && i.text.trim())
     .map((i: any) => ({
-      text: i.text.trim(),
-      category:
-        i.category === 'grocery'
-          ? 'grocery'
-          : i.category === 'bills'
-            ? 'bills'
-            : i.category === 'notes'
-              ? 'notes'
-              : 'task',
-    }));
+  text: i.text.trim(),
+  category:
+    i.category === 'grocery'
+      ? 'grocery'
+      : i.category === 'bills'
+        ? 'bills'
+        : i.category === 'notes'
+          ? 'notes'
+          : 'task',
+  amount: typeof i.amount === 'number' ? i.amount : null,
+  dueDay: typeof i.dueDay === 'number' ? i.dueDay : null,
+  recurring: typeof i.recurring === 'boolean' ? i.recurring : null,
+}));
 }
 
 export default function BrainDump({ open, onClose }: { open: boolean; onClose: () => void }) {
@@ -114,11 +124,14 @@ export default function BrainDump({ open, onClose }: { open: boolean; onClose: (
       }
 
       setDrafts(items.map((i, idx) => ({
-        id: `${idx}-${i.text}`,
-        text: i.text,
-        category: i.category,
-        include: true,
-      })));
+  id: `${idx}-${i.text}`,
+  text: i.text,
+  category: i.category,
+  include: true,
+  amount: i.amount ?? null,
+  dueDay: i.dueDay ?? null,
+  recurring: i.recurring ?? null,
+})));
     } catch {
       setError('Something went wrong sorting that. Please try again.');
     } finally {
@@ -127,8 +140,12 @@ export default function BrainDump({ open, onClose }: { open: boolean; onClose: (
   }
 
   function updateDraft(id: string, patch: Partial<DraftItem>) {
-    setDrafts(prev => prev ? prev.map(d => d.id === id ? { ...d, ...patch } : d) : prev);
-  }
+  setDrafts(prev =>
+    prev
+      ? prev.map(d => d.id === id ? { ...d, ...patch } : d)
+      : prev
+  );
+}
 
   function removeDraft(id: string) {
     setDrafts(prev => prev ? prev.filter(d => d.id !== id) : prev);
@@ -182,15 +199,15 @@ export default function BrainDump({ open, onClose }: { open: boolean; onClose: (
           : Promise.resolve({ error: null }),
 
         bills.length > 0
-          ? supabase.from('bills').insert(bills.map(b => ({
-              name: b.text,
-              amount: null,
-              due_day: null,
-              recurring: null,
-              bill_month: billMonth,
-              bill_year: billYear,
-            })))
-          : Promise.resolve({ error: null }),
+  ? supabase.from('bills').insert(bills.map(b => ({
+      name: b.text,
+      amount: b.amount ?? null,
+      due_day: b.dueDay ?? null,
+      recurring: b.recurring ?? null,
+      bill_month: billMonth,
+      bill_year: billYear,
+    })))
+  : Promise.resolve({ error: null }),
 
         notes.length > 0
           ? supabase.from('appointment_note_items').insert(
@@ -321,24 +338,90 @@ export default function BrainDump({ open, onClose }: { open: boolean; onClose: (
                           }}
                         />
 
-                        <select
-                          value={d.category}
-                          onChange={e => updateDraft(d.id, {
-                            category: e.target.value as 'task' | 'grocery' | 'bills' | 'notes'
-                          })}
-                          style={{
-                            fontSize: '0.7rem',
-                            border: '1px solid var(--border)',
-                            borderRadius: 8,
-                            background: 'var(--cream)',
-                            color: 'var(--ink-muted)'
-                          }}
-                        >
-                          <option value="task">Task</option>
-                          <option value="grocery">Grocery</option>
-                          <option value="bills">Bill</option>
-                          <option value="notes">Notes</option>
-                        </select>
+                       <select
+  value={d.category}
+  onChange={e => updateDraft(d.id, {
+    category: e.target.value as 'task' | 'grocery' | 'bills' | 'notes'
+  })}
+  style={{
+    fontSize: '0.7rem',
+    border: '1px solid var(--border)',
+    borderRadius: 8,
+    background: 'var(--cream)',
+    color: 'var(--ink-muted)'
+  }}
+>
+  <option value="task">Task</option>
+  <option value="grocery">Grocery</option>
+  <option value="bills">Bill</option>
+  <option value="notes">Notes</option>
+</select>
+
+{d.category === 'bills' && (
+  <div style={{
+    display: 'flex',
+    gap: 5,
+    alignItems: 'center',
+    flexShrink: 0,
+  }}>
+    <input
+      type="number"
+      min="0"
+      step="0.01"
+      placeholder="Amount"
+      value={d.amount ?? ''}
+      onChange={e => updateDraft(d.id, {
+        amount: e.target.value === '' ? null : Number(e.target.value),
+      })}
+      style={{
+        width: 75,
+        fontSize: '0.7rem',
+        border: '1px solid var(--border)',
+        borderRadius: 8,
+        background: 'var(--cream)',
+        color: 'var(--ink)',
+        padding: '5px 6px',
+      }}
+    />
+
+    <input
+      type="number"
+      min="1"
+      max="31"
+      placeholder="Due"
+      value={d.dueDay ?? ''}
+      onChange={e => updateDraft(d.id, {
+        dueDay: e.target.value === '' ? null : Number(e.target.value),
+      })}
+      style={{
+        width: 50,
+        fontSize: '0.7rem',
+        border: '1px solid var(--border)',
+        borderRadius: 8,
+        background: 'var(--cream)',
+        color: 'var(--ink)',
+        padding: '5px 6px',
+      }}
+    />
+
+    <select
+      value={d.recurring === null || d.recurring === undefined ? '' : String(d.recurring)}
+      onChange={e => updateDraft(d.id, {
+        recurring: e.target.value === '' ? null : e.target.value === 'true',
+      })}
+      style={{
+        fontSize: '0.7rem',
+        border: '1px solid var(--border)',
+        borderRadius: 8,
+        background: 'var(--cream)',
+        color: 'var(--ink-muted)',
+      }}
+    >
+      <option value="">Repeat?</option>
+      <option value="true">Yes</option>
+      <option value="false">No</option>
+    </select>
+  )}
 
                         <button
                           onClick={() => removeDraft(d.id)}
