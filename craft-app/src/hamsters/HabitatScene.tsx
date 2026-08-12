@@ -67,7 +67,7 @@ const HABITAT_ITEMS: HabitatItem[] = [
   { key: 'fishbowl', label: 'Fishbowl', image: `${SHELF_PATH}/icon-fishbowl.png`, shelf: 4 },
   // Was reading too big on the shelf — icon-gumball-machine.png appears
   // to be cropped tight to the object, unlike its neighbors.
-  { key: 'gumball-machine', label: 'Gumball Machine', image: `${SHELF_PATH}/icon-gumball-machine.png`, shelf: 4, scale: 0.80},
+  { key: 'gumball-machine', label: 'Gumball Machine', image: `${SHELF_PATH}/icon-gumball-machine.png`, shelf: 4, scale: 0.80 },
   { key: 'suitcases', label: 'Suitcases', image: `${SHELF_PATH}/icon-suitcases.png`, shelf: 4 },
   { key: 'vase', label: 'Vase', image: `${SHELF_PATH}/icon-vase.png`, shelf: 4 },
   { key: 'wheel', label: 'Wheel', image: `${SHELF_PATH}/icon-wheel.png`, shelf: 4 },
@@ -104,8 +104,12 @@ const SHELF_BOTTOM: Record<ShelfNum, number> = {
 };
 
 // Left-offset (as % of width) for up to MAX_PER_SHELF items placed
-// left-to-right along a shelf.
-const SLOT_LEFT = ['27%', '37.5%', '50%', '62.5%', '75%'];
+// left-to-right along a shelf. Evenly spaced at 19% intervals (12%–88%)
+// so two full-width neighbors (large items at 14%, or scaled-up items
+// up to ~14.4%) still clear each other with ~4-5% of breathing room
+// between edges, rather than the old 10.5–12.5% gaps which could
+// overlap once an item's half-width exceeded ~6.25%.
+const SLOT_LEFT = ['12%', '31%', '50%', '69%', '88%'];
 
 // Small deterministic "hand-placed" tilt per item, based on its key, so
 // items don't all sit perfectly flat like stamped stickers.
@@ -295,7 +299,7 @@ export default function HabitatScene() {
           }}
         >
           <img
-            src={`${SHELF_PATH}/shelf-empty.PNG`}
+            src={`${SHELF_PATH}/shelf-closeup.png`}
             alt="Hamster shelf"
             style={{
               position: 'absolute',
