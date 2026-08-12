@@ -109,7 +109,7 @@ const SHELF_BOTTOM: Record<ShelfNum, number> = {
 // up to ~14.4%) still clear each other with ~4-5% of breathing room
 // between edges, rather than the old 10.5–12.5% gaps which could
 // overlap once an item's half-width exceeded ~6.25%.
-const SLOT_LEFT = ['12%', '31%', '50%', '69%', '88%'];
+const SLOT_LEFT = ['17%', '33.5%', '50%', '66.5%', '83%'];
 
 // Small deterministic "hand-placed" tilt per item, based on its key, so
 // items don't all sit perfectly flat like stamped stickers.
