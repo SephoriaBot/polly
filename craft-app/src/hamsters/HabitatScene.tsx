@@ -14,6 +14,13 @@ interface HabitatItem {
   label: string;
   image: string;
   shelf: ShelfNum;
+  // Visual size multiplier applied on top of the base width. Source PNGs
+  // don't all have the same amount of transparent padding around the
+  // object, so two icons at the same base width can render very
+  // differently sized on the shelf. Default 1 = no correction. Nudge up
+  // for icons that read too small (lots of padding in the crop), down
+  // for icons that read too big (object fills most of the canvas).
+  scale?: number;
 }
 
 // Every item that was cropped and dropped into public/shelf, sorted onto
@@ -28,7 +35,9 @@ const HABITAT_ITEMS: HabitatItem[] = [
   { key: 'candy', label: 'Candy', image: `${SHELF_PATH}/icon-candy.png`, shelf: 1 },
   { key: 'donut-hut', label: 'Donut Hut', image: `${SHELF_PATH}/icon-donut-hut.png`, shelf: 1 },
   { key: 'pancakes', label: 'Pancakes', image: `${SHELF_PATH}/icon-pancakes.png`, shelf: 1 },
-  { key: 'picnic', label: 'Picnic Basket', image: `${SHELF_PATH}/icon-picnic.png`, shelf: 1 },
+  // Was reading too small on the shelf — icon-picnic.png appears to have
+  // extra transparent margin around the basket vs. its neighbors.
+  { key: 'picnic', label: 'Picnic Basket', image: `${SHELF_PATH}/icon-picnic.png`, shelf: 1, scale: 1.6 },
   { key: 'veggies', label: 'Veggies', image: `${SHELF_PATH}/icon-veggies.png`, shelf: 1 },
 
   // Shelf 2 — study & hobby corner
@@ -56,7 +65,9 @@ const HABITAT_ITEMS: HabitatItem[] = [
   { key: 'birdhouse', label: 'Birdhouse', image: `${SHELF_PATH}/icon-birdhouse.png`, shelf: 4 },
   { key: 'boot', label: 'Boot', image: `${SHELF_PATH}/icon-boot.png`, shelf: 4 },
   { key: 'fishbowl', label: 'Fishbowl', image: `${SHELF_PATH}/icon-fishbowl.png`, shelf: 4 },
-  { key: 'gumball-machine', label: 'Gumball Machine', image: `${SHELF_PATH}/icon-gumball-machine.png`, shelf: 4 },
+  // Was reading too big on the shelf — icon-gumball-machine.png appears
+  // to be cropped tight to the object, unlike its neighbors.
+  { key: 'gumball-machine', label: 'Gumball Machine', image: `${SHELF_PATH}/icon-gumball-machine.png`, shelf: 4, scale: 0.65 },
   { key: 'suitcases', label: 'Suitcases', image: `${SHELF_PATH}/icon-suitcases.png`, shelf: 4 },
   { key: 'vase', label: 'Vase', image: `${SHELF_PATH}/icon-vase.png`, shelf: 4 },
   { key: 'wheel', label: 'Wheel', image: `${SHELF_PATH}/icon-wheel.png`, shelf: 4 },
@@ -92,7 +103,9 @@ const SHELF_BOTTOM: Record<ShelfNum, number> = {
 
 // Left-offset (as % of width) for up to MAX_PER_SHELF items placed
 // left-to-right along a shelf.
-const SLOT_LEFT = ['27%', '37.5%', '50%', '62.5%', '75%'];// Small deterministic "hand-placed" tilt per item, based on its key, so
+const SLOT_LEFT = ['27%', '37.5%', '50%', '62.5%', '75%'];
+
+// Small deterministic "hand-placed" tilt per item, based on its key, so
 // items don't all sit perfectly flat like stamped stickers.
 function tiltFor(key: string): number {
   let hash = 0;
@@ -101,6 +114,18 @@ function tiltFor(key: string): number {
   }
   const range = 6; // degrees, total spread
   return (Math.abs(hash) % range) - range / 2;
+}
+
+// Base shelf-slot width (before per-item scale correction) as a % of
+// the scene container width.
+function baseWidthFor(item: HabitatItem): number {
+  return LARGE_ITEMS.has(item.key) ? 14 : 9;
+}
+
+// Final rendered width, after applying the item's scale correction to
+// its base width.
+function widthFor(item: HabitatItem): string {
+  return `${baseWidthFor(item) * (item.scale ?? 1)}%`;
 }
 
 interface HabitatThemeRow {
@@ -286,7 +311,7 @@ export default function HabitatScene() {
             return shelfItems.map((item, index) => {
               const large = LARGE_ITEMS.has(item.key);
               const left = SLOT_LEFT[index] ?? '50%';
-              const width = large ? '14%' : '9%';
+              const width = widthFor(item);
               const tilt = tiltFor(item.key);
 
               return (
@@ -297,8 +322,8 @@ export default function HabitatScene() {
                     left,
                     bottom,
                     width,
-transform: 'translate(-50%)',
-zIndex: 10 + index,
+                    transform: 'translate(-50%)',
+                    zIndex: 10 + index,
                     pointerEvents: 'none',
                   }}
                 >
