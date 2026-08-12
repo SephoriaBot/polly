@@ -100,7 +100,7 @@ const SHELF_BOTTOM: Record<ShelfNum, number> = {
   1: 81,
   2: 52,
   3: 23,
-  4: 4,
+  4: 2,
 };
 
 // Left-offset (as % of width) for up to MAX_PER_SHELF items placed
