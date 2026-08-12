@@ -299,7 +299,7 @@ export default function HabitatScene() {
           }}
         >
           <img
-            src={`${SHELF_PATH}/shelf-closeup.png`}
+            src={`${SHELF_PATH}/shelf-empty.PNG`}
             alt="Hamster shelf"
             style={{
               position: 'absolute',
