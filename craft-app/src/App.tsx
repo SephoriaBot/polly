@@ -41,9 +41,19 @@ type Page = 'dashboard' | 'grocery' | 'dailyplanner' | 'maidwizard' | 'wallet' |
             <header className="topbar">
               <span className="topbar-mark">Polly</span>
               <div className="topbar-actions">
-                <button
-                  onClick={() => setBrainDumpOpen(true)}
-                  aria-label="Get it out of my head"
+  <span
+    style={{
+      fontSize: '0.72rem',
+      fontWeight: 700,
+      color: 'var(--ink-muted)',
+      whiteSpace: 'nowrap',
+    }}
+  >
+    Brain Dump
+  </span>
+  <button
+    onClick={() => setBrainDumpOpen(true)}
+    aria-label="Get it out of my head"
                   style={{
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     width: 32, height: 32, borderRadius: '50%',
@@ -54,7 +64,25 @@ type Page = 'dashboard' | 'grocery' | 'dailyplanner' | 'maidwizard' | 'wallet' |
                 >
                   +
                 </button>
-                <ThemeToggle />
+                <div
+  style={{
+    display: 'flex',
+    alignItems: 'center',
+    gap: 6,
+  }}
+>
+  <span
+    style={{
+      fontSize: '0.72rem',
+      fontWeight: 700,
+      color: 'var(--ink-muted)',
+      whiteSpace: 'nowrap',
+    }}
+  >
+    Day / Night
+  </span>
+  <ThemeToggle />
+</div>
               </div>
             </header>
             <BrainDump open={brainDumpOpen} onClose={() => setBrainDumpOpen(false)} />
