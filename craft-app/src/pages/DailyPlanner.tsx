@@ -92,7 +92,10 @@ export default function DailyPlanner() {
   const [repeatMode, setRepeatMode] = useState(false); // false = one-off (date picker), true = recurring (day chips)
   const [newTaskDays, setNewTaskDays] = useState<number[]>([]);
   const [savingTemplate, setSavingTemplate] = useState(false);
+  const [showAttended, setShowAttended] = useState(false); // collapsed by default so attended appts don't stack up
 
+  const upcomingAppts = appointments.filter(a => !a.attended);
+  const attendedAppts = appointments.filter(a => a.attended);
   const { map: noteMap, refresh: refreshNoteMap } = useAppointmentNoteMap(appointments.map(a => a.id));
 
   useEffect(() => {
@@ -590,14 +593,14 @@ export default function DailyPlanner() {
                 <span>Schedule & Appointments</span>
               </div>
 
-              {appointments.length === 0 ? (
+              {upcomingAppts.length === 0 ? (
               
         <EmptyState image={emptyPlanner} message="No appointments scheduled yet" />
     
             ) : (
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16 }}>
-                  {appointments.map(appt => {
+                  {upcomingAppts.map(appt => {
                     const hasNote = Boolean(noteMap[appt.id]);
                     return (
                       <div key={appt.id} style={{
@@ -633,19 +636,13 @@ export default function DailyPlanner() {
                             <Icon name="icon-notebook" size={13} style={{ color: 'var(--pink-dark)' }} />
                           </button>
                         )}
-                                           {appt.attended ? (
-                          <span title="Attended" style={{ color: 'var(--pink-dark)', display: 'flex', alignItems: 'center' }}>
-                            <Icon name="clipboard-check" size={14} />
-                          </span>
-                        ) : (
-                          <button
-                            onClick={() => markAttended(appt.id)}
-                            title="Mark attended (+10 hamster points)"
-                            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-muted)', padding: 0, display: 'flex', alignItems: 'center', opacity: 0.6 }}
-                          >
-                            <Icon name="clipboard-check" size={13} />
-                          </button>
-                        )}
+                        <button
+                          onClick={() => markAttended(appt.id)}
+                          title="Mark attended (+10 hamster points)"
+                          style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-muted)', padding: 0, display: 'flex', alignItems: 'center', opacity: 0.6 }}
+                        >
+                          <Icon name="clipboard-check" size={13} />
+                        </button>
                         <button
                           onClick={() => deleteAppointment(appt.id)}
                           title="Cancel"
@@ -653,13 +650,60 @@ export default function DailyPlanner() {
                         >
                           <Icon name="icon-clear" size={13} />
                         </button>
-
                       </div>
                     );
                   })}
                 </div>
               )}
 
+              {attendedAppts.length > 0 && (
+                <div style={{ marginBottom: 16 }}>
+                  <button
+                    onClick={() => setShowAttended(prev => !prev)}
+                    style={{
+                      background: 'none', border: 'none', cursor: 'pointer', padding: 0,
+                      display: 'flex', alignItems: 'center', gap: 6,
+                      fontSize: '0.76rem', fontWeight: 700, color: 'var(--ink-muted)', marginBottom: showAttended ? 8 : 0,
+                    }}
+                  >
+                    <Icon name={showAttended ? 'icon-chevrondown' : 'icon-chevronup'} size={11} />
+                    Attended ({attendedAppts.length})
+                  </button>
+
+                  {showAttended && (
+                    <div style={{
+                      display: 'flex', flexDirection: 'column', gap: 6,
+                      maxHeight: 180, overflowY: 'auto',
+                      padding: '2px 2px',
+                    }}>
+                      {attendedAppts.map(appt => (
+                        <div key={appt.id} style={{
+                          display: 'flex', alignItems: 'center', gap: 10,
+                          padding: '9px 12px', borderRadius: 14,
+                          background: 'var(--cream)',
+                          border: '1.5px solid var(--border)',
+                          opacity: 0.7,
+                        }}>
+                          <Icon name="clipboard-check" size={12} style={{ color: 'var(--pink-dark)', flexShrink: 0 }} />
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontWeight: 600, fontSize: '0.8rem', color: 'var(--ink-muted)', textDecoration: 'line-through' }}>{appt.title}</div>
+                            <div style={{ fontSize: '0.7rem', color: 'var(--ink-muted)', marginTop: 1, fontFamily: "'IBM Plex Mono', monospace" }}>
+                              {formatApptDate(appt.date_time)}
+                            </div>
+                          </div>
+                          <button
+                            onClick={() => deleteAppointment(appt.id)}
+                            title="Remove"
+                            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-muted)', padding: 0, display: 'flex', alignItems: 'center', opacity: 0.4, flexShrink: 0 }}
+                          >
+                            <Icon name="icon-clear" size={12} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 <input
                   className="form-input"
