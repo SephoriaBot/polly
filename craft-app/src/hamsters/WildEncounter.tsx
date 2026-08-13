@@ -31,7 +31,7 @@ import {
 } from "./battle";
 import type { WildHamster, AttackOutcome, TrainedStats } from "./battle";
 import EmptyState from '../components/EmptyState';
-import empty3Img from '../assets/icons/empty3.png';
+import emptyHabitat from '../assets/icons/empty-habitat.png';
 
 
 interface FighterEntry {
@@ -298,7 +298,7 @@ export default function WildEncounter() {
         </div>
 
         {fighters.length === 0 ? (
-        <EmptyState image={empty3Img} message="No hamsters are old enough to battle yet!" />
+        <EmptyState image={emptyHabitat} message="No hamsters are old enough to battle yet!" />
 ) : (
           <>
             {(phase === "pick" || phase === "scouting" || phase === "found") && (
