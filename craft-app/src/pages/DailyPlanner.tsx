@@ -666,7 +666,7 @@ export default function DailyPlanner() {
                       fontSize: '0.76rem', fontWeight: 700, color: 'var(--ink-muted)', marginBottom: showAttended ? 8 : 0,
                     }}
                   >
-                    <Icon name={showAttended ? 'icon-chevrondown' : 'icon-chevronup'} size={11} />
+                    <Icon name={showAttended ? 'icon-chevronup' : 'icon-chevrondown'} size={11} />
                     Attended ({attendedAppts.length})
                   </button>
 
