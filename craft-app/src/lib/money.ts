@@ -60,3 +60,37 @@ export function pickNextBill(unpaidBills: EffectiveBill[], now: Date): Effective
   const currentDay = now.getDate();
   return unpaidBills.find(b => (b.due_day ?? 0) >= currentDay) ?? unpaidBills[0] ?? null;
 }
+
+export interface SafeToSpendResult {
+  currentBalance: number;
+  near5Total: number;
+  buffer: number;
+  safeToSpend: number;
+  near5Bills: { name: string; amount: number; daysUntilDue: number }[];
+}
+
+// Mirrors Wallet's own Safe to Spend card exactly: current balance, minus
+// bills due within 5 days (or already late), minus a $50 buffer. Kept as a
+// shared helper so "Can I afford this?" never shows a different number than
+// the Safe to Spend card itself.
+export async function getSafeToSpend(): Promise<SafeToSpendResult> {
+  const now = new Date();
+  const today = now.getDate();
+  const [budgetRes, unpaidBills] = await Promise.all([
+    supabase.from('budget').select('current_balance').eq('id', 1).maybeSingle(),
+    getUnpaidBillsThisMonth(),
+  ]);
+
+  const currentBalance = budgetRes.data?.current_balance || 0;
+  const buffer = 50;
+
+  const near5Bills = unpaidBills
+    .filter(b => b.due_day != null)
+    .map(b => ({ name: b.name, amount: b.amount ?? 0, daysUntilDue: (b.due_day as number) - today }))
+    .filter(b => b.daysUntilDue <= 5); // late (negative) or due within 5 days, same as Wallet's near5Bills
+
+  const near5Total = near5Bills.reduce((s, b) => s + b.amount, 0);
+  const safeToSpend = Math.max(0, currentBalance - near5Total - buffer);
+
+  return { currentBalance, near5Total, buffer, safeToSpend, near5Bills };
+}
