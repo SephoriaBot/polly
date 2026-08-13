@@ -5,7 +5,7 @@ import { supabase } from '../../lib/supabase';
 import { useToast } from '../../hooks/useToast';
 import DrDietGroq from '../suggest/DrDietGroq';
 import RecipeModal from './RecipeModal';
-import empty2Img from '../../assets/icons/empty2.png';
+import emptyWallet from '../../assets/icons/empty-wallet.png';
 import errorDizzyImg from '../../assets/illustrations/error_dizzy.png';
 import EmptyState from '../EmptyState';
 
@@ -569,7 +569,7 @@ function SavedTab({
   if (savedMeals.length === 0) {
     return (
       <div className="empty-state" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        <EmptyState image={empty2Img} message="No saved meals yet." />
+        <EmptyState image={emptyWallet} message="No saved meals yet." />
         <button className="btn btn-secondary btn-sm" onClick={onGoDiscover}>Find some</button>
       </div>
     )
