@@ -7,7 +7,7 @@ import EmptyState from '../components/EmptyState';
 import breadBasketImg from '../assets/illustrations/bread_basket.png';
 import hourglassImg from '../assets/illustrations/hourglass.png';
 import dizzyImg from '../assets/illustrations/error_dizzy.png';
-import empty4Img from '../assets/icons/empty4.png';
+import emptyGrocery from '../assets/icons/empty-grocery.png';
 import RecipeBox from '../components/meals/RecipeBox';
 
 
@@ -1477,7 +1477,7 @@ export default function Grocery() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 420, overflowY: 'auto', marginBottom: 12 }}>
                 {needs.length === 0
                   ? 
-      <EmptyState image={empty4Img} message="Nothing here yet." />
+      <EmptyState image={emptyGrocery} message="Nothing here yet." />
     
                   : needs.map(item => {
                     const cheapest = cheapestFor(item.name)
