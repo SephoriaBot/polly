@@ -39,7 +39,9 @@ interface Appointment {
   title: string;
   date_time: string;
   created_at: string;
+  attended: boolean | null; // null = not yet marked, true = attended, false = cancelled
 }
+
 
 interface Spark {
   id: number;
@@ -291,12 +293,20 @@ export default function DailyPlanner() {
     setNewApptDate('');
   }
 
-  async function deleteAppointment(id: string) {
+   async function deleteAppointment(id: string) {
     // Notes survive this now — appointment_id is ON DELETE SET NULL, so
     // attached notes just detach and stay available as carry-over material.
     await supabase.from('appointments').delete().eq('id', id);
     setAppointments(prev => prev.filter(a => a.id !== id));
   }
+
+  // Marks an appointment attended instead of deleting it, so useHamsterGrowth's
+  // credited-flag check can pick it up and award points on the next check.
+  async function markAttended(id: string) {
+    await supabase.from('appointments').update({ attended: true }).eq('id', id);
+    setAppointments(prev => prev.map(a => a.id === id ? { ...a, attended: true } : a));
+  }
+
 
   function formatApptDate(dateStr: string) {
     return new Date(dateStr).toLocaleString(undefined, {
@@ -623,12 +633,27 @@ export default function DailyPlanner() {
                             <Icon name="icon-notebook" size={13} style={{ color: 'var(--pink-dark)' }} />
                           </button>
                         )}
+                                           {appt.attended ? (
+                          <span title="Attended" style={{ color: 'var(--pink-dark)', display: 'flex', alignItems: 'center' }}>
+                            <Icon name="clipboard-check" size={14} />
+                          </span>
+                        ) : (
+                          <button
+                            onClick={() => markAttended(appt.id)}
+                            title="Mark attended (+10 hamster points)"
+                            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-muted)', padding: 0, display: 'flex', alignItems: 'center', opacity: 0.6 }}
+                          >
+                            <Icon name="clipboard-check" size={13} />
+                          </button>
+                        )}
                         <button
                           onClick={() => deleteAppointment(appt.id)}
+                          title="Cancel"
                           style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-muted)', padding: 0, display: 'flex', alignItems: 'center', opacity: 0.4 }}
                         >
                           <Icon name="icon-clear" size={13} />
                         </button>
+
                       </div>
                     );
                   })}
