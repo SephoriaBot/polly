@@ -28,7 +28,9 @@ interface DailyTaskTemplate {
   days_of_week: number[]; // 0=Sun .. 6=Sat (matches JS Date#getDay())
   active: boolean;
   created_at: string;
+  priority: boolean; // mirrors the starred state so regenerated instances inherit it
 }
+
 
 const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
@@ -119,15 +121,16 @@ export default function DailyPlanner() {
       t => t.active && t.days_of_week.includes(todayWeekday) && !alreadyGenerated.has(t.id)
     );
 
-    if (dueTemplates.length > 0) {
+        if (dueTemplates.length > 0) {
       const { data: inserted } = await supabase
         .from('daily_tasks')
-        .insert(dueTemplates.map(t => ({ label: t.label, done: false, task_date: today, template_id: t.id })))
+        .insert(dueTemplates.map(t => ({ label: t.label, done: false, task_date: today, template_id: t.id, priority: t.priority })))
         .select();
       setTasks([...todaysTasks, ...(inserted ?? [])]);
     } else {
       setTasks(todaysTasks);
     }
+
 
     setLoading(false);
   }
@@ -184,11 +187,19 @@ export default function DailyPlanner() {
     }
   }
 
-  async function togglePriority(task: DailyTask) {
+    async function togglePriority(task: DailyTask) {
     const newPriority = !task.priority;
     await supabase.from('daily_tasks').update({ priority: newPriority }).eq('id', task.id);
     setTasks(prev => prev.map(t => t.id === task.id ? { ...t, priority: newPriority } : t));
+
+    // Recurring tasks regenerate daily as new rows — persist the star on the
+    // template itself so tomorrow's instance is born already starred.
+    if (task.template_id) {
+      await supabase.from('daily_task_templates').update({ priority: newPriority }).eq('id', task.template_id);
+      setTemplates(prev => prev.map(t => t.id === task.template_id ? { ...t, priority: newPriority } : t));
+    }
   }
+
 
   async function deleteTask(id: string) {
     await supabase.from('daily_tasks').delete().eq('id', id);
@@ -236,14 +247,15 @@ export default function DailyPlanner() {
 
       // If today matches the new template's days, generate today's instance
       // immediately instead of waiting for the next page load.
-      if (data.days_of_week.includes(new Date().getDay())) {
+            if (data.days_of_week.includes(new Date().getDay())) {
         const { data: inserted } = await supabase
           .from('daily_tasks')
-          .insert({ label: data.label, done: false, task_date: todayISO(), template_id: data.id })
+          .insert({ label: data.label, done: false, task_date: todayISO(), template_id: data.id, priority: data.priority })
           .select()
           .single();
         if (inserted) setTasks(prev => [...prev, inserted]);
       }
+
 
       setNewTask('');
       setNewTaskDays([]);
