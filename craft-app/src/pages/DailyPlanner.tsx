@@ -28,7 +28,9 @@ interface DailyTaskTemplate {
   days_of_week: number[]; // 0=Sun .. 6=Sat (matches JS Date#getDay())
   active: boolean;
   created_at: string;
+  priority: boolean; // mirrors the starred state so regenerated instances inherit it
 }
+
 
 const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
@@ -37,7 +39,9 @@ interface Appointment {
   title: string;
   date_time: string;
   created_at: string;
+  attended: boolean | null; // null = not yet marked, true = attended, false = cancelled
 }
+
 
 interface Spark {
   id: number;
@@ -88,7 +92,10 @@ export default function DailyPlanner() {
   const [repeatMode, setRepeatMode] = useState(false); // false = one-off (date picker), true = recurring (day chips)
   const [newTaskDays, setNewTaskDays] = useState<number[]>([]);
   const [savingTemplate, setSavingTemplate] = useState(false);
+  const [showAttended, setShowAttended] = useState(false); // collapsed by default so attended appts don't stack up
 
+  const upcomingAppts = appointments.filter(a => !a.attended);
+  const attendedAppts = appointments.filter(a => a.attended);
   const { map: noteMap, refresh: refreshNoteMap } = useAppointmentNoteMap(appointments.map(a => a.id));
 
   useEffect(() => {
@@ -119,15 +126,16 @@ export default function DailyPlanner() {
       t => t.active && t.days_of_week.includes(todayWeekday) && !alreadyGenerated.has(t.id)
     );
 
-    if (dueTemplates.length > 0) {
+        if (dueTemplates.length > 0) {
       const { data: inserted } = await supabase
         .from('daily_tasks')
-        .insert(dueTemplates.map(t => ({ label: t.label, done: false, task_date: today, template_id: t.id })))
+        .insert(dueTemplates.map(t => ({ label: t.label, done: false, task_date: today, template_id: t.id, priority: t.priority })))
         .select();
       setTasks([...todaysTasks, ...(inserted ?? [])]);
     } else {
       setTasks(todaysTasks);
     }
+
 
     setLoading(false);
   }
@@ -184,11 +192,19 @@ export default function DailyPlanner() {
     }
   }
 
-  async function togglePriority(task: DailyTask) {
+    async function togglePriority(task: DailyTask) {
     const newPriority = !task.priority;
     await supabase.from('daily_tasks').update({ priority: newPriority }).eq('id', task.id);
     setTasks(prev => prev.map(t => t.id === task.id ? { ...t, priority: newPriority } : t));
+
+    // Recurring tasks regenerate daily as new rows — persist the star on the
+    // template itself so tomorrow's instance is born already starred.
+    if (task.template_id) {
+      await supabase.from('daily_task_templates').update({ priority: newPriority }).eq('id', task.template_id);
+      setTemplates(prev => prev.map(t => t.id === task.template_id ? { ...t, priority: newPriority } : t));
+    }
   }
+
 
   async function deleteTask(id: string) {
     await supabase.from('daily_tasks').delete().eq('id', id);
@@ -236,14 +252,15 @@ export default function DailyPlanner() {
 
       // If today matches the new template's days, generate today's instance
       // immediately instead of waiting for the next page load.
-      if (data.days_of_week.includes(new Date().getDay())) {
+            if (data.days_of_week.includes(new Date().getDay())) {
         const { data: inserted } = await supabase
           .from('daily_tasks')
-          .insert({ label: data.label, done: false, task_date: todayISO(), template_id: data.id })
+          .insert({ label: data.label, done: false, task_date: todayISO(), template_id: data.id, priority: data.priority })
           .select()
           .single();
         if (inserted) setTasks(prev => [...prev, inserted]);
       }
+
 
       setNewTask('');
       setNewTaskDays([]);
@@ -279,12 +296,20 @@ export default function DailyPlanner() {
     setNewApptDate('');
   }
 
-  async function deleteAppointment(id: string) {
+   async function deleteAppointment(id: string) {
     // Notes survive this now — appointment_id is ON DELETE SET NULL, so
     // attached notes just detach and stay available as carry-over material.
     await supabase.from('appointments').delete().eq('id', id);
     setAppointments(prev => prev.filter(a => a.id !== id));
   }
+
+  // Marks an appointment attended instead of deleting it, so useHamsterGrowth's
+  // credited-flag check can pick it up and award points on the next check.
+  async function markAttended(id: string) {
+    await supabase.from('appointments').update({ attended: true }).eq('id', id);
+    setAppointments(prev => prev.map(a => a.id === id ? { ...a, attended: true } : a));
+  }
+
 
   function formatApptDate(dateStr: string) {
     return new Date(dateStr).toLocaleString(undefined, {
@@ -568,14 +593,14 @@ export default function DailyPlanner() {
                 <span>Schedule & Appointments</span>
               </div>
 
-              {appointments.length === 0 ? (
+              {upcomingAppts.length === 0 ? (
               
         <EmptyState image={emptyPlanner} message="No appointments scheduled yet" />
     
             ) : (
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16 }}>
-                  {appointments.map(appt => {
+                  {upcomingAppts.map(appt => {
                     const hasNote = Boolean(noteMap[appt.id]);
                     return (
                       <div key={appt.id} style={{
@@ -612,7 +637,15 @@ export default function DailyPlanner() {
                           </button>
                         )}
                         <button
+                          onClick={() => markAttended(appt.id)}
+                          title="Mark attended (+10 hamster points)"
+                          style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-muted)', padding: 0, display: 'flex', alignItems: 'center', opacity: 0.6 }}
+                        >
+                          <Icon name="clipboard-check" size={13} />
+                        </button>
+                        <button
                           onClick={() => deleteAppointment(appt.id)}
+                          title="Cancel"
                           style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-muted)', padding: 0, display: 'flex', alignItems: 'center', opacity: 0.4 }}
                         >
                           <Icon name="icon-clear" size={13} />
@@ -623,6 +656,54 @@ export default function DailyPlanner() {
                 </div>
               )}
 
+              {attendedAppts.length > 0 && (
+                <div style={{ marginBottom: 16 }}>
+                  <button
+                    onClick={() => setShowAttended(prev => !prev)}
+                    style={{
+                      background: 'none', border: 'none', cursor: 'pointer', padding: 0,
+                      display: 'flex', alignItems: 'center', gap: 6,
+                      fontSize: '0.76rem', fontWeight: 700, color: 'var(--ink-muted)', marginBottom: showAttended ? 8 : 0,
+                    }}
+                  >
+                    <Icon name={showAttended ? 'icon-chevronup' : 'icon-chevrondown'} size={11} />
+                    Attended ({attendedAppts.length})
+                  </button>
+
+                  {showAttended && (
+                    <div style={{
+                      display: 'flex', flexDirection: 'column', gap: 6,
+                      maxHeight: 180, overflowY: 'auto',
+                      padding: '2px 2px',
+                    }}>
+                      {attendedAppts.map(appt => (
+                        <div key={appt.id} style={{
+                          display: 'flex', alignItems: 'center', gap: 10,
+                          padding: '9px 12px', borderRadius: 14,
+                          background: 'var(--cream)',
+                          border: '1.5px solid var(--border)',
+                          opacity: 0.7,
+                        }}>
+                          <Icon name="clipboard-check" size={12} style={{ color: 'var(--pink-dark)', flexShrink: 0 }} />
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontWeight: 600, fontSize: '0.8rem', color: 'var(--ink-muted)', textDecoration: 'line-through' }}>{appt.title}</div>
+                            <div style={{ fontSize: '0.7rem', color: 'var(--ink-muted)', marginTop: 1, fontFamily: "'IBM Plex Mono', monospace" }}>
+                              {formatApptDate(appt.date_time)}
+                            </div>
+                          </div>
+                          <button
+                            onClick={() => deleteAppointment(appt.id)}
+                            title="Remove"
+                            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-muted)', padding: 0, display: 'flex', alignItems: 'center', opacity: 0.4, flexShrink: 0 }}
+                          >
+                            <Icon name="icon-clear" size={12} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 <input
                   className="form-input"

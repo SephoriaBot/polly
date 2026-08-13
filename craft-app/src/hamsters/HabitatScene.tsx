@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase';
 import { useHamsterGrowth } from './HamsterGrowthContext';
 
 const SHELF_PATH = '/shelf';
-const MAX_PER_SHELF = 5;
+const MAX_PER_SHELF = 4;
 const REGULAR_COST = 15;
 const LARGE_COST = 25;
 
@@ -103,13 +103,9 @@ const SHELF_BOTTOM: Record<ShelfNum, number> = {
   4: 0.5,
 };
 
-// Left-offset (as % of width) for up to MAX_PER_SHELF items placed
-// left-to-right along a shelf. Evenly spaced at 19% intervals (12%–88%)
-// so two full-width neighbors (large items at 14%, or scaled-up items
-// up to ~14.4%) still clear each other with ~4-5% of breathing room
-// between edges, rather than the old 10.5–12.5% gaps which could
-// overlap once an item's half-width exceeded ~6.25%.
-const SLOT_LEFT = ['20%', '35%', '50%', '65%', '80%'];
+// 4 slots, evenly spaced at 20% intervals (20%–80%) — wider gaps than the
+// old 5-slot/15% spacing, which is what was crowding oversized items.
+const SLOT_LEFT = ['20%', '40%', '60%', '80%'];
 
 // Small deterministic "hand-placed" tilt per item, based on its key, so
 // items don't all sit perfectly flat like stamped stickers.
