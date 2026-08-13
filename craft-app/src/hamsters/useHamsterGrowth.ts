@@ -43,7 +43,9 @@ const POINTS = {
   tracker_log_entry: 4,
   daily_task_list_complete: 5,
   daily_focuses_complete: 7,
+  appointment_attended: 10,
 } as const;
+
 
 // Chance, per point-earning event, that a wild hamster shows up. Only rolls
 // at all if you already have a teen/final hamster capable of fighting, and
@@ -101,7 +103,8 @@ export const SOURCE_LABELS: Record<string, { text: string; icon: IconName }> = {
   savings_contribution: { text: "Savings contribution", icon: "piggy-bank" },
   tracker_log_entry: { text: "Tracker log", icon: "notebook-pen" },
   daily_task_list_complete: { text: "Full task list", icon: "clipboard-check" },
-  daily_focuses_complete: { text: "All focuses completed", icon: "clipboard-check"},
+    daily_focuses_complete: { text: "All focuses completed", icon: "clipboard-check"},
+  appointment_attended: { text: "Appointment attended", icon: "notebook-pen" },
 };
 
 export function useHamsterGrowthState() {
@@ -527,6 +530,23 @@ export function useHamsterGrowthState() {
       focusAllDoneAwarded = true;
     } else if (!allFinished) {
       focusAllDoneAwarded = false;
+    }
+
+        // 7. Appointments marked attended — credited flag works the same way
+    // as bill_payments, so re-checking an appointment can't double-credit.
+    const { data: attendedAppts } = await supabase
+      .from("appointments")
+      .select("id, hamster_credited")
+      .eq("attended", true)
+      .or("hamster_credited.is.null,hamster_credited.eq.false");
+
+    for (const appt of attendedAppts || []) {
+      runningPoints = await addPoints(POINTS.appointment_attended, "appointment_attended", runningPoints);
+      const { error: creditError } = await supabase
+        .from("appointments")
+        .update({ hamster_credited: true })
+        .eq("id", appt.id);
+      reportError(`Lock credit for appointment #${appt.id}`, creditError);
     }
 
     setPoints(runningPoints);
