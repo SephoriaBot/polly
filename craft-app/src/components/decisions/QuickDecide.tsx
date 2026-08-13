@@ -10,10 +10,12 @@
 import { useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { useEnergy } from '../../context/EnergyContext';
+import { useToast } from '../../hooks/useToast';
 import Icon from '../Icon';
 import { type Chore, statusFor } from '../../lib/chores';
+import { getSafeToSpend } from '../../lib/money';
 
-type Preset = 'cook-or-order' | 'what-to-eat' | 'what-to-clean';
+type Preset = 'cook-or-order' | 'what-to-eat' | 'what-to-clean' | 'can-i-afford';
 
 const ENERGY_LABEL: Record<string, string> = {
   normal: 'Normal',
@@ -36,9 +38,10 @@ export default function QuickDecide() {
             <PresetButton icon="cooking-pot" title="Should I cook or order food?" onClick={() => setPreset('cook-or-order')} />
             <PresetButton icon="icon-meals" title="What should I eat?" onClick={() => setPreset('what-to-eat')} />
             <PresetButton icon="cleaning-spray" title="What should I clean?" onClick={() => setPreset('what-to-clean')} />
+            <PresetButton icon="icon-wallet" title="Can I afford this?" onClick={() => setPreset('can-i-afford')} />
           </div>
           <p style={{ fontSize: '0.68rem', color: 'var(--ink-muted)', marginTop: 12, marginBottom: 0 }}>
-            More decision types are coming — groceries, bills, packing.
+            More decision types are coming — groceries, packing.
           </p>
         </div>
       </div>
@@ -48,6 +51,7 @@ export default function QuickDecide() {
   if (preset === 'cook-or-order') return <CookOrOrder onBack={() => setPreset(null)} />;
   if (preset === 'what-to-eat') return <WhatToEat onBack={() => setPreset(null)} />;
   if (preset === 'what-to-clean') return <WhatToClean onBack={() => setPreset(null)} />;
+  if (preset === 'can-i-afford') return <CanIAffordThis onBack={() => setPreset(null)} />;
   return null;
 }
 
@@ -327,6 +331,127 @@ function WhatToClean({ onBack }: { onBack: () => void }) {
             </p>
             <button className="btn btn-ghost btn-sm" onClick={() => setBudgetMinutes(null)} style={{ width: '100%', justifyContent: 'center' }}>
               Back
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+type AffordVerdict = 'yes' | 'careful' | 'no';
+
+interface AffordResult {
+  verdict: AffordVerdict;
+  reasons: string[];
+  amount: number;
+}
+
+function CanIAffordThis({ onBack }: { onBack: () => void }) {
+  const { showToast } = useToast();
+  const [label, setLabel] = useState('');
+  const [amountStr, setAmountStr] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState<AffordResult | null>(null);
+  const [logging, setLogging] = useState(false);
+  const [logged, setLogged] = useState(false);
+
+  async function check() {
+    const amount = parseFloat(amountStr);
+    if (!amount || amount <= 0) return;
+    setLoading(true);
+    setLogged(false);
+    const { currentBalance, near5Total, buffer, safeToSpend, near5Bills } = await getSafeToSpend();
+    const reasons: string[] = [];
+    let verdict: AffordVerdict;
+
+    if (amount <= safeToSpend) {
+      verdict = 'yes';
+      reasons.push(`Safe to Spend right now is $${safeToSpend.toFixed(2)}.`);
+      reasons.push(`This is $${amount.toFixed(2)}, leaving you $${(safeToSpend - amount).toFixed(2)} with upcoming bills and your $${buffer} buffer still covered.`);
+    } else if (amount <= currentBalance) {
+      verdict = 'careful';
+      reasons.push(`Your balance covers it ($${currentBalance.toFixed(2)}), but $${near5Total.toFixed(2)} of that is earmarked for bills due in the next 5 days.`);
+      if (near5Bills.length > 0) {
+        reasons.push(`Coming up: ${near5Bills.slice(0, 2).map(b => `${b.name} ($${b.amount.toFixed(2)})`).join(', ')}${near5Bills.length > 2 ? `, +${near5Bills.length - 2} more` : ''}.`);
+      }
+      reasons.push(`This would eat into that — Safe to Spend right now is really $${safeToSpend.toFixed(2)}.`);
+    } else {
+      verdict = 'no';
+      reasons.push(`Your current balance is $${currentBalance.toFixed(2)} — this is $${(amount - currentBalance).toFixed(2)} more than you have.`);
+    }
+
+    setResult({ verdict, reasons, amount });
+    setLoading(false);
+  }
+
+  async function logAsPlannedPurchase() {
+    if (!result) return;
+    setLogging(true);
+    const today = new Date();
+    const dateStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+    const { error } = await supabase.from('extra_expenses_log').upsert({ date: dateStr, amount: String(result.amount) }, { onConflict: 'date' });
+    setLogging(false);
+    if (error) { showToast("Couldn't log that — try again?", 'error'); return; }
+    setLogged(true);
+    showToast('Added to today\'s Money Calendar 🗓️');
+  }
+
+  const verdictMeta: Record<AffordVerdict, { title: string; icon: Parameters<typeof Icon>[0]['name']; bg: string; border: string; color: string }> = {
+    yes: { title: 'Yes', icon: 'icon-wallet', bg: 'var(--blush)', border: 'var(--pink-light)', color: 'var(--pink-dark)' },
+    careful: { title: 'Careful', icon: 'icon-alertcircle', bg: 'var(--cream)', border: 'var(--border)', color: 'var(--ink)' },
+    no: { title: 'Not right now', icon: 'icon-alertcircle', bg: 'var(--cream)', border: 'var(--border)', color: 'var(--danger)' },
+  };
+
+  return (
+    <div className="card">
+      <div className="card-body">
+        <BackButton onClick={onBack} />
+        <div className="section-label" style={{ marginBottom: 10 }}>Can I afford this?</div>
+
+        {!result ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <div>
+              <label style={{ fontSize: '0.75rem', color: 'var(--ink-muted)', fontWeight: 600 }}>What are you thinking about buying? (optional)</label>
+              <input className="form-input" value={label} onChange={e => setLabel(e.target.value)} placeholder="e.g. new shoes" style={{ marginTop: 4 }} />
+            </div>
+            <div>
+              <label style={{ fontSize: '0.75rem', color: 'var(--ink-muted)', fontWeight: 600 }}>How much?</label>
+              <input className="form-input" type="number" min={0} value={amountStr} onChange={e => setAmountStr(e.target.value)} placeholder="e.g. 45" style={{ marginTop: 4 }} />
+            </div>
+            <button className="btn btn-primary" onClick={check} disabled={loading || !amountStr}>
+              {loading ? 'Checking…' : 'Check'}
+            </button>
+          </div>
+        ) : (
+          <div>
+            {(() => {
+              const meta = verdictMeta[result.verdict];
+              return (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, background: meta.bg, border: `1.5px solid ${meta.border}`, borderRadius: 18, padding: '14px 16px', marginBottom: 10 }}>
+                  <Icon name={meta.icon} size={28} style={{ color: meta.color, flexShrink: 0 }} />
+                  <div style={{ fontSize: '1.05rem', fontWeight: 800, color: meta.color }}>
+                    {meta.title}{label ? ` — ${label}` : ''}
+                  </div>
+                </div>
+              );
+            })()}
+            <ul style={{ margin: 0, marginBottom: 12, paddingLeft: 18, display: 'flex', flexDirection: 'column', gap: 4 }}>
+              {result.reasons.map((r, i) => <li key={i} style={{ fontSize: '0.8rem', color: 'var(--ink-muted)' }}>{r}</li>)}
+            </ul>
+
+            {result.verdict !== 'no' && !logged && (
+              <button className="btn btn-primary" onClick={logAsPlannedPurchase} disabled={logging} style={{ width: '100%', justifyContent: 'center', marginBottom: 8 }}>
+                {logging ? 'Logging…' : 'Log this as a planned purchase today'}
+              </button>
+            )}
+            {logged && (
+              <div style={{ fontSize: '0.75rem', color: 'var(--pink-dark)', fontWeight: 700, textAlign: 'center', marginBottom: 8 }}>
+                Logged — check your Money Calendar ✓
+              </div>
+            )}
+            <button className="btn btn-ghost btn-sm" onClick={() => { setResult(null); setLogged(false); }} style={{ width: '100%', justifyContent: 'center' }}>
+              Check something else
             </button>
           </div>
         )}

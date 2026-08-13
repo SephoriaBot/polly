@@ -9,8 +9,7 @@ import Lantern from "../components/Lantern";
 import EmptyState from '../components/EmptyState';
 import checklistImg from '../assets/illustrations/checklist.png';
 import celebrationImg from '../assets/illustrations/celebration.png';
-import empty7Img from '../assets/icons/empty7.png';
-import empty2Img from '../assets/icons/empty2.png';
+import emptyPlanner from '../assets/icons/empty-planner.png';
 import Icon, { type IconName } from '../components/Icon';
 
 interface DailyTask {
@@ -398,7 +397,7 @@ export default function DailyPlanner() {
                 <p style={{ fontSize: 13, color: 'var(--ink-muted)' }}>Loading…</p>
               ) : tasks.length === 0 ? (
                 
-        <EmptyState image={empty2Img} message="No tasks yet. Add a new or recurring one below to get started." />
+        <EmptyState image={emptyPlanner} message="No tasks yet. Add a new or recurring one below to get started." />
     
               ) : (
                 <p className="daily-tasks-subtitle">Tap the toast to give it some jam</p>,
@@ -571,7 +570,7 @@ export default function DailyPlanner() {
 
               {appointments.length === 0 ? (
               
-        <EmptyState image={empty7Img} message="No appointments scheduled yet" />
+        <EmptyState image={emptyPlanner} message="No appointments scheduled yet" />
     
             ) : (
 

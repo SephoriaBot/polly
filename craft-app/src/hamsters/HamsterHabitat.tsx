@@ -4,7 +4,7 @@ import { HAMSTERS, imageForForm } from "./hamsters";
 import Icon, { type IconName } from "../components/Icon";
 import HamsterStatTraining from "./HamsterStatTraining";
 import EmptyState from '../components/EmptyState';
-import empty3Img from '../assets/icons/empty3.png';
+import emptyHabitat from '../assets/icons/empty-habitat.png';
 
 function imageFor(hamsterId: string) {
   return HAMSTERS.find((h) => h.id === hamsterId)?.image;
@@ -94,7 +94,7 @@ export default function HamsterHabitat() {
         )}
 
         {collection.length === 0 ? (
-        <EmptyState image={empty3Img} message="No hamsters in the habitat yet." />
+        <EmptyState image={emptyHabitat} message="No hamsters in the habitat yet." />
         ) : (
           <>
             <div

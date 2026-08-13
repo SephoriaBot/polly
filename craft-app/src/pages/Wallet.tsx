@@ -5,7 +5,7 @@ import Icon from '../components/Icon';
 import Lantern from "../components/Lantern";
 import walletPouchImg from '../assets/illustrations/wallet_pouch.png';
 import celebrationImg from '../assets/illustrations/celebration.png';
-import empty3Img from '../assets/icons/empty3.png';
+import emptyWallet from '../assets/icons/empty-wallet.png';
 import EmptyState from '../components/EmptyState';
 
 interface Debt {
@@ -1345,7 +1345,7 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                 )}
 
                 {lists.length === 0 ? (
-                  <EmptyState image={empty3Img} message="No lists yet. Create one to get started." />
+                  <EmptyState image={emptyWallet} message="No lists yet. Create one to get started." />
                 ) : (
                   <>
                     {activeListItems.length >= 0 && (
@@ -1869,7 +1869,7 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                     {monthBills.length === 0 ? (
                       <tr><td colSpan={6} style={{ padding: 24, textAlign: "center", color: "var(--ink-muted)" }}>
                         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
-                          <img src={walletPouchImg} alt="" style={{ width: 100 }} />
+                          <img src={emptyWallet} alt="" style={{ width: 100 }} />
                           No bills yet — click + Add Bill to get started.
                         </div>
                       </td></tr>
@@ -2023,7 +2023,7 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
   <tbody>
     <tr>
       <td colSpan={8} style={{ padding: 24, textAlign: "center" }}>
-        <EmptyState image={empty3Img} message="No debts listed yet. Add one to start tracking." />
+        <EmptyState image={emptyWallet} message="No debts listed yet. Add one to start tracking." />
       </td>
     </tr>
   </tbody>
