@@ -11,6 +11,7 @@ import checklistImg from '../assets/illustrations/checklist.png';
 import celebrationImg from '../assets/illustrations/celebration.png';
 import emptyPlanner from '../assets/icons/empty-planner.png';
 import Icon, { type IconName } from '../components/Icon';
+import { useTheme } from '../context/ThemeContext';
 
 interface DailyTask {
   id: string;
@@ -77,6 +78,7 @@ function todayISO() {
 }
 
 export default function DailyPlanner() {
+  const { theme } = useTheme();
   const [tasks, setTasks] = useState<DailyTask[]>([]);
   const [templates, setTemplates] = useState<DailyTaskTemplate[]>([]);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
@@ -449,8 +451,8 @@ export default function DailyPlanner() {
                         }}
                       >
                         {task.done
-                          ? <Icon name="toastfull" size={22} style={{ color: 'var(--pink-dark)' }} />
-                          : <Icon name="toastempty" size={22} style={{ color: 'var(--border)' }} />
+                          ? <Icon name={theme === 'light' ? 'full_sun' : 'full_moon'} size={22} style={{ color: 'var(--pink-dark)' }} />
+                          : <Icon name={theme === 'light' ? 'empty_sun' : 'empty_moon'} size={22} style={{ color: 'var(--border)' }} />
                         }
                       </button>
 
