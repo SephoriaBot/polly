@@ -99,7 +99,7 @@ function costFor(key: string): number {
 const SHELF_BOTTOM: Record<ShelfNum, number> = {
   1: 81,
   2: 52,
-  3: 23,
+  3: 25,
   4: 0.5,
 };
 
