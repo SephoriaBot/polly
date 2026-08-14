@@ -113,27 +113,34 @@ export default function BrainDump({ open, onClose }: { open: boolean; onClose: (
   const [listening, setListening] = useState(false);
   const recognitionRef = useRef<any>(null);
   const baseTextRef = useRef('');
+  const shouldListenRef = useRef(false);
 
   useEffect(() => {
     // Stop listening if the sheet closes out from under an active session.
-    if (!open) recognitionRef.current?.stop();
+    if (!open) {
+      shouldListenRef.current = false;
+      recognitionRef.current?.stop();
+    }
   }, [open]);
 
   useEffect(() => {
-    return () => { recognitionRef.current?.stop(); };
+    return () => {
+      shouldListenRef.current = false;
+      recognitionRef.current?.stop();
+    };
   }, []);
 
   if (!open) return null;
 
-  function startListening() {
-    if (!SpeechRecognitionCtor || listening) return;
-    setError('');
+  function launchRecognition() {
     const recognition = new SpeechRecognitionCtor();
-    recognition.continuous = true;
+    // Chrome has a known bug where a single long-running continuous +
+    // interimResults session eventually locks up the tab. Running short,
+    // single-utterance sessions and auto-restarting on each pause gives the
+    // same "keep talking" feel without tripping that bug.
+    recognition.continuous = false;
     recognition.interimResults = true;
     recognition.lang = 'en-US';
-
-    baseTextRef.current = dump.trim() ? dump.trim() + ' ' : '';
 
     recognition.onresult = (event: any) => {
       let finalChunk = '';
@@ -147,15 +154,38 @@ export default function BrainDump({ open, onClose }: { open: boolean; onClose: (
       setDump(baseTextRef.current + interimChunk);
     };
 
-    recognition.onerror = () => setListening(false);
-    recognition.onend = () => setListening(false);
+    recognition.onerror = (event: any) => {
+      // "no-speech" just means a pause with nothing said — onend follows
+      // right after and restarts things, so it's not a real failure.
+      if (event.error !== 'no-speech') {
+        shouldListenRef.current = false;
+        setListening(false);
+      }
+    };
+
+    recognition.onend = () => {
+      if (shouldListenRef.current) {
+        launchRecognition();
+      } else {
+        setListening(false);
+      }
+    };
 
     recognitionRef.current = recognition;
     recognition.start();
+  }
+
+  function startListening() {
+    if (!SpeechRecognitionCtor || listening) return;
+    setError('');
+    baseTextRef.current = dump.trim() ? dump.trim() + ' ' : '';
+    shouldListenRef.current = true;
+    launchRecognition();
     setListening(true);
   }
 
   function stopListening() {
+    shouldListenRef.current = false;
     recognitionRef.current?.stop();
     setListening(false);
   }
