@@ -7,6 +7,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import Icon from './Icon';
+import { useTheme } from '../context/ThemeContext';
 
 const CHECKLIST_KEY = 'polly-no-energy-checklist';
 
@@ -116,6 +117,7 @@ export default function LowEnergyChecklist({ onNavigate }: { onNavigate?: (page:
 }
 
 function ChecklistRow({ label, done, onToggle }: { label: string; done: boolean; onToggle: () => void }) {
+  const { theme } = useTheme();
   return (
     <div
       onClick={onToggle}
@@ -127,7 +129,7 @@ function ChecklistRow({ label, done, onToggle }: { label: string; done: boolean;
       }}
     >
       <Icon
-        name={done ? 'picnicfull' : 'picnicempty'}
+        name={done ? (theme === 'light' ? 'full_sun' : 'full_moon') : (theme === 'light' ? 'empty_sun' : 'empty_moon')}
         size={22}
         style={{ color: done ? 'var(--pink-dark)' : 'var(--border)', flexShrink: 0 }}
       />
