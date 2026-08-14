@@ -210,9 +210,6 @@ async function loadAll() {
     
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-
-  <p className="daily-tasks-subtitle">Tap the basket to fill it up...</p>
-
               {focuses.map(f => (
                 <div
                   key={f.id}
