@@ -3,8 +3,8 @@
 /* ================= TOKENS ================= */
 [data-theme='light'],
 :root {
-  --bg: #FAEBD7;
-  --surface: #FFF8EF;
+  --bg: #FFFEFB;
+  --surface: #FFFFFF;
   --text: #5C4633;
 
   --primary: #C9976B;
@@ -12,17 +12,17 @@
   --accent: #2F6F4E;
   --mint: #4C9A72;
 
-  --border: rgba(92, 70, 51, .14);
-  --shadow: 0 10px 26px rgba(92, 70, 51, .10);
+  --border: rgba(92, 70, 51, .12);
+  --shadow: 0 10px 26px rgba(92, 70, 51, .08);
 
   --ink: #5C4633;
   --ink-soft: #80725F;
   --ink-muted: #A9977E;
   --btn-ink: #5C4633;
 
-  --white: #FFF8EF;
-  --cream: #FAEBD7;
-  --blush: #E8CBAA;
+  --white: #FFFFFF;
+  --cream: #FFFEFB;
+  --blush: #FAEBD7;
 
   --green-dark: #2F6F4E;
   --citrus-blue: #2F6F4E;
@@ -32,7 +32,7 @@
 
   --pink: #C9976B;
   --pink-dark: #8B5E3C;
-  --pink-light: #F5E7D6;
+  --pink-light: #FAEBD7;
 
   --sky: #4C9A72;
 
@@ -43,6 +43,7 @@
   --danger: #B5615B;
   --danger-bg: #F5E6E3;
 }
+
 
 
 
