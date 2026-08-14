@@ -55,12 +55,12 @@ interface Spark {
 // (pink-light / primary / secondary / accent / mint / gold-light)
 // instead of a one-off hex set, so the celebration matches the theme.
 const SPARK_COLORS = [
-  'var(--pink-light)',
+  'var(--pink-light-solid)',
   'var(--primary)',
   'var(--secondary)',
   'var(--pink-dark)',
   'var(--mint)',
-  'var(--gold-light)',
+  'var(--gold-light-solid)',
 ];
 
 function StitchDivider() {
@@ -401,7 +401,7 @@ export default function DailyPlanner() {
                 height: '100%',
                 width: `${(doneCount / tasks.length) * 100}%`,
                 background: allDone
-                  ? 'linear-gradient(90deg, var(--pink-light), var(--pink-dark))'
+                  ? 'linear-gradient(90deg, var(--pink-light-solid), var(--pink-dark))'
                   : 'linear-gradient(90deg, var(--secondary), var(--accent))',
                 borderRadius: 999,
                 transition: 'width 0.4s ease',
