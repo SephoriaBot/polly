@@ -465,7 +465,7 @@ export default function BrainDump({ open, onClose }: { open: boolean; onClose: (
     category: e.target.value as 'task' | 'grocery' | 'bills' | 'notes'
   })}
   style={{
-    fontSize: '0.7rem',
+    fontSize: '1rem',
     border: '1px solid var(--border)',
     borderRadius: 8,
     background: 'var(--cream)',
@@ -531,7 +531,7 @@ export default function BrainDump({ open, onClose }: { open: boolean; onClose: (
         recurring: e.target.value === '' ? null : e.target.value === 'true',
       })}
       style={{
-        fontSize: '0.7rem',
+        fontSize: '1rem',
         border: '1px solid var(--border)',
         borderRadius: 8,
         background: 'var(--cream)',
