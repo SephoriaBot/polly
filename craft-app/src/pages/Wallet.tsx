@@ -1369,9 +1369,6 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                   <EmptyState image={emptyWallet} message="No lists yet. Create one to get started." />
                 ) : (
                   <>
-                    {activeListItems.length >= 0 && (
-                      <p className="daily-tasks-subtitle">Tap the flower to check it off...</p>
-                    )}
                     <div style={{ display: "flex", gap: 6, overflowX: "auto", paddingBottom: 8, marginBottom: 8 }}>
                       {lists.map(l => (
                         <button
@@ -2068,9 +2065,6 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                     + Add
                   </button>
                 </div>
-                {activeDebts.length > 0 && (
-                  <p className="daily-tasks-subtitle">Tap the shell to give it some color.</p>
-                )}
                 <div style={{ overflowX: "auto" }}>
                   <table className="table">
                     <thead>
