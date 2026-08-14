@@ -3,7 +3,7 @@
 /* ================= TOKENS ================= */
 [data-theme='light'],
 :root {
-  --bg: #FFFEFB;
+  --bg: #FFFFFF;
   --surface: #FFFFFF;
   --text: #5C4633;
 
@@ -21,8 +21,8 @@
   --btn-ink: #5C4633;
 
   --white: #FFFFFF;
-  --cream: #FFFEFB;
-  --blush: #FAEBD7;
+  --cream: #FFFFFF;
+  --blush: #E8CBAA;
 
   --green-dark: #2F6F4E;
   --citrus-blue: #2F6F4E;
@@ -32,7 +32,7 @@
 
   --pink: #C9976B;
   --pink-dark: #8B5E3C;
-  --pink-light: #FAEBD7;
+  --pink-light: #E8CBAA;
 
   --sky: #4C9A72;
 
@@ -43,6 +43,7 @@
   --danger: #B5615B;
   --danger-bg: #F5E6E3;
 }
+
 
 
 
