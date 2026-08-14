@@ -1911,10 +1911,6 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                     <button className="btn btn-green" style={{ justifyContent: "center" }} onClick={addBill}>Save Bill</button>
                   </div>
                 )}
-
-                {monthBills.length > 0 && (
-                  <p className="daily-tasks-subtitle">Tap the jar to give it some sugar...</p>
-                )}
                 <div style={{ overflowX: "auto" }}>
                 <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
                   <thead>
@@ -2101,8 +2097,8 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                                   alignItems: "center", justifyContent: "center",
                                 }}
                               >
-                                <Icon name="shellempty" size={22} />
-                              </button>
+                                <Icon name={theme === 'light' ? 'empty_sun' : 'empty_moon'} size={22} />
+            </button>
                             </td>
                             <td style={{ padding: "9px 8px" }}>
                               {i === 0
@@ -2154,8 +2150,8 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                                 alignItems: "center", justifyContent: "center",
                               }}
                             >
-                              <Icon name="shellfull" size={22} />
-                            </button>
+                            <Icon name={theme === 'light' ? 'full_sun' : 'full_moon'} size={22} />
+          </button>
                           </td>
                           <td style={{ padding: "9px 8px", textDecoration: "line-through", color: "var(--green-dark)", fontWeight: 700 }}>{d.name}</td>
                           <td style={{ padding: "9px 8px", color: "var(--green-dark)", fontWeight: 800 }}>$0.00</td>
