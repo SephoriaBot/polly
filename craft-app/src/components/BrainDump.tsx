@@ -8,7 +8,8 @@
 // contain an amount or due date, those fields are left null for the user
 // to fill in later from Wallet.
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { Mic, Square } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useToast } from '../hooks/useToast';
 import Icon from './Icon';
@@ -94,6 +95,14 @@ async function categorize(dump: string): Promise<{
 }));
 }
 
+// Web Speech API isn't in TS's default DOM lib and support is Chrome/Edge-first
+// (Safari and Firefox are spotty), so this stays feature-detected and typed
+// loosely rather than pulling in a whole speech-recognition type package.
+const SpeechRecognitionCtor: any =
+  typeof window !== 'undefined'
+    ? (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
+    : null;
+
 export default function BrainDump({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { showToast } = useToast();
   const [dump, setDump] = useState('');
@@ -101,10 +110,58 @@ export default function BrainDump({ open, onClose }: { open: boolean; onClose: (
   const [sorting, setSorting] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [listening, setListening] = useState(false);
+  const recognitionRef = useRef<any>(null);
+  const baseTextRef = useRef('');
+
+  useEffect(() => {
+    // Stop listening if the sheet closes out from under an active session.
+    if (!open) recognitionRef.current?.stop();
+  }, [open]);
+
+  useEffect(() => {
+    return () => { recognitionRef.current?.stop(); };
+  }, []);
 
   if (!open) return null;
 
+  function startListening() {
+    if (!SpeechRecognitionCtor || listening) return;
+    setError('');
+    const recognition = new SpeechRecognitionCtor();
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.lang = 'en-US';
+
+    baseTextRef.current = dump.trim() ? dump.trim() + ' ' : '';
+
+    recognition.onresult = (event: any) => {
+      let finalChunk = '';
+      let interimChunk = '';
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const transcript = event.results[i][0].transcript;
+        if (event.results[i].isFinal) finalChunk += transcript + ' ';
+        else interimChunk += transcript;
+      }
+      if (finalChunk) baseTextRef.current += finalChunk;
+      setDump(baseTextRef.current + interimChunk);
+    };
+
+    recognition.onerror = () => setListening(false);
+    recognition.onend = () => setListening(false);
+
+    recognitionRef.current = recognition;
+    recognition.start();
+    setListening(true);
+  }
+
+  function stopListening() {
+    recognitionRef.current?.stop();
+    setListening(false);
+  }
+
   function reset() {
+    stopListening();
     setDump('');
     setDrafts(null);
     setError('');
@@ -281,15 +338,43 @@ export default function BrainDump({ open, onClose }: { open: boolean; onClose: (
 
         {!drafts ? (
           <>
-            <textarea
-              className="form-input"
-              value={dump}
-              onChange={e => setDump(e.target.value)}
-              placeholder="Need to call the dentist, buy detergent, pay the electric bill, clean the bathroom..."
-              rows={5}
-              style={{ fontSize: '0.9rem', resize: 'vertical', fontFamily: 'inherit' }}
-              autoFocus
-            />
+            <div style={{ position: 'relative' }}>
+              <textarea
+                className="form-input"
+                value={dump}
+                onChange={e => setDump(e.target.value)}
+                placeholder="Need to call the dentist, buy detergent, pay the electric bill, clean the bathroom..."
+                rows={5}
+                style={{ fontSize: '0.9rem', resize: 'vertical', fontFamily: 'inherit', paddingRight: SpeechRecognitionCtor ? 46 : undefined }}
+                autoFocus
+              />
+              {SpeechRecognitionCtor && (
+                <button
+                  type="button"
+                  onClick={listening ? stopListening : startListening}
+                  aria-label={listening ? 'Stop voice capture' : 'Start voice capture'}
+                  title={listening ? 'Stop listening' : 'Speak your dump'}
+                  style={{
+                    position: 'absolute', top: 8, right: 8,
+                    width: 30, height: 30, borderRadius: '50%',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    border: 'none', cursor: 'pointer',
+                    background: listening ? 'var(--pink-dark)' : 'var(--cream)',
+                    color: listening ? 'var(--white)' : 'var(--ink-muted)',
+                    boxShadow: listening ? '0 0 0 4px rgba(203, 138, 99, 0.25)' : 'none',
+                    transition: 'box-shadow 0.2s ease',
+                  }}
+                >
+                  {listening ? <Square size={13} fill="currentColor" /> : <Mic size={15} />}
+                </button>
+              )}
+            </div>
+            {listening && (
+              <div style={{ fontSize: '0.72rem', color: 'var(--pink-dark)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 5 }}>
+                <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--pink-dark)', display: 'inline-block' }} />
+                Listening… tap the square to stop
+              </div>
+            )}
             {error && <div style={{ fontSize: '0.75rem', color: 'var(--pink-dark)', fontWeight: 600 }}>{error}</div>}
             <button
               className="btn btn-primary"
