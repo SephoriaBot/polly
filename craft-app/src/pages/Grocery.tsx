@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import type { GroceryItem } from '../types/legacy';
 import { supabase } from '../lib/supabase';
 import Icon, { type IconName } from '../components/Icon';
+import { useTheme } from '../context/ThemeContext';
 import Lantern from "../components/Lantern";
 import EmptyState from '../components/EmptyState';
 import breadBasketImg from '../assets/illustrations/bread_basket.png';
@@ -242,6 +243,7 @@ const MAX_BACKFILL_STORES_PER_ITEM = 3
 const MAX_TOTAL_BACKFILL_CALLS = 20
 
 export default function Grocery() {
+  const { theme } = useTheme();
   const [items, setItems] = useState<GroceryItem[]>([])
   const [currentList, setCurrentList] = useState('Default')
   const [lists, setLists] = useState<GroceryList[]>([])
@@ -1148,7 +1150,7 @@ export default function Grocery() {
                               color: 'var(--ink)',
                             }}
                           >
-                            <Icon name={checked ? 'flowerfull' : 'flowerempty'} size={18} />
+                            <Icon name={checked ? (theme === 'light' ? 'full_sun' : 'full_moon') : (theme === 'light' ? 'empty_sun' : 'empty_moon')} size={18} />
                             <span style={{ flex: 1, fontSize: '0.86rem', color: 'var(--ink)' }}>{item.name}</span>
                             <span style={{ fontSize: '0.76rem', color: 'var(--ink-muted)' }}>{item.qty}</span>
                             {alreadyOnList && <span style={{ fontSize: '0.7rem', color: 'var(--ink-muted)' }}>on list</span>}
@@ -1487,7 +1489,7 @@ export default function Grocery() {
                       <div key={item.id}>
                         <div style={itemRowStyle(false)}>
                           <button onClick={() => toggle(item.id, item.checked)} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', display: 'flex', flexShrink: 0 }}>
-                            <Icon name="flowerempty" size={20} />
+                            <Icon name={theme === 'light' ? 'empty_sun' : 'empty_moon'} size={20} />
                           </button>
                           <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--ink)' }}>{item.name}</span>
                           <span style={{ fontSize: '0.72rem', color: 'var(--ink-muted)', whiteSpace: 'nowrap' }}>{item.qty}</span>
@@ -1580,7 +1582,7 @@ export default function Grocery() {
                   : have.map(item => (
                     <div key={item.id} style={itemRowStyle(true)}>
                       <button onClick={() => toggle(item.id, item.checked)} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', display: 'flex', flexShrink: 0 }}>
-                        <Icon name="flowerfull" size={20} />
+                        <Icon name={theme === 'light' ? 'full_sun' : 'full_moon'} size={20} />
                       </button>
                       <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--ink-muted)', textDecoration: 'line-through' }}>{item.name}</span>
                       <span style={{ fontSize: '0.72rem', color: 'var(--ink-muted)', whiteSpace: 'nowrap' }}>{item.qty}</span>
