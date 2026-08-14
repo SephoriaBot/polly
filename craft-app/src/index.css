@@ -1,19 +1,18 @@
 @import './styles/theme.css';
 
 /* ================= TOKENS ================= */
-
 [data-theme='light'],
 :root {
-  --bg: #FFFCF5;
-  --surface: #FFFFFF;
+  --bg: #FAEBD7;
+  --surface: #FFF8EF;
   --text: #5C4633;
 
   --primary: #C9976B;
   --secondary: #EFCB7E;
-  --accent: #6F8DA0;
-  --mint: #9DBACB;
+  --accent: #2F6F4E;
+  --mint: #4C9A72;
 
-  --border: rgba(92, 70, 51, .12);
+  --border: rgba(92, 70, 51, .14);
   --shadow: 0 10px 26px rgba(92, 70, 51, .10);
 
   --ink: #5C4633;
@@ -21,21 +20,21 @@
   --ink-muted: #A9977E;
   --btn-ink: #5C4633;
 
-  --white: #FFFFFF;
-  --cream: #FFFCF5;
-  --blush: #F6E7D2;
+  --white: #FFF8EF;
+  --cream: #FAEBD7;
+  --blush: #E8CBAA;
 
-  --green-dark: #6F8DA0;
-  --citrus-blue: #6F8DA0;
-  --sage: #9DBACB;
-  --sage-dark: #6F8DA0;
-  --sage-light: #EAF1F0;
+  --green-dark: #2F6F4E;
+  --citrus-blue: #2F6F4E;
+  --sage: #4C9A72;
+  --sage-dark: #2F6F4E;
+  --sage-light: #E3F0E6;
 
   --pink: #C9976B;
   --pink-dark: #8B5E3C;
-  --pink-light: #FBEAE0;
+  --pink-light: #F5E7D6;
 
-  --sky: #9DBACB;
+  --sky: #4C9A72;
 
   --gold: #EFCB7E;
   --gold-dark: #B98D3E;
@@ -44,6 +43,7 @@
   --danger: #B5615B;
   --danger-bg: #F5E6E3;
 }
+
 
 
 
