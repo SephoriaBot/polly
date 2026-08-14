@@ -39,6 +39,11 @@ const HABITAT_ITEMS: HabitatItem[] = [
   // extra transparent margin around the basket vs. its neighbors.
   { key: 'picnic', label: 'Picnic Basket', image: `${SHELF_PATH}/icon-picnic.png`, shelf: 1, scale: 1.6 },
   { key: 'veggies', label: 'Veggies', image: `${SHELF_PATH}/icon-veggies.png`, shelf: 1 },
+  // Oddities batch, moved here to even out shelf counts
+  { key: 'stitched-doll', label: 'Stitched Doll', image: `${SHELF_PATH}/stitched_doll.png`, shelf: 1 },
+  { key: 'skeleton-coin', label: 'Skeleton Coin', image: `${SHELF_PATH}/skeleton_coin.png`, shelf: 1 },
+  { key: 'ouija-planchette', label: 'Ouija Planchette', image: `${SHELF_PATH}/ouija_planchette.png`, shelf: 1 },
+  { key: 'ghost-bottle', label: 'Ghost in a Bottle', image: `${SHELF_PATH}/ghost_bottle.png`, shelf: 1 },
 
   // Shelf 2 — study & hobby corner
   { key: 'books', label: 'Books', image: `${SHELF_PATH}/icon-books.png`, shelf: 2 },
@@ -50,6 +55,10 @@ const HABITAT_ITEMS: HabitatItem[] = [
   { key: 'mirror', label: 'Mirror', image: `${SHELF_PATH}/icon-mirror.png`, shelf: 2 },
   { key: 'instapix', label: 'Instapix', image: `${SHELF_PATH}/icon-instapix.png`, shelf: 2 },
   { key: 'tv', label: 'TV', image: `${SHELF_PATH}/icon-tv.png`, shelf: 2 },
+  // Oddities batch, moved here to even out shelf counts
+  { key: 'astrolabe', label: 'Astrolabe', image: `${SHELF_PATH}/astrolabe.png`, shelf: 2 },
+  { key: 'music-box', label: 'Music Box', image: `${SHELF_PATH}/music_box.png`, shelf: 2 },
+  { key: 'clockwork-beetle', label: 'Clockwork Beetle', image: `${SHELF_PATH}/clockwork_beetle.png`, shelf: 2 },
 
   // Shelf 3 — cozy & botanical
   { key: 'candle', label: 'Candle', image: `${SHELF_PATH}/icon-candle.png`, shelf: 3 },
@@ -60,6 +69,11 @@ const HABITAT_ITEMS: HabitatItem[] = [
   { key: 'terrarium', label: 'Terrarium', image: `${SHELF_PATH}/icon-terrarium.png`, shelf: 3 },
   { key: 'mushroom', label: 'Mushroom', image: `${SHELF_PATH}/icon-mushroom.png`, shelf: 3 },
   { key: 'flowers', label: 'Flowers', image: `${SHELF_PATH}/icon-flowers.png`, shelf: 3 },
+  // Oddities batch, moved here to even out shelf counts
+  { key: 'black-candle', label: 'Black Candle', image: `${SHELF_PATH}/black_candle.png`, shelf: 3 },
+  { key: 'moon-cauldron', label: 'Moon Cauldron', image: `${SHELF_PATH}/moon_cauldron.png`, shelf: 3 },
+  { key: 'framed-butterfly', label: 'Framed Butterfly', image: `${SHELF_PATH}/framed_butterfly.png`, shelf: 3 },
+  { key: 'jackalope', label: 'Jackalope', image: `${SHELF_PATH}/jackalope.png`, shelf: 3 },
 
   // Shelf 4 (bottom) — curiosities
   { key: 'birdhouse', label: 'Birdhouse', image: `${SHELF_PATH}/icon-birdhouse.png`, shelf: 4 },
@@ -73,6 +87,11 @@ const HABITAT_ITEMS: HabitatItem[] = [
   { key: 'wheel', label: 'Wheel', image: `${SHELF_PATH}/icon-wheel.png`, shelf: 4 },
   { key: 'camera', label: 'Camera', image: `${SHELF_PATH}/item-camera.png`, shelf: 4 },
   { key: 'chest', label: 'Treasure Chest', image: `${SHELF_PATH}/item-chest.png`, shelf: 4 },
+  // Oddities batch — the rest stay here on their original curiosities shelf
+  { key: 'anatomical-heart', label: 'Anatomical Heart', image: `${SHELF_PATH}/anatomical_heart.png`, shelf: 4 },
+  { key: 'bound-bones', label: 'Bound Bones', image: `${SHELF_PATH}/bound_bones.png`, shelf: 4 },
+  { key: 'eyeball-jar', label: 'Eyeball Jar', image: `${SHELF_PATH}/eyeball_jar.png`, shelf: 4 },
+  { key: 'moth-skull', label: 'Moth Skull', image: `${SHELF_PATH}/moth_skull.png`, shelf: 4 },
 ];
 
 const SHELVES: { key: ShelfNum; label: string }[] = [
