@@ -136,6 +136,67 @@ interface HabitatThemeRow {
   decor_keys: string[] | null;
 }
 
+// Ambient lighting wash for the shelf, keyed to time of day. Interpolated
+// linearly between neighboring keyframes so it drifts gradually rather than
+// snapping — deep cool navy overnight, a soft peach dawn, fully clear
+// through the daytime hours, then a golden dusk sliding back into night.
+interface LightKeyframe {
+  hour: number;
+  rgb: [number, number, number];
+  opacity: number;
+}
+
+const LIGHT_KEYFRAMES: LightKeyframe[] = [
+  { hour: 0, rgb: [33, 27, 61], opacity: 0.42 }, // deep night
+  { hour: 5, rgb: [33, 27, 61], opacity: 0.42 },
+  { hour: 7, rgb: [246, 184, 138], opacity: 0.24 }, // dawn glow
+  { hour: 9, rgb: [246, 184, 138], opacity: 0 }, // full daylight
+  { hour: 17, rgb: [246, 184, 138], opacity: 0 },
+  { hour: 19, rgb: [232, 147, 95], opacity: 0.28 }, // golden dusk
+  { hour: 21, rgb: [46, 37, 85], opacity: 0.38 }, // twilight into night
+  { hour: 24, rgb: [33, 27, 61], opacity: 0.42 },
+];
+
+function lerp(a: number, b: number, t: number): number {
+  return a + (b - a) * t;
+}
+
+function shelfLighting(fractionalHour: number): string {
+  for (let i = 0; i < LIGHT_KEYFRAMES.length - 1; i++) {
+    const a = LIGHT_KEYFRAMES[i];
+    const b = LIGHT_KEYFRAMES[i + 1];
+    if (fractionalHour >= a.hour && fractionalHour <= b.hour) {
+      const t = (fractionalHour - a.hour) / (b.hour - a.hour);
+      const r = Math.round(lerp(a.rgb[0], b.rgb[0], t));
+      const g = Math.round(lerp(a.rgb[1], b.rgb[1], t));
+      const bl = Math.round(lerp(a.rgb[2], b.rgb[2], t));
+      const opacity = lerp(a.opacity, b.opacity, t);
+      return `rgba(${r}, ${g}, ${bl}, ${opacity.toFixed(3)})`;
+    }
+  }
+  const last = LIGHT_KEYFRAMES[LIGHT_KEYFRAMES.length - 1];
+  return `rgba(${last.rgb[0]}, ${last.rgb[1]}, ${last.rgb[2]}, ${last.opacity})`;
+}
+
+// Re-reads the clock once a minute so the wash drifts through the day
+// without needing a page reload.
+function useFractionalHour(): number {
+  const [hour, setHour] = useState(() => {
+    const now = new Date();
+    return now.getHours() + now.getMinutes() / 60;
+  });
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      const now = new Date();
+      setHour(now.getHours() + now.getMinutes() / 60);
+    }, 60000);
+    return () => clearInterval(id);
+  }, []);
+
+  return hour;
+}
+
 export default function HabitatScene() {
   const { loading, points, spendPoints } = useHamsterGrowth();
   const [decor, setDecor] = useState<string[]>([]);
@@ -144,6 +205,7 @@ export default function HabitatScene() {
   const [unlockingKey, setUnlockingKey] = useState<string | null>(null);
   const [unlockError, setUnlockError] = useState<string | null>(null);
   const [selectedShelf, setSelectedShelf] = useState<ShelfNum>(1);
+  const fractionalHour = useFractionalHour();
 
   // Load the saved theme + unlocked items once on mount.
   useEffect(() => {
@@ -364,6 +426,19 @@ export default function HabitatScene() {
               );
             });
           })}
+          {/* Ambient lighting wash — sits above the shelf and every placed
+              item so the whole scene dims and warms together through the
+              day, rather than just tinting the background art. */}
+          <div
+            style={{
+              position: 'absolute',
+              inset: 0,
+              background: shelfLighting(fractionalHour),
+              zIndex: 50,
+              pointerEvents: 'none',
+              transition: 'background 3s ease',
+            }}
+          />
         </div>
         <div
           style={{
