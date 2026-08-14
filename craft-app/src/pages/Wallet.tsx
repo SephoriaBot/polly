@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect, useRef } from "react";
 import type { CSSProperties } from "react";
 import { supabase } from '../lib/supabase';
 import Icon from '../components/Icon';
+import { useTheme } from '../context/ThemeContext';
 import Lantern from "../components/Lantern";
 import walletPouchImg from '../assets/illustrations/wallet_pouch.png';
 import celebrationImg from '../assets/illustrations/celebration.png';
@@ -284,6 +285,7 @@ function EditableCell({ value, onChange, type = "number", style, className, plac
 }
 
 export default function Wallet() {
+  const { theme } = useTheme();
   const [debts, setDebts] = useState<Debt[]>([]);
   const [debtStrategy, setDebtStrategy] =
   useState<DebtStrategy>("snowball");
@@ -1404,8 +1406,8 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                                 }}
                               >
                                 {item.done
-                                  ? <Icon name="flowerfull" size={17} style={{ color: "var(--pink-dark)" }} />
-                                  : <Icon name="flowerempty" size={17} style={{ color: "var(--border)" }} />
+                                  ? <Icon name={theme === 'light' ? 'full_sun' : 'full_moon'} size={17} style={{ color: "var(--pink-dark)" }} />
+                                  : <Icon name={theme === 'light' ? 'empty_sun' : 'empty_moon'} size={17} style={{ color: "var(--border)" }} />
                                 }
                               </button>
                               <div style={{ flex: 1, fontSize: 13, color: item.done ? "var(--ink-muted)" : "var(--ink)", textDecoration: item.done ? "line-through" : "none" }}>
@@ -1949,8 +1951,8 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                             }}
                           >
                             {b.paid
-                              ? <Icon name="sugarfull" size={22} />
-                              : <Icon name="sugarempty" size={22} />
+                              ? <Icon name={theme === 'light' ? 'full_sun' : 'full_moon'} size={22} />
+                              : <Icon name={theme === 'light' ? 'empty_sun' : 'empty_moon'} size={22} />
                             }
                           </button>
                         </td>
