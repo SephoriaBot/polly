@@ -3,46 +3,47 @@
 /* ================= TOKENS ================= */
 [data-theme='light'],
 :root {
-  --bg: #FFF8EC;
-  --surface: #FFFEFA;
-  --text: #4A3626;
+  --bg: #FFFCF7;
+  --surface: #FFFFFF;
+  --text: #3D2B1F;
 
-  --primary: #B97A45;
-  --secondary: #E8B65A;
-  --accent: #1F6B45;
-  --mint: #3C9463;
+  --primary: #A66A3C;
+  --secondary: #D9A441;
+  --accent: #1B5E3F;
+  --mint: #2F7A54;
 
-  --border: rgba(74, 54, 38, .16);
-  --shadow: 0 10px 26px rgba(74, 54, 38, .14);
+  --border: rgba(61, 43, 31, .14);
+  --shadow: 0 10px 26px rgba(61, 43, 31, .12);
 
-  --ink: #4A3626;
-  --ink-soft: #7A6350;
-  --ink-muted: #A08E76;
-  --btn-ink: #4A3626;
+  --ink: #3D2B1F;
+  --ink-soft: #74604D;
+  --ink-muted: #A0907C;
+  --btn-ink: #3D2B1F;
 
-  --white: #FFFEFA;
-  --cream: #FFF8EC;
-  --blush: #F0D9B5;
+  --white: #FFFFFF;
+  --cream: #FFFCF7;
+  --blush: rgba(166, 106, 60, .13);
 
-  --green-dark: #1F6B45;
-  --citrus-blue: #1F6B45;
-  --sage: #3C9463;
-  --sage-dark: #1F6B45;
-  --sage-light: #DCEFE1;
+  --green-dark: #1B5E3F;
+  --citrus-blue: #1B5E3F;
+  --sage: #2F7A54;
+  --sage-dark: #1B5E3F;
+  --sage-light: rgba(27, 94, 63, .12);
 
-  --pink: #B97A45;
-  --pink-dark: #7A4B26;
-  --pink-light: #F0D9B5;
+  --pink: #A66A3C;
+  --pink-dark: #6B4324;
+  --pink-light: rgba(166, 106, 60, .13);
 
-  --sky: #3C9463;
+  --sky: #2F7A54;
 
-  --gold: #E8B65A;
-  --gold-dark: #A87326;
-  --gold-light: #F7E4B8;
+  --gold: #D9A441;
+  --gold-dark: #96701E;
+  --gold-light: rgba(217, 164, 65, .15);
 
   --danger: #B5615B;
   --danger-bg: #F5E6E3;
 }
+
 
 
 
