@@ -1,6 +1,7 @@
 @import './styles/theme.css';
 
 /* ================= TOKENS ================= */
+
 [data-theme='light'],
 :root {
   --bg: #FFFCF7;
@@ -33,23 +34,18 @@
   --pink: #A66A3C;
   --pink-dark: #6B4324;
   --pink-light: rgba(166, 106, 60, .13);
+  --pink-light-solid: #E8CBAA;
 
   --sky: #2F7A54;
 
   --gold: #D9A441;
   --gold-dark: #96701E;
   --gold-light: rgba(217, 164, 65, .15);
+  --gold-light-solid: #F2D896;
 
   --danger: #B5615B;
   --danger-bg: #F5E6E3;
 }
-
-
-
-
-
-
-
 
 [data-theme='dark'] {
   --bg: #202A38;
