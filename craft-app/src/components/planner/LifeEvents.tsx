@@ -10,6 +10,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { useToast } from '../../hooks/useToast';
 import Icon from '../Icon';
+import { useTheme } from '../../context/ThemeContext';
 import { LIFE_EVENT_TEMPLATES, type LifeEventTemplate } from '../../lib/lifeEventTemplates';
 
 interface LifeEventRow {
@@ -29,6 +30,7 @@ interface LifeEventItemRow {
 }
 
 export default function LifeEvents() {
+  const { theme } = useTheme();
   const { showToast } = useToast();
   const [events, setEvents] = useState<LifeEventRow[]>([]);
   const [itemsByEvent, setItemsByEvent] = useState<Record<string, LifeEventItemRow[]>>({});
@@ -139,7 +141,7 @@ export default function LifeEvents() {
                             borderRadius: 12, padding: '8px 10px',
                           }}
                         >
-                          <Icon name={item.done ? 'picnicfull' : 'picnicempty'} size={16} style={{ color: item.done ? 'var(--pink-dark)' : 'var(--border)', flexShrink: 0 }} />
+                          <Icon name={item.done ? (theme === 'light' ? 'full_sun' : 'full_moon') : (theme === 'light' ? 'empty_sun' : 'empty_moon')} size={16} style={{ color: item.done ? 'var(--pink-dark)' : 'var(--border)', flexShrink: 0 }} />
                           <span style={{
                             fontSize: '0.78rem', fontWeight: 600, flex: 1,
                             color: item.done ? 'var(--ink-muted)' : 'var(--ink)',
