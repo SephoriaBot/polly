@@ -375,7 +375,7 @@ export default function BrainDump({ open, onClose }: { open: boolean; onClose: (
                 onChange={e => setDump(e.target.value)}
                 placeholder="Need to call the dentist, buy detergent, pay the electric bill, clean the bathroom..."
                 rows={5}
-                style={{ fontSize: '0.9rem', resize: 'vertical', fontFamily: 'inherit', paddingRight: SpeechRecognitionCtor ? 46 : undefined }}
+                style={{ fontSize: '1rem', resize: 'vertical', fontFamily: 'inherit', paddingRight: SpeechRecognitionCtor ? 46 : undefined }}
                 autoFocus
               />
               {SpeechRecognitionCtor && (
@@ -453,7 +453,7 @@ export default function BrainDump({ open, onClose }: { open: boolean; onClose: (
                           onChange={e => updateDraft(d.id, { text: e.target.value })}
                           style={{
                             flex: 1, border: 'none', background: 'transparent', outline: 'none',
-                            fontSize: '0.85rem', fontFamily: 'inherit',
+                            fontSize: '1rem', fontFamily: 'inherit',
                             color: d.include ? 'var(--ink)' : 'var(--ink-muted)',
                             textDecoration: d.include ? 'none' : 'line-through',
                           }}
@@ -496,7 +496,7 @@ export default function BrainDump({ open, onClose }: { open: boolean; onClose: (
       })}
       style={{
         width: 75,
-        fontSize: '0.7rem',
+        fontSize: '1rem',
         border: '1px solid var(--border)',
         borderRadius: 8,
         background: 'var(--cream)',
@@ -516,7 +516,7 @@ export default function BrainDump({ open, onClose }: { open: boolean; onClose: (
       })}
       style={{
         width: 50,
-        fontSize: '0.7rem',
+        fontSize: '1rem',
         border: '1px solid var(--border)',
         borderRadius: 8,
         background: 'var(--cream)',
