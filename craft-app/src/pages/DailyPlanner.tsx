@@ -11,6 +11,7 @@ import checklistImg from '../assets/illustrations/checklist.png';
 import celebrationImg from '../assets/illustrations/celebration.png';
 import emptyPlanner from '../assets/icons/empty-planner.png';
 import Icon, { type IconName } from '../components/Icon';
+import { useTheme } from '../context/ThemeContext';
 
 interface DailyTask {
   id: string;
@@ -54,12 +55,12 @@ interface Spark {
 // (pink-light / primary / secondary / accent / mint / gold-light)
 // instead of a one-off hex set, so the celebration matches the theme.
 const SPARK_COLORS = [
-  'var(--pink-light)',
+  'var(--pink-light-solid)',
   'var(--primary)',
   'var(--secondary)',
   'var(--pink-dark)',
   'var(--mint)',
-  'var(--gold-light)',
+  'var(--gold-light-solid)',
 ];
 
 function StitchDivider() {
@@ -77,6 +78,7 @@ function todayISO() {
 }
 
 export default function DailyPlanner() {
+  const { theme } = useTheme();
   const [tasks, setTasks] = useState<DailyTask[]>([]);
   const [templates, setTemplates] = useState<DailyTaskTemplate[]>([]);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
@@ -399,7 +401,7 @@ export default function DailyPlanner() {
                 height: '100%',
                 width: `${(doneCount / tasks.length) * 100}%`,
                 background: allDone
-                  ? 'linear-gradient(90deg, var(--pink-light), var(--pink-dark))'
+                  ? 'linear-gradient(90deg, var(--pink-light-solid), var(--pink-dark))'
                   : 'linear-gradient(90deg, var(--secondary), var(--accent))',
                 borderRadius: 999,
                 transition: 'width 0.4s ease',
@@ -449,8 +451,8 @@ export default function DailyPlanner() {
                         }}
                       >
                         {task.done
-                          ? <Icon name="toastfull" size={22} style={{ color: 'var(--pink-dark)' }} />
-                          : <Icon name="toastempty" size={22} style={{ color: 'var(--border)' }} />
+                          ? <Icon name={theme === 'light' ? 'full_sun' : 'full_moon'} size={22} style={{ color: 'var(--pink-dark)' }} />
+                          : <Icon name={theme === 'light' ? 'empty_sun' : 'empty_moon'} size={22} style={{ color: 'var(--border)' }} />
                         }
                       </button>
 

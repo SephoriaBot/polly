@@ -10,6 +10,7 @@ import sleepingNestImg from '../assets/illustrations/sleeping_nest.png';
 import emptyDash from '../assets/icons/empty-dashboard.png';
 import WeatherBadge from '../components/WeatherBadge';
 import Icon, { type IconName } from '../components/Icon';
+import { useTheme } from '../context/ThemeContext';
 import EmptyState from '../components/EmptyState';
 
 interface Focus {
@@ -45,6 +46,7 @@ function StitchDivider() {
 }
 
 export default function Dashboard({ onNavigate }: { onNavigate?: (page: string) => void }) {
+  const { theme } = useTheme();
   const { mode } = useEnergy();
   const [focuses, setFocuses] = useState<Focus[]>([]);
   const [newFocus, setNewFocus] = useState('');
@@ -208,9 +210,6 @@ async function loadAll() {
     
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-
-  <p className="daily-tasks-subtitle">Tap the basket to fill it up...</p>
-
               {focuses.map(f => (
                 <div
                   key={f.id}
@@ -234,8 +233,8 @@ async function loadAll() {
                         }}
                       >
                         {f.completed
-                          ? <Icon name="picnicfull" size={22} style={{ color: 'var(--pink-dark)' }} />
-                          : <Icon name="picnicempty" size={22} style={{ color: 'var(--border)' }} />
+                          ? <Icon name={theme === 'light' ? 'full_sun' : 'full_moon'} size={22} style={{ color: 'var(--pink-dark)' }} />
+                          : <Icon name={theme === 'light' ? 'empty_sun' : 'empty_moon'} size={22} style={{ color: 'var(--border)' }} />
                         }
                       </button>
 

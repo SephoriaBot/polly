@@ -8,7 +8,8 @@
 // contain an amount or due date, those fields are left null for the user
 // to fill in later from Wallet.
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { Mic, Square } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useToast } from '../hooks/useToast';
 import Icon from './Icon';
@@ -94,6 +95,14 @@ async function categorize(dump: string): Promise<{
 }));
 }
 
+// Web Speech API isn't in TS's default DOM lib and support is Chrome/Edge-first
+// (Safari and Firefox are spotty), so this stays feature-detected and typed
+// loosely rather than pulling in a whole speech-recognition type package.
+const SpeechRecognitionCtor: any =
+  typeof window !== 'undefined'
+    ? (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
+    : null;
+
 export default function BrainDump({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { showToast } = useToast();
   const [dump, setDump] = useState('');
@@ -101,10 +110,88 @@ export default function BrainDump({ open, onClose }: { open: boolean; onClose: (
   const [sorting, setSorting] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [listening, setListening] = useState(false);
+  const recognitionRef = useRef<any>(null);
+  const baseTextRef = useRef('');
+  const shouldListenRef = useRef(false);
+
+  useEffect(() => {
+    // Stop listening if the sheet closes out from under an active session.
+    if (!open) {
+      shouldListenRef.current = false;
+      recognitionRef.current?.stop();
+    }
+  }, [open]);
+
+  useEffect(() => {
+    return () => {
+      shouldListenRef.current = false;
+      recognitionRef.current?.stop();
+    };
+  }, []);
 
   if (!open) return null;
 
+  function launchRecognition() {
+    const recognition = new SpeechRecognitionCtor();
+    // Chrome has a known bug where a single long-running continuous +
+    // interimResults session eventually locks up the tab. Running short,
+    // single-utterance sessions and auto-restarting on each pause gives the
+    // same "keep talking" feel without tripping that bug.
+    recognition.continuous = false;
+    recognition.interimResults = true;
+    recognition.lang = 'en-US';
+
+    recognition.onresult = (event: any) => {
+      let finalChunk = '';
+      let interimChunk = '';
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const transcript = event.results[i][0].transcript;
+        if (event.results[i].isFinal) finalChunk += transcript + ' ';
+        else interimChunk += transcript;
+      }
+      if (finalChunk) baseTextRef.current += finalChunk;
+      setDump(baseTextRef.current + interimChunk);
+    };
+
+    recognition.onerror = (event: any) => {
+      // "no-speech" just means a pause with nothing said — onend follows
+      // right after and restarts things, so it's not a real failure.
+      if (event.error !== 'no-speech') {
+        shouldListenRef.current = false;
+        setListening(false);
+      }
+    };
+
+    recognition.onend = () => {
+      if (shouldListenRef.current) {
+        launchRecognition();
+      } else {
+        setListening(false);
+      }
+    };
+
+    recognitionRef.current = recognition;
+    recognition.start();
+  }
+
+  function startListening() {
+    if (!SpeechRecognitionCtor || listening) return;
+    setError('');
+    baseTextRef.current = dump.trim() ? dump.trim() + ' ' : '';
+    shouldListenRef.current = true;
+    launchRecognition();
+    setListening(true);
+  }
+
+  function stopListening() {
+    shouldListenRef.current = false;
+    recognitionRef.current?.stop();
+    setListening(false);
+  }
+
   function reset() {
+    stopListening();
     setDump('');
     setDrafts(null);
     setError('');
@@ -281,15 +368,43 @@ export default function BrainDump({ open, onClose }: { open: boolean; onClose: (
 
         {!drafts ? (
           <>
-            <textarea
-              className="form-input"
-              value={dump}
-              onChange={e => setDump(e.target.value)}
-              placeholder="Need to call the dentist, buy detergent, pay the electric bill, clean the bathroom..."
-              rows={5}
-              style={{ fontSize: '0.9rem', resize: 'vertical', fontFamily: 'inherit' }}
-              autoFocus
-            />
+            <div style={{ position: 'relative' }}>
+              <textarea
+                className="form-input"
+                value={dump}
+                onChange={e => setDump(e.target.value)}
+                placeholder="Need to call the dentist, buy detergent, pay the electric bill, clean the bathroom..."
+                rows={5}
+                style={{ fontSize: '1rem', resize: 'vertical', fontFamily: 'inherit', paddingRight: SpeechRecognitionCtor ? 46 : undefined }}
+                autoFocus
+              />
+              {SpeechRecognitionCtor && (
+                <button
+                  type="button"
+                  onClick={listening ? stopListening : startListening}
+                  aria-label={listening ? 'Stop voice capture' : 'Start voice capture'}
+                  title={listening ? 'Stop listening' : 'Speak your dump'}
+                  style={{
+                    position: 'absolute', top: 8, right: 8,
+                    width: 30, height: 30, borderRadius: '50%',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    border: 'none', cursor: 'pointer',
+                    background: listening ? 'var(--pink-dark)' : 'var(--cream)',
+                    color: listening ? 'var(--white)' : 'var(--ink-muted)',
+                    boxShadow: listening ? '0 0 0 4px rgba(203, 138, 99, 0.25)' : 'none',
+                    transition: 'box-shadow 0.2s ease',
+                  }}
+                >
+                  {listening ? <Square size={13} fill="currentColor" /> : <Mic size={15} />}
+                </button>
+              )}
+            </div>
+            {listening && (
+              <div style={{ fontSize: '0.72rem', color: 'var(--pink-dark)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 5 }}>
+                <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--pink-dark)', display: 'inline-block' }} />
+                Listening… tap the square to stop
+              </div>
+            )}
             {error && <div style={{ fontSize: '0.75rem', color: 'var(--pink-dark)', fontWeight: 600 }}>{error}</div>}
             <button
               className="btn btn-primary"
@@ -338,7 +453,7 @@ export default function BrainDump({ open, onClose }: { open: boolean; onClose: (
                           onChange={e => updateDraft(d.id, { text: e.target.value })}
                           style={{
                             flex: 1, border: 'none', background: 'transparent', outline: 'none',
-                            fontSize: '0.85rem', fontFamily: 'inherit',
+                            fontSize: '1rem', fontFamily: 'inherit',
                             color: d.include ? 'var(--ink)' : 'var(--ink-muted)',
                             textDecoration: d.include ? 'none' : 'line-through',
                           }}
@@ -350,7 +465,7 @@ export default function BrainDump({ open, onClose }: { open: boolean; onClose: (
     category: e.target.value as 'task' | 'grocery' | 'bills' | 'notes'
   })}
   style={{
-    fontSize: '0.7rem',
+    fontSize: '1rem',
     border: '1px solid var(--border)',
     borderRadius: 8,
     background: 'var(--cream)',
@@ -381,7 +496,7 @@ export default function BrainDump({ open, onClose }: { open: boolean; onClose: (
       })}
       style={{
         width: 75,
-        fontSize: '0.7rem',
+        fontSize: '1rem',
         border: '1px solid var(--border)',
         borderRadius: 8,
         background: 'var(--cream)',
@@ -401,7 +516,7 @@ export default function BrainDump({ open, onClose }: { open: boolean; onClose: (
       })}
       style={{
         width: 50,
-        fontSize: '0.7rem',
+        fontSize: '1rem',
         border: '1px solid var(--border)',
         borderRadius: 8,
         background: 'var(--cream)',
@@ -416,7 +531,7 @@ export default function BrainDump({ open, onClose }: { open: boolean; onClose: (
         recurring: e.target.value === '' ? null : e.target.value === 'true',
       })}
       style={{
-        fontSize: '0.7rem',
+        fontSize: '1rem',
         border: '1px solid var(--border)',
         borderRadius: 8,
         background: 'var(--cream)',

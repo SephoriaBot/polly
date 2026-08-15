@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect, useRef } from "react";
 import type { CSSProperties } from "react";
 import { supabase } from '../lib/supabase';
 import Icon from '../components/Icon';
+import { useTheme } from '../context/ThemeContext';
 import Lantern from "../components/Lantern";
 import walletPouchImg from '../assets/illustrations/wallet_pouch.png';
 import celebrationImg from '../assets/illustrations/celebration.png';
@@ -284,6 +285,7 @@ function EditableCell({ value, onChange, type = "number", style, className, plac
 }
 
 export default function Wallet() {
+  const { theme } = useTheme();
   const [debts, setDebts] = useState<Debt[]>([]);
   const [debtStrategy, setDebtStrategy] =
   useState<DebtStrategy>("snowball");
@@ -812,6 +814,25 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
   const SAFE_TO_SPEND_BUFFER = 50;
   const safeToSpend = Math.max(0, (budget.current_balance || 0) - near5Total - SAFE_TO_SPEND_BUFFER);
 
+  function tierForDaySafe(amount: number): { label: string; color: string; bg: string } {
+    if (amount <= 0) return { label: "Tight", color: "var(--danger)", bg: "var(--danger-bg)" };
+    if (amount < SAFE_TO_SPEND_BUFFER) return { label: "OK", color: "var(--gold-dark)", bg: "var(--gold-light)" };
+    return { label: "Comfortable", color: "var(--green-dark)", bg: "var(--sage-light)" };
+  }
+
+  const heatStripDays = useMemo(() => {
+    const rows = moneyCalendarResult.rows;
+    return rows.map((row, idx) => {
+      // Look at bills landing in the next 4 days after this one (today's own bills
+      // are already reflected in row.balance) so a day right before a bill hits
+      // shows as tighter than the raw end-of-day balance alone would suggest.
+      const lookahead = rows.slice(idx + 1, idx + 5);
+      const upcomingBills = lookahead.reduce((s, r) => s + r.billsTotal, 0);
+      const daySafe = row.balance - upcomingBills - SAFE_TO_SPEND_BUFFER;
+      return { key: row.key, date: row.date, daySafe };
+    });
+  }, [moneyCalendarResult]);
+
   const pay = parseFloat(anytimePay) || 0;
   const inputAmount = pay;
 
@@ -1110,7 +1131,7 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
     : deferredDebts.reduce((s, d) => s + d.balance, 0);
 
   const Confetti = () => {
-    const colors = ["var(--pink-dark)","var(--green-dark)","var(--pink-light)","var(--ink-soft)","var(--gold-light)"];
+    const colors = ["var(--pink-dark)","var(--green-dark)","var(--pink-light-solid)","var(--ink-soft)","var(--gold-light-solid)"];
     return (
       <div style={{ position: "fixed", top: 0, left: 0, width: "100%", height: "100%", pointerEvents: "none", zIndex: 9999, overflow: "hidden" }}>
         {Array.from({ length: 60 }).map((_, i) => (
@@ -1348,9 +1369,6 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                   <EmptyState image={emptyWallet} message="No lists yet. Create one to get started." />
                 ) : (
                   <>
-                    {activeListItems.length >= 0 && (
-                      <p className="daily-tasks-subtitle">Tap the flower to check it off...</p>
-                    )}
                     <div style={{ display: "flex", gap: 6, overflowX: "auto", paddingBottom: 8, marginBottom: 8 }}>
                       {lists.map(l => (
                         <button
@@ -1385,8 +1403,8 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                                 }}
                               >
                                 {item.done
-                                  ? <Icon name="flowerfull" size={17} style={{ color: "var(--pink-dark)" }} />
-                                  : <Icon name="flowerempty" size={17} style={{ color: "var(--border)" }} />
+                                  ? <Icon name={theme === 'light' ? 'full_sun' : 'full_moon'} size={17} style={{ color: "var(--pink-dark)" }} />
+                                  : <Icon name={theme === 'light' ? 'empty_sun' : 'empty_moon'} size={17} style={{ color: "var(--border)" }} />
                                 }
                               </button>
                               <div style={{ flex: 1, fontSize: 13, color: item.done ? "var(--ink-muted)" : "var(--ink)", textDecoration: item.done ? "line-through" : "none" }}>
@@ -1633,6 +1651,47 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                   </div>
                 </details>
 
+                {budget.hourly_wage > 0 && heatStripDays.length > 0 && (
+                  <div style={{ marginBottom: 16 }}>
+                    <div className="form-label" style={{ marginBottom: 6 }}>Safe-to-Spend at a Glance</div>
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 4 }}>
+                      {heatStripDays.map(d => {
+                        const tier = tierForDaySafe(d.daySafe);
+                        const isToday = d.key === dateKey(new Date());
+                        return (
+                          <div
+                            key={d.key}
+                            onClick={() => {
+                              document.getElementById(`money-day-${d.key}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+                            }}
+                            title={`${d.date.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })} · ${tier.label}`}
+                            style={{
+                              aspectRatio: "1",
+                              borderRadius: 8,
+                              background: tier.bg,
+                              border: `1.5px solid ${isToday ? "var(--pink-dark)" : tier.color}`,
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              fontSize: 10,
+                              fontWeight: 700,
+                              color: tier.color,
+                              cursor: "pointer",
+                            }}
+                          >
+                            {d.date.getDate()}
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <div style={{ display: "flex", gap: 10, marginTop: 6, fontSize: 9, color: "var(--ink-muted)" }}>
+                      <span style={{ color: "var(--danger)" }}>■ Tight</span>
+                      <span style={{ color: "var(--gold-dark)" }}>■ OK</span>
+                      <span style={{ color: "var(--green-dark)" }}>■ Comfortable</span>
+                    </div>
+                  </div>
+                )}
+
                 {budget.hourly_wage <= 0 ? (
                   <div style={{ fontSize: 12, color: "var(--ink-muted)" }}>Enter your hourly wage above to see your calendar.</div>
                 ) : (
@@ -1643,7 +1702,7 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                         {result.rows.map(row => {
                           const isToday = row.key === dateKey(new Date());
                           return (
-                            <div key={row.key} style={{ border: `1.5px solid ${isToday ? "var(--pink-dark)" : "var(--border)"}`, borderRadius: 14, padding: "10px 12px", background: isToday ? "var(--accent)" : "transparent" }}>
+                            <div key={row.key} id={`money-day-${row.key}`} style={{ border: `1.5px solid ${isToday ? "var(--pink-dark)" : "var(--border)"}`, borderRadius: 14, padding: "10px 12px", background: isToday ? "var(--accent)" : "transparent" }}>
                               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
                                 <div style={{ fontSize: 12, fontWeight: 700, color: "var(--ink)" }}>
                                   {row.date.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })}
@@ -1852,10 +1911,6 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                     <button className="btn btn-green" style={{ justifyContent: "center" }} onClick={addBill}>Save Bill</button>
                   </div>
                 )}
-
-                {monthBills.length > 0 && (
-                  <p className="daily-tasks-subtitle">Tap the jar to give it some sugar...</p>
-                )}
                 <div style={{ overflowX: "auto" }}>
                 <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
                   <thead>
@@ -1889,8 +1944,8 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                             }}
                           >
                             {b.paid
-                              ? <Icon name="sugarfull" size={22} />
-                              : <Icon name="sugarempty" size={22} />
+                              ? <Icon name={theme === 'light' ? 'full_sun' : 'full_moon'} size={22} />
+                              : <Icon name={theme === 'light' ? 'empty_sun' : 'empty_moon'} size={22} />
                             }
                           </button>
                         </td>
@@ -2006,9 +2061,6 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                     + Add
                   </button>
                 </div>
-                {activeDebts.length > 0 && (
-                  <p className="daily-tasks-subtitle">Tap the shell to give it some color.</p>
-                )}
                 <div style={{ overflowX: "auto" }}>
                   <table className="table">
                     <thead>
@@ -2045,8 +2097,8 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                                   alignItems: "center", justifyContent: "center",
                                 }}
                               >
-                                <Icon name="shellempty" size={22} />
-                              </button>
+                                <Icon name={theme === 'light' ? 'empty_sun' : 'empty_moon'} size={22} />
+            </button>
                             </td>
                             <td style={{ padding: "9px 8px" }}>
                               {i === 0
@@ -2098,8 +2150,8 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                                 alignItems: "center", justifyContent: "center",
                               }}
                             >
-                              <Icon name="shellfull" size={22} />
-                            </button>
+                            <Icon name={theme === 'light' ? 'full_sun' : 'full_moon'} size={22} />
+          </button>
                           </td>
                           <td style={{ padding: "9px 8px", textDecoration: "line-through", color: "var(--green-dark)", fontWeight: 700 }}>{d.name}</td>
                           <td style={{ padding: "9px 8px", color: "var(--green-dark)", fontWeight: 800 }}>$0.00</td>

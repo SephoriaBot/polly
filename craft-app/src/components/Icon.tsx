@@ -32,6 +32,7 @@ export type IconName =
   | 'creamhamster' | 'pinkhamster' | 'cupempty' | 'cupfull'
   | 'picnicempty' | 'picnicfull' | 'shellempty' | 'shellfull'
   | 'sugarempty' | 'sugarfull' | 'heartempty' | 'heartfull' | 'flowerfull' | 'flowerempty' | 'icon-clear'
+  | 'full_sun' | 'empty_sun' | 'full_moon' | 'empty_moon'
   | 'icon-recur' | 'shopping-cart' | 'toastempty' | 'toastfull'| 'pagedivider' | 'empty-wallet' | 'empty-dashboard'
   |  'empty-grocery' | 'empty-habitat' | 'empty-planner' | 'empty-trackers';
 

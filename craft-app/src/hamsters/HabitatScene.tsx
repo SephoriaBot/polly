@@ -39,6 +39,11 @@ const HABITAT_ITEMS: HabitatItem[] = [
   // extra transparent margin around the basket vs. its neighbors.
   { key: 'picnic', label: 'Picnic Basket', image: `${SHELF_PATH}/icon-picnic.png`, shelf: 1, scale: 1.6 },
   { key: 'veggies', label: 'Veggies', image: `${SHELF_PATH}/icon-veggies.png`, shelf: 1 },
+  // Oddities batch, moved here to even out shelf counts
+  { key: 'stitched-doll', label: 'Stitched Doll', image: `${SHELF_PATH}/stitched_doll.png`, shelf: 1 },
+  { key: 'skeleton-coin', label: 'Skeleton Coin', image: `${SHELF_PATH}/skeleton_coin.png`, shelf: 1 },
+  { key: 'ouija-planchette', label: 'Ouija Planchette', image: `${SHELF_PATH}/ouija_planchette.png`, shelf: 1 },
+  { key: 'ghost-bottle', label: 'Ghost in a Bottle', image: `${SHELF_PATH}/ghost_bottle.png`, shelf: 1 },
 
   // Shelf 2 — study & hobby corner
   { key: 'books', label: 'Books', image: `${SHELF_PATH}/icon-books.png`, shelf: 2 },
@@ -50,6 +55,10 @@ const HABITAT_ITEMS: HabitatItem[] = [
   { key: 'mirror', label: 'Mirror', image: `${SHELF_PATH}/icon-mirror.png`, shelf: 2 },
   { key: 'instapix', label: 'Instapix', image: `${SHELF_PATH}/icon-instapix.png`, shelf: 2 },
   { key: 'tv', label: 'TV', image: `${SHELF_PATH}/icon-tv.png`, shelf: 2 },
+  // Oddities batch, moved here to even out shelf counts
+  { key: 'astrolabe', label: 'Astrolabe', image: `${SHELF_PATH}/astrolabe.png`, shelf: 2 },
+  { key: 'music-box', label: 'Music Box', image: `${SHELF_PATH}/music_box.png`, shelf: 2 },
+  { key: 'clockwork-beetle', label: 'Clockwork Beetle', image: `${SHELF_PATH}/clockwork_beetle.png`, shelf: 2 },
 
   // Shelf 3 — cozy & botanical
   { key: 'candle', label: 'Candle', image: `${SHELF_PATH}/icon-candle.png`, shelf: 3 },
@@ -60,6 +69,11 @@ const HABITAT_ITEMS: HabitatItem[] = [
   { key: 'terrarium', label: 'Terrarium', image: `${SHELF_PATH}/icon-terrarium.png`, shelf: 3 },
   { key: 'mushroom', label: 'Mushroom', image: `${SHELF_PATH}/icon-mushroom.png`, shelf: 3 },
   { key: 'flowers', label: 'Flowers', image: `${SHELF_PATH}/icon-flowers.png`, shelf: 3 },
+  // Oddities batch, moved here to even out shelf counts
+  { key: 'black-candle', label: 'Black Candle', image: `${SHELF_PATH}/black_candle.png`, shelf: 3 },
+  { key: 'moon-cauldron', label: 'Moon Cauldron', image: `${SHELF_PATH}/moon_cauldron.png`, shelf: 3 },
+  { key: 'framed-butterfly', label: 'Framed Butterfly', image: `${SHELF_PATH}/framed_butterfly.png`, shelf: 3 },
+  { key: 'jackalope', label: 'Jackalope', image: `${SHELF_PATH}/jackalope.png`, shelf: 3 },
 
   // Shelf 4 (bottom) — curiosities
   { key: 'birdhouse', label: 'Birdhouse', image: `${SHELF_PATH}/icon-birdhouse.png`, shelf: 4 },
@@ -73,6 +87,11 @@ const HABITAT_ITEMS: HabitatItem[] = [
   { key: 'wheel', label: 'Wheel', image: `${SHELF_PATH}/icon-wheel.png`, shelf: 4 },
   { key: 'camera', label: 'Camera', image: `${SHELF_PATH}/item-camera.png`, shelf: 4 },
   { key: 'chest', label: 'Treasure Chest', image: `${SHELF_PATH}/item-chest.png`, shelf: 4 },
+  // Oddities batch — the rest stay here on their original curiosities shelf
+  { key: 'anatomical-heart', label: 'Anatomical Heart', image: `${SHELF_PATH}/anatomical_heart.png`, shelf: 4 },
+  { key: 'bound-bones', label: 'Bound Bones', image: `${SHELF_PATH}/bound_bones.png`, shelf: 4 },
+  { key: 'eyeball-jar', label: 'Eyeball Jar', image: `${SHELF_PATH}/eyeball_jar.png`, shelf: 4 },
+  { key: 'moth-skull', label: 'Moth Skull', image: `${SHELF_PATH}/moth_skull.png`, shelf: 4 },
 ];
 
 const SHELVES: { key: ShelfNum; label: string }[] = [
@@ -99,7 +118,7 @@ function costFor(key: string): number {
 const SHELF_BOTTOM: Record<ShelfNum, number> = {
   1: 81,
   2: 52,
-  3: 23,
+  3: 25,
   4: 0.5,
 };
 
@@ -136,14 +155,76 @@ interface HabitatThemeRow {
   decor_keys: string[] | null;
 }
 
+// Ambient lighting wash for the shelf, keyed to time of day. Interpolated
+// linearly between neighboring keyframes so it drifts gradually rather than
+// snapping — deep cool navy overnight, a soft peach dawn, fully clear
+// through the daytime hours, then a golden dusk sliding back into night.
+interface LightKeyframe {
+  hour: number;
+  rgb: [number, number, number];
+  opacity: number;
+}
+
+const LIGHT_KEYFRAMES: LightKeyframe[] = [
+  { hour: 0, rgb: [33, 27, 61], opacity: 0.42 }, // deep night
+  { hour: 5, rgb: [33, 27, 61], opacity: 0.42 },
+  { hour: 7, rgb: [246, 184, 138], opacity: 0.24 }, // dawn glow
+  { hour: 9, rgb: [246, 184, 138], opacity: 0 }, // full daylight
+  { hour: 17, rgb: [246, 184, 138], opacity: 0 },
+  { hour: 19, rgb: [232, 147, 95], opacity: 0.28 }, // golden dusk
+  { hour: 21, rgb: [46, 37, 85], opacity: 0.38 }, // twilight into night
+  { hour: 24, rgb: [33, 27, 61], opacity: 0.42 },
+];
+
+function lerp(a: number, b: number, t: number): number {
+  return a + (b - a) * t;
+}
+
+function shelfLighting(fractionalHour: number): string {
+  for (let i = 0; i < LIGHT_KEYFRAMES.length - 1; i++) {
+    const a = LIGHT_KEYFRAMES[i];
+    const b = LIGHT_KEYFRAMES[i + 1];
+    if (fractionalHour >= a.hour && fractionalHour <= b.hour) {
+      const t = (fractionalHour - a.hour) / (b.hour - a.hour);
+      const r = Math.round(lerp(a.rgb[0], b.rgb[0], t));
+      const g = Math.round(lerp(a.rgb[1], b.rgb[1], t));
+      const bl = Math.round(lerp(a.rgb[2], b.rgb[2], t));
+      const opacity = lerp(a.opacity, b.opacity, t);
+      return `rgba(${r}, ${g}, ${bl}, ${opacity.toFixed(3)})`;
+    }
+  }
+  const last = LIGHT_KEYFRAMES[LIGHT_KEYFRAMES.length - 1];
+  return `rgba(${last.rgb[0]}, ${last.rgb[1]}, ${last.rgb[2]}, ${last.opacity})`;
+}
+
+// Re-reads the clock once a minute so the wash drifts through the day
+// without needing a page reload.
+function useFractionalHour(): number {
+  const [hour, setHour] = useState(() => {
+    const now = new Date();
+    return now.getHours() + now.getMinutes() / 60;
+  });
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      const now = new Date();
+      setHour(now.getHours() + now.getMinutes() / 60);
+    }, 60000);
+    return () => clearInterval(id);
+  }, []);
+
+  return hour;
+}
+
 export default function HabitatScene() {
-  const { loading, points, spendPoints } = useHamsterGrowth();
+  const { loading, decorPoints, spendDecorPoints } = useHamsterGrowth();
   const [decor, setDecor] = useState<string[]>([]);
   const [unlocked, setUnlocked] = useState<string[]>([]);
   const [themeLoaded, setThemeLoaded] = useState(false);
   const [unlockingKey, setUnlockingKey] = useState<string | null>(null);
   const [unlockError, setUnlockError] = useState<string | null>(null);
   const [selectedShelf, setSelectedShelf] = useState<ShelfNum>(1);
+  const fractionalHour = useFractionalHour();
 
   // Load the saved theme + unlocked items once on mount.
   useEffect(() => {
@@ -224,7 +305,7 @@ export default function HabitatScene() {
     setUnlockingKey(key);
 
     const cost = costFor(key);
-    const result = await spendPoints(cost);
+    const result = await spendDecorPoints(cost);
 
     if (!result.ok) {
       setUnlockError(result.reason || "Couldn't unlock that yet");
@@ -278,7 +359,7 @@ export default function HabitatScene() {
               color: 'var(--ink-muted)',
             }}
           >
-            {points} pts
+            {decorPoints} pts
           </div>
         </div>
         <div
@@ -364,6 +445,19 @@ export default function HabitatScene() {
               );
             });
           })}
+          {/* Ambient lighting wash — sits above the shelf and every placed
+              item so the whole scene dims and warms together through the
+              day, rather than just tinting the background art. */}
+          <div
+            style={{
+              position: 'absolute',
+              inset: 0,
+              background: shelfLighting(fractionalHour),
+              zIndex: 50,
+              pointerEvents: 'none',
+              transition: 'background 3s ease',
+            }}
+          />
         </div>
         <div
           style={{
@@ -403,7 +497,7 @@ export default function HabitatScene() {
           }}
         >
           Pick up to {MAX_PER_SHELF} unlocked items per shelf. Locked items cost
-          points to unlock — same points that hatch and train your hamsters.
+          points to unlock — earned the same way hamster points are, but kept in a separate pool so decorating never affects hatching.
         </div>
         {unlockError && (
           <div
