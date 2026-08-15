@@ -217,7 +217,7 @@ function useFractionalHour(): number {
 }
 
 export default function HabitatScene() {
-  const { loading, points, spendPoints } = useHamsterGrowth();
+  const { loading, decorPoints, spendDecorPoints } = useHamsterGrowth();
   const [decor, setDecor] = useState<string[]>([]);
   const [unlocked, setUnlocked] = useState<string[]>([]);
   const [themeLoaded, setThemeLoaded] = useState(false);
@@ -305,7 +305,7 @@ export default function HabitatScene() {
     setUnlockingKey(key);
 
     const cost = costFor(key);
-    const result = await spendPoints(cost);
+    const result = await spendDecorPoints(cost);
 
     if (!result.ok) {
       setUnlockError(result.reason || "Couldn't unlock that yet");
@@ -359,7 +359,7 @@ export default function HabitatScene() {
               color: 'var(--ink-muted)',
             }}
           >
-            {points} pts
+            {decorPoints} pts
           </div>
         </div>
         <div
@@ -497,7 +497,7 @@ export default function HabitatScene() {
           }}
         >
           Pick up to {MAX_PER_SHELF} unlocked items per shelf. Locked items cost
-          points to unlock — same points that hatch and train your hamsters.
+          points to unlock — earned the same way hamster points are, but kept in a separate pool so decorating never affects hatching.
         </div>
         {unlockError && (
           <div
