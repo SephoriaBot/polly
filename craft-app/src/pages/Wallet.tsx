@@ -1276,13 +1276,6 @@ const billsByDate = useMemo(() => {
   }
 }
 
-    if (newPaid) {
-      setCelebration({ title: "BILL PAID!", subtitle: bill.name });
-      setShowConfetti(true);
-      setTimeout(() => setShowConfetti(false), 3200);
-    }
-  }
-
 async function updateMonthBill(
   bill: typeof monthBills[0],
   field: "name" | "amount" | "due_day",
