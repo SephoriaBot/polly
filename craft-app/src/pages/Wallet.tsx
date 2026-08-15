@@ -36,6 +36,7 @@ interface Bill {
   amount: number;
   due_day: number;
   recurring: boolean;
+  frequency: "weekly" | "biweekly" | "monthly" | "quarterly" | "yearly";
   bill_month?: number;
   bill_year?: number;
 }
@@ -300,8 +301,13 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
   const [anytimePay, setAnytimePay] = useState("");
   const [planNotes, setPlanNotes] = useState("");
   const [showBillForm, setShowBillForm] = useState(false);
-  const [newBill, setNewBill] = useState({ name: "", amount: "", due_day: "", recurring: true });
-  const [showConfetti, setShowConfetti] = useState(false);
+  const [newBill, setNewBill] = useState({
+  name: "",
+  amount: "",
+  due_day: "",
+  recurring: true,
+  frequency: "monthly" as "weekly" | "biweekly" | "monthly" | "quarterly" | "yearly",
+});  const [showConfetti, setShowConfetti] = useState(false);
   const [celebration, setCelebration] = useState<{ title: string; subtitle: string }>({ title: "", subtitle: "" });
 
   const [lists, setLists] = useState<ListDef[]>([]);
@@ -1062,14 +1068,15 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
   async function addBill() {
     if (!newBill.name || !newBill.amount || !newBill.due_day) return;
     const bill: Bill = {
-      id: nextBillId,
-      name: newBill.name,
-      amount: parseFloat(newBill.amount),
-      due_day: parseInt(newBill.due_day),
-      recurring: newBill.recurring,
-      bill_month: newBill.recurring ? undefined : selectedMonth,
-      bill_year: newBill.recurring ? undefined : selectedYear,
-    };
+  id: nextBillId,
+  name: newBill.name,
+  amount: parseFloat(newBill.amount),
+  due_day: parseInt(newBill.due_day),
+  recurring: newBill.recurring,
+  frequency: newBill.recurring ? newBill.frequency : "monthly",
+  bill_month: newBill.recurring ? undefined : selectedMonth,
+  bill_year: newBill.recurring ? undefined : selectedYear,
+};
     setBills(prev => [...prev, bill].sort((a, b) => a.due_day - b.due_day));
     setNextBillId(n => n + 1);
     await supabase.from("bills").insert(bill);
@@ -1906,6 +1913,46 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                           <input type="checkbox" checked={newBill.recurring} onChange={e => setNewBill(p => ({ ...p, recurring: e.target.checked }))} />
                           Recurring
                         </label>
+
+{newBill.recurring && (
+  <label style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+    <span style={{ fontSize: 11, color: "var(--ink-muted)", fontWeight: 700 }}>
+      FREQUENCY
+    </span>
+
+    <select
+      value={newBill.frequency}
+      onChange={e =>
+        setNewBill(prev => ({
+          ...prev,
+          frequency: e.target.value as
+            | "weekly"
+            | "biweekly"
+            | "monthly"
+            | "quarterly"
+            | "yearly",
+        }))
+      }
+      style={{
+        width: "100%",
+        padding: "9px 10px",
+        borderRadius: 10,
+        border: "1.5px solid var(--border)",
+        background: "var(--surface)",
+        color: "var(--ink)",
+        fontFamily: "inherit",
+        fontSize: 13,
+      }}
+    >
+      <option value="weekly">Weekly</option>
+      <option value="biweekly">Every 2 Weeks</option>
+      <option value="monthly">Monthly</option>
+      <option value="quarterly">Every 3 Months</option>
+      <option value="yearly">Yearly</option>
+    </select>
+  </label>
+)}
+
                       </div>
                     </div>
                     <button className="btn btn-green" style={{ justifyContent: "center" }} onClick={addBill}>Save Bill</button>
