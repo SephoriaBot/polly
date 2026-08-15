@@ -630,6 +630,7 @@ function getRecurringDates(
   const month = date.getMonth() + 1;
   const year = date.getFullYear();
 
+  // First: exact occurrence match.
   const exactPayment = payments.find(
     p =>
       p.bill_id === bill.id &&
@@ -640,7 +641,8 @@ function getRecurringDates(
     return exactPayment;
   }
 
-  // Preserve the original monthly payment system.
+  // For existing monthly records that predate payment_date,
+  // only use the record belonging to this exact month/year.
   if (
     (bill.frequency || "monthly") === "monthly" ||
     !bill.recurring
@@ -649,7 +651,8 @@ function getRecurringDates(
       p =>
         p.bill_id === bill.id &&
         p.month === month &&
-        p.year === year
+        p.year === year &&
+        !p.payment_date
     );
   }
 
