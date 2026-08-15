@@ -36,10 +36,14 @@ interface Bill {
   amount: number;
   due_day: number;
   recurring: boolean;
-  frequency?: "weekly" | "biweekly" | "monthly" | "quarterly" | "yearly";
-  frequency_start_date?: string;
   bill_month?: number;
   bill_year?: number;
+  // Frequency for recurring bills. Absent/undefined means the original
+  // behavior: once a month, on due_day. "week" lets a bill repeat every
+  // N weeks from a fixed anchor date (e.g. rent every 2 weeks).
+  frequency_unit?: "month" | "week";
+  frequency_interval?: number; // only meaningful when frequency_unit === "week"
+  anchor_date?: string | null; // ISO date, first occurrence — required for week-based bills
 }
 
 interface BillPayment {
@@ -52,7 +56,7 @@ interface BillPayment {
   name?: string;
   amount?: number;
   due_day?: number;
-  payment_date?: string;
+  due_date?: string; // ISO date — canonical occurrence date, lets a bill have multiple entries within one calendar month
 }
 
 interface DailyLog {
@@ -168,6 +172,37 @@ function daysUntilDue(dueDay: number, month: number, year: number) {
   const today = new Date();
   const due = new Date(year, month - 1, dueDay);
   return Math.ceil((due.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+}
+
+function isoDate(d: Date) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+function frequencyLabel(unit: "month" | "week" | undefined, interval: number | undefined) {
+  if (unit !== "week") return "Monthly";
+  const n = interval && interval > 0 ? interval : 1;
+  if (n === 1) return "Every week";
+  if (n === 2) return "Every 2 weeks";
+  return `Every ${n} weeks`;
+}
+
+// All occurrence dates for a week-based bill that fall within [rangeStart, rangeEnd] (inclusive).
+function weeklyOccurrencesInRange(anchor: Date, intervalWeeks: number, rangeStart: Date, rangeEnd: Date): Date[] {
+  const stepDays = Math.max(1, intervalWeeks) * 7;
+  let cursor = new Date(anchor);
+  if (cursor < rangeStart) {
+    const diffDays = Math.ceil((rangeStart.getTime() - cursor.getTime()) / (1000 * 60 * 60 * 24));
+    const steps = Math.ceil(diffDays / stepDays);
+    cursor = new Date(cursor);
+    cursor.setDate(cursor.getDate() + steps * stepDays);
+  }
+  const occurrences: Date[] = [];
+  while (cursor <= rangeEnd) {
+    occurrences.push(new Date(cursor));
+    cursor = new Date(cursor);
+    cursor.setDate(cursor.getDate() + stepDays);
+  }
+  return occurrences;
 }
 
 function hoursOfWork(amount: number, wage: number) {
@@ -304,12 +339,11 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
   const [planNotes, setPlanNotes] = useState("");
   const [showBillForm, setShowBillForm] = useState(false);
   const [newBill, setNewBill] = useState({
-  name: "",
-  amount: "",
-  due_day: "",
-  recurring: true,
-  frequency: "monthly" as "weekly" | "biweekly" | "monthly" | "quarterly" | "yearly",
-});
+    name: "", amount: "", due_day: "", recurring: true,
+    frequency_unit: "month" as "month" | "week",
+    frequency_interval: "1",
+    anchor_date: "",
+  });
   const [showConfetti, setShowConfetti] = useState(false);
   const [celebration, setCelebration] = useState<{ title: string; subtitle: string }>({ title: "", subtitle: "" });
 
@@ -495,6 +529,59 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
     loadData();
   }, []);
 
+  useEffect(() => {
+    async function ensurePaymentsExist() {
+      if (bills.length === 0) return;
+      const recurringBills = bills.filter(b => b.recurring);
+      const rangeStart = new Date(today.getFullYear(), today.getMonth(), 1);
+      const lastAvailable = availableMonths[availableMonths.length - 1];
+      // Last day of the furthest month currently in view (e.g. today + 3 months)
+      const rangeEnd = lastAvailable ? new Date(lastAvailable.year, lastAvailable.month, 0) : rangeStart;
+
+      for (const bill of recurringBills) {
+        if (bill.frequency_unit === "week" && bill.anchor_date) {
+          const anchor = new Date(bill.anchor_date + "T00:00:00");
+          const interval = bill.frequency_interval && bill.frequency_interval > 0 ? bill.frequency_interval : 1;
+          const occurrences = weeklyOccurrencesInRange(anchor, interval, rangeStart, rangeEnd);
+          for (const occDate of occurrences) {
+            const occKey = isoDate(occDate);
+            const exists = payments.some(p => p.bill_id === bill.id && p.due_date === occKey);
+            if (!exists) {
+              const newPayment: BillPayment = {
+                bill_id: bill.id,
+                month: occDate.getMonth() + 1,
+                year: occDate.getFullYear(),
+                due_day: occDate.getDate(),
+                due_date: occKey,
+                paid: false,
+                name: bill.name,
+                amount: bill.amount,
+              };
+              const { data } = await supabase.from("bill_payments").insert(newPayment).select().single();
+              if (data) setPayments(prev => [...prev, data]);
+            }
+          }
+        } else {
+          // Original monthly cadence — one occurrence per calendar month on due_day.
+          for (const { month, year } of availableMonths) {
+            const exists = payments.some(p => p.bill_id === bill.id && p.month === month && p.year === year);
+            if (!exists) {
+              const dueDate = new Date(year, month - 1, bill.due_day);
+              const newPayment: BillPayment = {
+                bill_id: bill.id, month, year, paid: false,
+                name: bill.name, amount: bill.amount, due_day: bill.due_day,
+                due_date: isoDate(dueDate),
+              };
+              const { data } = await supabase.from("bill_payments").insert(newPayment).select().single();
+              if (data) setPayments(prev => [...prev, data]);
+            }
+          }
+        }
+      }
+    }
+    ensurePaymentsExist();
+  }, [bills, availableMonths]);
+
   const { months, extraDebtPayment, totalMins } = useMemo(
   () =>
     runDebtPlan(
@@ -521,138 +608,6 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
   }
 
-function getRecurringDates(
-  bill: Bill,
-  startDate: Date,
-  endDate: Date
-): Date[] {
-  if (!bill.recurring) return [];
-
-  const frequency = bill.frequency || "monthly";
-
-  const anchor = bill.frequency_start_date
-    ? new Date(`${bill.frequency_start_date}T00:00:00`)
-    : new Date(
-        startDate.getFullYear(),
-        startDate.getMonth(),
-        Math.min(
-          bill.due_day,
-          new Date(
-            startDate.getFullYear(),
-            startDate.getMonth() + 1,
-            0
-          ).getDate()
-        )
-      );
-
-  const anchorDay = anchor.getDate();
-
-  function makeMonthDate(monthOffset: number) {
-    const totalMonths =
-      anchor.getFullYear() * 12 +
-      anchor.getMonth() +
-      monthOffset;
-
-    const year = Math.floor(totalMonths / 12);
-    const month = totalMonths % 12;
-
-    const lastDay = new Date(
-      year,
-      month + 1,
-      0
-    ).getDate();
-
-    return new Date(
-      year,
-      month,
-      Math.min(anchorDay, lastDay)
-    );
-  }
-
-  const dates: Date[] = [];
-
-  if (
-    frequency === "monthly" ||
-    frequency === "quarterly" ||
-    frequency === "yearly"
-  ) {
-    const step =
-      frequency === "monthly"
-        ? 1
-        : frequency === "quarterly"
-        ? 3
-        : 12;
-
-    let monthOffset = 0;
-    let current = makeMonthDate(monthOffset);
-
-    while (current < startDate) {
-      monthOffset += step;
-      current = makeMonthDate(monthOffset);
-    }
-
-    while (current <= endDate) {
-      if (current >= startDate) {
-        dates.push(new Date(current));
-      }
-
-      monthOffset += step;
-      current = makeMonthDate(monthOffset);
-    }
-
-    return dates;
-  }
-  
-  const stepDays = frequency === "weekly" ? 7 : 14;
-
-  let current = new Date(anchor);
-
-  while (current < startDate) {
-    current.setDate(current.getDate() + stepDays);
-  }
-
-  while (current <= endDate) {
-    if (current >= startDate) {
-      dates.push(new Date(current));
-    }
-
-    current.setDate(current.getDate() + stepDays);
-  }
-
-  return dates;
-}
-
-  function getPaymentForOccurrence(
-  bill: Bill,
-  occurrenceDate: string
-) {
-  const occurrence = new Date(
-    `${occurrenceDate}T00:00:00`
-  );
-
-  const month = occurrence.getMonth() + 1;
-  const year = occurrence.getFullYear();
-
-  const frequency = bill.frequency || "monthly";
-
-  // Monthly bills use the existing month/year payment system.
-  // This preserves the behavior Polly had before frequency was added.
-  if (frequency === "monthly") {
-    return payments.find(
-      p =>
-        p.bill_id === bill.id &&
-        p.month === month &&
-        p.year === year
-    );
-  }
-
-  // Other frequencies need individual occurrences.
-  return payments.find(
-    p =>
-      p.bill_id === bill.id &&
-      p.payment_date === occurrenceDate
-  );
-}
   const calendarWeeks = useMemo(() => {
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -665,75 +620,52 @@ function getRecurringDates(
     return { week1: days.slice(0, 7), week2: days.slice(7, 14) };
   }, []);
 
-const billsByDate = useMemo(() => {
-  const map: Record<
-    string,
-    {
-      id: number;
-      name: string;
-      amount: number;
-    }[]
-  > = {};
+  const billsByDate = useMemo(() => {
+    const map: Record<string, { id: number; name: string; amount: number }[]> = {};
+    const allDays = [...calendarWeeks.week1, ...calendarWeeks.week2];
+    const monthsInView = new Set(allDays.map(d => `${d.getFullYear()}-${d.getMonth() + 1}`));
 
-  const allDays = [
-    ...calendarWeeks.week1,
-    ...calendarWeeks.week2,
-  ];
+    bills.forEach(bill => {
+      if (bill.recurring) {
+        monthsInView.forEach(key => {
+          const [y, m] = key.split("-").map(Number);
+          const occurrences = payments.filter(p => p.bill_id === bill.id && p.month === m && p.year === y);
 
-  if (allDays.length === 0) return map;
+          if (occurrences.length === 0) {
+            // Payment row(s) not generated yet (race with ensurePaymentsExist on
+            // first load) — synthesize a single fallback so the calendar doesn't
+            // blank out momentarily. Only meaningful for the monthly cadence;
+            // weekly bills will fill in for real within a moment.
+            const dueDate = new Date(y, m - 1, bill.due_day);
+            const dKey = dateKey(dueDate);
+            if (!map[dKey]) map[dKey] = [];
+            map[dKey].push({ id: bill.id, name: bill.name, amount: bill.amount });
+            return;
+          }
 
-  const startDate = allDays[0];
-  const endDate = allDays[allDays.length - 1];
-
-  bills.forEach(bill => {
-    let occurrenceDates: Date[] = [];
-
-    if (bill.recurring) {
-      occurrenceDates = getRecurringDates(
-        bill,
-        startDate,
-        endDate
-      );
-    } else if (bill.bill_month && bill.bill_year) {
-      occurrenceDates = [
-        new Date(
-          bill.bill_year,
-          bill.bill_month - 1,
-          bill.due_day
-        ),
-      ];
-    }
-
-    occurrenceDates.forEach(occurrenceDate => {
-      const occurrenceKey = dateKey(occurrenceDate);
-
-      const payment = getPaymentForOccurrence(
-        bill,
-        occurrenceKey
-      );
-
-      if (payment?.paid) return;
-
-      const name =
-        payment?.name ?? bill.name;
-
-      const amount =
-        payment?.amount ?? bill.amount;
-
-      if (!map[occurrenceKey]) {
-        map[occurrenceKey] = [];
+          occurrences.forEach(payment => {
+            if (payment.paid) return;
+            const effectiveDueDay = payment.due_day ?? bill.due_day;
+            const amount = payment.amount ?? bill.amount;
+            const name = payment.name ?? bill.name;
+            const dueDate = payment.due_date ? new Date(payment.due_date + "T00:00:00") : new Date(y, m - 1, effectiveDueDay);
+            const dKey = dateKey(dueDate);
+            if (!map[dKey]) map[dKey] = [];
+            map[dKey].push({ id: bill.id, name, amount });
+          });
+        });
+      } else if (bill.bill_month && bill.bill_year) {
+        const payment = payments.find(p => p.bill_id === bill.id && p.month === bill.bill_month && p.year === bill.bill_year);
+        const paid = payment?.paid ?? false;
+        if (paid) return;
+        const dueDate = new Date(bill.bill_year, bill.bill_month - 1, bill.due_day);
+        const dKey = dateKey(dueDate);
+        if (!map[dKey]) map[dKey] = [];
+        map[dKey].push({ id: bill.id, name: bill.name, amount: bill.amount });
       }
-
-      map[occurrenceKey].push({
-        id: bill.id,
-        name,
-        amount,
-      });
     });
-  });
-
-  return map;
-}, [bills, payments, calendarWeeks]);
+    return map;
+  }, [bills, payments, calendarWeeks]);
 
   const [dailyHours, setDailyHours] = useState<Record<string, { reg: string; ot: string }>>({});
   const dailyHoursSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -946,101 +878,52 @@ const billsByDate = useMemo(() => {
   const week1Result = { rows: moneyCalendarResult.rows.slice(0, 7) };
   const week2Result = { rows: moneyCalendarResult.rows.slice(7, 14) };
 
- const monthBills = useMemo(() => {
-  const monthStart = new Date(
-    selectedYear,
-    selectedMonth - 1,
-    1
-  );
+  const monthBills = useMemo(() => {
+    const rows: (Bill & { name: string; amount: number; due_day: number; paid: boolean; late: boolean; days: number; paymentId?: number })[] = [];
 
-  const monthEnd = new Date(
-    selectedYear,
-    selectedMonth,
-    0
-  );
+    bills.forEach(bill => {
+      if (bill.recurring) {
+        const occurrences = payments.filter(p => p.bill_id === bill.id && p.month === selectedMonth && p.year === selectedYear);
 
-  const rows: any[] = [];
+        if (occurrences.length === 0) {
+          // Fallback row while ensurePaymentsExist is still generating this month's payment(s)
+          const due_day = bill.due_day;
+          rows.push({
+            ...bill, name: bill.name, amount: bill.amount, due_day, paid: false,
+            late: isLate(due_day, selectedMonth, selectedYear, false),
+            days: daysUntilDue(due_day, selectedMonth, selectedYear),
+            paymentId: undefined,
+          });
+          return;
+        }
 
-  bills.forEach(bill => {
-    let occurrenceDates: Date[] = [];
-
-    if (bill.recurring) {
-      occurrenceDates = getRecurringDates(
-        bill,
-        monthStart,
-        monthEnd
-      );
-    } else if (
-      bill.bill_month === selectedMonth &&
-      bill.bill_year === selectedYear
-    ) {
-      occurrenceDates = [
-        new Date(
-          selectedYear,
-          selectedMonth - 1,
-          bill.due_day
-        ),
-      ];
-    }
-
-    occurrenceDates.forEach(occurrenceDate => {
-      const occurrenceDateKey =
-        dateKey(occurrenceDate);
-
-      const payment =
-        getPaymentForOccurrence(
-          bill,
-          occurrenceDateKey
-        );
-
-      const paid = payment?.paid ?? false;
-
-      const name =
-        payment?.name ?? bill.name;
-
-      const amount =
-        payment?.amount ?? bill.amount;
-
-      const due_day =
-        payment?.due_day ??
-        occurrenceDate.getDate();
-
-      rows.push({
-        ...bill,
-        name,
-        amount,
-        due_day,
-        paid,
-        late: isLate(
-          due_day,
-          selectedMonth,
-          selectedYear,
-          paid
-        ),
-        days: daysUntilDue(
-          due_day,
-          selectedMonth,
-          selectedYear
-        ),
-        paymentId: payment?.id,
-        occurrenceDate: occurrenceDateKey,
-      });
+        occurrences.forEach(payment => {
+          const paid = payment.paid ?? false;
+          const name = payment.name ?? bill.name;
+          const amount = payment.amount ?? bill.amount;
+          const due_day = payment.due_day ?? bill.due_day;
+          rows.push({
+            ...bill, name, amount, due_day, paid,
+            late: isLate(due_day, selectedMonth, selectedYear, paid),
+            days: daysUntilDue(due_day, selectedMonth, selectedYear),
+            paymentId: payment.id,
+          });
+        });
+      } else if (bill.bill_month === selectedMonth && bill.bill_year === selectedYear) {
+        const payment = payments.find(p => p.bill_id === bill.id && p.month === selectedMonth && p.year === selectedYear);
+        const paid = payment?.paid ?? false;
+        const due_day = bill.due_day;
+        rows.push({
+          ...bill, name: bill.name, amount: bill.amount, due_day, paid,
+          late: isLate(due_day, selectedMonth, selectedYear, paid),
+          days: daysUntilDue(due_day, selectedMonth, selectedYear),
+          paymentId: payment?.id,
+        });
+      }
     });
-  });
 
-  return rows.sort((a, b) => {
-    if (a.due_day !== b.due_day) {
-      return a.due_day - b.due_day;
-    }
-
-    return a.id - b.id;
-  });
-}, [
-  bills,
-  payments,
-  selectedMonth,
-  selectedYear,
-]);
+    return rows.sort((a, b) => a.due_day - b.due_day);
+  }, [bills, payments, selectedMonth, selectedYear]);
 
   const urgentBills = monthBills.filter(b => !b.paid && b.days <= 7 && b.days >= 0);
   const near3Bills = monthBills.filter(b => !b.paid && (b.late || (b.days <= 3 && b.days >= 0)));
@@ -1181,202 +1064,46 @@ const billsByDate = useMemo(() => {
     if (updates.length > 0) setDebts(updatedDebts);
   }
 
-  async function togglePaid(
-  bill: typeof monthBills[0]
-) {
-  const newPaid = !bill.paid;
-
-  if (bill.paymentId) {
-    const { error } = await supabase
-      .from("bill_payments")
-      .update({
-        paid: newPaid,
-        paid_at: newPaid
-          ? new Date().toISOString()
-          : null,
-      })
-      .eq("id", bill.paymentId);
-
-    if (error) {
-      console.error(
-        "togglePaid update failed:",
-        error
-      );
-      return;
-    }
-
-    setPayments(prev =>
-      prev.map(p =>
-        p.id === bill.paymentId
-          ? {
-              ...p,
-              paid: newPaid,
-              paid_at: newPaid
-                ? new Date().toISOString()
-                : undefined,
-            }
-          : p
-      )
-    );
-  } else {
-    const occurrenceDate = bill.occurrenceDate;
-
-    const date = new Date(
-      `${occurrenceDate}T00:00:00`
-    );
-
-    const newPayment: BillPayment = {
-      bill_id: bill.id,
-      month: date.getMonth() + 1,
-      year: date.getFullYear(),
-      paid: newPaid,
-      paid_at: newPaid
-        ? new Date().toISOString()
-        : undefined,
-      payment_date:
-  bill.frequency && bill.frequency !== "monthly"
-    ? occurrenceDate
-    : undefined,
-      name: bill.name,
-      amount: bill.amount,
-      due_day: bill.due_day,
-    };
-
-    const { data, error } = await supabase
-      .from("bill_payments")
-      .insert(newPayment)
-      .select()
-      .single();
-
-    if (error) {
-      console.error(
-        "togglePaid insert failed:",
-        error
-      );
-      return;
-    }
-
-    if (data) {
-      setPayments(prev => [...prev, data]);
-    }
-  }
-
-  if (newPaid) {
-    setCelebration({
-      title: "BILL PAID!",
-      subtitle: bill.name,
-    });
-
-    setShowConfetti(true);
-
-    setTimeout(
-      () => setShowConfetti(false),
-      3200
-    );
-  }
-}
-
-async function updateMonthBill(
-  bill: typeof monthBills[0],
-  field: "name" | "amount" | "due_day",
-  value: string | number
-) {
-  if (bill.recurring) {
+  async function togglePaid(bill: typeof monthBills[0]) {
+    const newPaid = !bill.paid;
     if (bill.paymentId) {
-      const { error } = await supabase
-        .from("bill_payments")
-        .update({
-          [field]: value,
-        })
-        .eq("id", bill.paymentId);
-
-      if (error) {
-        console.error(
-          "updateMonthBill failed:",
-          error
-        );
-        return;
-      }
-
-      setPayments(prev =>
-        prev.map(p =>
-          p.id === bill.paymentId
-            ? {
-                ...p,
-                [field]: value,
-              }
-            : p
-        )
-      );
+      await supabase.from("bill_payments").update({ paid: newPaid, paid_at: newPaid ? new Date().toISOString() : null }).eq("id", bill.paymentId);
+      setPayments(prev => prev.map(p => p.id === bill.paymentId ? { ...p, paid: newPaid } : p));
     } else {
-      const occurrenceDate =
-        bill.occurrenceDate;
-
-      const date = new Date(
-        `${occurrenceDate}T00:00:00`
-      );
-
-      const newPayment: BillPayment = {
-        bill_id: bill.id,
-        month: date.getMonth() + 1,
-        year: date.getFullYear(),
-        paid: false,
-        payment_date: occurrenceDate,
-        name: bill.name,
-        amount: bill.amount,
-        due_day: bill.due_day,
-        [field]: value,
-      };
-
-      const { data, error } = await supabase
-        .from("bill_payments")
-        .insert(newPayment)
-        .select()
-        .single();
-
-      if (error) {
-        console.error(
-          "updateMonthBill insert failed:",
-          error
-        );
-        return;
-      }
-
-      if (data) {
-        setPayments(prev => [
-          ...prev,
-          data,
-        ]);
-      }
-    }
-  } else {
-    const { error } = await supabase
-      .from("bills")
-      .update({
-        [field]: value,
-      })
-      .eq("id", bill.id);
-
-    if (error) {
-      console.error(
-        "updateMonthBill (bills) failed:",
-        error
-      );
-      return;
+      const newPayment: BillPayment = { bill_id: bill.id, month: selectedMonth, year: selectedYear, paid: newPaid, paid_at: newPaid ? new Date().toISOString() : undefined };
+      const { data } = await supabase.from("bill_payments").insert(newPayment).select().single();
+      if (data) setPayments(prev => [...prev, data]);
     }
 
-    setBills(prev =>
-      prev.map(b =>
-        b.id === bill.id
-          ? {
-              ...b,
-              [field]: value,
-            }
-          : b
-      )
-    );
+    if (newPaid) {
+      setCelebration({ title: "BILL PAID!", subtitle: bill.name });
+      setShowConfetti(true);
+      setTimeout(() => setShowConfetti(false), 3200);
+    }
   }
-}
+
+  async function updateMonthBill(bill: typeof monthBills[0], field: "name" | "amount" | "due_day", value: string | number) {
+    if (bill.recurring) {
+      if (bill.paymentId) {
+        const { error } = await supabase.from("bill_payments").update({ [field]: value }).eq("id", bill.paymentId);
+        if (error) { console.error("updateMonthBill failed:", error); return; }
+        setPayments(prev => prev.map(p => p.id === bill.paymentId ? { ...p, [field]: value } : p));
+      } else {
+        const newPayment: BillPayment = {
+          bill_id: bill.id, month: selectedMonth, year: selectedYear, paid: false,
+          name: bill.name, amount: bill.amount, due_day: bill.due_day,
+          [field]: value,
+        };
+        const { data, error } = await supabase.from("bill_payments").insert(newPayment).select().single();
+        if (error) { console.error("updateMonthBill insert failed:", error); return; }
+        if (data) setPayments(prev => [...prev, data]);
+      }
+    } else {
+      const { error } = await supabase.from("bills").update({ [field]: value }).eq("id", bill.id);
+      if (error) { console.error("updateMonthBill (bills) failed:", error); return; }
+      setBills(prev => prev.map(b => b.id === bill.id ? { ...b, [field]: value } : b));
+    }
+  }
 
   async function saveLog() {
     const amount = pay;
@@ -1455,53 +1182,33 @@ async function updateMonthBill(
   }
 
   async function addBill() {
-  if (!newBill.name || !newBill.amount || !newBill.due_day) return;
+    const isWeekly = newBill.recurring && newBill.frequency_unit === "week";
+    if (!newBill.name || !newBill.amount) return;
+    if (isWeekly ? !newBill.anchor_date : !newBill.due_day) return;
 
-  const dueDay = parseInt(newBill.due_day);
+    const interval = Math.max(1, parseInt(newBill.frequency_interval) || 1);
+    const due_day = isWeekly
+      ? parseInt(newBill.anchor_date.split("-")[2], 10)
+      : parseInt(newBill.due_day);
 
-  const startDate = newBill.recurring
-    ? `${selectedYear}-${String(selectedMonth).padStart(2, "0")}-${String(
-        Math.min(dueDay, new Date(selectedYear, selectedMonth, 0).getDate())
-      ).padStart(2, "0")}`
-    : undefined;
-
-  const bill: Bill = {
-    id: nextBillId,
-    name: newBill.name,
-    amount: parseFloat(newBill.amount),
-    due_day: dueDay,
-    recurring: newBill.recurring,
-    frequency: newBill.recurring ? newBill.frequency : "monthly",
-    frequency_start_date: startDate,
-    bill_month: newBill.recurring ? undefined : selectedMonth,
-    bill_year: newBill.recurring ? undefined : selectedYear,
-  };
-
-  const { error } = await supabase
-    .from("bills")
-    .insert(bill);
-
-  if (error) {
-    console.error("addBill failed:", error);
-    return;
+    const bill: Bill = {
+      id: nextBillId,
+      name: newBill.name,
+      amount: parseFloat(newBill.amount),
+      due_day,
+      recurring: newBill.recurring,
+      bill_month: newBill.recurring ? undefined : selectedMonth,
+      bill_year: newBill.recurring ? undefined : selectedYear,
+      frequency_unit: newBill.recurring ? newBill.frequency_unit : undefined,
+      frequency_interval: isWeekly ? interval : undefined,
+      anchor_date: isWeekly ? newBill.anchor_date : null,
+    };
+    setBills(prev => [...prev, bill].sort((a, b) => a.due_day - b.due_day));
+    setNextBillId(n => n + 1);
+    await supabase.from("bills").insert(bill);
+    setNewBill({ name: "", amount: "", due_day: "", recurring: true, frequency_unit: "month", frequency_interval: "1", anchor_date: "" });
+    setShowBillForm(false);
   }
-
-  setBills(prev =>
-    [...prev, bill].sort((a, b) => a.due_day - b.due_day)
-  );
-
-  setNextBillId(n => n + 1);
-
-  setNewBill({
-    name: "",
-    amount: "",
-    due_day: "",
-    recurring: true,
-    frequency: "monthly",
-  });
-
-  setShowBillForm(false);
-}
 
   async function removeBill(id: number) {
     setBills(prev => prev.filter(b => b.id !== id));
@@ -2323,49 +2030,44 @@ async function updateMonthBill(
                         <div className="form-label">Amount ($)</div>
                         <input className="form-input" type="number" placeholder="e.g. 1375" value={newBill.amount} onChange={e => setNewBill(p => ({ ...p, amount: e.target.value }))} />
                       </div>
-                      <div>
-                        <div className="form-label">Due Day</div>
-                        <input className="form-input" type="number" placeholder="e.g. 1" value={newBill.due_day} onChange={e => setNewBill(p => ({ ...p, due_day: e.target.value }))} />
-                      </div>
-                     <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-  <label style={{ fontSize: 13, color: "var(--ink)", display: "flex", alignItems: "center", gap: 6, fontWeight: 600 }}>
-    <input
-      type="checkbox"
-      checked={newBill.recurring}
-      onChange={e =>
-        setNewBill(p => ({
-          ...p,
-          recurring: e.target.checked,
-        }))
-      }
-    />
-    Recurring
-  </label>
 
-  {newBill.recurring && (
-    <select
-      className="form-input"
-      value={newBill.frequency}
-      onChange={e =>
-        setNewBill(p => ({
-          ...p,
-          frequency: e.target.value as
-            | "weekly"
-            | "biweekly"
-            | "monthly"
-            | "quarterly"
-            | "yearly",
-        }))
-      }
-    >
-      <option value="weekly">Weekly</option>
-      <option value="biweekly">Every 2 Weeks</option>
-      <option value="monthly">Monthly</option>
-      <option value="quarterly">Every 3 Months</option>
-      <option value="yearly">Yearly</option>
-    </select>
-  )}
-</div>
+                      <div style={{ display: "flex", alignItems: "flex-end" }}>
+                        <label style={{ fontSize: 13, color: "var(--ink)", display: "flex", alignItems: "center", gap: 6, fontWeight: 600 }}>
+                          <input type="checkbox" checked={newBill.recurring} onChange={e => setNewBill(p => ({ ...p, recurring: e.target.checked }))} />
+                          Recurring
+                        </label>
+                      </div>
+                      {newBill.recurring && (
+                        <div>
+                          <div className="form-label">Frequency</div>
+                          <select
+                            className="form-input"
+                            value={newBill.frequency_unit}
+                            onChange={e => setNewBill(p => ({ ...p, frequency_unit: e.target.value as "month" | "week" }))}
+                          >
+                            <option value="month">Once a month</option>
+                            <option value="week">Every N weeks</option>
+                          </select>
+                        </div>
+                      )}
+
+                      {newBill.recurring && newBill.frequency_unit === "week" ? (
+                        <>
+                          <div>
+                            <div className="form-label">First Due Date</div>
+                            <input className="form-input" type="date" value={newBill.anchor_date} onChange={e => setNewBill(p => ({ ...p, anchor_date: e.target.value }))} />
+                          </div>
+                          <div>
+                            <div className="form-label">Every how many weeks?</div>
+                            <input className="form-input" type="number" min="1" placeholder="e.g. 2" value={newBill.frequency_interval} onChange={e => setNewBill(p => ({ ...p, frequency_interval: e.target.value }))} />
+                          </div>
+                        </>
+                      ) : (
+                        <div>
+                          <div className="form-label">Due Day</div>
+                          <input className="form-input" type="number" placeholder="e.g. 1" value={newBill.due_day} onChange={e => setNewBill(p => ({ ...p, due_day: e.target.value }))} />
+                        </div>
+                      )}
                     </div>
                     <button className="btn btn-green" style={{ justifyContent: "center" }} onClick={addBill}>Save Bill</button>
                   </div>
@@ -2390,7 +2092,7 @@ async function updateMonthBill(
                     ) : (
                   <tbody>
                     {monthBills.map((b, i) => (
-                      <tr key={b.id} style={{ background: b.late ? "var(--danger-bg)" : b.paid ? "var(--sage-light)" : i % 2 === 0 ? "transparent" : "var(--accent)" }}>
+                      <tr key={b.paymentId ?? `${b.id}-fallback`} style={{ background: b.late ? "var(--danger-bg)" : b.paid ? "var(--sage-light)" : i % 2 === 0 ? "transparent" : "var(--accent)" }}>
                         <td style={{ padding: "9px 8px" }}>
                           <button
                             onClick={() => togglePaid(b)}
@@ -2410,6 +2112,9 @@ async function updateMonthBill(
                         </td>
                         <td style={{ padding: "9px 8px", textDecoration: b.paid ? "line-through" : "none" }}>
                           <EditableCell value={b.name} onChange={v => updateMonthBill(b, "name", v)} type="text" style={{ color: b.paid ? "var(--ink-muted)" : "var(--ink)", fontWeight: 600 }} />
+                          {b.recurring && b.frequency_unit === "week" && (
+                            <div style={{ fontSize: 10, color: "var(--ink-muted)", marginTop: 2 }}>{frequencyLabel(b.frequency_unit, b.frequency_interval)}</div>
+                          )}
                         </td>
                         <td style={{ padding: "9px 8px", textDecoration: b.paid ? "line-through" : "none" }}>
                           <EditableCell value={b.amount} onChange={v => updateMonthBill(b, "amount", parseFloat(v) || 0)} style={{ color: b.paid ? "var(--ink-muted)" : "var(--pink-dark)", fontWeight: 700 }} />
