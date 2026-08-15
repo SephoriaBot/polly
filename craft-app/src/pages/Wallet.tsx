@@ -1158,23 +1158,44 @@ const billsByDate = useMemo(() => {
   }
 
   async function addBill() {
-    if (!newBill.name || !newBill.amount || !newBill.due_day) return;
-    const bill: Bill = {
-  id: nextBillId,
-  name: newBill.name,
-  amount: parseFloat(newBill.amount),
-  due_day: parseInt(newBill.due_day),
-  recurring: newBill.recurring,
-  frequency: newBill.recurring ? newBill.frequency : "monthly",
-  bill_month: newBill.recurring ? undefined : selectedMonth,
-  bill_year: newBill.recurring ? undefined : selectedYear,
-};
-    setBills(prev => [...prev, bill].sort((a, b) => a.due_day - b.due_day));
-    setNextBillId(n => n + 1);
-    await supabase.from("bills").insert(bill);
-    setNewBill({ name: "", amount: "", due_day: "", recurring: true });
-    setShowBillForm(false);
+  if (!newBill.name || !newBill.amount || !newBill.due_day) return;
+
+  const bill: Bill = {
+    id: nextBillId,
+    name: newBill.name,
+    amount: parseFloat(newBill.amount),
+    due_day: parseInt(newBill.due_day),
+    recurring: newBill.recurring,
+    frequency: newBill.recurring ? newBill.frequency : "monthly",
+    bill_month: newBill.recurring ? undefined : selectedMonth,
+    bill_year: newBill.recurring ? undefined : selectedYear,
+  };
+
+  setBills(prev =>
+    [...prev, bill].sort((a, b) => a.due_day - b.due_day)
+  );
+
+  setNextBillId(n => n + 1);
+
+  const { error } = await supabase
+    .from("bills")
+    .insert(bill);
+
+  if (error) {
+    console.error("addBill failed:", error);
+    return;
   }
+
+  setNewBill({
+    name: "",
+    amount: "",
+    due_day: "",
+    recurring: true,
+    frequency: "monthly",
+  });
+
+  setShowBillForm(false);
+}
 
   async function removeBill(id: number) {
     setBills(prev => prev.filter(b => b.id !== id));
