@@ -1282,7 +1282,7 @@ const billsByDate = useMemo(() => {
       setTimeout(() => setShowConfetti(false), 3200);
     }
   }
-
+}
 async function updateMonthBill(
   bill: typeof monthBills[0],
   field: "name" | "amount" | "due_day",
@@ -1383,7 +1383,7 @@ async function updateMonthBill(
       )
     );
   }
-}}
+}
 
   async function saveLog() {
     const amount = pay;
