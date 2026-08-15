@@ -20,6 +20,7 @@ interface Focus {
   completed: boolean;
   date: string;
   carried_over: boolean;
+  priority: boolean;
 }
 
 
@@ -96,12 +97,33 @@ async function loadAll() {
     if (data) setFocuses(prev => prev.map(f => f.id === focus.id ? data : f));
   }
 
+  async function togglePriority(focus: Focus) {
+  const { data } = await supabase
+    .from('focuses')
+    .update({ priority: !focus.priority })
+    .eq('id', focus.id)
+    .select()
+    .single();
+
+  if (data) {
+    setFocuses(prev =>
+      prev.map(f => f.id === focus.id ? data : f)
+    );
+  }
+}
+
+
   async function deleteFocus(id: string) {
     await supabase.from('focuses').delete().eq('id', id);
     setFocuses(prev => prev.filter(f => f.id !== id));
   }
 
   const completedFocuses = focuses.filter(f => f.completed).length;
+
+  const sortedFocuses = [...focuses].sort((a, b) => {
+  if (a.priority !== b.priority) return a.priority ? -1 : 1;
+  return 0;
+});
 
   return (
     <div>
@@ -210,7 +232,7 @@ async function loadAll() {
     
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {focuses.map(f => (
+              {sortedFocuses.map(f => (
                 <div
                   key={f.id}
                   style={{
@@ -237,6 +259,29 @@ async function loadAll() {
                           : <Icon name={theme === 'light' ? 'empty_sun' : 'empty_moon'} size={22} style={{ color: 'var(--border)' }} />
                         }
                       </button>
+
+
+    <button
+  onClick={() => togglePriority(f)}
+  aria-label={f.priority ? 'Remove priority' : 'Mark as priority'}
+  title={f.priority ? 'Remove priority' : 'Mark as priority'}
+  style={{
+    width: 24,
+    height: 24,
+    flexShrink: 0,
+    border: 'none',
+    background: 'none',
+    padding: 0,
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    color: f.priority ? 'var(--pink-dark)' : 'var(--ink-muted)',
+    fontSize: '1rem',
+  }}
+>
+  {f.priority ? '★' : '☆'}
+</button>
 
                   <div style={{ flex: 1 }}>
                     <div style={{
