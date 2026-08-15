@@ -37,6 +37,7 @@ interface Bill {
   due_day: number;
   recurring: boolean;
   frequency: "weekly" | "biweekly" | "monthly" | "quarterly" | "yearly";
+frequency_start_date?: string;
   bill_month?: number;
   bill_year?: number;
 }
