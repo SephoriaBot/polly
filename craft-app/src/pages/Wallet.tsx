@@ -626,17 +626,18 @@ function getRecurringDates(
   bill: Bill,
   occurrenceDate: string
 ) {
-  const date = new Date(`${occurrenceDate}T00:00:00`);
-  const month = date.getMonth() + 1;
-  const year = date.getFullYear();
+  const occurrence = new Date(
+    `${occurrenceDate}T00:00:00`
+  );
 
-  // Monthly recurring bills use the existing month/year
-  // payment system. A paid August payment therefore
-  // cannot mark September paid.
-  if (
-    !bill.frequency ||
-    bill.frequency === "monthly"
-  ) {
+  const month = occurrence.getMonth() + 1;
+  const year = occurrence.getFullYear();
+
+  const frequency = bill.frequency || "monthly";
+
+  // Monthly bills use the existing month/year payment system.
+  // This preserves the behavior Polly had before frequency was added.
+  if (frequency === "monthly") {
     return payments.find(
       p =>
         p.bill_id === bill.id &&
@@ -645,15 +646,13 @@ function getRecurringDates(
     );
   }
 
-  // Weekly / biweekly / quarterly / yearly bills
-  // use the individual occurrence date.
+  // Other frequencies need individual occurrences.
   return payments.find(
     p =>
       p.bill_id === bill.id &&
       p.payment_date === occurrenceDate
   );
 }
-
   const calendarWeeks = useMemo(() => {
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -1234,7 +1233,10 @@ const billsByDate = useMemo(() => {
       paid_at: newPaid
         ? new Date().toISOString()
         : undefined,
-      payment_date: occurrenceDate,
+      payment_date:
+  bill.frequency && bill.frequency !== "monthly"
+    ? occurrenceDate
+    : undefined,
       name: bill.name,
       amount: bill.amount,
       due_day: bill.due_day,
