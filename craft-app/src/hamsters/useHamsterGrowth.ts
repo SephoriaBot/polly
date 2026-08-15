@@ -110,6 +110,12 @@ export const SOURCE_LABELS: Record<string, { text: string; icon: IconName }> = {
 export function useHamsterGrowthState() {
   const [points, setPoints] = useState(0);
   const [threshold, setThreshold] = useState(100);
+  // Separate currency from `points` — `points` drives hatching/evolution
+  // via the threshold above; `decorPoints` is spent unlocking shelf items
+  // in the Habitat and never touches the hatch balance. Both are credited
+  // together by the same accomplishments (see addPoints), but spending one
+  // has zero effect on the other.
+  const [decorPoints, setDecorPoints] = useState(0);
   const [collection, setCollection] = useState<HamsterCollectionEntry[]>([]);
   const [recentPoints, setRecentPoints] = useState<PointsLogEntry[]>([]);
   const [loading, setLoading] = useState(true);
@@ -383,6 +389,20 @@ export function useHamsterGrowthState() {
       // as if newPoints is safely saved.
       reportError("Save points/threshold", growthSaveError);
 
+      // Credit the separate decor pool by the same amount. Read-then-write
+      // like the growth save above — good enough for this app's traffic,
+      // consistent with how every other balance here is persisted. Kept
+      // independent of the hatch loop above on purpose: unlocking a shelf
+      // item should never be able to affect whether a hamster hatches.
+      const { data: decorRow } = await supabase.from("habitat_points").select("points").eq("id", 1).maybeSingle();
+      const newDecorPoints = (Number(decorRow?.points) || 0) + amount;
+      const { error: decorSaveError } = await supabase
+        .from("habitat_points")
+        .upsert({ id: 1, points: newDecorPoints });
+      if (!reportError("Save decor points", decorSaveError)) {
+        setDecorPoints(newDecorPoints);
+      }
+
       if (hatched || evolved) await refreshCollection();
       await refreshRecentPoints();
       return newPoints;
@@ -629,6 +649,15 @@ export function useHamsterGrowthState() {
         const { error } = await supabase.from("hamster_growth").upsert({ id: 1, points: 0, threshold: 100 });
         reportError("Initialize hamster_growth", error);
       }
+
+      const { data: decorRow } = await supabase.from("habitat_points").select("points").eq("id", 1).maybeSingle();
+      if (decorRow) {
+        setDecorPoints(Number(decorRow.points) || 0);
+      } else {
+        const { error } = await supabase.from("habitat_points").upsert({ id: 1, points: 0 });
+        reportError("Initialize habitat_points", error);
+      }
+
       await refreshCollection();
       await refreshRecentPoints();
 
@@ -779,6 +808,39 @@ export function useHamsterGrowthState() {
     [threshold, reportError]
   );
 
+  // Spends from the separate decor pool used for unlocking habitat shelf
+  // items. Completely independent of `points`/spendPoints above — spending
+  // here can never reduce hatch/evolution progress. Same re-read-fresh
+  // pattern as spendPoints so two quick spends can't both succeed against a
+  // stale balance.
+  const spendDecorPoints = useCallback(
+    async (amount: number): Promise<{ ok: boolean; reason?: string }> => {
+      const { data: row } = await supabase
+        .from("habitat_points")
+        .select("points")
+        .eq("id", 1)
+        .maybeSingle();
+
+      const current = Number(row?.points) || 0;
+      if (current < amount) {
+        return { ok: false, reason: "Not enough points yet" };
+      }
+
+      const newDecorPoints = current - amount;
+      const { error } = await supabase
+        .from("habitat_points")
+        .upsert({ id: 1, points: newDecorPoints });
+
+      if (reportError("Spend decor points", error)) {
+        return { ok: false, reason: error.message || "Save failed" };
+      }
+
+      setDecorPoints(newDecorPoints);
+      return { ok: true };
+    },
+    [reportError]
+  );
+
   return {
     loading,
     refreshing,
@@ -786,6 +848,8 @@ export function useHamsterGrowthState() {
     points,
     threshold,
     progressPct: Math.min(100, Math.round((points / threshold) * 100)),
+    decorPoints,
+    spendDecorPoints,
     collection,
     recentPoints,
     justHatched,
