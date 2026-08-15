@@ -25,6 +25,7 @@ interface GoalStepRow {
   label: string;
   step_order: number;
   done: boolean;
+  parent_step_id: string | null;
 }
 
 function buildPrompt(goal: string, stepCount: number): string {
@@ -38,7 +39,23 @@ Respond ONLY with a valid JSON object, no markdown, no backticks, no explanation
 }`;
 }
 
-async function generateSteps(goal: string, stepCount: number): Promise<string[]> {
+// A single step can turn out to be a whole task on its own ("Book flights" during
+// a bigger "Plan the trip" goal). This breaks just that one step into its own
+// sub-checklist, one level deep — sub-steps don't get a further breakdown option.
+function buildSubstepPrompt(goalTitle: string, stepLabel: string, stepCount: number): string {
+  return `A person is working toward this overall goal: "${goalTitle.trim()}"
+
+One of the steps toward that goal is: "${stepLabel.trim()}"
+
+That step turned out to be a task of its own. Break ONLY that step down into exactly ${stepCount} smaller, sequential, actionable sub-steps. Keep each short and plain — a checklist label, not a sentence.
+
+Respond ONLY with a valid JSON object, no markdown, no backticks, no explanation. Use this exact shape:
+{
+  "steps": ["first sub-step", "second sub-step", "..."]
+}`;
+}
+
+async function callGroqForSteps(prompt: string, stepCount: number): Promise<string[]> {
   const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
     method: 'POST',
     headers: {
@@ -48,7 +65,7 @@ async function generateSteps(goal: string, stepCount: number): Promise<string[]>
     body: JSON.stringify({
       model: 'llama-3.3-70b-versatile',
       max_tokens: 600,
-      messages: [{ role: 'user', content: buildPrompt(goal, stepCount) }],
+      messages: [{ role: 'user', content: prompt }],
     }),
   });
 
@@ -65,6 +82,14 @@ async function generateSteps(goal: string, stepCount: number): Promise<string[]>
     .slice(0, stepCount);
 }
 
+async function generateSteps(goal: string, stepCount: number): Promise<string[]> {
+  return callGroqForSteps(buildPrompt(goal, stepCount), stepCount);
+}
+
+async function generateSubsteps(goalTitle: string, stepLabel: string, stepCount: number): Promise<string[]> {
+  return callGroqForSteps(buildSubstepPrompt(goalTitle, stepLabel, stepCount), stepCount);
+}
+
 export default function Goals() {
   const { theme } = useTheme();
   const { showToast } = useToast();
@@ -73,6 +98,11 @@ export default function Goals() {
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
   const [expanded, setExpanded] = useState<string | null>(null);
+  // Which top-level step is currently showing its "how many sub-steps?" picker
+  const [breakingDownStep, setBreakingDownStep] = useState<string | null>(null);
+  const [breakdownLoading, setBreakdownLoading] = useState<string | null>(null);
+  // Sub-steps collapse under their parent by default state; true = expanded
+  const [substepsOpen, setSubstepsOpen] = useState<Record<string, boolean>>({});
 
   useEffect(() => { load(); }, []);
 
@@ -134,6 +164,46 @@ export default function Goals() {
     await supabase.from('goal_steps').update({ done: newDone }).eq('id', step.id);
   }
 
+  async function breakdownStep(goalTitle: string, step: GoalStepRow, subCount: number) {
+    setBreakdownLoading(step.id);
+    let substeps: string[];
+    try {
+      substeps = await generateSubsteps(goalTitle, step.label, subCount);
+    } catch {
+      showToast("Couldn't break that step down — try again?", 'error');
+      setBreakdownLoading(null);
+      return;
+    }
+    if (substeps.length === 0) {
+      showToast("Couldn't break that step down — try again?", 'error');
+      setBreakdownLoading(null);
+      return;
+    }
+
+    const { data: subRows, error } = await supabase
+      .from('goal_steps')
+      .insert(substeps.map((label, idx) => ({
+        goal_id: step.goal_id,
+        label,
+        step_order: idx,
+        done: false,
+        parent_step_id: step.id,
+      })))
+      .select()
+      .order('step_order');
+
+    setBreakdownLoading(null);
+    if (error) { showToast("Couldn't break that step down — try again?", 'error'); return; }
+
+    setStepsByGoal(prev => ({
+      ...prev,
+      [step.goal_id]: [...prev[step.goal_id], ...((subRows as GoalStepRow[]) ?? [])],
+    }));
+    setSubstepsOpen(prev => ({ ...prev, [step.id]: true }));
+    setBreakingDownStep(null);
+    showToast('Broken down into sub-steps 🌱');
+  }
+
   async function archiveGoal(id: string) {
     setGoals(prev => prev.filter(g => g.id !== id));
     if (expanded === id) setExpanded(null);
@@ -156,6 +226,9 @@ export default function Goals() {
               const steps = stepsByGoal[goal.id] ?? [];
               const doneCount = steps.filter(s => s.done).length;
               const isOpen = expanded === goal.id;
+              const topSteps = steps.filter(s => !s.parent_step_id).sort((a, b) => a.step_order - b.step_order);
+              const childrenOf = (parentId: string) =>
+                steps.filter(s => s.parent_step_id === parentId).sort((a, b) => a.step_order - b.step_order);
               return (
                 <div key={goal.id} style={{ border: '1.5px solid var(--border)', borderRadius: 18, overflow: 'hidden', background: 'var(--white)' }}>
                   <button
@@ -177,27 +250,97 @@ export default function Goals() {
 
                   {isOpen && (
                     <div style={{ padding: '0 14px 14px', display: 'flex', flexDirection: 'column', gap: 6 }}>
-                      {steps.map(step => (
-                        <div
-                          key={step.id}
-                          onClick={() => toggleStep(step)}
-                          style={{
-                            display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer',
-                            background: step.done ? 'var(--blush)' : 'var(--cream)',
-                            border: `1.5px solid ${step.done ? 'var(--pink-light)' : 'var(--border)'}`,
-                            borderRadius: 12, padding: '8px 10px',
-                          }}
-                        >
-                          <Icon name={step.done ? (theme === 'light' ? 'full_sun' : 'full_moon') : (theme === 'light' ? 'empty_sun' : 'empty_moon')} size={16} style={{ color: step.done ? 'var(--pink-dark)' : 'var(--border)', flexShrink: 0 }} />
-                          <span style={{
-                            fontSize: '0.78rem', fontWeight: 600, flex: 1,
-                            color: step.done ? 'var(--ink-muted)' : 'var(--ink)',
-                            textDecoration: step.done ? 'line-through' : 'none',
-                          }}>
-                            {step.label}
-                          </span>
-                        </div>
-                      ))}
+                      {topSteps.map(step => {
+                        const children = childrenOf(step.id);
+                        const hasChildren = children.length > 0;
+                        const subOpen = substepsOpen[step.id] ?? true;
+                        const isPicking = breakingDownStep === step.id;
+                        const isBreakingDown = breakdownLoading === step.id;
+                        return (
+                          <div key={step.id}>
+                            <div
+                              style={{
+                                display: 'flex', alignItems: 'center', gap: 10,
+                                background: step.done ? 'var(--blush)' : 'var(--cream)',
+                                border: `1.5px solid ${step.done ? 'var(--pink-light)' : 'var(--border)'}`,
+                                borderRadius: 12, padding: '8px 10px',
+                              }}
+                            >
+                              <div
+                                onClick={() => toggleStep(step)}
+                                style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, cursor: 'pointer', minWidth: 0 }}
+                              >
+                                <Icon name={step.done ? (theme === 'light' ? 'full_sun' : 'full_moon') : (theme === 'light' ? 'empty_sun' : 'empty_moon')} size={16} style={{ color: step.done ? 'var(--pink-dark)' : 'var(--border)', flexShrink: 0 }} />
+                                <span style={{
+                                  fontSize: '0.78rem', fontWeight: 600, flex: 1,
+                                  color: step.done ? 'var(--ink-muted)' : 'var(--ink)',
+                                  textDecoration: step.done ? 'line-through' : 'none',
+                                }}>
+                                  {step.label}
+                                </span>
+                              </div>
+
+                              {hasChildren ? (
+                                <button
+                                  onClick={() => setSubstepsOpen(prev => ({ ...prev, [step.id]: !subOpen }))}
+                                  aria-label={subOpen ? 'Collapse sub-steps' : 'Expand sub-steps'}
+                                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-muted)', flexShrink: 0, display: 'flex' }}
+                                >
+                                  <Icon name={subOpen ? 'icon-chevronup' : 'icon-chevrondown'} size={13} />
+                                </button>
+                              ) : (
+                                <button
+                                  onClick={() => setBreakingDownStep(isPicking ? null : step.id)}
+                                  disabled={isBreakingDown}
+                                  title="This is a whole task itself — break it into steps"
+                                  aria-label="Break this step into sub-steps"
+                                  style={{
+                                    background: 'none', border: 'none', cursor: isBreakingDown ? 'default' : 'pointer',
+                                    color: 'var(--pink-dark)', flexShrink: 0, display: 'flex',
+                                    opacity: isBreakingDown ? 0.5 : 1,
+                                  }}
+                                >
+                                  <Icon name="icon-listchecks" size={14} />
+                                </button>
+                              )}
+                            </div>
+
+                            {isPicking && (
+                              <SubstepPicker
+                                loading={isBreakingDown}
+                                onCancel={() => setBreakingDownStep(null)}
+                                onConfirm={count => breakdownStep(goal.title, step, count)}
+                              />
+                            )}
+
+                            {hasChildren && subOpen && (
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: 5, marginTop: 5, marginLeft: 20, paddingLeft: 10, borderLeft: '2px solid var(--border)' }}>
+                                {children.map(sub => (
+                                  <div
+                                    key={sub.id}
+                                    onClick={() => toggleStep(sub)}
+                                    style={{
+                                      display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer',
+                                      background: sub.done ? 'var(--blush)' : 'var(--cream)',
+                                      border: `1.5px solid ${sub.done ? 'var(--pink-light)' : 'var(--border)'}`,
+                                      borderRadius: 10, padding: '6px 9px',
+                                    }}
+                                  >
+                                    <Icon name={sub.done ? (theme === 'light' ? 'full_sun' : 'full_moon') : (theme === 'light' ? 'empty_sun' : 'empty_moon')} size={13} style={{ color: sub.done ? 'var(--pink-dark)' : 'var(--border)', flexShrink: 0 }} />
+                                    <span style={{
+                                      fontSize: '0.72rem', fontWeight: 600, flex: 1,
+                                      color: sub.done ? 'var(--ink-muted)' : 'var(--ink)',
+                                      textDecoration: sub.done ? 'line-through' : 'none',
+                                    }}>
+                                      {sub.label}
+                                    </span>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
                       <button
                         onClick={() => archiveGoal(goal.id)}
                         className="btn btn-ghost btn-sm"
@@ -220,6 +363,39 @@ export default function Goals() {
         ) : (
           <GoalCreator onCreate={createGoal} onCancel={() => setCreating(false)} />
         )}
+      </div>
+    </div>
+  );
+}
+
+function SubstepPicker({ loading, onConfirm, onCancel }: { loading: boolean; onConfirm: (count: number) => void; onCancel: () => void }) {
+  const [count, setCount] = useState(3);
+
+  return (
+    <div style={{ marginTop: 5, padding: 8, borderRadius: 10, background: 'var(--cream)', border: '1px dashed var(--border)', display: 'flex', flexDirection: 'column', gap: 6 }}>
+      <label style={{ fontSize: '0.68rem', color: 'var(--ink-muted)', fontWeight: 600 }}>
+        Break this into how many sub-steps? ({count})
+      </label>
+      <input
+        type="range"
+        min={2}
+        max={8}
+        value={count}
+        onChange={e => setCount(Number(e.target.value))}
+        disabled={loading}
+      />
+      <div style={{ display: 'flex', gap: 6 }}>
+        <button className="btn btn-ghost btn-sm" style={{ flex: 1, justifyContent: 'center' }} onClick={onCancel} disabled={loading}>
+          Cancel
+        </button>
+        <button
+          className="btn btn-primary btn-sm"
+          style={{ flex: 1, justifyContent: 'center', opacity: loading ? 0.6 : 1 }}
+          onClick={() => onConfirm(count)}
+          disabled={loading}
+        >
+          {loading ? 'Breaking it down…' : 'Break it down'}
+        </button>
       </div>
     </div>
   );
