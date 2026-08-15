@@ -4,6 +4,7 @@ import AppointmentNotesPanel from '../components/planner/AppointmentNotesPanel';
 import type { AppointmentNoteSelection } from '../components/planner/AppointmentNotesPanel';
 import Chores from '../components/planner/Chores';
 import LifeEvents from '../components/planner/LifeEvents';
+import Goals from '../components/planner/Goals';
 import { useAppointmentNoteMap } from '../hooks/useAppointmentNoteMap';
 import Lantern from "../components/Lantern";
 import EmptyState from '../components/EmptyState';
@@ -754,6 +755,15 @@ export default function DailyPlanner() {
         {/* LIFE EVENTS — temporary workspaces for big life stuff */}
         <section>
           <LifeEvents />
+        </section>
+
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+  <Icon name="pagedivider" size={85} />
+</div>
+
+        {/* GOALS — AI-generated step checklist for a goal you set */}
+        <section>
+          <Goals />
         </section>
 
         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
