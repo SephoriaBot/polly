@@ -28,10 +28,23 @@ interface GoalStepRow {
   parent_step_id: string | null;
 }
 
-function buildPrompt(goal: string, stepCount: number): string {
-  return `Break this goal down into exactly ${stepCount} sequential, actionable steps a person could actually follow, from getting started to done. Keep each step short and plain — a checklist label, not a sentence.
+type Timeframe = 'hours' | 'days' | 'weeks' | 'months';
+
+const TIMEFRAME_GUIDANCE: Record<Timeframe, string> = {
+  hours: 'This needs to happen soon — within a few hours. Keep steps tightly scoped to things doable in a single sitting or two, and skip anything that isn\'t essential to actually finishing.',
+  days: 'There are a few days to work with. Steps can span a couple of sessions, but should stay near-term and concrete rather than spread thin.',
+  weeks: 'There\'s about one to two weeks. Steps can be spread out with room for things like waiting periods, gathering materials, or building up gradually.',
+  months: 'There\'s a month or more. Feel free to include longer-term stages, buffer or rest periods, and steps that build on each other over time rather than everything at once.',
+};
+
+function buildPrompt(goal: string, timeframe: Timeframe): string {
+  return `Break this goal down into sequential, actionable steps a person could actually follow, from getting started to done. Keep each step short and plain — a checklist label, not a sentence.
 
 Goal: "${goal.trim()}"
+
+${TIMEFRAME_GUIDANCE[timeframe]}
+
+Decide for yourself how many steps this specific goal actually needs, and size/pace them to fit the timeframe above — don't pad it out or force it to hit a number. A simple goal should get a short list; a complex one should get a longer list.
 
 Respond ONLY with a valid JSON object, no markdown, no backticks, no explanation. Use this exact shape:
 {
@@ -55,7 +68,7 @@ Respond ONLY with a valid JSON object, no markdown, no backticks, no explanation
 }`;
 }
 
-async function callGroqForSteps(prompt: string, stepCount: number): Promise<string[]> {
+async function callGroqForSteps(prompt: string, safetyCap: number): Promise<string[]> {
   const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
     method: 'POST',
     headers: {
@@ -64,7 +77,7 @@ async function callGroqForSteps(prompt: string, stepCount: number): Promise<stri
     },
     body: JSON.stringify({
       model: 'llama-3.3-70b-versatile',
-      max_tokens: 600,
+      max_tokens: 800,
       messages: [{ role: 'user', content: prompt }],
     }),
   });
@@ -79,11 +92,11 @@ async function callGroqForSteps(prompt: string, stepCount: number): Promise<stri
   return parsed.steps
     .filter((s: any) => typeof s === 'string' && s.trim())
     .map((s: string) => s.trim())
-    .slice(0, stepCount);
+    .slice(0, safetyCap); // guards against a runaway response, not a target
 }
 
-async function generateSteps(goal: string, stepCount: number): Promise<string[]> {
-  return callGroqForSteps(buildPrompt(goal, stepCount), stepCount);
+async function generateSteps(goal: string, timeframe: Timeframe): Promise<string[]> {
+  return callGroqForSteps(buildPrompt(goal, timeframe), 20);
 }
 
 async function generateSubsteps(goalTitle: string, stepLabel: string, stepCount: number): Promise<string[]> {
@@ -123,10 +136,10 @@ export default function Goals() {
     setLoading(false);
   }
 
-  async function createGoal(title: string, stepCount: number) {
+  async function createGoal(title: string, timeframe: Timeframe) {
     let steps: string[];
     try {
-      steps = await generateSteps(title, stepCount);
+      steps = await generateSteps(title, timeframe);
     } catch {
       showToast("Couldn't break that down — try again?", 'error');
       throw new Error('generation failed');
@@ -401,18 +414,18 @@ function SubstepPicker({ loading, onConfirm, onCancel }: { loading: boolean; onC
   );
 }
 
-function GoalCreator({ onCreate, onCancel }: { onCreate: (title: string, stepCount: number) => Promise<void>; onCancel: () => void }) {
+function GoalCreator({ onCreate, onCancel }: { onCreate: (title: string, timeframe: Timeframe) => Promise<void>; onCancel: () => void }) {
   const [title, setTitle] = useState('');
-  const [stepCount, setStepCount] = useState(5);
+  const [timeframe, setTimeframe] = useState<Timeframe>('weeks');
   const [generating, setGenerating] = useState(false);
 
   async function handleCreate() {
     if (!title.trim() || generating) return;
     setGenerating(true);
     try {
-      await onCreate(title, stepCount);
+      await onCreate(title, timeframe);
       setTitle('');
-      setStepCount(5);
+      setTimeframe('weeks');
       onCancel();
     } catch {
       // toast already shown by createGoal; stay open so they can retry
@@ -420,6 +433,13 @@ function GoalCreator({ onCreate, onCancel }: { onCreate: (title: string, stepCou
       setGenerating(false);
     }
   }
+
+  const options: { value: Timeframe; label: string }[] = [
+    { value: 'hours', label: 'A few hours' },
+    { value: 'days', label: 'A few days' },
+    { value: 'weeks', label: '1–2 weeks' },
+    { value: 'months', label: 'A month or more' },
+  ];
 
   return (
     <div style={{ padding: 10, borderRadius: 14, background: 'var(--cream)', border: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -435,15 +455,29 @@ function GoalCreator({ onCreate, onCancel }: { onCreate: (title: string, stepCou
       />
 
       <label style={{ fontSize: '0.72rem', color: 'var(--ink-muted)', fontWeight: 600 }}>
-        How many steps? ({stepCount})
+        How much time do you have to get this done?
       </label>
-      <input
-        type="range"
-        min={3}
-        max={12}
-        value={stepCount}
-        onChange={e => setStepCount(Number(e.target.value))}
-      />
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
+        {options.map(opt => {
+          const selected = timeframe === opt.value;
+          return (
+            <button
+              key={opt.value}
+              onClick={() => setTimeframe(opt.value)}
+              disabled={generating}
+              style={{
+                padding: '9px 6px', borderRadius: 12, cursor: generating ? 'default' : 'pointer',
+                border: `1.5px solid ${selected ? 'var(--pink-dark)' : 'var(--border)'}`,
+                background: selected ? 'var(--blush)' : 'var(--white)',
+                fontSize: '0.78rem', fontWeight: 700,
+                color: selected ? 'var(--pink-dark)' : 'var(--ink)',
+              }}
+            >
+              {opt.label}
+            </button>
+          );
+        })}
+      </div>
 
       <div style={{ display: 'flex', gap: 6 }}>
         <button className="btn btn-ghost btn-sm" style={{ flex: 1, justifyContent: 'center' }} onClick={onCancel} disabled={generating}>
