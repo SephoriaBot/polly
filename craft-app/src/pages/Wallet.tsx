@@ -36,6 +36,8 @@ interface Bill {
   amount: number;
   due_day: number;
   recurring: boolean;
+  frequency?: "weekly" | "biweekly" | "monthly" | "quarterly" | "yearly";
+  frequency_start_date?: string;
   bill_month?: number;
   bill_year?: number;
 }
@@ -50,6 +52,7 @@ interface BillPayment {
   name?: string;
   amount?: number;
   due_day?: number;
+  payment_date?: string;
 }
 
 interface DailyLog {
@@ -300,7 +303,13 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
   const [anytimePay, setAnytimePay] = useState("");
   const [planNotes, setPlanNotes] = useState("");
   const [showBillForm, setShowBillForm] = useState(false);
-  const [newBill, setNewBill] = useState({ name: "", amount: "", due_day: "", recurring: true });
+  const [newBill, setNewBill] = useState({
+  name: "",
+  amount: "",
+  due_day: "",
+  recurring: true,
+  frequency: "monthly" as "weekly" | "biweekly" | "monthly" | "quarterly" | "yearly",
+});
   const [showConfetti, setShowConfetti] = useState(false);
   const [celebration, setCelebration] = useState<{ title: string; subtitle: string }>({ title: "", subtitle: "" });
 
@@ -486,27 +495,6 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
     loadData();
   }, []);
 
-  useEffect(() => {
-    async function ensurePaymentsExist() {
-      if (bills.length === 0) return;
-      const recurringBills = bills.filter(b => b.recurring);
-      for (const bill of recurringBills) {
-        for (const { month, year } of availableMonths) {
-          const exists = payments.some(p => p.bill_id === bill.id && p.month === month && p.year === year);
-          if (!exists) {
-            const newPayment: BillPayment = {
-              bill_id: bill.id, month, year, paid: false,
-              name: bill.name, amount: bill.amount, due_day: bill.due_day,
-            };
-            const { data } = await supabase.from("bill_payments").insert(newPayment).select().single();
-            if (data) setPayments(prev => [...prev, data]);
-          }
-        }
-      }
-    }
-    ensurePaymentsExist();
-  }, [bills, availableMonths]);
-
   const { months, extraDebtPayment, totalMins } = useMemo(
   () =>
     runDebtPlan(
@@ -532,6 +520,86 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
   function dateKey(d: Date) {
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
   }
+
+  function getRecurringDates(
+  bill: Bill,
+  startDate: Date,
+  endDate: Date
+): Date[] {
+  if (!bill.recurring) return [];
+
+  const frequency = bill.frequency || "monthly";
+  const anchor = bill.frequency_start_date
+    ? new Date(`${bill.frequency_start_date}T00:00:00`)
+    : new Date(
+        startDate.getFullYear(),
+        startDate.getMonth(),
+        Math.min(
+          bill.due_day,
+          new Date(
+            startDate.getFullYear(),
+            startDate.getMonth() + 1,
+            0
+          ).getDate()
+        )
+      );
+
+  const dates: Date[] = [];
+
+  if (frequency === "monthly") {
+    const cursor = new Date(
+      startDate.getFullYear(),
+      startDate.getMonth(),
+      Math.min(
+        bill.due_day,
+        new Date(
+          startDate.getFullYear(),
+          startDate.getMonth() + 1,
+          0
+        ).getDate()
+      )
+    );
+
+    if (cursor >= startDate && cursor <= endDate) {
+      dates.push(cursor);
+    }
+
+    return dates;
+  }
+
+  const current = new Date(anchor);
+
+  while (current < startDate) {
+    if (frequency === "weekly") {
+      current.setDate(current.getDate() + 7);
+    } else if (frequency === "biweekly") {
+      current.setDate(current.getDate() + 14);
+    } else if (frequency === "quarterly") {
+      current.setMonth(current.getMonth() + 3);
+    } else if (frequency === "yearly") {
+      current.setFullYear(current.getFullYear() + 1);
+    }
+  }
+
+  while (current <= endDate) {
+    if (current >= startDate) {
+      dates.push(new Date(current));
+    }
+
+    if (frequency === "weekly") {
+      current.setDate(current.getDate() + 7);
+    } else if (frequency === "biweekly") {
+      current.setDate(current.getDate() + 14);
+    } else if (frequency === "quarterly") {
+      current.setMonth(current.getMonth() + 3);
+    } else if (frequency === "yearly") {
+      current.setFullYear(current.getFullYear() + 1);
+    }
+  }
+
+  return dates;
+}
+
 
   const calendarWeeks = useMemo(() => {
     const now = new Date();
@@ -1060,22 +1128,53 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
   }
 
   async function addBill() {
-    if (!newBill.name || !newBill.amount || !newBill.due_day) return;
-    const bill: Bill = {
-      id: nextBillId,
-      name: newBill.name,
-      amount: parseFloat(newBill.amount),
-      due_day: parseInt(newBill.due_day),
-      recurring: newBill.recurring,
-      bill_month: newBill.recurring ? undefined : selectedMonth,
-      bill_year: newBill.recurring ? undefined : selectedYear,
-    };
-    setBills(prev => [...prev, bill].sort((a, b) => a.due_day - b.due_day));
-    setNextBillId(n => n + 1);
-    await supabase.from("bills").insert(bill);
-    setNewBill({ name: "", amount: "", due_day: "", recurring: true });
-    setShowBillForm(false);
+  if (!newBill.name || !newBill.amount || !newBill.due_day) return;
+
+  const dueDay = parseInt(newBill.due_day);
+
+  const startDate = newBill.recurring
+    ? `${selectedYear}-${String(selectedMonth).padStart(2, "0")}-${String(
+        Math.min(dueDay, new Date(selectedYear, selectedMonth, 0).getDate())
+      ).padStart(2, "0")}`
+    : undefined;
+
+  const bill: Bill = {
+    id: nextBillId,
+    name: newBill.name,
+    amount: parseFloat(newBill.amount),
+    due_day: dueDay,
+    recurring: newBill.recurring,
+    frequency: newBill.recurring ? newBill.frequency : "monthly",
+    frequency_start_date: startDate,
+    bill_month: newBill.recurring ? undefined : selectedMonth,
+    bill_year: newBill.recurring ? undefined : selectedYear,
+  };
+
+  const { error } = await supabase
+    .from("bills")
+    .insert(bill);
+
+  if (error) {
+    console.error("addBill failed:", error);
+    return;
   }
+
+  setBills(prev =>
+    [...prev, bill].sort((a, b) => a.due_day - b.due_day)
+  );
+
+  setNextBillId(n => n + 1);
+
+  setNewBill({
+    name: "",
+    amount: "",
+    due_day: "",
+    recurring: true,
+    frequency: "monthly",
+  });
+
+  setShowBillForm(false);
+}
 
   async function removeBill(id: number) {
     setBills(prev => prev.filter(b => b.id !== id));
@@ -1901,12 +2000,45 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                         <div className="form-label">Due Day</div>
                         <input className="form-input" type="number" placeholder="e.g. 1" value={newBill.due_day} onChange={e => setNewBill(p => ({ ...p, due_day: e.target.value }))} />
                       </div>
-                      <div style={{ display: "flex", alignItems: "flex-end" }}>
-                        <label style={{ fontSize: 13, color: "var(--ink)", display: "flex", alignItems: "center", gap: 6, fontWeight: 600 }}>
-                          <input type="checkbox" checked={newBill.recurring} onChange={e => setNewBill(p => ({ ...p, recurring: e.target.checked }))} />
-                          Recurring
-                        </label>
-                      </div>
+                     <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+  <label style={{ fontSize: 13, color: "var(--ink)", display: "flex", alignItems: "center", gap: 6, fontWeight: 600 }}>
+    <input
+      type="checkbox"
+      checked={newBill.recurring}
+      onChange={e =>
+        setNewBill(p => ({
+          ...p,
+          recurring: e.target.checked,
+        }))
+      }
+    />
+    Recurring
+  </label>
+
+  {newBill.recurring && (
+    <select
+      className="form-input"
+      value={newBill.frequency}
+      onChange={e =>
+        setNewBill(p => ({
+          ...p,
+          frequency: e.target.value as
+            | "weekly"
+            | "biweekly"
+            | "monthly"
+            | "quarterly"
+            | "yearly",
+        }))
+      }
+    >
+      <option value="weekly">Weekly</option>
+      <option value="biweekly">Every 2 Weeks</option>
+      <option value="monthly">Monthly</option>
+      <option value="quarterly">Every 3 Months</option>
+      <option value="yearly">Yearly</option>
+    </select>
+  )}
+</div>
                     </div>
                     <button className="btn btn-green" style={{ justifyContent: "center" }} onClick={addBill}>Save Bill</button>
                   </div>
