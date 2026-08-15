@@ -630,7 +630,7 @@ function getRecurringDates(
   const month = date.getMonth() + 1;
   const year = date.getFullYear();
 
-  // First: exact occurrence match.
+  // First look for an exact occurrence.
   const exactPayment = payments.find(
     p =>
       p.bill_id === bill.id &&
@@ -641,22 +641,17 @@ function getRecurringDates(
     return exactPayment;
   }
 
-  // For existing monthly records that predate payment_date,
-  // only use the record belonging to this exact month/year.
-  if (
-    (bill.frequency || "monthly") === "monthly" ||
-    !bill.recurring
-  ) {
-    return payments.find(
-      p =>
-        p.bill_id === bill.id &&
-        p.month === month &&
-        p.year === year &&
-        !p.payment_date
-    );
-  }
+  // For existing payment records that don't have payment_date,
+  // only match the exact month/year of this occurrence.
+  const legacyPayment = payments.find(
+    p =>
+      p.bill_id === bill.id &&
+      !p.payment_date &&
+      p.month === month &&
+      p.year === year
+  );
 
-  return undefined;
+  return legacyPayment;
 }
 
   const calendarWeeks = useMemo(() => {
