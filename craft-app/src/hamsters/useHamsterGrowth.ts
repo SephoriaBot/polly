@@ -341,7 +341,20 @@ export function useHamsterGrowthState() {
         newPoints -= threshold;
         const { error: hatchError } = await supabase
           .from("hamster_collection")
-          .insert({ hamster_id: h.id, source, personality, stage: "baby", evolution_points: 0, abilities: [] });
+          .insert({
+            hamster_id: h.id,
+            source,
+            personality,
+            stage: "baby",
+            evolution_points: 0,
+            abilities: [],
+            hatched_at: new Date().toISOString(),
+            training_points: 0,
+            trained_hp: 0,
+            trained_attack: 0,
+            trained_defense: 0,
+            trained_speed: 0,
+          });
 
         // If the insert failed, no hamster actually exists to show for the
         // points we're about to spend. Put the points back and stop trying
