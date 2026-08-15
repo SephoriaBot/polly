@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect, useRef } from "react";
 import type { CSSProperties } from "react";
 import { supabase } from '../lib/supabase';
 import Icon from '../components/Icon';
+import { useTheme } from '../context/ThemeContext';
 import Lantern from "../components/Lantern";
 import walletPouchImg from '../assets/illustrations/wallet_pouch.png';
 import celebrationImg from '../assets/illustrations/celebration.png';
@@ -284,6 +285,7 @@ function EditableCell({ value, onChange, type = "number", style, className, plac
 }
 
 export default function Wallet() {
+  const { theme } = useTheme();
   const [debts, setDebts] = useState<Debt[]>([]);
   const [debtStrategy, setDebtStrategy] =
   useState<DebtStrategy>("snowball");
@@ -1129,7 +1131,7 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
     : deferredDebts.reduce((s, d) => s + d.balance, 0);
 
   const Confetti = () => {
-    const colors = ["var(--pink-dark)","var(--green-dark)","var(--pink-light)","var(--ink-soft)","var(--gold-light)"];
+    const colors = ["var(--pink-dark)","var(--green-dark)","var(--pink-light-solid)","var(--ink-soft)","var(--gold-light-solid)"];
     return (
       <div style={{ position: "fixed", top: 0, left: 0, width: "100%", height: "100%", pointerEvents: "none", zIndex: 9999, overflow: "hidden" }}>
         {Array.from({ length: 60 }).map((_, i) => (
@@ -1367,9 +1369,6 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                   <EmptyState image={emptyWallet} message="No lists yet. Create one to get started." />
                 ) : (
                   <>
-                    {activeListItems.length >= 0 && (
-                      <p className="daily-tasks-subtitle">Tap the flower to check it off...</p>
-                    )}
                     <div style={{ display: "flex", gap: 6, overflowX: "auto", paddingBottom: 8, marginBottom: 8 }}>
                       {lists.map(l => (
                         <button
@@ -1404,8 +1403,8 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                                 }}
                               >
                                 {item.done
-                                  ? <Icon name="flowerfull" size={17} style={{ color: "var(--pink-dark)" }} />
-                                  : <Icon name="flowerempty" size={17} style={{ color: "var(--border)" }} />
+                                  ? <Icon name={theme === 'light' ? 'full_sun' : 'full_moon'} size={17} style={{ color: "var(--pink-dark)" }} />
+                                  : <Icon name={theme === 'light' ? 'empty_sun' : 'empty_moon'} size={17} style={{ color: "var(--border)" }} />
                                 }
                               </button>
                               <div style={{ flex: 1, fontSize: 13, color: item.done ? "var(--ink-muted)" : "var(--ink)", textDecoration: item.done ? "line-through" : "none" }}>
@@ -1912,10 +1911,6 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                     <button className="btn btn-green" style={{ justifyContent: "center" }} onClick={addBill}>Save Bill</button>
                   </div>
                 )}
-
-                {monthBills.length > 0 && (
-                  <p className="daily-tasks-subtitle">Tap the jar to give it some sugar...</p>
-                )}
                 <div style={{ overflowX: "auto" }}>
                 <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
                   <thead>
@@ -1949,8 +1944,8 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                             }}
                           >
                             {b.paid
-                              ? <Icon name="sugarfull" size={22} />
-                              : <Icon name="sugarempty" size={22} />
+                              ? <Icon name={theme === 'light' ? 'full_sun' : 'full_moon'} size={22} />
+                              : <Icon name={theme === 'light' ? 'empty_sun' : 'empty_moon'} size={22} />
                             }
                           </button>
                         </td>
@@ -2066,9 +2061,6 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                     + Add
                   </button>
                 </div>
-                {activeDebts.length > 0 && (
-                  <p className="daily-tasks-subtitle">Tap the shell to give it some color.</p>
-                )}
                 <div style={{ overflowX: "auto" }}>
                   <table className="table">
                     <thead>
@@ -2105,8 +2097,8 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                                   alignItems: "center", justifyContent: "center",
                                 }}
                               >
-                                <Icon name="shellempty" size={22} />
-                              </button>
+                                <Icon name={theme === 'light' ? 'empty_sun' : 'empty_moon'} size={22} />
+            </button>
                             </td>
                             <td style={{ padding: "9px 8px" }}>
                               {i === 0
@@ -2158,8 +2150,8 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                                 alignItems: "center", justifyContent: "center",
                               }}
                             >
-                              <Icon name="shellfull" size={22} />
-                            </button>
+                            <Icon name={theme === 'light' ? 'full_sun' : 'full_moon'} size={22} />
+          </button>
                           </td>
                           <td style={{ padding: "9px 8px", textDecoration: "line-through", color: "var(--green-dark)", fontWeight: 700 }}>{d.name}</td>
                           <td style={{ padding: "9px 8px", color: "var(--green-dark)", fontWeight: 800 }}>$0.00</td>
