@@ -2,7 +2,6 @@ import { useState, useMemo, useEffect, useRef } from "react";
 import type { CSSProperties } from "react";
 import { supabase } from '../lib/supabase';
 import Icon from '../components/Icon';
-import { useTheme } from '../context/ThemeContext';
 import Lantern from "../components/Lantern";
 import walletPouchImg from '../assets/illustrations/wallet_pouch.png';
 import celebrationImg from '../assets/illustrations/celebration.png';
@@ -36,16 +35,15 @@ interface Bill {
   amount: number;
   due_day: number;
   recurring: boolean;
-  frequency: "weekly" | "biweekly" | "monthly" | "quarterly" | "yearly";
   bill_month?: number;
   bill_year?: number;
 }
+
 interface BillPayment {
   id?: number;
   bill_id: number;
   month: number;
   year: number;
-  payment_date: string;
   paid: boolean;
   paid_at?: string;
   name?: string;
@@ -286,7 +284,6 @@ function EditableCell({ value, onChange, type = "number", style, className, plac
 }
 
 export default function Wallet() {
-  const { theme } = useTheme();
   const [debts, setDebts] = useState<Debt[]>([]);
   const [debtStrategy, setDebtStrategy] =
   useState<DebtStrategy>("snowball");
@@ -301,13 +298,8 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
   const [anytimePay, setAnytimePay] = useState("");
   const [planNotes, setPlanNotes] = useState("");
   const [showBillForm, setShowBillForm] = useState(false);
-  const [newBill, setNewBill] = useState({
-  name: "",
-  amount: "",
-  due_day: "",
-  recurring: true,
-  frequency: "monthly" as "weekly" | "biweekly" | "monthly" | "quarterly" | "yearly",
-});  const [showConfetti, setShowConfetti] = useState(false);
+  const [newBill, setNewBill] = useState({ name: "", amount: "", due_day: "", recurring: true });
+  const [showConfetti, setShowConfetti] = useState(false);
   const [celebration, setCelebration] = useState<{ title: string; subtitle: string }>({ title: "", subtitle: "" });
 
   const [lists, setLists] = useState<ListDef[]>([]);
@@ -492,100 +484,26 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
     loadData();
   }, []);
 
-useEffect(() => {
-  async function ensurePaymentsExist() {
-    if (bills.length === 0) return;
-
-    const recurringBills = bills.filter(b => b.recurring);
-
-    const today = new Date();
-
-    for (const bill of recurringBills) {
-      let current = new Date(
-        today.getFullYear(),
-        today.getMonth(),
-        bill.due_day
-      );
-
-      if (current < today) {
-        current = new Date(
-          today.getFullYear(),
-          today.getMonth() + 1,
-          bill.due_day
-        );
-      }
-
-      const endDate = new Date(
-        today.getFullYear(),
-        today.getMonth() + 4,
-        0
-      );
-
-      while (current <= endDate) {
-        const paymentDate = dateKey(current);
-
-        const exists = payments.some(
-          p =>
-            p.bill_id === bill.id &&
-            p.payment_date === paymentDate
-        );
-
-        if (!exists) {
-          const newPayment = {
-            bill_id: bill.id,
-            month: current.getMonth() + 1,
-            year: current.getFullYear(),
-            payment_date: paymentDate,
-            paid: false,
-            name: bill.name,
-            amount: bill.amount,
-            due_day: current.getDate(),
-          };
-
-          const { data, error } = await supabase
-            .from("bill_payments")
-            .insert(newPayment)
-            .select()
-            .single();
-
-          if (error) {
-            console.error(
-              "Failed to create bill payment:",
-              error
-            );
-          } else if (data) {
-            setPayments(prev => [...prev, data]);
+  useEffect(() => {
+    async function ensurePaymentsExist() {
+      if (bills.length === 0) return;
+      const recurringBills = bills.filter(b => b.recurring);
+      for (const bill of recurringBills) {
+        for (const { month, year } of availableMonths) {
+          const exists = payments.some(p => p.bill_id === bill.id && p.month === month && p.year === year);
+          if (!exists) {
+            const newPayment: BillPayment = {
+              bill_id: bill.id, month, year, paid: false,
+              name: bill.name, amount: bill.amount, due_day: bill.due_day,
+            };
+            const { data } = await supabase.from("bill_payments").insert(newPayment).select().single();
+            if (data) setPayments(prev => [...prev, data]);
           }
-        }
-
-        switch (bill.frequency) {
-          case "weekly":
-            current.setDate(current.getDate() + 7);
-            break;
-
-          case "biweekly":
-            current.setDate(current.getDate() + 14);
-            break;
-
-          case "quarterly":
-            current.setMonth(current.getMonth() + 3);
-            break;
-
-          case "yearly":
-            current.setFullYear(current.getFullYear() + 1);
-            break;
-
-          case "monthly":
-          default:
-            current.setMonth(current.getMonth() + 1);
-            break;
         }
       }
     }
-  }
-
-  ensurePaymentsExist();
-}, [bills, payments]);
+    ensurePaymentsExist();
+  }, [bills, availableMonths]);
 
   const { months, extraDebtPayment, totalMins } = useMemo(
   () =>
@@ -625,34 +543,35 @@ useEffect(() => {
     return { week1: days.slice(0, 7), week2: days.slice(7, 14) };
   }, []);
 
-const billsByDate = useMemo(() => {
-  const map: Record<
-    string,
-    { id: number; name: string; amount: number }[]
-  > = {};
-
-  payments.forEach(payment => {
-    if (payment.paid || !payment.payment_date) return;
-
-    const date = new Date(
-      `${payment.payment_date}T00:00:00`
-    );
-
-    const key = dateKey(date);
-
-    if (!map[key]) {
-      map[key] = [];
-    }
-
-    map[key].push({
-      id: payment.bill_id,
-      name: payment.name ?? "",
-      amount: payment.amount ?? 0,
+  const billsByDate = useMemo(() => {
+    const map: Record<string, { id: number; name: string; amount: number }[]> = {};
+    const allDays = [...calendarWeeks.week1, ...calendarWeeks.week2];
+    const monthsInView = new Set(allDays.map(d => `${d.getFullYear()}-${d.getMonth() + 1}`));
+    bills.forEach(bill => {
+      const candidates: { month: number; year: number }[] = [];
+      if (bill.recurring) {
+        monthsInView.forEach(key => {
+          const [y, m] = key.split("-").map(Number);
+          candidates.push({ month: m, year: y });
+        });
+      } else if (bill.bill_month && bill.bill_year) {
+        candidates.push({ month: bill.bill_month, year: bill.bill_year });
+      }
+      candidates.forEach(({ month, year }) => {
+        const payment = payments.find(p => p.bill_id === bill.id && p.month === month && p.year === year);
+        const paid = payment?.paid ?? false;
+        if (paid) return;
+        const effectiveDueDay = bill.recurring ? (payment?.due_day ?? bill.due_day) : bill.due_day;
+        const amount = bill.recurring ? (payment?.amount ?? bill.amount) : bill.amount;
+        const name = bill.recurring ? (payment?.name ?? bill.name) : bill.name;
+        const dueDate = new Date(year, month - 1, effectiveDueDay);
+        const key = dateKey(dueDate);
+        if (!map[key]) map[key] = [];
+        map[key].push({ id: bill.id, name, amount });
+      });
     });
-  });
-
-  return map;
-}, [payments]);
+    return map;
+  }, [bills, payments, calendarWeeks]);
 
   const [dailyHours, setDailyHours] = useState<Record<string, { reg: string; ot: string }>>({});
   const dailyHoursSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -866,72 +785,21 @@ const billsByDate = useMemo(() => {
   const week2Result = { rows: moneyCalendarResult.rows.slice(7, 14) };
 
   const monthBills = useMemo(() => {
-  const filtered = bills.filter(bill => {
-    if (bill.recurring) return true;
-
-    return (
-      bill.bill_month === selectedMonth &&
-      bill.bill_year === selectedYear
-    );
-  });
-
-  return filtered
-    .map(bill => {
-      const matchingPayments = payments
-        .filter(
-          p =>
-            p.bill_id === bill.id &&
-            p.month === selectedMonth &&
-            p.year === selectedYear
-        )
-        .sort((a, b) => {
-          if (!a.payment_date) return 1;
-          if (!b.payment_date) return -1;
-          return a.payment_date.localeCompare(b.payment_date);
-        });
-
-      const payment = matchingPayments[0];
-
+    const filtered = bills.filter(bill => {
+      if (bill.recurring) return true;
+      return bill.bill_month === selectedMonth && bill.bill_year === selectedYear;
+    });
+    return filtered.map(bill => {
+      const payment = payments.find(p => p.bill_id === bill.id && p.month === selectedMonth && p.year === selectedYear);
       const paid = payment?.paid ?? false;
-
-      const name = bill.recurring
-        ? payment?.name ?? bill.name
-        : bill.name;
-
-      const amount = bill.recurring
-        ? payment?.amount ?? bill.amount
-        : bill.amount;
-
-      const due_day = bill.recurring
-        ? payment?.due_day ?? bill.due_day
-        : bill.due_day;
-
-      const late = isLate(
-        due_day,
-        selectedMonth,
-        selectedYear,
-        paid
-      );
-
-      const days = daysUntilDue(
-        due_day,
-        selectedMonth,
-        selectedYear
-      );
-
-      return {
-        ...bill,
-        name,
-        amount,
-        due_day,
-        paid,
-        late,
-        days,
-        paymentId: payment?.id,
-      };
-    })
-    .sort((a, b) => a.due_day - b.due_day);
-}, [bills, payments, selectedMonth, selectedYear]);
+      const name = bill.recurring ? (payment?.name ?? bill.name) : bill.name;
+      const amount = bill.recurring ? (payment?.amount ?? bill.amount) : bill.amount;
+      const due_day = bill.recurring ? (payment?.due_day ?? bill.due_day) : bill.due_day;
+      const late = isLate(due_day, selectedMonth, selectedYear, paid);
+      const days = daysUntilDue(due_day, selectedMonth, selectedYear);
+      return { ...bill, name, amount, due_day, paid, late, days, paymentId: payment?.id };
+    }).sort((a, b) => a.due_day - b.due_day);
+  }, [bills, payments, selectedMonth, selectedYear]);
 
   const urgentBills = monthBills.filter(b => !b.paid && b.days <= 7 && b.days >= 0);
   const near3Bills = monthBills.filter(b => !b.paid && (b.late || (b.days <= 3 && b.days >= 0)));
@@ -1072,41 +940,24 @@ const billsByDate = useMemo(() => {
     if (updates.length > 0) setDebts(updatedDebts);
   }
 
-async function togglePaid(bill: typeof monthBills[0]) {
-  const newPaid = !bill.paid;
-
-  if (bill.paymentId) {
-    const { error } = await supabase
-      .from("bill_payments")
-      .update({
-        paid: newPaid,
-        paid_at: newPaid ? new Date().toISOString() : null,
-      })
-      .eq("id", bill.paymentId);
-
-    if (error) {
-      console.error("togglePaid failed:", error);
-      return;
+  async function togglePaid(bill: typeof monthBills[0]) {
+    const newPaid = !bill.paid;
+    if (bill.paymentId) {
+      await supabase.from("bill_payments").update({ paid: newPaid, paid_at: newPaid ? new Date().toISOString() : null }).eq("id", bill.paymentId);
+      setPayments(prev => prev.map(p => p.id === bill.paymentId ? { ...p, paid: newPaid } : p));
+    } else {
+      const newPayment: BillPayment = { bill_id: bill.id, month: selectedMonth, year: selectedYear, paid: newPaid, paid_at: newPaid ? new Date().toISOString() : undefined };
+      const { data } = await supabase.from("bill_payments").insert(newPayment).select().single();
+      if (data) setPayments(prev => [...prev, data]);
     }
 
-    setPayments(prev =>
-      prev.map(p =>
-        p.id === bill.paymentId
-          ? { ...p, paid: newPaid }
-          : p
-      )
-    );
+    if (newPaid) {
+      setCelebration({ title: "BILL PAID!", subtitle: bill.name });
+      setShowConfetti(true);
+      setTimeout(() => setShowConfetti(false), 3200);
+    }
   }
 
-  if (newPaid) {
-    setCelebration({
-      title: "BILL PAID!",
-      subtitle: bill.name,
-    });
-    setShowConfetti(true);
-    setTimeout(() => setShowConfetti(false), 3200);
-  }
-}
   async function updateMonthBill(bill: typeof monthBills[0], field: "name" | "amount" | "due_day", value: string | number) {
     if (bill.recurring) {
       if (bill.paymentId) {
@@ -1207,44 +1058,22 @@ async function togglePaid(bill: typeof monthBills[0]) {
   }
 
   async function addBill() {
-  if (!newBill.name || !newBill.amount || !newBill.due_day) return;
-
-  const bill: Bill = {
-    id: nextBillId,
-    name: newBill.name,
-    amount: parseFloat(newBill.amount),
-    due_day: parseInt(newBill.due_day),
-    recurring: newBill.recurring,
-    frequency: newBill.recurring ? newBill.frequency : "monthly",
-    bill_month: newBill.recurring ? undefined : selectedMonth,
-    bill_year: newBill.recurring ? undefined : selectedYear,
-  };
-
-  setBills(prev =>
-    [...prev, bill].sort((a, b) => a.due_day - b.due_day)
-  );
-
-  setNextBillId(n => n + 1);
-
-  const { error } = await supabase
-    .from("bills")
-    .insert(bill);
-
-  if (error) {
-    console.error("addBill failed:", error);
-    return;
+    if (!newBill.name || !newBill.amount || !newBill.due_day) return;
+    const bill: Bill = {
+      id: nextBillId,
+      name: newBill.name,
+      amount: parseFloat(newBill.amount),
+      due_day: parseInt(newBill.due_day),
+      recurring: newBill.recurring,
+      bill_month: newBill.recurring ? undefined : selectedMonth,
+      bill_year: newBill.recurring ? undefined : selectedYear,
+    };
+    setBills(prev => [...prev, bill].sort((a, b) => a.due_day - b.due_day));
+    setNextBillId(n => n + 1);
+    await supabase.from("bills").insert(bill);
+    setNewBill({ name: "", amount: "", due_day: "", recurring: true });
+    setShowBillForm(false);
   }
-
-  setNewBill({
-    name: "",
-    amount: "",
-    due_day: "",
-    recurring: true,
-    frequency: "monthly",
-  });
-
-  setShowBillForm(false);
-}
 
   async function removeBill(id: number) {
     setBills(prev => prev.filter(b => b.id !== id));
@@ -1300,7 +1129,7 @@ async function togglePaid(bill: typeof monthBills[0]) {
     : deferredDebts.reduce((s, d) => s + d.balance, 0);
 
   const Confetti = () => {
-    const colors = ["var(--pink-dark)","var(--green-dark)","var(--pink-light-solid)","var(--ink-soft)","var(--gold-light-solid)"];
+    const colors = ["var(--pink-dark)","var(--green-dark)","var(--pink-light)","var(--ink-soft)","var(--gold-light)"];
     return (
       <div style={{ position: "fixed", top: 0, left: 0, width: "100%", height: "100%", pointerEvents: "none", zIndex: 9999, overflow: "hidden" }}>
         {Array.from({ length: 60 }).map((_, i) => (
@@ -1538,6 +1367,9 @@ async function togglePaid(bill: typeof monthBills[0]) {
                   <EmptyState image={emptyWallet} message="No lists yet. Create one to get started." />
                 ) : (
                   <>
+                    {activeListItems.length >= 0 && (
+                      <p className="daily-tasks-subtitle">Tap the flower to check it off...</p>
+                    )}
                     <div style={{ display: "flex", gap: 6, overflowX: "auto", paddingBottom: 8, marginBottom: 8 }}>
                       {lists.map(l => (
                         <button
@@ -1572,8 +1404,8 @@ async function togglePaid(bill: typeof monthBills[0]) {
                                 }}
                               >
                                 {item.done
-                                  ? <Icon name={theme === 'light' ? 'full_sun' : 'full_moon'} size={17} style={{ color: "var(--pink-dark)" }} />
-                                  : <Icon name={theme === 'light' ? 'empty_sun' : 'empty_moon'} size={17} style={{ color: "var(--border)" }} />
+                                  ? <Icon name="flowerfull" size={17} style={{ color: "var(--pink-dark)" }} />
+                                  : <Icon name="flowerempty" size={17} style={{ color: "var(--border)" }} />
                                 }
                               </button>
                               <div style={{ flex: 1, fontSize: 13, color: item.done ? "var(--ink-muted)" : "var(--ink)", textDecoration: item.done ? "line-through" : "none" }}>
@@ -2075,50 +1907,14 @@ async function togglePaid(bill: typeof monthBills[0]) {
                           <input type="checkbox" checked={newBill.recurring} onChange={e => setNewBill(p => ({ ...p, recurring: e.target.checked }))} />
                           Recurring
                         </label>
-
-{newBill.recurring && (
-  <label style={{ display: "flex", flexDirection: "column", gap: 5 }}>
-    <span style={{ fontSize: 11, color: "var(--ink-muted)", fontWeight: 700 }}>
-      FREQUENCY
-    </span>
-
-    <select
-      value={newBill.frequency}
-      onChange={e =>
-        setNewBill(prev => ({
-          ...prev,
-          frequency: e.target.value as
-            | "weekly"
-            | "biweekly"
-            | "monthly"
-            | "quarterly"
-            | "yearly",
-        }))
-      }
-      style={{
-        width: "100%",
-        padding: "9px 10px",
-        borderRadius: 10,
-        border: "1.5px solid var(--border)",
-        background: "var(--surface)",
-        color: "var(--ink)",
-        fontFamily: "inherit",
-        fontSize: 13,
-      }}
-    >
-      <option value="weekly">Weekly</option>
-      <option value="biweekly">Every 2 Weeks</option>
-      <option value="monthly">Monthly</option>
-      <option value="quarterly">Every 3 Months</option>
-      <option value="yearly">Yearly</option>
-    </select>
-  </label>
-)}
-
                       </div>
                     </div>
                     <button className="btn btn-green" style={{ justifyContent: "center" }} onClick={addBill}>Save Bill</button>
                   </div>
+                )}
+
+                {monthBills.length > 0 && (
+                  <p className="daily-tasks-subtitle">Tap the jar to give it some sugar...</p>
                 )}
                 <div style={{ overflowX: "auto" }}>
                 <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
@@ -2153,8 +1949,8 @@ async function togglePaid(bill: typeof monthBills[0]) {
                             }}
                           >
                             {b.paid
-                              ? <Icon name={theme === 'light' ? 'full_sun' : 'full_moon'} size={22} />
-                              : <Icon name={theme === 'light' ? 'empty_sun' : 'empty_moon'} size={22} />
+                              ? <Icon name="sugarfull" size={22} />
+                              : <Icon name="sugarempty" size={22} />
                             }
                           </button>
                         </td>
@@ -2270,6 +2066,9 @@ async function togglePaid(bill: typeof monthBills[0]) {
                     + Add
                   </button>
                 </div>
+                {activeDebts.length > 0 && (
+                  <p className="daily-tasks-subtitle">Tap the shell to give it some color.</p>
+                )}
                 <div style={{ overflowX: "auto" }}>
                   <table className="table">
                     <thead>
@@ -2306,8 +2105,8 @@ async function togglePaid(bill: typeof monthBills[0]) {
                                   alignItems: "center", justifyContent: "center",
                                 }}
                               >
-                                <Icon name={theme === 'light' ? 'empty_sun' : 'empty_moon'} size={22} />
-            </button>
+                                <Icon name="shellempty" size={22} />
+                              </button>
                             </td>
                             <td style={{ padding: "9px 8px" }}>
                               {i === 0
@@ -2359,8 +2158,8 @@ async function togglePaid(bill: typeof monthBills[0]) {
                                 alignItems: "center", justifyContent: "center",
                               }}
                             >
-                            <Icon name={theme === 'light' ? 'full_sun' : 'full_moon'} size={22} />
-          </button>
+                              <Icon name="shellfull" size={22} />
+                            </button>
                           </td>
                           <td style={{ padding: "9px 8px", textDecoration: "line-through", color: "var(--green-dark)", fontWeight: 700 }}>{d.name}</td>
                           <td style={{ padding: "9px 8px", color: "var(--green-dark)", fontWeight: 800 }}>$0.00</td>
