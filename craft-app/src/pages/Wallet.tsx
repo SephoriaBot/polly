@@ -47,6 +47,7 @@ interface BillPayment {
   bill_id: number;
   month: number;
   year: number;
+  payment_date: string;
   paid: boolean;
   paid_at?: string;
   name?: string;
@@ -494,25 +495,116 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
   }, []);
 
   useEffect(() => {
-    async function ensurePaymentsExist() {
-      if (bills.length === 0) return;
-      const recurringBills = bills.filter(b => b.recurring);
-      for (const bill of recurringBills) {
-        for (const { month, year } of availableMonths) {
-          const exists = payments.some(p => p.bill_id === bill.id && p.month === month && p.year === year);
-          if (!exists) {
-            const newPayment: BillPayment = {
-              bill_id: bill.id, month, year, paid: false,
-              name: bill.name, amount: bill.amount, due_day: bill.due_day,
-            };
-            const { data } = await supabase.from("bill_payments").insert(newPayment).select().single();
-            if (data) setPayments(prev => [...prev, data]);
+  async function ensurePaymentsExist() {
+    if (bills.length === 0) return;
+
+    const recurringBills = bills.filter(b => b.recurring);
+
+    const today = new Date();
+    const startDate = new Date(
+      today.getFullYear(),
+      today.getMonth(),
+      1
+    );
+
+    const endDate = new Date(
+      today.getFullYear(),
+      today.getMonth() + 6,
+      0
+    );
+
+    for (const bill of recurringBills) {
+      const dates: Date[] = [];
+
+      let current = new Date(
+        today.getFullYear(),
+        today.getMonth(),
+        bill.due_day
+      );
+
+      if (current < startDate) {
+        current = new Date(
+          today.getFullYear(),
+          today.getMonth() + 1,
+          bill.due_day
+        );
+      }
+
+      while (current <= endDate) {
+        dates.push(new Date(current));
+
+        switch (bill.frequency) {
+          case "weekly":
+            current.setDate(current.getDate() + 7);
+            break;
+
+          case "biweekly":
+            current.setDate(current.getDate() + 14);
+            break;
+
+          case "quarterly":
+            current.setMonth(current.getMonth() + 3);
+            break;
+
+          case "yearly":
+            current.setFullYear(current.getFullYear() + 1);
+            break;
+
+          case "monthly":
+          default:
+            current.setMonth(current.getMonth() + 1);
+            break;
+        }
+      }
+
+      for (const dueDate of dates) {
+        const paymentDate = `${dueDate.getFullYear()}-${String(
+          dueDate.getMonth() + 1
+        ).padStart(2, "0")}-${String(
+          dueDate.getDate()
+        ).padStart(2, "0")}`;
+
+        const exists = payments.some(
+          p =>
+            p.bill_id === bill.id &&
+            p.payment_date === paymentDate
+        );
+
+        if (!exists) {
+          const newPayment: BillPayment = {
+            bill_id: bill.id,
+            month: dueDate.getMonth() + 1,
+            year: dueDate.getFullYear(),
+            payment_date: paymentDate,
+            paid: false,
+            name: bill.name,
+            amount: bill.amount,
+            due_day: dueDate.getDate(),
+          };
+
+          const { data, error } = await supabase
+            .from("bill_payments")
+            .insert(newPayment)
+            .select()
+            .single();
+
+          if (error) {
+            console.error(
+              "Failed to create bill payment:",
+              error
+            );
+          }
+
+          if (data) {
+            setPayments(prev => [...prev, data]);
           }
         }
       }
     }
-    ensurePaymentsExist();
-  }, [bills, availableMonths]);
+  }
+
+  ensurePaymentsExist();
+}, [bills, payments]);
 
   const { months, extraDebtPayment, totalMins } = useMemo(
   () =>
@@ -552,35 +644,34 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
     return { week1: days.slice(0, 7), week2: days.slice(7, 14) };
   }, []);
 
-  const billsByDate = useMemo(() => {
-    const map: Record<string, { id: number; name: string; amount: number }[]> = {};
-    const allDays = [...calendarWeeks.week1, ...calendarWeeks.week2];
-    const monthsInView = new Set(allDays.map(d => `${d.getFullYear()}-${d.getMonth() + 1}`));
-    bills.forEach(bill => {
-      const candidates: { month: number; year: number }[] = [];
-      if (bill.recurring) {
-        monthsInView.forEach(key => {
-          const [y, m] = key.split("-").map(Number);
-          candidates.push({ month: m, year: y });
-        });
-      } else if (bill.bill_month && bill.bill_year) {
-        candidates.push({ month: bill.bill_month, year: bill.bill_year });
-      }
-      candidates.forEach(({ month, year }) => {
-        const payment = payments.find(p => p.bill_id === bill.id && p.month === month && p.year === year);
-        const paid = payment?.paid ?? false;
-        if (paid) return;
-        const effectiveDueDay = bill.recurring ? (payment?.due_day ?? bill.due_day) : bill.due_day;
-        const amount = bill.recurring ? (payment?.amount ?? bill.amount) : bill.amount;
-        const name = bill.recurring ? (payment?.name ?? bill.name) : bill.name;
-        const dueDate = new Date(year, month - 1, effectiveDueDay);
-        const key = dateKey(dueDate);
-        if (!map[key]) map[key] = [];
-        map[key].push({ id: bill.id, name, amount });
-      });
+const billsByDate = useMemo(() => {
+  const map: Record<
+    string,
+    { id: number; name: string; amount: number }[]
+  > = {};
+
+  payments.forEach(payment => {
+    if (payment.paid || !payment.payment_date) return;
+
+    const date = new Date(
+      `${payment.payment_date}T00:00:00`
+    );
+
+    const key = dateKey(date);
+
+    if (!map[key]) {
+      map[key] = [];
+    }
+
+    map[key].push({
+      id: payment.bill_id,
+      name: payment.name ?? "",
+      amount: payment.amount ?? 0,
     });
-    return map;
-  }, [bills, payments, calendarWeeks]);
+  });
+
+  return map;
+}, [payments]);
 
   const [dailyHours, setDailyHours] = useState<Record<string, { reg: string; ot: string }>>({});
   const dailyHoursSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
