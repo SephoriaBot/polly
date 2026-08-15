@@ -1383,7 +1383,7 @@ async function updateMonthBill(
       )
     );
   }
-}
+}}
 
   async function saveLog() {
     const amount = pay;
