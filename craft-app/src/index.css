@@ -389,6 +389,24 @@ a {
   border: 1px solid var(--sage);
 }
 
+.badge-green {
+  background: var(--sage-light);
+  color: var(--green-dark);
+  border-color: var(--sage);
+}
+
+.badge-lavender {
+  background: var(--gold-light-solid);
+  color: var(--gold-dark);
+  border-color: var(--gold);
+}
+
+.badge-pink {
+  background: var(--pink-light-solid);
+  color: var(--pink-dark);
+  border-color: var(--pink);
+}
+
 @media (max-width: 480px) {
   .badge {
     padding: 3px 8px;
