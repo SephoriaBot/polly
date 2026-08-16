@@ -45,6 +45,9 @@
 
   --danger: #B5615B;
   --danger-bg: #F5E6E3;
+
+  --accent-text: #FFFCF7;
+  --accent-text-muted: rgba(255, 252, 247, .78);
 }
 
 [data-theme='dark'] {
@@ -87,6 +90,9 @@
 
   --danger: #E08A82;
   --danger-bg: #3B2320;
+
+  --accent-text: #F3D7B1;
+  --accent-text-muted: rgba(243, 215, 177, .78);
 }
 
 /* Light mode: soft gold-tinted glow on hover */
