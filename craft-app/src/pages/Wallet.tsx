@@ -2091,7 +2091,9 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                       </td></tr>
                     ) : (
                   <tbody>
-                    {monthBills.map((b, i) => (
+                    {monthBills.map((b, i) => {
+                      const isAccentRow = !b.late && !b.paid && i % 2 !== 0;
+                      return (
                       <tr key={b.paymentId ?? `${b.id}-fallback`} style={{ background: b.late ? "var(--danger-bg)" : b.paid ? "var(--sage-light)" : i % 2 === 0 ? "transparent" : "var(--accent)" }}>
                         <td style={{ padding: "9px 8px" }}>
                           <button
@@ -2111,16 +2113,16 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                           </button>
                         </td>
                         <td style={{ padding: "9px 8px", textDecoration: b.paid ? "line-through" : "none" }}>
-                          <EditableCell value={b.name} onChange={v => updateMonthBill(b, "name", v)} type="text" style={{ color: b.paid ? "var(--ink-muted)" : "var(--ink)", fontWeight: 600 }} />
+                          <EditableCell value={b.name} onChange={v => updateMonthBill(b, "name", v)} type="text" style={{ color: b.paid ? "var(--ink-muted)" : isAccentRow ? "var(--accent-text)" : "var(--ink)", fontWeight: 600 }} />
                           {b.recurring && b.frequency_unit === "week" && (
-                            <div style={{ fontSize: 10, color: "var(--ink-muted)", marginTop: 2 }}>{frequencyLabel(b.frequency_unit, b.frequency_interval)}</div>
+                            <div style={{ fontSize: 10, color: isAccentRow ? "var(--accent-text-muted)" : "var(--ink-muted)", marginTop: 2 }}>{frequencyLabel(b.frequency_unit, b.frequency_interval)}</div>
                           )}
                         </td>
                         <td style={{ padding: "9px 8px", textDecoration: b.paid ? "line-through" : "none" }}>
-                          <EditableCell value={b.amount} onChange={v => updateMonthBill(b, "amount", parseFloat(v) || 0)} style={{ color: b.paid ? "var(--ink-muted)" : "var(--pink-dark)", fontWeight: 700 }} />
+                          <EditableCell value={b.amount} onChange={v => updateMonthBill(b, "amount", parseFloat(v) || 0)} style={{ color: b.paid ? "var(--ink-muted)" : isAccentRow ? "var(--accent-text)" : "var(--pink-dark)", fontWeight: 700 }} />
                         </td>
                         <td style={{ padding: "9px 8px" }}>
-                          <EditableCell value={b.due_day} onChange={v => updateMonthBill(b, "due_day", parseInt(v) || 1)} style={{ color: "var(--ink-muted)" }} />
+                          <EditableCell value={b.due_day} onChange={v => updateMonthBill(b, "due_day", parseInt(v) || 1)} style={{ color: isAccentRow ? "var(--accent-text-muted)" : "var(--ink-muted)" }} />
                         </td>
                         <td style={{ padding: "9px 8px" }}>
                           {b.paid
@@ -2134,7 +2136,8 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                           <button className="btn btn-ghost btn-sm" onClick={() => removeBill(b.id)}><Icon name="icon-trash2" size={13} /></button>
                         </td>
                       </tr>
-                    ))}
+                      );
+                    })}
                     
                   </tbody>
                 )}
