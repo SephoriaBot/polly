@@ -372,13 +372,22 @@ a {
 /* ================= BADGES ================= */
 
 .badge {
+  display: inline-block;
   padding: 4px 10px;
   border-radius: 999px;
   font-size: 12px;
   font-weight: 600;
+  white-space: nowrap;
   background: var(--sage-light);
   color: var(--green-dark);
   border: 1px solid var(--sage);
+}
+
+@media (max-width: 480px) {
+  .badge {
+    padding: 3px 8px;
+    font-size: 10.5px;
+  }
 }
 
 /* ================= INPUTS ================= */
