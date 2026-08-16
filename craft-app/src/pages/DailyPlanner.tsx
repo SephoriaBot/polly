@@ -64,6 +64,53 @@ const SPARK_COLORS = [
   'var(--gold-light-solid)',
 ];
 
+const PLANNER_TABS: { key: 'tasks' | 'appointments' | 'chores' | 'events' | 'goals' | 'notes'; label: string; icon: IconName }[] = [
+  { key: 'tasks', label: 'Tasks', icon: 'icon-listchecks' },
+  { key: 'appointments', label: 'Appointments', icon: 'icon-calendar' },
+  { key: 'chores', label: 'Chores', icon: 'cleaning-spray' },
+  { key: 'events', label: 'Life Events', icon: 'icon-heart' },
+  { key: 'goals', label: 'Goals', icon: 'trophy' },
+  { key: 'notes', label: 'Notes', icon: 'icon-notebook' },
+];
+
+function PlannerTabs({ active, onChange }: { active: string; onChange: (key: 'tasks' | 'appointments' | 'chores' | 'events' | 'goals' | 'notes') => void }) {
+  return (
+    <div
+      style={{
+        display: 'flex',
+        gap: 6,
+        overflowX: 'auto',
+        paddingBottom: 4,
+        marginBottom: 16,
+        WebkitOverflowScrolling: 'touch',
+        scrollbarWidth: 'none',
+      }}
+    >
+      {PLANNER_TABS.map(tab => {
+        const isActive = active === tab.key;
+        return (
+          <button
+            key={tab.key}
+            onClick={() => onChange(tab.key)}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0,
+              padding: '8px 14px', borderRadius: 999,
+              border: `1.5px solid ${isActive ? 'var(--primary)' : 'var(--border)'}`,
+              background: isActive ? 'var(--primary)' : 'var(--surface)',
+              color: isActive ? 'var(--btn-ink)' : 'var(--ink-muted)',
+              fontWeight: 700, fontSize: 12.5, cursor: 'pointer',
+              transition: '0.15s ease',
+            }}
+          >
+            <Icon name={tab.icon} size={14} />
+            {tab.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 function StitchDivider() {
   return (
     <div className="stitch-divider">
@@ -96,6 +143,7 @@ export default function DailyPlanner() {
   const [newTaskDays, setNewTaskDays] = useState<number[]>([]);
   const [savingTemplate, setSavingTemplate] = useState(false);
   const [showAttended, setShowAttended] = useState(false); // collapsed by default so attended appts don't stack up
+  const [activeTab, setActiveTab] = useState<'tasks' | 'appointments' | 'chores' | 'events' | 'goals' | 'notes'>('tasks');
 
   const upcomingAppts = appointments.filter(a => !a.attended);
   const attendedAppts = appointments.filter(a => a.attended);
@@ -325,6 +373,7 @@ export default function DailyPlanner() {
     const noteType = noteMap[appt.id];
     if (!noteType) return;
     setFocusNote({ appointmentId: appt.id, noteType, label: appt.title });
+    setActiveTab('notes');
   }
 
   const doneCount = tasks.filter(t => t.done).length;
@@ -388,9 +437,11 @@ export default function DailyPlanner() {
         </div>
       </div>
 
+      <PlannerTabs active={activeTab} onChange={setActiveTab} />
+
       <div className="page-body">
 
-        {tasks.length > 0 && (
+        {activeTab === 'tasks' && tasks.length > 0 && (
           <div style={{ marginBottom: 4, maxWidth: 560 }}>
             <div style={{
               height: 10,
@@ -411,7 +462,8 @@ export default function DailyPlanner() {
           </div>
         )}
 
-        <section className="grid-2" style={{ alignItems: 'start' }}>
+        {activeTab === 'tasks' && (
+        <section>
 
           {/* Dailies checklist */}
           <div className="card">
@@ -585,9 +637,11 @@ export default function DailyPlanner() {
             </div>
           </div>
 
-          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-  <Icon name="pagedivider" size={85} />
-</div>
+        </section>
+        )}
+
+        {activeTab === 'appointments' && (
+        <section>
 
           {/* Appointments */}
           <div className="card">
@@ -738,40 +792,31 @@ export default function DailyPlanner() {
           </div>
 
         </section>
-
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-  <Icon name="pagedivider" size={85} />
-</div>
+        )}
 
         {/* CHORES — interval-based, time-since-last-done */}
+        {activeTab === 'chores' && (
         <section>
           <Chores />
         </section>
-
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-  <Icon name="pagedivider" size={85} />
-</div>
+        )}
 
         {/* LIFE EVENTS — temporary workspaces for big life stuff */}
+        {activeTab === 'events' && (
         <section>
           <LifeEvents />
         </section>
-
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-  <Icon name="pagedivider" size={85} />
-</div>
+        )}
 
         {/* GOALS — AI-generated step checklist for a goal you set */}
+        {activeTab === 'goals' && (
         <section>
           <Goals />
         </section>
-
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-  <Icon name="pagedivider" size={85} />
-</div>
+        )}
 
         {/* APPOINTMENT NOTES PANEL */}
-
+        {activeTab === 'notes' && (
         <section>
           <AppointmentNotesPanel
             externalSelection={focusNote}
@@ -779,6 +824,7 @@ export default function DailyPlanner() {
             onNotesChanged={refreshNoteMap}
           />
         </section>
+        )}
 
       </div>
     </div>
