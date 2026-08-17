@@ -1068,9 +1068,11 @@ export default function Grocery() {
         </div>
        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
   {activeTab === 'list' && (
+<>
     <button className="btn btn-primary" onClick={openBasicsModal}>
       <Icon name="icon-listchecks" size={20} /> Build Basics List
     </button>
+</>
   )}
 
   {activeTab === 'smart-cart' && (
