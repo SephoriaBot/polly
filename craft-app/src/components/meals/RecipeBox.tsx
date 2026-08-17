@@ -133,7 +133,6 @@ interface RecipeBoxProps {
 
 export default function RecipeBox({ currentList, existingItemNames, onItemsAdded }: RecipeBoxProps) {
   const { showToast } = useToast()
-  const [open, setOpen] = useState(false)
   const [tab, setTab] = useState<Tab>('discover')
   const [openRecipeId, setOpenRecipeId] = useState<number | null>(null)
 
@@ -143,7 +142,7 @@ export default function RecipeBox({ currentList, existingItemNames, onItemsAdded
   const [addedId, setAddedId] = useState<string | null>(null)
   const [planningId, setPlanningId] = useState<string | null>(null)
 
-  useEffect(() => { if (open) loadSavedMeals() }, [open])
+  useEffect(() => { loadSavedMeals() }, [])
 
   async function loadSavedMeals() {
     setSavedLoading(true)
@@ -202,51 +201,38 @@ export default function RecipeBox({ currentList, existingItemNames, onItemsAdded
   }
 
   return (
-    <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-      <button
-        onClick={() => setOpen(o => !o)}
-        style={{
-          width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          gap: 8, padding: '12px 14px', background: 'transparent', border: 'none', cursor: 'pointer',
-          textAlign: 'left', color: 'var(--ink)',
-        }}
-      >
-        <span style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 700, fontSize: '0.9rem' }}>
-          <Icon name="cookbook" size={18} style={{ color: 'var(--pink-dark)' }} /> Recipe Box
-        </span>
-        {open ? <Icon name="icon-chevronup" size={16} /> : <Icon name="icon-chevrondown" size={16} />}
-      </button>
+    <div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+        <Icon name="cookbook" size={20} style={{ color: 'var(--pink-dark)' }} />
+        <h2 style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--ink)' }}>Recipe Box</h2>
+      </div>
 
-      {open && (
-        <div style={{ padding: '0 14px 14px' }}>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 12 }}>
-            <button style={chipStyle(tab === 'discover')} onClick={() => setTab('discover')}>
-              <Icon name="groq_2" size={12} style={{ marginRight: 4, verticalAlign: -1 }} /> Find Meals
-            </button>
-            <button style={chipStyle(tab === 'saved')} onClick={() => setTab('saved')}>
-              <Icon name="icon-heart" size={12} style={{ marginRight: 4, verticalAlign: -1 }} /> Saved ({savedMeals.length})
-            </button>
-          </div>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 12 }}>
+        <button style={chipStyle(tab === 'discover')} onClick={() => setTab('discover')}>
+          <Icon name="groq_2" size={12} style={{ marginRight: 4, verticalAlign: -1 }} /> Find Meals
+        </button>
+        <button style={chipStyle(tab === 'saved')} onClick={() => setTab('saved')}>
+          <Icon name="icon-heart" size={12} style={{ marginRight: 4, verticalAlign: -1 }} /> Saved ({savedMeals.length})
+        </button>
+      </div>
 
-          {tab === 'discover' && <DiscoverTab onOpenRecipe={setOpenRecipeId} onSaved={loadSavedMeals} />}
+      {tab === 'discover' && <DiscoverTab onOpenRecipe={setOpenRecipeId} onSaved={loadSavedMeals} />}
 
-          {tab === 'saved' && (
-            <SavedTab
-              savedMeals={savedMeals}
-              loading={savedLoading}
-              addingId={addingId}
-              addedId={addedId}
-              planningId={planningId}
-              onCook={setOpenRecipeId}
-              onAddToCart={sendToGroceryList}
-              onDelete={deleteMeal}
-              onGoDiscover={() => setTab('discover')}
-              onStartPlan={setPlanningId}
-              onCancelPlan={() => setPlanningId(null)}
-              onConfirmPlan={planMealNight}
-            />
-          )}
-        </div>
+      {tab === 'saved' && (
+        <SavedTab
+          savedMeals={savedMeals}
+          loading={savedLoading}
+          addingId={addingId}
+          addedId={addedId}
+          planningId={planningId}
+          onCook={setOpenRecipeId}
+          onAddToCart={sendToGroceryList}
+          onDelete={deleteMeal}
+          onGoDiscover={() => setTab('discover')}
+          onStartPlan={setPlanningId}
+          onCancelPlan={() => setPlanningId(null)}
+          onConfirmPlan={planMealNight}
+        />
       )}
 
       {openRecipeId && <RecipeModal mealId={openRecipeId} onClose={() => setOpenRecipeId(null)} />}
