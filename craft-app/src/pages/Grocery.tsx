@@ -1067,13 +1067,6 @@ export default function Grocery() {
           <Lantern size={50} />
         </div>
        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-  {activeTab === 'list' && (
-<>
-    <button className="btn btn-primary" onClick={openBasicsModal}>
-      <Icon name="icon-listchecks" size={20} /> Build Basics List
-    </button>
-</>
-  )}
 
   {activeTab === 'smart-cart' && (
     <>
@@ -1100,12 +1093,20 @@ export default function Grocery() {
 
       <div className="page-body">
 
-                {activeTab === 'list' && (
-          <RecipeBox
+             {activeTab === 'list' && (
+  <>
+    <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}>
+      <button className="btn btn-primary" onClick={openBasicsModal}>
+        <Icon name="icon-listchecks" size={20} /> Build Basics List
+      </button>
+    </div>
+
+    <RecipeBox
             currentList={currentList}
             existingItemNames={items.map(i => i.name)}
             onItemsAdded={newRows => setItems(prev => [...prev, ...(newRows as GroceryItem[])])}
           />
+  </>
         )}
 
         {/* Build Basics List modal */}
