@@ -1067,27 +1067,232 @@ export default function Grocery() {
           <Lantern size={50} />
         </div>
 
-
-         
-   <PageTabs tabs={GROCERY_TABS} active={activeTab} onChange={setActiveTab} />
+        <PageTabs tabs={GROCERY_TABS} active={activeTab} onChange={setActiveTab} />
       </div>
 
       <div className="page-body">
 
-             {activeTab === 'list' && (
-  <>
-    <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}>
-      <button className="btn btn-primary" onClick={openBasicsModal}>
-        <Icon name="icon-listchecks" size={20} /> Build Basics List
-      </button>
-    </div>
+        {activeTab === 'list' && (
+          <>
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}>
+              <button className="btn btn-primary" onClick={openBasicsModal}>
+                <Icon name="icon-listchecks" size={20} /> Build Basics List
+              </button>
+            </div>
 
-    <RecipeBox
-            currentList={currentList}
-            existingItemNames={items.map(i => i.name)}
-            onItemsAdded={newRows => setItems(prev => [...prev, ...(newRows as GroceryItem[])])}
-          />
-  </>
+            <RecipeBox
+              currentList={currentList}
+              existingItemNames={items.map(i => i.name)}
+              onItemsAdded={newRows => setItems(prev => [...prev, ...(newRows as GroceryItem[])])}
+            />
+
+            {/* my lists — every list here is a real, live list you can switch
+                 to, add/check off items on, and come back to later. nothing is
+                 just a static snapshot. */}
+            <div className="card">
+              <div className="section-label" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Icon name="icon-listchecks" size={13} /> My Lists</span>
+                <span style={{ fontWeight: 500 }}>{lists.length} list{lists.length === 1 ? '' : 's'}</span>
+              </div>
+
+              {listsLoading ? (
+                <p style={{ fontSize: '0.8rem', color: 'var(--ink-muted)' }}>Loading lists…</p>
+              ) : (
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 10 }}>
+                  {lists.map(list => {
+                    const active = currentList === list.name
+                    return (
+                      <div key={list.id} style={{ display: 'flex', alignItems: 'stretch' }}>
+                        <button
+                          onClick={() => setCurrentList(list.name)}
+                          style={{
+                            padding: '6px 12px',
+                            borderRadius: lists.length > 1 ? 'var(--radius-md) 0 0 var(--radius-md)' : 'var(--radius-md)',
+                            border: `1.5px solid ${active ? 'var(--pink)' : 'var(--border)'}`,
+                            background: active ? 'var(--pink)' : 'var(--white)',
+                            color: active ? 'var(--white)' : 'var(--ink)',
+                            fontWeight: 600, fontSize: '0.8rem', cursor: 'pointer',
+                          }}
+                        >
+                          {list.name}
+                        </button>
+                        {lists.length > 1 && (
+                          <button
+                            onClick={() => deleteList(list)}
+                            title={`Delete ${list.name}`}
+                            style={{
+                              padding: '6px 8px',
+                              borderRadius: '0 var(--radius-md) var(--radius-md) 0',
+                              border: `1.5px solid ${active ? 'var(--pink)' : 'var(--border)'}`,
+                              borderLeft: 'none',
+                              background: active ? 'var(--pink)' : 'var(--white)',
+                              color: active ? 'var(--white)' : 'var(--ink-muted)',
+                              cursor: 'pointer', display: 'flex', alignItems: 'center',
+                            }}
+                          >
+                            <Icon name="icon-trash2" size={12} />
+                          </button>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+
+              <div style={{ display: 'flex', gap: 6 }}>
+                <input
+                  className="form-input"
+                  type="text"
+                  placeholder="New list name (e.g. Costco Run)…"
+                  value={newListName}
+                  onChange={e => setNewListName(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && createList()}
+                  style={{ flex: 1 }}
+                />
+                <button className="btn btn-primary" onClick={createList} disabled={!newListName.trim()}>
+                  <Icon name="icon-folderplus" size={20} /> New List
+                </button>
+              </div>
+            </div>
+
+            {have.length > 0 && (
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                <button className="btn btn-ghost" onClick={clearChecked}>
+                  <Icon name="icon-trash2" size={20} /> Clear Checked
+                </button>
+              </div>
+            )}
+
+            {loading ? (
+              <p style={{ color: 'var(--ink-muted)', fontSize: '0.8rem' }}>Loading…</p>
+            ) : (
+              <div className="grid-2" style={{ alignItems: 'start' }}>
+                <div className="card">
+                  <div className="section-label" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Icon name="icon-clipboardlist" size={13} /> Need to Buy</span>
+                    <span style={{ fontWeight: 500 }}>{needs.length} items</span>
+                  </div>
+                  <p className="daily-tasks-subtitle">Tap the flower to check it off...</p>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 420, overflowY: 'auto', marginBottom: 12 }}>
+                    {needs.length === 0
+                      ? <EmptyState image={emptyGrocery} message="Nothing here yet." />
+                      : needs.map(item => {
+                        const cheapest = cheapestFor(item.name)
+                        const itemPrices = pricesFor(item.name)
+                        const isOpen = expandedItem === item.id
+                        return (
+                          <div key={item.id}>
+                            <div style={itemRowStyle(false)}>
+                              <button onClick={() => toggle(item.id, item.checked)} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', display: 'flex', flexShrink: 0 }}>
+                                <Icon name={theme === 'light' ? 'empty_sun' : 'empty_moon'} size={20} />
+                              </button>
+                              <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--ink)' }}>{item.name}</span>
+                              <span style={{ fontSize: '0.72rem', color: 'var(--ink-muted)', whiteSpace: 'nowrap' }}>{item.qty}</span>
+                              {cheapest && (
+                                <span style={priceBadgeStyle(isStale(cheapest.updated_at))}>
+                                  ${cheapest.price.toFixed(2)} @ {cheapest.store}
+                                </span>
+                              )}
+                              <button onClick={() => setExpandedItem(isOpen ? null : item.id)}
+                                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-muted)', display: 'flex', flexShrink: 0 }}>
+                                {isOpen ? <Icon name="icon-chevronup" size={13} /> : <Icon name="icon-chevrondown" size={13} />}
+                              </button>
+                              <button onClick={() => removeItem(item.id)}
+                                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-muted)', opacity: 0.4, display: 'flex', flexShrink: 0 }}>
+                                <Icon name="icon-trash2" size={13} />
+                              </button>
+                            </div>
+
+                            {isOpen && (
+                              <div style={{ padding: '8px 12px 4px 34px', background: 'var(--cream)', borderRadius: '0 0 var(--radius-md) var(--radius-md)' }}>
+                                {itemPrices.length === 0 ? (
+                                  <p style={{ fontSize: '0.72rem', color: 'var(--ink-muted)', padding: '4px 0 8px' }}>No prices logged yet.</p>
+                                ) : (
+                                  <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginBottom: 8 }}>
+                                    {itemPrices.map(p => (
+                                      <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.72rem', padding: '4px 0' }}>
+                                        <span style={{ flex: 2, fontWeight: 600, color: 'var(--ink)' }}>{p.store}</span>
+                                        <span style={{ flex: 1, color: 'var(--pink-dark)', fontWeight: 600 }}>${p.price.toFixed(2)}</span>
+                                        <span style={{ flex: 1, color: isStale(p.updated_at) ? 'var(--gold-dark)' : 'var(--ink-muted)', fontSize: '0.66rem' }}>{p.updated_at}</span>
+                                        <button onClick={() => deletePrice(p.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-muted)', opacity: 0.5 }}>
+                                          <Icon name="icon-clear" size={12} />
+                                        </button>
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                                <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
+                                  <input
+                                    className="form-input"
+                                    type="text"
+                                    placeholder="Store…"
+                                    value={priceForm.store}
+                                    onChange={e => setPriceForm(f => ({ ...f, store: e.target.value }))}
+                                    style={{ flex: 2, fontSize: '0.78rem', padding: '6px 8px' }}
+                                  />
+                                  <input
+                                    className="form-input"
+                                    type="number"
+                                    placeholder="Price"
+                                    value={priceForm.price}
+                                    onChange={e => setPriceForm(f => ({ ...f, price: e.target.value }))}
+                                    onKeyDown={e => e.key === 'Enter' && addPrice(item.name)}
+                                    style={{ flex: 1, fontSize: '0.78rem', padding: '6px 8px' }}
+                                  />
+                                  <button className="btn btn-primary" style={{ padding: '6px 10px' }} onClick={() => addPrice(item.name)}>
+                                    <Icon name="icon-plus" size={13} />
+                                  </button>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        )
+                      })
+                    }
+                  </div>
+                  <div style={{ display: 'flex', gap: 6 }}>
+                    <input className="form-input" type="text" placeholder="Add item… (or item, item, item)" value={newItem}
+                      onChange={e => setNewItem(e.target.value)}
+                      onKeyDown={e => e.key === 'Enter' && addItem()}
+                      style={{ flex: 2 }} />
+                    <input className="form-input" type="text" placeholder="Qty" value={newQty}
+                      onChange={e => setNewQty(e.target.value)}
+                      onKeyDown={e => e.key === 'Enter' && addItem()}
+                      style={{ flex: 1, minWidth: 0 }} />
+                    <button className="btn btn-primary" style={{ padding: '8px 12px' }} onClick={addItem}>
+                      <Icon name="icon-plus" size={20} />
+                    </button>
+                  </div>
+                </div>
+
+                <div className="card">
+                  <div className="section-label" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Icon name="groq_7" size={13} /> Already Have</span>
+                    <span style={{ fontWeight: 500 }}>{have.length} items</span>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 420, overflowY: 'auto' }}>
+                    {have.length === 0
+                      ? <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6, width: '100%', padding: '12px 0' }}><Icon name="empty_jar" size={60} />Nothing checked off yet!</span>
+                      : have.map(item => (
+                        <div key={item.id} style={itemRowStyle(true)}>
+                          <button onClick={() => toggle(item.id, item.checked)} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', display: 'flex', flexShrink: 0 }}>
+                            <Icon name={theme === 'light' ? 'full_sun' : 'full_moon'} size={20} />
+                          </button>
+                          <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--ink-muted)', textDecoration: 'line-through' }}>{item.name}</span>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--ink-muted)', whiteSpace: 'nowrap' }}>{item.qty}</span>
+                          <button onClick={() => removeItem(item.id)}
+                            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-muted)', opacity: 0.4, display: 'flex', flexShrink: 0 }}>
+                            <Icon name="icon-trash2" size={13} />
+                          </button>
+                        </div>
+                      ))
+                    }
+                  </div>
+                </div>
+              </div>
+            )}
+          </>
         )}
 
         {/* Build Basics List modal */}
@@ -1180,564 +1385,336 @@ export default function Grocery() {
           </div>
         )}
 
-                        {activeTab === 'smart-cart' && (
+        {activeTab === 'smart-cart' && (
           <>
-  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-  <button className="btn btn-primary" onClick={buildSmartCart}>
-
-      <Icon name="shopping-cart" size={20} /> Build Smart Cart
-
-    </button>
-
-    <button className="btn btn-secondary" onClick={refreshSmartCart}>
-
-      <Icon name="icon-recur" size={20} /> Refresh
-
-    </button>
-
-    <button className="btn btn-ghost" onClick={clearSmartCart}>
-
-      <Icon name="icon-clear" size={20} /> Clear
-
-    </button>
-
-    <button className="btn btn-primary" onClick={openDoorDashList} disabled={!needs.length}>
-
-      <Icon name="icon-externallink" size={20} /> Copy List &amp; Open DoorDash
-
-    </button>
-</div>
-            
-            {/* location input */}
-         <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>          <Icon name="icon-mappin" size={16} style={{ color: 'var(--ink-muted)', flexShrink: 0 }} />
-          <input
-            className="form-input"
-            type="text"
-            placeholder="ZIP"
-            value={location}
-            onChange={e => saveLocation(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && buildSmartCart()}
-            style={{ width: 280 }}
-          />
-          <button className="btn btn-primary" onClick={buildSmartCart} disabled={!location}>
-            Build Smart Cart for {location}
-          </button>
-          <button className="btn btn-ghost" onClick={() => setShowStoreSettings(s => !s)}>
-            <Icon name="icon-slidershorizontal" size={14} /> Stores ({Object.keys(allowedStores).length})
-          </button>
-          <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.74rem', color: 'var(--ink-muted)', cursor: 'pointer' }}>
-            <input type="checkbox" checked={deepSearch} onChange={toggleDeepSearch} />
-            Deep search
-          </label>
-        </div>
-        {deepSearch && (
-          <p style={{ fontSize: '0.68rem', color: 'var(--ink-muted)', margin: '4px 0 0' }}>
-            Runs extra targeted searches for stores missing from results — more accurate, but uses more API calls.
-          </p>
-        )}
-
-        {showStoreSettings && (
-          <div className="card" style={{ marginTop: 8 }}>
-            <div className="section-label">Stores Smart Cart Will Search</div>
-            <div style={{ fontSize: 11, color: 'var(--ink-muted)', marginBottom: 10 }}>
-              Only chains on this list are matched against search results — everything else gets filtered out. Add whatever's actually near you; remove ones that aren't.
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 12 }}>
-              {Object.entries(allowedStores).map(([name, aliases]) => (
-                <div key={name} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-                  <div>
-                    <div style={{ fontSize: 13, fontWeight: 600 }}>{name}</div>
-                    <div style={{ fontSize: 10, color: 'var(--ink-muted)' }}>matches: {aliases.join(', ')}</div>
-                  </div>
-                  <button className="btn btn-ghost" onClick={() => removeAllowedStore(name)}>
-                    <Icon name="icon-trash2" size={14} />
-                  </button>
-                </div>
-              ))}
-            </div>
-            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-              <input
-                className="form-input" type="text" placeholder="Store name (e.g. H-E-B)"
-                value={newStoreName} onChange={e => setNewStoreName(e.target.value)}
-                style={{ width: 160 }}
-              />
-              <input
-                className="form-input" type="text" placeholder="Match text, comma-separated (e.g. heb, h-e-b)"
-                value={newStoreAliases} onChange={e => setNewStoreAliases(e.target.value)}
-                style={{ width: 220 }}
-              />
-              <button className="btn btn-primary" onClick={addAllowedStore} disabled={!newStoreName.trim() || !newStoreAliases.trim()}>
-                Add
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              <button className="btn btn-primary" onClick={buildSmartCart}>
+                <Icon name="shopping-cart" size={20} /> Build Smart Cart
+              </button>
+              <button className="btn btn-secondary" onClick={refreshSmartCart}>
+                <Icon name="icon-recur" size={20} /> Refresh
+              </button>
+              <button className="btn btn-ghost" onClick={clearSmartCart}>
+                <Icon name="icon-clear" size={20} /> Clear
+              </button>
+              <button className="btn btn-primary" onClick={openDoorDashList} disabled={!needs.length}>
+                <Icon name="icon-externallink" size={20} /> Copy List &amp; Open DoorDash
               </button>
             </div>
-          </div>
-                )}
-          </>
-        )}
-                {activeTab === 'list' && (
-          <>
-            {/* my lists — every list here is a real, live list you can switch
-                 to, add/check off items on, and come back to later. nothing is
-                 just a static snapshot. */}
-        <div className="card">
-          <div className="section-label" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Icon name="icon-listchecks" size={13} /> My Lists</span>
-            <span style={{ fontWeight: 500 }}>{lists.length} list{lists.length === 1 ? '' : 's'}</span>
-          </div>
 
-          {listsLoading ? (
-            <p style={{ fontSize: '0.8rem', color: 'var(--ink-muted)' }}>Loading lists…</p>
-          ) : (
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 10 }}>
-              {lists.map(list => {
-                const active = currentList === list.name
-                return (
-                  <div key={list.id} style={{ display: 'flex', alignItems: 'stretch' }}>
-                    <button
-                      onClick={() => setCurrentList(list.name)}
-                      style={{
-                        padding: '6px 12px',
-                        borderRadius: lists.length > 1 ? 'var(--radius-md) 0 0 var(--radius-md)' : 'var(--radius-md)',
-                        border: `1.5px solid ${active ? 'var(--pink)' : 'var(--border)'}`,
-                        background: active ? 'var(--pink)' : 'var(--white)',
-                        color: active ? 'var(--white)' : 'var(--ink)',
-                        fontWeight: 600, fontSize: '0.8rem', cursor: 'pointer',
-                      }}
-                    >
-                      {list.name}
-                    </button>
-                    {lists.length > 1 && (
-                      <button
-                        onClick={() => deleteList(list)}
-                        title={`Delete ${list.name}`}
-                        style={{
-                          padding: '6px 8px',
-                          borderRadius: '0 var(--radius-md) var(--radius-md) 0',
-                          border: `1.5px solid ${active ? 'var(--pink)' : 'var(--border)'}`,
-                          borderLeft: 'none',
-                          background: active ? 'var(--pink)' : 'var(--white)',
-                          color: active ? 'var(--white)' : 'var(--ink-muted)',
-                          cursor: 'pointer', display: 'flex', alignItems: 'center',
-                        }}
-                      >
-                        <Icon name="icon-trash2" size={12} />
-                      </button>
-                    )}
-                  </div>
-                )
-              })}
+            {/* location input */}
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+              <Icon name="icon-mappin" size={16} style={{ color: 'var(--ink-muted)', flexShrink: 0 }} />
+              <input
+                className="form-input"
+                type="text"
+                placeholder="ZIP"
+                value={location}
+                onChange={e => saveLocation(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && buildSmartCart()}
+                style={{ width: 280 }}
+              />
+              <button className="btn btn-primary" onClick={buildSmartCart} disabled={!location}>
+                Build Smart Cart for {location}
+              </button>
+              <button className="btn btn-ghost" onClick={() => setShowStoreSettings(s => !s)}>
+                <Icon name="icon-slidershorizontal" size={14} /> Stores ({Object.keys(allowedStores).length})
+              </button>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.74rem', color: 'var(--ink-muted)', cursor: 'pointer' }}>
+                <input type="checkbox" checked={deepSearch} onChange={toggleDeepSearch} />
+                Deep search
+              </label>
             </div>
-          )}
-
-          <div style={{ display: 'flex', gap: 6 }}>
-            <input
-              className="form-input"
-              type="text"
-              placeholder="New list name (e.g. Costco Run)…"
-              value={newListName}
-              onChange={e => setNewListName(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && createList()}
-              style={{ flex: 1 }}
-            />
-            <button className="btn btn-primary" onClick={createList} disabled={!newListName.trim()}>
-              <Icon name="icon-folderplus" size={20} /> New List
-            </button>
-          </div>
-                </div>
-          </>
-        )}
-       
-
-        {activeTab === 'list' && have.length > 0 && (
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            <button className="btn btn-ghost" onClick={clearChecked}>
-              <Icon name="icon-trash2" size={20} /> Clear Checked
-            </button>
-          </div>
-        )}
-
-                {activeTab === 'smart-cart' && (
-          <>
-            {/* store leaderboard — computed inline from current cart */}
-        {(() => {
-          const tally = computeTally(cart)
-          const totalTracked = cart.length
-          if (cart.length === 0) return null
-          if (cartError) {
-            return (
-              <div className="card">
-                <div className="section-label">Best Store for Your Whole List</div>
-                <p style={{ fontSize: '0.8rem', color: 'var(--danger)', padding: '4px 0' }}>
-                  Price lookup is down right now: {cartError}
-                </p>
-                <p style={{ fontSize: '0.72rem', color: 'var(--ink-muted)' }}>
-                  This isn't "no products found" — the search service itself failed. Try again in a bit, or check the SerpAPI account/key if this keeps happening.
-                </p>
-              </div>
-            )
-          }
-          if (tally.length === 0) {
-            return (
-              <div className="card">
-                <div className="section-label">Best Store for Your Whole List</div>
-<EmptyState image={dizzyImg} message="No products found...Refresh or try again." />
-      
-    
-              </div>
-            )
-          }
-          return (
-            <div className="card">
-              <div className="section-label">Best Store for Your Whole List</div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {tally.map((t, i) => (
-                  <div key={t.store} style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: '0.82rem' }}>
-                    <span style={{
-                      width: 20, height: 20, borderRadius: '50%', flexShrink: 0,
-                      background: 'var(--pink-dark)', color: 'white',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontSize: '0.68rem', fontWeight: 700,
-                    }}>{i + 1}</span>
-                    <span style={{ fontWeight: 600, color: 'var(--ink)', minWidth: 70, flexShrink: 0 }}>{t.store}</span>
-                    <div style={{ flex: 1, height: 8, borderRadius: 999, background: 'var(--border)', overflow: 'hidden' }}>
-                      <div style={{
-                        height: '100%', borderRadius: 999,
-                        width: `${(t.realCount / totalTracked) * 100}%`,
-                        background: 'linear-gradient(90deg, var(--secondary), var(--pink-dark))',
-                      }} />
-                    </div>
-                    <span style={{ fontSize: '0.72rem', color: 'var(--ink-muted)', minWidth: 46, textAlign: 'right', flexShrink: 0 }}>
-                      {t.realCount}/{totalTracked} real
-                    </span>
-                    <span style={priceBadgeStyle(false)}>${t.total.toFixed(2)} est.</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )
-        })()}
-
-        {/* split-trip mode — spread the list across stores if it actually saves money */}
-        {(() => {
-          if (cart.length === 0 || cartError) return null
-          const split = computeSplitTrip(cart)
-          if (!split || !split.worthIt) return null
-
-          return (
-            <div className="card">
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-                <div className="section-label" style={{ marginBottom: 0 }}>Split Trip Saves ${split.savings.toFixed(2)}</div>
-                <button className="btn btn-ghost" onClick={() => setShowSplitTrip(s => !s)} style={{ fontSize: '0.72rem', padding: '4px 10px' }}>
-                  {showSplitTrip ? 'Hide' : 'Show'}
-                </button>
-              </div>
-              <p style={{ fontSize: '0.72rem', color: 'var(--ink-muted)', margin: '4px 0 0' }}>
-                Buying everything at {split.singleStoreName} runs ${split.singleStoreTotal.toFixed(2)}. Splitting across {split.stops.length} stores brings it to ${split.total.toFixed(2)}.
+            {deepSearch && (
+              <p style={{ fontSize: '0.68rem', color: 'var(--ink-muted)', margin: '4px 0 0' }}>
+                Runs extra targeted searches for stores missing from results — more accurate, but uses more API calls.
               </p>
-              {showSplitTrip && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 10 }}>
-                  {split.stops.map(stop => (
-                    <div key={stop.store} style={{ border: '1px solid var(--border)', borderRadius: 10, padding: '8px 10px' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span style={{ fontWeight: 600, color: 'var(--ink)', fontSize: '0.82rem' }}>{stop.store}</span>
-                        <span style={priceBadgeStyle(false)}>${stop.subtotal.toFixed(2)}</span>
+            )}
+
+            {showStoreSettings && (
+              <div className="card" style={{ marginTop: 8 }}>
+                <div className="section-label">Stores Smart Cart Will Search</div>
+                <div style={{ fontSize: 11, color: 'var(--ink-muted)', marginBottom: 10 }}>
+                  Only chains on this list are matched against search results — everything else gets filtered out. Add whatever's actually near you; remove ones that aren't.
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 12 }}>
+                  {Object.entries(allowedStores).map(([name, aliases]) => (
+                    <div key={name} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                      <div>
+                        <div style={{ fontSize: 13, fontWeight: 600 }}>{name}</div>
+                        <div style={{ fontSize: 10, color: 'var(--ink-muted)' }}>matches: {aliases.join(', ')}</div>
                       </div>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 2, marginTop: 6 }}>
-                        {stop.items.map(it => (
-                          <div key={it.name} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.74rem', color: 'var(--ink-muted)' }}>
-                            <span>{it.name}{it.estimated ? ' (est.)' : ''}</span>
-                            <span>${it.price.toFixed(2)}</span>
-                          </div>
-                        ))}
-                      </div>
+                      <button className="btn btn-ghost" onClick={() => removeAllowedStore(name)}>
+                        <Icon name="icon-trash2" size={14} />
+                      </button>
                     </div>
                   ))}
                 </div>
-              )}
-            </div>
-          )
-        })()}
-
-                {activeTab === 'price-watch' && (
-          <>
-            {/* price drops — flagged by the daily api/check-price-drops cron, not live */}        {watches.some(w => w.dropped) && (
-          <div className="card" style={{ borderColor: 'var(--pink-dark)' }}>
-            <div className="section-label">Price Drops</div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 6 }}>
-              {watches.filter(w => w.dropped).map(w => (
-                <div key={w.id} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.78rem' }}>
-                  <span style={{ flex: 1, minWidth: 0, color: 'var(--ink)', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {w.item_name} @ {w.store}
-                  </span>
-                  <span style={{ color: 'var(--ink-muted)', textDecoration: 'line-through', fontSize: '0.72rem' }}>
-                    ${w.baseline_price.toFixed(2)}
-                  </span>
-                  <span style={priceBadgeStyle(false)}>${w.current_price.toFixed(2)}</span>
-                  <button className="btn btn-ghost" style={{ fontSize: '0.68rem', padding: '3px 8px' }} onClick={() => dismissDrop(w)}>
-                    Dismiss
+                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                  <input
+                    className="form-input" type="text" placeholder="Store name (e.g. H-E-B)"
+                    value={newStoreName} onChange={e => setNewStoreName(e.target.value)}
+                    style={{ width: 160 }}
+                  />
+                  <input
+                    className="form-input" type="text" placeholder="Match text, comma-separated (e.g. heb, h-e-b)"
+                    value={newStoreAliases} onChange={e => setNewStoreAliases(e.target.value)}
+                    style={{ width: 220 }}
+                  />
+                  <button className="btn btn-primary" onClick={addAllowedStore} disabled={!newStoreName.trim() || !newStoreAliases.trim()}>
+                    Add
                   </button>
                 </div>
-              ))}
-            </div>
-          </div>
-        )}
+              </div>
+            )}
 
-        {/* watched items — always visible so watches can be managed even with no active drop */}
-        {watches.length > 0 && (
-          <div className="card">
-            <div className="section-label">Watching ({watches.length})</div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 6 }}>
-              {watches.map(w => (
-                <div key={w.id} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.76rem' }}>
-                  <span style={{ flex: 1, minWidth: 0, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {w.item_name} @ {w.store}
-                  </span>
-                  <span style={{ color: 'var(--ink-muted)', fontSize: '0.7rem' }}>
-                    baseline ${w.baseline_price.toFixed(2)} · now ${w.current_price.toFixed(2)}
-                  </span>
-                  <button onClick={() => deleteWatch(w.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-muted)', opacity: 0.5, display: 'flex', flexShrink: 0 }}>
-                    <Icon name="icon-trash2" size={12} />
-                  </button>
+            {/* store leaderboard — computed inline from current cart */}
+            {(() => {
+              const tally = computeTally(cart)
+              const totalTracked = cart.length
+              if (cart.length === 0) return null
+              if (cartError) {
+                return (
+                  <div className="card">
+                    <div className="section-label">Best Store for Your Whole List</div>
+                    <p style={{ fontSize: '0.8rem', color: 'var(--danger)', padding: '4px 0' }}>
+                      Price lookup is down right now: {cartError}
+                    </p>
+                    <p style={{ fontSize: '0.72rem', color: 'var(--ink-muted)' }}>
+                      This isn't "no products found" — the search service itself failed. Try again in a bit, or check the SerpAPI account/key if this keeps happening.
+                    </p>
+                  </div>
+                )
+              }
+              if (tally.length === 0) {
+                return (
+                  <div className="card">
+                    <div className="section-label">Best Store for Your Whole List</div>
+                    <EmptyState image={dizzyImg} message="No products found...Refresh or try again." />
+                  </div>
+                )
+              }
+              return (
+                <div className="card">
+                  <div className="section-label">Best Store for Your Whole List</div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    {tally.map((t, i) => (
+                      <div key={t.store} style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: '0.82rem' }}>
+                        <span style={{
+                          width: 20, height: 20, borderRadius: '50%', flexShrink: 0,
+                          background: 'var(--pink-dark)', color: 'white',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          fontSize: '0.68rem', fontWeight: 700,
+                        }}>{i + 1}</span>
+                        <span style={{ fontWeight: 600, color: 'var(--ink)', minWidth: 70, flexShrink: 0 }}>{t.store}</span>
+                        <div style={{ flex: 1, height: 8, borderRadius: 999, background: 'var(--border)', overflow: 'hidden' }}>
+                          <div style={{
+                            height: '100%', borderRadius: 999,
+                            width: `${(t.realCount / totalTracked) * 100}%`,
+                            background: 'linear-gradient(90deg, var(--secondary), var(--pink-dark))',
+                          }} />
+                        </div>
+                        <span style={{ fontSize: '0.72rem', color: 'var(--ink-muted)', minWidth: 46, textAlign: 'right', flexShrink: 0 }}>
+                          {t.realCount}/{totalTracked} real
+                        </span>
+                        <span style={priceBadgeStyle(false)}>${t.total.toFixed(2)} est.</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              ))}
-            </div>
-          </div>
-        )}
-</>
-)}
+              )
+            })()}
 
-                {activeTab === 'list' && (loading ? (
-          <p style={{ color: 'var(--ink-muted)', fontSize: '0.8rem' }}>Loading…</p>        ) : (
-          <div className="grid-2" style={{ alignItems: 'start' }}>
+            {/* split-trip mode — spread the list across stores if it actually saves money */}
+            {(() => {
+              if (cart.length === 0 || cartError) return null
+              const split = computeSplitTrip(cart)
+              if (!split || !split.worthIt) return null
+
+              return (
+                <div className="card">
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                    <div className="section-label" style={{ marginBottom: 0 }}>Split Trip Saves ${split.savings.toFixed(2)}</div>
+                    <button className="btn btn-ghost" onClick={() => setShowSplitTrip(s => !s)} style={{ fontSize: '0.72rem', padding: '4px 10px' }}>
+                      {showSplitTrip ? 'Hide' : 'Show'}
+                    </button>
+                  </div>
+                  <p style={{ fontSize: '0.72rem', color: 'var(--ink-muted)', margin: '4px 0 0' }}>
+                    Buying everything at {split.singleStoreName} runs ${split.singleStoreTotal.toFixed(2)}. Splitting across {split.stops.length} stores brings it to ${split.total.toFixed(2)}.
+                  </p>
+                  {showSplitTrip && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 10 }}>
+                      {split.stops.map(stop => (
+                        <div key={stop.store} style={{ border: '1px solid var(--border)', borderRadius: 10, padding: '8px 10px' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span style={{ fontWeight: 600, color: 'var(--ink)', fontSize: '0.82rem' }}>{stop.store}</span>
+                            <span style={priceBadgeStyle(false)}>${stop.subtotal.toFixed(2)}</span>
+                          </div>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 2, marginTop: 6 }}>
+                            {stop.items.map(it => (
+                              <div key={it.name} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.74rem', color: 'var(--ink-muted)' }}>
+                                <span>{it.name}{it.estimated ? ' (est.)' : ''}</span>
+                                <span>${it.price.toFixed(2)}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )
+            })()}
+
+            {/* smart cart — per-item cheapest price */}
             <div className="card">
               <div className="section-label" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Icon name="icon-clipboardlist" size={13} /> Need to Buy</span>
-                <span style={{ fontWeight: 500 }}>{needs.length} items</span>
+                <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Icon name="shopping-cart" size={20} /> Smart Cart</span>
+                <span style={{ fontWeight: 500 }}>{cart.length} items</span>
               </div>
-    <p className="daily-tasks-subtitle">Tap the flower to check it off...</p>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 420, overflowY: 'auto', marginBottom: 12 }}>
-                {needs.length === 0
-                  ? 
-      <EmptyState image={emptyGrocery} message="Nothing here yet." />
-    
-                  : needs.map(item => {
-                    const cheapest = cheapestFor(item.name)
-                    const itemPrices = pricesFor(item.name)
-                    const isOpen = expandedItem === item.id
+              {loadingCart && (
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '20px 0', gap: 10 }}>
+                  <img src={hourglassImg} alt="" style={{ width: 120, animation: 'groceryHamsterPulse 1.4s ease-in-out infinite' }} />
+                  <p style={{ fontSize: '0.8rem', color: 'var(--ink-muted)' }}>Finding prices…</p>
+                  <style>{`
+                    @keyframes groceryHamsterPulse {
+                      0%, 100% { transform: scale(1); opacity: 1; }
+                      50% { transform: scale(1.08); opacity: 0.8; }
+                    }
+                  `}</style>
+                </div>
+              )}
+
+              {!loadingCart && cart.length === 0 && (
+                <p style={{ textAlign: 'center', fontSize: '0.78rem', color: 'var(--ink-muted)', padding: '1rem' }}>
+                  Enter your city and state above, then build a smart cart to see prices.
+                </p>
+              )}
+
+              {!loadingCart && cart.length > 0 && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  {cart.map((c, i) => {
+                    // c.results is the raw/unfiltered seller list (kept that way
+                    // for the median estimator) — filter to whitelisted stores
+                    // here so the visible per-item list only shows chains from
+                    // ALLOWED_STORES, same as the leaderboard above.
+                    const sorted = filterToAllowedStores(c.results ?? [], allowedStores)
+                      .sort((a: any, b: any) => Number(a.price ?? 9999) - Number(b.price ?? 9999))
+                    const cheapest = sorted[0]
+                    const priciest = sorted[sorted.length - 1]
+                    const bigDiff = cheapest && priciest && (priciest.price - cheapest.price) >= 1
+                    const watched = cheapest && findWatch(c.item, cheapest.store)
+
                     return (
-                      <div key={item.id}>
+                      <div key={i}>
                         <div style={itemRowStyle(false)}>
-                          <button onClick={() => toggle(item.id, item.checked)} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', display: 'flex', flexShrink: 0 }}>
-                            <Icon name={theme === 'light' ? 'empty_sun' : 'empty_moon'} size={20} />
-                          </button>
-                          <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--ink)' }}>{item.name}</span>
-                          <span style={{ fontSize: '0.72rem', color: 'var(--ink-muted)', whiteSpace: 'nowrap' }}>{item.qty}</span>
+                          <span style={{ flex: 1, minWidth: 0, color: 'var(--ink)', fontWeight: 600 }}>{c.item}</span>
                           {cheapest && (
-                            <span style={priceBadgeStyle(isStale(cheapest.updated_at))}>
-                              ${cheapest.price.toFixed(2)} @ {cheapest.store}
-                            </span>
-                          )}
-                          <button onClick={() => setExpandedItem(isOpen ? null : item.id)}
-                            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-muted)', display: 'flex', flexShrink: 0 }}>
-                            {isOpen ? <Icon name="icon-chevronup" size={13} /> : <Icon name="icon-chevrondown" size={13} />}
-                          </button>
-                          <button onClick={() => removeItem(item.id)}
-                            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-muted)', opacity: 0.4, display: 'flex', flexShrink: 0 }}>
-                            <Icon name="icon-trash2" size={13} />
-                          </button>
-                        </div>
-
-                        {isOpen && (
-                          <div style={{ padding: '8px 12px 4px 34px', background: 'var(--cream)', borderRadius: '0 0 var(--radius-md) var(--radius-md)' }}>
-                            {itemPrices.length === 0 ? (
-                              <p style={{ fontSize: '0.72rem', color: 'var(--ink-muted)', padding: '4px 0 8px' }}>No prices logged yet.</p>
-                            ) : (
-                              <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginBottom: 8 }}>
-                                {itemPrices.map(p => (
-                                  <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.72rem', padding: '4px 0' }}>
-                                    <span style={{ flex: 2, fontWeight: 600, color: 'var(--ink)' }}>{p.store}</span>
-                                    <span style={{ flex: 1, color: 'var(--pink-dark)', fontWeight: 600 }}>${p.price.toFixed(2)}</span>
-                                    <span style={{ flex: 1, color: isStale(p.updated_at) ? 'var(--gold-dark)' : 'var(--ink-muted)', fontSize: '0.66rem' }}>{p.updated_at}</span>
-                                    <button onClick={() => deletePrice(p.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-muted)', opacity: 0.5 }}>
-                                      <Icon name="icon-clear" size={12} />
-                                    </button>
-                                  </div>
-                                ))}
-                              </div>
-                            )}
-                            <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
-                              <input
-                                className="form-input"
-                                type="text"
-                                placeholder="Store…"
-                                value={priceForm.store}
-                                onChange={e => setPriceForm(f => ({ ...f, store: e.target.value }))}
-                                style={{ flex: 2, fontSize: '0.78rem', padding: '6px 8px' }}
-                              />
-                              <input
-                                className="form-input"
-                                type="number"
-                                placeholder="Price"
-                                value={priceForm.price}
-                                onChange={e => setPriceForm(f => ({ ...f, price: e.target.value }))}
-                                onKeyDown={e => e.key === 'Enter' && addPrice(item.name)}
-                                style={{ flex: 1, fontSize: '0.78rem', padding: '6px 8px' }}
-                              />
-                              <button className="btn btn-primary" style={{ padding: '6px 10px' }} onClick={() => addPrice(item.name)}>
-                                <Icon name="icon-plus" size={13} />
+                            <>
+                              <span style={priceBadgeStyle(false)}>${Number(cheapest.price).toFixed(2)}</span>
+                              <span style={{ fontSize: '0.72rem', color: 'var(--ink-muted)' }}>{cheapest.store}</span>
+                              {c.cached && (
+                                <span style={{ fontSize: '0.62rem', color: 'var(--ink-muted)', fontStyle: 'italic' }}>cached</span>
+                              )}
+                              {bigDiff && (
+                                <span style={{ fontSize: '0.68rem', color: 'var(--gold-dark)', fontWeight: 700 }}>
+                                  save ${(priciest.price - cheapest.price).toFixed(2)} vs {priciest.store}
+                                </span>
+                              )}
+                              <button
+                                onClick={() => toggleWatch(c.item, cheapest.store, Number(cheapest.price))}
+                                title={watched ? 'Stop watching this price' : 'Watch this price for drops'}
+                                style={{
+                                  background: 'none',
+                                  border: 'none',
+                                  cursor: 'pointer',
+                                  padding: 0,
+                                  fontSize: '0.9rem',
+                                  color: watched ? 'var(--pink-dark)' : 'var(--ink-muted)',
+                                  opacity: watched ? 1 : 0.45,
+                                  flexShrink: 0,
+                                }}
+                              >
+                                {watched ? '★' : '☆'}
                               </button>
-                            </div>
+                            </>
+                          )}
+                          {!cheapest && c.error && (
+                            <button
+                              onClick={refreshSmartCart}
+                              title={c.error}
+                              style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontSize: '0.72rem', color: 'var(--danger)', textDecoration: 'underline' }}
+                            >
+                              couldn't find a price — tap to retry
+                            </button>
+                          )}
+                          {!cheapest && !c.error && (
+                            <span style={{ fontSize: '0.72rem', color: 'var(--ink-muted)' }}>no matches at whitelisted stores</span>
+                          )}
+                        </div>
+                        {sorted.length > 1 && (
+                          <div style={{ paddingLeft: 16, paddingTop: 4, fontSize: '0.72rem', color: 'var(--ink-muted)' }}>
+                            {sorted.slice(1).map((r: any, j: number) => (
+                              <span key={j} style={{ marginRight: 12 }}>{r.store} ${Number(r.price).toFixed(2)}</span>
+                            ))}
                           </div>
                         )}
                       </div>
                     )
-                  })
-                }
-              </div>
-              <div style={{ display: 'flex', gap: 6 }}>
-                <input className="form-input" type="text" placeholder="Add item… (or item, item, item)" value={newItem}
-                  onChange={e => setNewItem(e.target.value)}
-                  onKeyDown={e => e.key === 'Enter' && addItem()}
-                  style={{ flex: 2 }} />
-                <input className="form-input" type="text" placeholder="Qty" value={newQty}
-                  onChange={e => setNewQty(e.target.value)}
-                  onKeyDown={e => e.key === 'Enter' && addItem()}
-                  style={{ flex: 1, minWidth: 0 }} />
-                <button className="btn btn-primary" style={{ padding: '8px 12px' }} onClick={addItem}>
-                  <Icon name="icon-plus" size={20} />
-                </button>
-              </div>
+                  })}
+                </div>
+              )}
             </div>
+          </>
+        )}
 
-            <div className="card">
-              <div className="section-label" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Icon name="groq_7" size={13} /> Already Have</span>
-                <span style={{ fontWeight: 500 }}>{have.length} items</span>
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 420, overflowY: 'auto' }}>
-                {have.length === 0
-                  ? <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6, width: '100%', padding: '12px 0' }}><Icon name="empty_jar" size={60} />Nothing checked off yet!</span>
-
-                  : have.map(item => (
-                    <div key={item.id} style={itemRowStyle(true)}>
-                      <button onClick={() => toggle(item.id, item.checked)} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', display: 'flex', flexShrink: 0 }}>
-                        <Icon name={theme === 'light' ? 'full_sun' : 'full_moon'} size={20} />
-                      </button>
-                      <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--ink-muted)', textDecoration: 'line-through' }}>{item.name}</span>
-                      <span style={{ fontSize: '0.72rem', color: 'var(--ink-muted)', whiteSpace: 'nowrap' }}>{item.qty}</span>
-                      <button onClick={() => removeItem(item.id)}
-                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-muted)', opacity: 0.4, display: 'flex', flexShrink: 0 }}>
-                        <Icon name="icon-trash2" size={13} />
+        {activeTab === 'price-watch' && (
+          <>
+            {/* price drops — flagged by the daily api/check-price-drops cron, not live */}
+            {watches.some(w => w.dropped) && (
+              <div className="card" style={{ borderColor: 'var(--pink-dark)' }}>
+                <div className="section-label">Price Drops</div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 6 }}>
+                  {watches.filter(w => w.dropped).map(w => (
+                    <div key={w.id} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.78rem' }}>
+                      <span style={{ flex: 1, minWidth: 0, color: 'var(--ink)', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {w.item_name} @ {w.store}
+                      </span>
+                      <span style={{ color: 'var(--ink-muted)', textDecoration: 'line-through', fontSize: '0.72rem' }}>
+                        ${w.baseline_price.toFixed(2)}
+                      </span>
+                      <span style={priceBadgeStyle(false)}>${w.current_price.toFixed(2)}</span>
+                      <button className="btn btn-ghost" style={{ fontSize: '0.68rem', padding: '3px 8px' }} onClick={() => dismissDrop(w)}>
+                        Dismiss
                       </button>
                     </div>
-                  ))
-                }
+                  ))}
+                </div>
               </div>
-            </div>
-          </div>
-        ))}
-       
-        {/* smart cart */}
-        <div className="card">
-          <div className="section-label" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Icon name="shopping-cart" size={20} /> Smart Cart</span>
-            <span style={{ fontWeight: 500 }}>{cart.length} items</span>
-          </div>
+            )}
 
-          {loadingCart && (
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '20px 0', gap: 10 }}>
-              <img src={hourglassImg} alt="" style={{ width: 120, animation: 'groceryHamsterPulse 1.4s ease-in-out infinite' }} />
-              <p style={{ fontSize: '0.8rem', color: 'var(--ink-muted)' }}>Finding prices…</p>
-              <style>{`
-                @keyframes groceryHamsterPulse {
-                  0%, 100% { transform: scale(1); opacity: 1; }
-                  50% { transform: scale(1.08); opacity: 0.8; }
-                }
-              `}</style>
-            </div>
-          )}
-
-          {!loadingCart && cart.length === 0 && (
-            <p style={{ textAlign: 'center', fontSize: '0.78rem', color: 'var(--ink-muted)', padding: '1rem' }}>
-              Enter your city and state above, then build a smart cart to see prices.
-            </p>
-          )}
-
-          {!loadingCart && cart.length > 0 && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              {cart.map((c, i) => {
-                // c.results is the raw/unfiltered seller list (kept that way
-                // for the median estimator) — filter to whitelisted stores
-                // here so the visible per-item list only shows chains from
-                // ALLOWED_STORES, same as the leaderboard above.
-                const sorted = filterToAllowedStores(c.results ?? [], allowedStores)
-                  .sort((a: any, b: any) => Number(a.price ?? 9999) - Number(b.price ?? 9999))
-                const cheapest = sorted[0]
-                const priciest = sorted[sorted.length - 1]
-                const bigDiff = cheapest && priciest && (priciest.price - cheapest.price) >= 1
-                const watched = cheapest && findWatch(c.item, cheapest.store)
-
-                return (
-                  <div key={i}>
-                    <div style={itemRowStyle(false)}>
-                      <span style={{ flex: 1, minWidth: 0, color: 'var(--ink)', fontWeight: 600 }}>{c.item}</span>
-                      {cheapest && (
-                        <>
-                          <span style={priceBadgeStyle(false)}>${Number(cheapest.price).toFixed(2)}</span>
-                          <span style={{ fontSize: '0.72rem', color: 'var(--ink-muted)' }}>{cheapest.store}</span>
-                          {c.cached && (
-                            <span style={{ fontSize: '0.62rem', color: 'var(--ink-muted)', fontStyle: 'italic' }}>cached</span>
-                          )}
-                          {bigDiff && (
-                            <span style={{ fontSize: '0.68rem', color: 'var(--gold-dark)', fontWeight: 700 }}>
-                              save ${(priciest.price - cheapest.price).toFixed(2)} vs {priciest.store}
-                            </span>
-                          )}
-                          <button
-                            onClick={() => toggleWatch(c.item, cheapest.store, Number(cheapest.price))}
-                            title={watched ? 'Stop watching this price' : 'Watch this price for drops'}
-                            style={{
-                              background: 'none',
-                              border: 'none',
-                              cursor: 'pointer',
-                              padding: 0,
-                              fontSize: '0.9rem',
-                              color: watched ? 'var(--pink-dark)' : 'var(--ink-muted)',
-                              opacity: watched ? 1 : 0.45,
-                              flexShrink: 0,
-                            }}
-                          >
-                            {watched ? '★' : '☆'}
-                          </button>
-                        </>
-                      )}
-                      {!cheapest && c.error && (
-                        <button
-                          onClick={refreshSmartCart}
-                          title={c.error}
-                          style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontSize: '0.72rem', color: 'var(--danger)', textDecoration: 'underline' }}
-                        >
-                          couldn't find a price — tap to retry
-                        </button>
-                      )}
-                      {!cheapest && !c.error && (
-                        <span style={{ fontSize: '0.72rem', color: 'var(--ink-muted)' }}>no matches at whitelisted stores</span>
-                      )}
+            {/* watched items — always visible so watches can be managed even with no active drop */}
+            {watches.length > 0 && (
+              <div className="card">
+                <div className="section-label">Watching ({watches.length})</div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 6 }}>
+                  {watches.map(w => (
+                    <div key={w.id} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.76rem' }}>
+                      <span style={{ flex: 1, minWidth: 0, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {w.item_name} @ {w.store}
+                      </span>
+                      <span style={{ color: 'var(--ink-muted)', fontSize: '0.7rem' }}>
+                        baseline ${w.baseline_price.toFixed(2)} · now ${w.current_price.toFixed(2)}
+                      </span>
+                      <button onClick={() => deleteWatch(w.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-muted)', opacity: 0.5, display: 'flex', flexShrink: 0 }}>
+                        <Icon name="icon-trash2" size={12} />
+                      </button>
                     </div>
-                    {sorted.length > 1 && (
-                      <div style={{ paddingLeft: 16, paddingTop: 4, fontSize: '0.72rem', color: 'var(--ink-muted)' }}>
-                        {sorted.slice(1).map((r: any, j: number) => (
-                          <span key={j} style={{ marginRight: 12 }}>{r.store} ${Number(r.price).toFixed(2)}</span>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )
-              })}
-            </div>
-          )}
-               </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </>
         )}
       </div>
