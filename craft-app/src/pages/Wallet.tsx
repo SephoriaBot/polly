@@ -2,8 +2,8 @@ import { useState, useMemo, useEffect, useRef } from "react";
 import type { CSSProperties } from "react";
 import { supabase } from '../lib/supabase';
 import Icon from '../components/Icon';
-import { useTheme } from '../context/ThemeContext';
-import Lantern from "../components/Lantern";
+import PageTabs, { type PageTab } from '../components/PageTabs';
+import { useTheme } from '../context/ThemeContext';import Lantern from "../components/Lantern";
 import walletPouchImg from '../assets/illustrations/wallet_pouch.png';
 import celebrationImg from '../assets/illustrations/celebration.png';
 import emptyWallet from '../assets/icons/empty-wallet.png';
@@ -1281,95 +1281,44 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
     );
   };
 
-  const VIEW_TITLES: Record<typeof view, { text: string; icon?: IconName }> = {
-  home: { text: "Wallet" },
-  calendar: { text: "Money Calendar", icon: "calendar" },
-  bills: { text: "Bills", icon: "house" },
-  debts: { text: "Debts", icon: "calculator-hearts" },
-};
+    const VIEW_TITLES: Record<typeof view, { text: string; icon?: IconName }> = {
+    home: { text: "Wallet" },
+    calendar: { text: "Money Calendar", icon: "calendar" },
+    bills: { text: "Bills", icon: "house" },
+    debts: { text: "Debts", icon: "calculator-hearts" },
+  };
+
+  const WALLET_TABS: PageTab<typeof view>[] = [
+    { key: "home", label: "Overview", icon: "money-bag" },
+    { key: "calendar", label: "Money Calendar", icon: "calendar" },
+    { key: "bills", label: "Bills", icon: "house" },
+    { key: "debts", label: "Debts", icon: "calculator-hearts" },
+  ];
 
   return (
     <div>
       {showConfetti && <Confetti />}
 
       <div className="page-header">
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          {view !== "home" && (
-            <button className="btn btn-ghost btn-sm" onClick={() => setView("home")}>← Back</button>
-          )}
-          <h2>{VIEW_TITLES[view].icon && <Icon name={VIEW_TITLES[view].icon!} size={20} />} {VIEW_TITLES[view].text}</h2>
-          <Lantern />
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <h2>{VIEW_TITLES[view].icon && <Icon name={VIEW_TITLES[view].icon!} size={20} />} {VIEW_TITLES[view].text}</h2>    
+ <Lantern />
         </div>
         {savedMsg && <span className="badge badge-green">Saved!</span>}
       </div>
 
+ <PageTabs
+          tabs={WALLET_TABS}
+          active={view}
+          onChange={setView}
+        />
+
       <div className="page-body" style={{ display: "flex", flexDirection: "column", gap: 20 }}>
 
-    {/* CALENDAR, BILLS AND DEBTS BUTTONS */}
+           
 
         {view === "home" && (
           <>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 10 }}>
-              
-            <button
-              onClick={() => setView("calendar")}
-              style={{
-                textAlign: "left",
-                cursor: "pointer",
-                fontFamily: "inherit",
-                border: "1.5px dashed var(--border)",
-                borderRadius: 18,
-                background: "var(--white)",
-                padding: "14px 16px",
-                display: "flex",
-                flexDirection: "column",
-                gap: 6,
-              }}
-            >
-              <div style={{ fontSize: 24 }}>
-                <Icon name="calendar" size={24} />
-              </div>
-
-              <div style={{ fontSize: 14, fontWeight: 800, color: "var(--ink)" }}>
-                Money Calendar
-              </div>
-
-              <div style={{ fontSize: 11, color: "var(--ink-muted)" }}>
-                14 day forecast
-              </div>
-            </button>
-
-              <button
-                onClick={() => setView("bills")}
-                style={{
-                  textAlign: "left", cursor: "pointer", fontFamily: "inherit",
-                  border: "1.5px dashed var(--border)", borderRadius: 18,
-                  background: "var(--white)", padding: "14px 16px",
-                  display: "flex", flexDirection: "column", gap: 6,
-                }}
-              >
-                <div style={{ fontSize: 24, lineHeight: 1 }}><Icon name="house" size={24} /></div>
-                <div style={{ fontSize: 14, fontWeight: 800, color: "var(--ink)" }}>Bills</div>
-                <div style={{ fontSize: 11, color: "var(--ink-muted)" }}>
-                  {unpaidTotal > 0 ? `${fmt(unpaidTotal)} unpaid` : <>all paid up <Icon name="clipboard-check" size={12} /></>}
-                </div>
-              </button>
-              <button
-                onClick={() => setView("debts")}
-                style={{
-                  textAlign: "left", cursor: "pointer", fontFamily: "inherit",
-                  border: "1.5px dashed var(--border)", borderRadius: 18,
-                  background: "var(--white)", padding: "14px 16px",
-                  display: "flex", flexDirection: "column", gap: 6,
-                }}
-              >
-                <div style={{ fontSize: 24, lineHeight: 1 }}><Icon name="calculator-hearts" size={24} /></div>
-                <div style={{ fontSize: 14, fontWeight: 800, color: "var(--ink)" }}>Debts</div>
-                <div style={{ fontSize: 11, color: "var(--ink-muted)" }}>
-                  {activeDebts.filter(d => !d.paid_off).length} active · {payoffMonth}mo payoff
-                </div>
-              </button>
-            </div>
 
             {/* SAFE TO SPEND */}
 
