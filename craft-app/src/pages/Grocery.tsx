@@ -1066,26 +1066,33 @@ export default function Grocery() {
           <h2>Grocery List <Icon name="basket" size={22} /></h2>
           <Lantern size={50} />
         </div>
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          <button className="btn btn-primary" onClick={openBasicsModal}>
-            <Icon name="icon-listchecks" size={20} /> Build Basics List
-          </button>
-          <button className="btn btn-primary" onClick={buildSmartCart}>
-            <Icon name="shopping-cart" size={20} /> Build Smart Cart
-          </button>
-          <button className="btn btn-secondary" onClick={refreshSmartCart}>
-            <Icon name="icon-recur" size={20} /> Refresh
-          </button>
-          <button className="btn btn-ghost" onClick={clearSmartCart}>
-            <Icon name="icon-clear" size={20} /> Clear
-          </button>
-          <button className="btn btn-primary" onClick={openDoorDashList} disabled={!needs.length}>
-          <Icon name="icon-externallink" size={20} /> Copy List &amp; Open DoorDash
-          </button>
-        </div>
+       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+  {activeTab === 'list' && (
+    <button className="btn btn-primary" onClick={openBasicsModal}>
+      <Icon name="icon-listchecks" size={20} /> Build Basics List
+    </button>
+  )}
+
+  {activeTab === 'smart-cart' && (
+    <>
+      <button className="btn btn-primary" onClick={buildSmartCart}>
+        <Icon name="shopping-cart" size={20} /> Build Smart Cart
+      </button>
+      <button className="btn btn-secondary" onClick={refreshSmartCart}>
+        <Icon name="icon-recur" size={20} /> Refresh
+      </button>
+      <button className="btn btn-ghost" onClick={clearSmartCart}>
+        <Icon name="icon-clear" size={20} /> Clear
+      </button>
+      <button className="btn btn-primary" onClick={openDoorDashList} disabled={!needs.length}>
+        <Icon name="icon-externallink" size={20} /> Copy List &amp; Open DoorDash
+      </button>
+    </>
+  )}
+</div>
             </div>
 
-         <div style={{ padding: '0 16px' }}>
+         
         <PageTabs tabs={GROCERY_TABS} active={activeTab} onChange={setActiveTab} />
       </div>
 
