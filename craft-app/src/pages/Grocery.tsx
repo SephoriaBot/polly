@@ -243,8 +243,9 @@ const MAX_BACKFILL_STORES_PER_ITEM = 3
 const MAX_TOTAL_BACKFILL_CALLS = 20
 
 
-const GROCERY_TABS: PageTab<'list' | 'smart-cart' | 'price-watch'>[] = [
+const GROCERY_TABS: PageTab<'list' | 'recipes' | 'smart-cart' | 'price-watch'>[] = [
   { key: 'list', label: 'My List', icon: 'icon-grocery' },
+  { key: 'recipes', label: 'Recipes', icon: 'cookbook' },
   { key: 'smart-cart', label: 'Smart Cart', icon: 'shopping-cart' },
   { key: 'price-watch', label: 'Price Watch', icon: 'icon-search' },
 ];
@@ -281,7 +282,7 @@ export default function Grocery() {
   const [newStoreName, setNewStoreName] = useState('')
   const [newStoreAliases, setNewStoreAliases] = useState('')
   const [storeSettingsLoaded, setStoreSettingsLoaded] = useState(false)
-  const [activeTab, setActiveTab] = useState<'list' | 'smart-cart' | 'price-watch'>('list');
+  const [activeTab, setActiveTab] = useState<'list' | 'recipes' | 'smart-cart' | 'price-watch'>('list');
 
 
 
@@ -1080,12 +1081,6 @@ export default function Grocery() {
               </button>
             </div>
 
-            <RecipeBox
-              currentList={currentList}
-              existingItemNames={items.map(i => i.name)}
-              onItemsAdded={newRows => setItems(prev => [...prev, ...(newRows as GroceryItem[])])}
-            />
-
             {/* my lists — every list here is a real, live list you can switch
                  to, add/check off items on, and come back to later. nothing is
                  just a static snapshot. */}
@@ -1383,6 +1378,14 @@ export default function Grocery() {
               )}
             </div>
           </div>
+        )}
+
+        {activeTab === 'recipes' && (
+          <RecipeBox
+            currentList={currentList}
+            existingItemNames={items.map(i => i.name)}
+            onItemsAdded={newRows => setItems(prev => [...prev, ...(newRows as GroceryItem[])])}
+          />
         )}
 
         {activeTab === 'smart-cart' && (
