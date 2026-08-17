@@ -1085,7 +1085,9 @@ export default function Grocery() {
         </div>
             </div>
 
-      <PageTabs tabs={GROCERY_TABS} active={activeTab} onChange={setActiveTab} />
+         <div style={{ padding: '0 16px' }}>
+        <PageTabs tabs={GROCERY_TABS} active={activeTab} onChange={setActiveTab} />
+      </div>
 
       <div className="page-body">
 
