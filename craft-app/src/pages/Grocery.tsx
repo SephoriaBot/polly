@@ -1167,7 +1167,6 @@ export default function Grocery() {
                     <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Icon name="icon-clipboardlist" size={13} /> Need to Buy</span>
                     <span style={{ fontWeight: 500 }}>{needs.length} items</span>
                   </div>
-                  <p className="daily-tasks-subtitle">Tap the flower to check it off...</p>
 
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 420, overflowY: 'auto', marginBottom: 12 }}>
                     {needs.length === 0
@@ -1390,6 +1389,16 @@ export default function Grocery() {
 
         {activeTab === 'smart-cart' && (
           <>
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 8,
+              background: 'var(--gold-light)', border: '1px solid var(--gold-dark)',
+              borderRadius: 'var(--radius-md)', padding: '8px 12px', fontSize: '0.76rem',
+              color: 'var(--ink)',
+            }}>
+              <Icon name="icon-listchecks" size={14} style={{ flexShrink: 0, color: 'var(--gold-dark)' }} />
+              <span>Prices are pulled for the items on your <strong>{currentList}</strong> list — switch lists on the My List tab to price a different one.</span>
+            </div>
+
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
               <button className="btn btn-primary" onClick={buildSmartCart}>
                 <Icon name="shopping-cart" size={20} /> Build Smart Cart
