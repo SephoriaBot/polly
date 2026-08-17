@@ -1336,9 +1336,7 @@ export default function Grocery() {
                 </div>
           </>
         )}
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-          <Icon name="pagedivider" size={85} />
-        </div>
+       
 
         {activeTab === 'list' && have.length > 0 && (
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
@@ -1629,9 +1627,7 @@ export default function Grocery() {
             </div>
           </div>
         ))}
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-          <Icon name="pagedivider" size={85} />
-        </div>
+       
         {/* smart cart */}
         <div className="card">
           <div className="section-label" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
