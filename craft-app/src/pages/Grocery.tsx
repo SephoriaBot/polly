@@ -10,7 +10,7 @@ import hourglassImg from '../assets/illustrations/hourglass.png';
 import dizzyImg from '../assets/illustrations/error_dizzy.png';
 import emptyGrocery from '../assets/icons/empty-grocery.png';
 import RecipeBox from '../components/meals/RecipeBox';
-
+import PageTabs, { type PageTab } from '../components/PageTabs';
 
 interface GroceryList { id: string; name: string; created_at: string }
 
@@ -242,6 +242,13 @@ function filterToAllowedStores(results: any[], allowedStores: Record<string, str
 const MAX_BACKFILL_STORES_PER_ITEM = 3
 const MAX_TOTAL_BACKFILL_CALLS = 20
 
+
+const GROCERY_TABS: PageTab<'list' | 'smart-cart' | 'price-watch'>[] = [
+  { key: 'list', label: 'My List', icon: 'icon-grocery' },
+  { key: 'smart-cart', label: 'Smart Cart', icon: 'shopping-cart' },
+  { key: 'price-watch', label: 'Price Watch', icon: 'icon-search' },
+];
+
 export default function Grocery() {
   const { theme } = useTheme();
   const [items, setItems] = useState<GroceryItem[]>([])
@@ -274,6 +281,9 @@ export default function Grocery() {
   const [newStoreName, setNewStoreName] = useState('')
   const [newStoreAliases, setNewStoreAliases] = useState('')
   const [storeSettingsLoaded, setStoreSettingsLoaded] = useState(false)
+  const [activeTab, setActiveTab] = useState<'list' | 'smart-cart' | 'price-watch'>('list');
+
+
 
   useEffect(() => {
     supabase.from('grocery_settings').select('*').eq('id', 1).maybeSingle().then(({ data }) => {
@@ -1056,32 +1066,29 @@ export default function Grocery() {
           <h2>Grocery List <Icon name="basket" size={22} /></h2>
           <Lantern size={50} />
         </div>
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          <button className="btn btn-primary" onClick={openBasicsModal}>
-            <Icon name="icon-listchecks" size={20} /> Build Basics List
-          </button>
-          <button className="btn btn-primary" onClick={buildSmartCart}>
-            <Icon name="shopping-cart" size={20} /> Build Smart Cart
-          </button>
-          <button className="btn btn-secondary" onClick={refreshSmartCart}>
-            <Icon name="icon-recur" size={20} /> Refresh
-          </button>
-          <button className="btn btn-ghost" onClick={clearSmartCart}>
-            <Icon name="icon-clear" size={20} /> Clear
-          </button>
-          <button className="btn btn-primary" onClick={openDoorDashList} disabled={!needs.length}>
-          <Icon name="icon-externallink" size={20} /> Copy List &amp; Open DoorDash
-          </button>
-        </div>
+
+
+         
+   <PageTabs tabs={GROCERY_TABS} active={activeTab} onChange={setActiveTab} />
       </div>
 
       <div className="page-body">
 
-        <RecipeBox
-          currentList={currentList}
-          existingItemNames={items.map(i => i.name)}
-          onItemsAdded={newRows => setItems(prev => [...prev, ...(newRows as GroceryItem[])])}
-        />
+             {activeTab === 'list' && (
+  <>
+    <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}>
+      <button className="btn btn-primary" onClick={openBasicsModal}>
+        <Icon name="icon-listchecks" size={20} /> Build Basics List
+      </button>
+    </div>
+
+    <RecipeBox
+            currentList={currentList}
+            existingItemNames={items.map(i => i.name)}
+            onItemsAdded={newRows => setItems(prev => [...prev, ...(newRows as GroceryItem[])])}
+          />
+  </>
+        )}
 
         {/* Build Basics List modal */}
         {showBasicsModal && (
@@ -1173,9 +1180,36 @@ export default function Grocery() {
           </div>
         )}
 
-                {/* location input */}
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-          <Icon name="icon-mappin" size={16} style={{ color: 'var(--ink-muted)', flexShrink: 0 }} />
+                        {activeTab === 'smart-cart' && (
+          <>
+  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+  <button className="btn btn-primary" onClick={buildSmartCart}>
+
+      <Icon name="shopping-cart" size={20} /> Build Smart Cart
+
+    </button>
+
+    <button className="btn btn-secondary" onClick={refreshSmartCart}>
+
+      <Icon name="icon-recur" size={20} /> Refresh
+
+    </button>
+
+    <button className="btn btn-ghost" onClick={clearSmartCart}>
+
+      <Icon name="icon-clear" size={20} /> Clear
+
+    </button>
+
+    <button className="btn btn-primary" onClick={openDoorDashList} disabled={!needs.length}>
+
+      <Icon name="icon-externallink" size={20} /> Copy List &amp; Open DoorDash
+
+    </button>
+</div>
+            
+            {/* location input */}
+         <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>          <Icon name="icon-mappin" size={16} style={{ color: 'var(--ink-muted)', flexShrink: 0 }} />
           <input
             className="form-input"
             type="text"
@@ -1237,11 +1271,14 @@ export default function Grocery() {
               </button>
             </div>
           </div>
+                )}
+          </>
         )}
-
-        {/* my lists — every list here is a real, live list you can switch
-            to, add/check off items on, and come back to later. nothing is
-            just a static snapshot. */}
+                {activeTab === 'list' && (
+          <>
+            {/* my lists — every list here is a real, live list you can switch
+                 to, add/check off items on, and come back to later. nothing is
+                 just a static snapshot. */}
         <div className="card">
           <div className="section-label" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Icon name="icon-listchecks" size={13} /> My Lists</span>
@@ -1306,13 +1343,12 @@ export default function Grocery() {
               <Icon name="icon-folderplus" size={20} /> New List
             </button>
           </div>
-        </div>
+                </div>
+          </>
+        )}
+       
 
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-  <Icon name="pagedivider" size={85} />
-</div>
-
-        {have.length > 0 && (
+        {activeTab === 'list' && have.length > 0 && (
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             <button className="btn btn-ghost" onClick={clearChecked}>
               <Icon name="icon-trash2" size={20} /> Clear Checked
@@ -1320,7 +1356,9 @@ export default function Grocery() {
           </div>
         )}
 
-        {/* store leaderboard — computed inline from current cart */}
+                {activeTab === 'smart-cart' && (
+          <>
+            {/* store leaderboard — computed inline from current cart */}
         {(() => {
           const tally = computeTally(cart)
           const totalTracked = cart.length
@@ -1420,8 +1458,9 @@ export default function Grocery() {
           )
         })()}
 
-        {/* price drops — flagged by the daily api/check-price-drops cron, not live */}
-        {watches.some(w => w.dropped) && (
+                {activeTab === 'price-watch' && (
+          <>
+            {/* price drops — flagged by the daily api/check-price-drops cron, not live */}        {watches.some(w => w.dropped) && (
           <div className="card" style={{ borderColor: 'var(--pink-dark)' }}>
             <div className="section-label">Price Drops</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 6 }}>
@@ -1464,10 +1503,11 @@ export default function Grocery() {
             </div>
           </div>
         )}
+</>
+)}
 
-        {loading ? (
-          <p style={{ color: 'var(--ink-muted)', fontSize: '0.8rem' }}>Loading…</p>
-        ) : (
+                {activeTab === 'list' && (loading ? (
+          <p style={{ color: 'var(--ink-muted)', fontSize: '0.8rem' }}>Loading…</p>        ) : (
           <div className="grid-2" style={{ alignItems: 'start' }}>
             <div className="card">
               <div className="section-label" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -1596,12 +1636,8 @@ export default function Grocery() {
               </div>
             </div>
           </div>
-        )}
-
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-  <Icon name="pagedivider" size={85} />
-</div>
-
+        ))}
+       
         {/* smart cart */}
         <div className="card">
           <div className="section-label" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -1701,8 +1737,9 @@ export default function Grocery() {
               })}
             </div>
           )}
-        </div>
-
+               </div>
+          </>
+        )}
       </div>
     </div>
   )

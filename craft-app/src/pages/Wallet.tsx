@@ -2,8 +2,8 @@ import { useState, useMemo, useEffect, useRef } from "react";
 import type { CSSProperties } from "react";
 import { supabase } from '../lib/supabase';
 import Icon from '../components/Icon';
-import { useTheme } from '../context/ThemeContext';
-import Lantern from "../components/Lantern";
+import PageTabs, { type PageTab } from '../components/PageTabs';
+import { useTheme } from '../context/ThemeContext';import Lantern from "../components/Lantern";
 import walletPouchImg from '../assets/illustrations/wallet_pouch.png';
 import celebrationImg from '../assets/illustrations/celebration.png';
 import emptyWallet from '../assets/icons/empty-wallet.png';
@@ -38,6 +38,12 @@ interface Bill {
   recurring: boolean;
   bill_month?: number;
   bill_year?: number;
+  // Frequency for recurring bills. Absent/undefined means the original
+  // behavior: once a month, on due_day. "week" lets a bill repeat every
+  // N weeks from a fixed anchor date (e.g. rent every 2 weeks).
+  frequency_unit?: "month" | "week";
+  frequency_interval?: number; // only meaningful when frequency_unit === "week"
+  anchor_date?: string | null; // ISO date, first occurrence — required for week-based bills
 }
 
 interface BillPayment {
@@ -50,6 +56,7 @@ interface BillPayment {
   name?: string;
   amount?: number;
   due_day?: number;
+  due_date?: string; // ISO date — canonical occurrence date, lets a bill have multiple entries within one calendar month
 }
 
 interface DailyLog {
@@ -165,6 +172,37 @@ function daysUntilDue(dueDay: number, month: number, year: number) {
   const today = new Date();
   const due = new Date(year, month - 1, dueDay);
   return Math.ceil((due.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+}
+
+function isoDate(d: Date) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+function frequencyLabel(unit: "month" | "week" | undefined, interval: number | undefined) {
+  if (unit !== "week") return "Monthly";
+  const n = interval && interval > 0 ? interval : 1;
+  if (n === 1) return "Every week";
+  if (n === 2) return "Every 2 weeks";
+  return `Every ${n} weeks`;
+}
+
+// All occurrence dates for a week-based bill that fall within [rangeStart, rangeEnd] (inclusive).
+function weeklyOccurrencesInRange(anchor: Date, intervalWeeks: number, rangeStart: Date, rangeEnd: Date): Date[] {
+  const stepDays = Math.max(1, intervalWeeks) * 7;
+  let cursor = new Date(anchor);
+  if (cursor < rangeStart) {
+    const diffDays = Math.ceil((rangeStart.getTime() - cursor.getTime()) / (1000 * 60 * 60 * 24));
+    const steps = Math.ceil(diffDays / stepDays);
+    cursor = new Date(cursor);
+    cursor.setDate(cursor.getDate() + steps * stepDays);
+  }
+  const occurrences: Date[] = [];
+  while (cursor <= rangeEnd) {
+    occurrences.push(new Date(cursor));
+    cursor = new Date(cursor);
+    cursor.setDate(cursor.getDate() + stepDays);
+  }
+  return occurrences;
 }
 
 function hoursOfWork(amount: number, wage: number) {
@@ -300,7 +338,12 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
   const [anytimePay, setAnytimePay] = useState("");
   const [planNotes, setPlanNotes] = useState("");
   const [showBillForm, setShowBillForm] = useState(false);
-  const [newBill, setNewBill] = useState({ name: "", amount: "", due_day: "", recurring: true });
+  const [newBill, setNewBill] = useState({
+    name: "", amount: "", due_day: "", recurring: true,
+    frequency_unit: "month" as "month" | "week",
+    frequency_interval: "1",
+    anchor_date: "",
+  });
   const [showConfetti, setShowConfetti] = useState(false);
   const [celebration, setCelebration] = useState<{ title: string; subtitle: string }>({ title: "", subtitle: "" });
 
@@ -490,16 +533,48 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
     async function ensurePaymentsExist() {
       if (bills.length === 0) return;
       const recurringBills = bills.filter(b => b.recurring);
+      const rangeStart = new Date(today.getFullYear(), today.getMonth(), 1);
+      const lastAvailable = availableMonths[availableMonths.length - 1];
+      // Last day of the furthest month currently in view (e.g. today + 3 months)
+      const rangeEnd = lastAvailable ? new Date(lastAvailable.year, lastAvailable.month, 0) : rangeStart;
+
       for (const bill of recurringBills) {
-        for (const { month, year } of availableMonths) {
-          const exists = payments.some(p => p.bill_id === bill.id && p.month === month && p.year === year);
-          if (!exists) {
-            const newPayment: BillPayment = {
-              bill_id: bill.id, month, year, paid: false,
-              name: bill.name, amount: bill.amount, due_day: bill.due_day,
-            };
-            const { data } = await supabase.from("bill_payments").insert(newPayment).select().single();
-            if (data) setPayments(prev => [...prev, data]);
+        if (bill.frequency_unit === "week" && bill.anchor_date) {
+          const anchor = new Date(bill.anchor_date + "T00:00:00");
+          const interval = bill.frequency_interval && bill.frequency_interval > 0 ? bill.frequency_interval : 1;
+          const occurrences = weeklyOccurrencesInRange(anchor, interval, rangeStart, rangeEnd);
+          for (const occDate of occurrences) {
+            const occKey = isoDate(occDate);
+            const exists = payments.some(p => p.bill_id === bill.id && p.due_date === occKey);
+            if (!exists) {
+              const newPayment: BillPayment = {
+                bill_id: bill.id,
+                month: occDate.getMonth() + 1,
+                year: occDate.getFullYear(),
+                due_day: occDate.getDate(),
+                due_date: occKey,
+                paid: false,
+                name: bill.name,
+                amount: bill.amount,
+              };
+              const { data } = await supabase.from("bill_payments").insert(newPayment).select().single();
+              if (data) setPayments(prev => [...prev, data]);
+            }
+          }
+        } else {
+          // Original monthly cadence — one occurrence per calendar month on due_day.
+          for (const { month, year } of availableMonths) {
+            const exists = payments.some(p => p.bill_id === bill.id && p.month === month && p.year === year);
+            if (!exists) {
+              const dueDate = new Date(year, month - 1, bill.due_day);
+              const newPayment: BillPayment = {
+                bill_id: bill.id, month, year, paid: false,
+                name: bill.name, amount: bill.amount, due_day: bill.due_day,
+                due_date: isoDate(dueDate),
+              };
+              const { data } = await supabase.from("bill_payments").insert(newPayment).select().single();
+              if (data) setPayments(prev => [...prev, data]);
+            }
           }
         }
       }
@@ -549,28 +624,45 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
     const map: Record<string, { id: number; name: string; amount: number }[]> = {};
     const allDays = [...calendarWeeks.week1, ...calendarWeeks.week2];
     const monthsInView = new Set(allDays.map(d => `${d.getFullYear()}-${d.getMonth() + 1}`));
+
     bills.forEach(bill => {
-      const candidates: { month: number; year: number }[] = [];
       if (bill.recurring) {
         monthsInView.forEach(key => {
           const [y, m] = key.split("-").map(Number);
-          candidates.push({ month: m, year: y });
+          const occurrences = payments.filter(p => p.bill_id === bill.id && p.month === m && p.year === y);
+
+          if (occurrences.length === 0) {
+            // Payment row(s) not generated yet (race with ensurePaymentsExist on
+            // first load) — synthesize a single fallback so the calendar doesn't
+            // blank out momentarily. Only meaningful for the monthly cadence;
+            // weekly bills will fill in for real within a moment.
+            const dueDate = new Date(y, m - 1, bill.due_day);
+            const dKey = dateKey(dueDate);
+            if (!map[dKey]) map[dKey] = [];
+            map[dKey].push({ id: bill.id, name: bill.name, amount: bill.amount });
+            return;
+          }
+
+          occurrences.forEach(payment => {
+            if (payment.paid) return;
+            const effectiveDueDay = payment.due_day ?? bill.due_day;
+            const amount = payment.amount ?? bill.amount;
+            const name = payment.name ?? bill.name;
+            const dueDate = payment.due_date ? new Date(payment.due_date + "T00:00:00") : new Date(y, m - 1, effectiveDueDay);
+            const dKey = dateKey(dueDate);
+            if (!map[dKey]) map[dKey] = [];
+            map[dKey].push({ id: bill.id, name, amount });
+          });
         });
       } else if (bill.bill_month && bill.bill_year) {
-        candidates.push({ month: bill.bill_month, year: bill.bill_year });
-      }
-      candidates.forEach(({ month, year }) => {
-        const payment = payments.find(p => p.bill_id === bill.id && p.month === month && p.year === year);
+        const payment = payments.find(p => p.bill_id === bill.id && p.month === bill.bill_month && p.year === bill.bill_year);
         const paid = payment?.paid ?? false;
         if (paid) return;
-        const effectiveDueDay = bill.recurring ? (payment?.due_day ?? bill.due_day) : bill.due_day;
-        const amount = bill.recurring ? (payment?.amount ?? bill.amount) : bill.amount;
-        const name = bill.recurring ? (payment?.name ?? bill.name) : bill.name;
-        const dueDate = new Date(year, month - 1, effectiveDueDay);
-        const key = dateKey(dueDate);
-        if (!map[key]) map[key] = [];
-        map[key].push({ id: bill.id, name, amount });
-      });
+        const dueDate = new Date(bill.bill_year, bill.bill_month - 1, bill.due_day);
+        const dKey = dateKey(dueDate);
+        if (!map[dKey]) map[dKey] = [];
+        map[dKey].push({ id: bill.id, name: bill.name, amount: bill.amount });
+      }
     });
     return map;
   }, [bills, payments, calendarWeeks]);
@@ -787,20 +879,50 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
   const week2Result = { rows: moneyCalendarResult.rows.slice(7, 14) };
 
   const monthBills = useMemo(() => {
-    const filtered = bills.filter(bill => {
-      if (bill.recurring) return true;
-      return bill.bill_month === selectedMonth && bill.bill_year === selectedYear;
+    const rows: (Bill & { name: string; amount: number; due_day: number; paid: boolean; late: boolean; days: number; paymentId?: number })[] = [];
+
+    bills.forEach(bill => {
+      if (bill.recurring) {
+        const occurrences = payments.filter(p => p.bill_id === bill.id && p.month === selectedMonth && p.year === selectedYear);
+
+        if (occurrences.length === 0) {
+          // Fallback row while ensurePaymentsExist is still generating this month's payment(s)
+          const due_day = bill.due_day;
+          rows.push({
+            ...bill, name: bill.name, amount: bill.amount, due_day, paid: false,
+            late: isLate(due_day, selectedMonth, selectedYear, false),
+            days: daysUntilDue(due_day, selectedMonth, selectedYear),
+            paymentId: undefined,
+          });
+          return;
+        }
+
+        occurrences.forEach(payment => {
+          const paid = payment.paid ?? false;
+          const name = payment.name ?? bill.name;
+          const amount = payment.amount ?? bill.amount;
+          const due_day = payment.due_day ?? bill.due_day;
+          rows.push({
+            ...bill, name, amount, due_day, paid,
+            late: isLate(due_day, selectedMonth, selectedYear, paid),
+            days: daysUntilDue(due_day, selectedMonth, selectedYear),
+            paymentId: payment.id,
+          });
+        });
+      } else if (bill.bill_month === selectedMonth && bill.bill_year === selectedYear) {
+        const payment = payments.find(p => p.bill_id === bill.id && p.month === selectedMonth && p.year === selectedYear);
+        const paid = payment?.paid ?? false;
+        const due_day = bill.due_day;
+        rows.push({
+          ...bill, name: bill.name, amount: bill.amount, due_day, paid,
+          late: isLate(due_day, selectedMonth, selectedYear, paid),
+          days: daysUntilDue(due_day, selectedMonth, selectedYear),
+          paymentId: payment?.id,
+        });
+      }
     });
-    return filtered.map(bill => {
-      const payment = payments.find(p => p.bill_id === bill.id && p.month === selectedMonth && p.year === selectedYear);
-      const paid = payment?.paid ?? false;
-      const name = bill.recurring ? (payment?.name ?? bill.name) : bill.name;
-      const amount = bill.recurring ? (payment?.amount ?? bill.amount) : bill.amount;
-      const due_day = bill.recurring ? (payment?.due_day ?? bill.due_day) : bill.due_day;
-      const late = isLate(due_day, selectedMonth, selectedYear, paid);
-      const days = daysUntilDue(due_day, selectedMonth, selectedYear);
-      return { ...bill, name, amount, due_day, paid, late, days, paymentId: payment?.id };
-    }).sort((a, b) => a.due_day - b.due_day);
+
+    return rows.sort((a, b) => a.due_day - b.due_day);
   }, [bills, payments, selectedMonth, selectedYear]);
 
   const urgentBills = monthBills.filter(b => !b.paid && b.days <= 7 && b.days >= 0);
@@ -1060,20 +1182,31 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
   }
 
   async function addBill() {
-    if (!newBill.name || !newBill.amount || !newBill.due_day) return;
+    const isWeekly = newBill.recurring && newBill.frequency_unit === "week";
+    if (!newBill.name || !newBill.amount) return;
+    if (isWeekly ? !newBill.anchor_date : !newBill.due_day) return;
+
+    const interval = Math.max(1, parseInt(newBill.frequency_interval) || 1);
+    const due_day = isWeekly
+      ? parseInt(newBill.anchor_date.split("-")[2], 10)
+      : parseInt(newBill.due_day);
+
     const bill: Bill = {
       id: nextBillId,
       name: newBill.name,
       amount: parseFloat(newBill.amount),
-      due_day: parseInt(newBill.due_day),
+      due_day,
       recurring: newBill.recurring,
       bill_month: newBill.recurring ? undefined : selectedMonth,
       bill_year: newBill.recurring ? undefined : selectedYear,
+      frequency_unit: newBill.recurring ? newBill.frequency_unit : undefined,
+      frequency_interval: isWeekly ? interval : undefined,
+      anchor_date: isWeekly ? newBill.anchor_date : null,
     };
     setBills(prev => [...prev, bill].sort((a, b) => a.due_day - b.due_day));
     setNextBillId(n => n + 1);
     await supabase.from("bills").insert(bill);
-    setNewBill({ name: "", amount: "", due_day: "", recurring: true });
+    setNewBill({ name: "", amount: "", due_day: "", recurring: true, frequency_unit: "month", frequency_interval: "1", anchor_date: "" });
     setShowBillForm(false);
   }
 
@@ -1148,95 +1281,44 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
     );
   };
 
-  const VIEW_TITLES: Record<typeof view, { text: string; icon?: IconName }> = {
-  home: { text: "Wallet" },
-  calendar: { text: "Money Calendar", icon: "calendar" },
-  bills: { text: "Bills", icon: "house" },
-  debts: { text: "Debts", icon: "calculator-hearts" },
-};
+    const VIEW_TITLES: Record<typeof view, { text: string; icon?: IconName }> = {
+    home: { text: "Wallet" },
+    calendar: { text: "Money Calendar", icon: "calendar" },
+    bills: { text: "Bills", icon: "house" },
+    debts: { text: "Debts", icon: "calculator-hearts" },
+  };
+
+  const WALLET_TABS: PageTab<typeof view>[] = [
+    { key: "home", label: "Overview", icon: "money-bag" },
+    { key: "calendar", label: "Money Calendar", icon: "calendar" },
+    { key: "bills", label: "Bills", icon: "house" },
+    { key: "debts", label: "Debts", icon: "calculator-hearts" },
+  ];
 
   return (
     <div>
       {showConfetti && <Confetti />}
 
       <div className="page-header">
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          {view !== "home" && (
-            <button className="btn btn-ghost btn-sm" onClick={() => setView("home")}>← Back</button>
-          )}
-          <h2>{VIEW_TITLES[view].icon && <Icon name={VIEW_TITLES[view].icon!} size={20} />} {VIEW_TITLES[view].text}</h2>
-          <Lantern />
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <h2>{VIEW_TITLES[view].icon && <Icon name={VIEW_TITLES[view].icon!} size={20} />} {VIEW_TITLES[view].text}</h2>    
+ <Lantern />
         </div>
         {savedMsg && <span className="badge badge-green">Saved!</span>}
       </div>
 
+ <PageTabs
+          tabs={WALLET_TABS}
+          active={view}
+          onChange={setView}
+        />
+
       <div className="page-body" style={{ display: "flex", flexDirection: "column", gap: 20 }}>
 
-    {/* CALENDAR, BILLS AND DEBTS BUTTONS */}
+           
 
         {view === "home" && (
           <>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 10 }}>
-              
-            <button
-              onClick={() => setView("calendar")}
-              style={{
-                textAlign: "left",
-                cursor: "pointer",
-                fontFamily: "inherit",
-                border: "1.5px dashed var(--border)",
-                borderRadius: 18,
-                background: "var(--white)",
-                padding: "14px 16px",
-                display: "flex",
-                flexDirection: "column",
-                gap: 6,
-              }}
-            >
-              <div style={{ fontSize: 24 }}>
-                <Icon name="calendar" size={24} />
-              </div>
-
-              <div style={{ fontSize: 14, fontWeight: 800, color: "var(--ink)" }}>
-                Money Calendar
-              </div>
-
-              <div style={{ fontSize: 11, color: "var(--ink-muted)" }}>
-                14 day forecast
-              </div>
-            </button>
-
-              <button
-                onClick={() => setView("bills")}
-                style={{
-                  textAlign: "left", cursor: "pointer", fontFamily: "inherit",
-                  border: "1.5px dashed var(--border)", borderRadius: 18,
-                  background: "var(--white)", padding: "14px 16px",
-                  display: "flex", flexDirection: "column", gap: 6,
-                }}
-              >
-                <div style={{ fontSize: 24, lineHeight: 1 }}><Icon name="house" size={24} /></div>
-                <div style={{ fontSize: 14, fontWeight: 800, color: "var(--ink)" }}>Bills</div>
-                <div style={{ fontSize: 11, color: "var(--ink-muted)" }}>
-                  {unpaidTotal > 0 ? `${fmt(unpaidTotal)} unpaid` : <>all paid up <Icon name="clipboard-check" size={12} /></>}
-                </div>
-              </button>
-              <button
-                onClick={() => setView("debts")}
-                style={{
-                  textAlign: "left", cursor: "pointer", fontFamily: "inherit",
-                  border: "1.5px dashed var(--border)", borderRadius: 18,
-                  background: "var(--white)", padding: "14px 16px",
-                  display: "flex", flexDirection: "column", gap: 6,
-                }}
-              >
-                <div style={{ fontSize: 24, lineHeight: 1 }}><Icon name="calculator-hearts" size={24} /></div>
-                <div style={{ fontSize: 14, fontWeight: 800, color: "var(--ink)" }}>Debts</div>
-                <div style={{ fontSize: 11, color: "var(--ink-muted)" }}>
-                  {activeDebts.filter(d => !d.paid_off).length} active · {payoffMonth}mo payoff
-                </div>
-              </button>
-            </div>
 
             {/* SAFE TO SPEND */}
 
@@ -1897,16 +1979,44 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                         <div className="form-label">Amount ($)</div>
                         <input className="form-input" type="number" placeholder="e.g. 1375" value={newBill.amount} onChange={e => setNewBill(p => ({ ...p, amount: e.target.value }))} />
                       </div>
-                      <div>
-                        <div className="form-label">Due Day</div>
-                        <input className="form-input" type="number" placeholder="e.g. 1" value={newBill.due_day} onChange={e => setNewBill(p => ({ ...p, due_day: e.target.value }))} />
-                      </div>
+
                       <div style={{ display: "flex", alignItems: "flex-end" }}>
                         <label style={{ fontSize: 13, color: "var(--ink)", display: "flex", alignItems: "center", gap: 6, fontWeight: 600 }}>
                           <input type="checkbox" checked={newBill.recurring} onChange={e => setNewBill(p => ({ ...p, recurring: e.target.checked }))} />
                           Recurring
                         </label>
                       </div>
+                      {newBill.recurring && (
+                        <div>
+                          <div className="form-label">Frequency</div>
+                          <select
+                            className="form-input"
+                            value={newBill.frequency_unit}
+                            onChange={e => setNewBill(p => ({ ...p, frequency_unit: e.target.value as "month" | "week" }))}
+                          >
+                            <option value="month">Once a month</option>
+                            <option value="week">Every N weeks</option>
+                          </select>
+                        </div>
+                      )}
+
+                      {newBill.recurring && newBill.frequency_unit === "week" ? (
+                        <>
+                          <div>
+                            <div className="form-label">First Due Date</div>
+                            <input className="form-input" type="date" value={newBill.anchor_date} onChange={e => setNewBill(p => ({ ...p, anchor_date: e.target.value }))} />
+                          </div>
+                          <div>
+                            <div className="form-label">Every how many weeks?</div>
+                            <input className="form-input" type="number" min="1" placeholder="e.g. 2" value={newBill.frequency_interval} onChange={e => setNewBill(p => ({ ...p, frequency_interval: e.target.value }))} />
+                          </div>
+                        </>
+                      ) : (
+                        <div>
+                          <div className="form-label">Due Day</div>
+                          <input className="form-input" type="number" placeholder="e.g. 1" value={newBill.due_day} onChange={e => setNewBill(p => ({ ...p, due_day: e.target.value }))} />
+                        </div>
+                      )}
                     </div>
                     <button className="btn btn-green" style={{ justifyContent: "center" }} onClick={addBill}>Save Bill</button>
                   </div>
@@ -1930,8 +2040,10 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                       </td></tr>
                     ) : (
                   <tbody>
-                    {monthBills.map((b, i) => (
-                      <tr key={b.id} style={{ background: b.late ? "var(--danger-bg)" : b.paid ? "var(--sage-light)" : i % 2 === 0 ? "transparent" : "var(--accent)" }}>
+                    {monthBills.map((b, i) => {
+                      const isAccentRow = !b.late && !b.paid && i % 2 !== 0;
+                      return (
+                      <tr key={b.paymentId ?? `${b.id}-fallback`} style={{ background: b.late ? "var(--danger-bg)" : b.paid ? "var(--sage-light)" : i % 2 === 0 ? "transparent" : "var(--accent)" }}>
                         <td style={{ padding: "9px 8px" }}>
                           <button
                             onClick={() => togglePaid(b)}
@@ -1950,13 +2062,16 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                           </button>
                         </td>
                         <td style={{ padding: "9px 8px", textDecoration: b.paid ? "line-through" : "none" }}>
-                          <EditableCell value={b.name} onChange={v => updateMonthBill(b, "name", v)} type="text" style={{ color: b.paid ? "var(--ink-muted)" : "var(--ink)", fontWeight: 600 }} />
+                          <EditableCell value={b.name} onChange={v => updateMonthBill(b, "name", v)} type="text" style={{ color: b.paid ? "var(--ink-muted)" : isAccentRow ? "var(--accent-text)" : "var(--ink)", fontWeight: 600 }} />
+                          {b.recurring && b.frequency_unit === "week" && (
+                            <div style={{ fontSize: 10, color: isAccentRow ? "var(--accent-text-muted)" : "var(--ink-muted)", marginTop: 2 }}>{frequencyLabel(b.frequency_unit, b.frequency_interval)}</div>
+                          )}
                         </td>
                         <td style={{ padding: "9px 8px", textDecoration: b.paid ? "line-through" : "none" }}>
-                          <EditableCell value={b.amount} onChange={v => updateMonthBill(b, "amount", parseFloat(v) || 0)} style={{ color: b.paid ? "var(--ink-muted)" : "var(--pink-dark)", fontWeight: 700 }} />
+                          <EditableCell value={b.amount} onChange={v => updateMonthBill(b, "amount", parseFloat(v) || 0)} style={{ color: b.paid ? "var(--ink-muted)" : isAccentRow ? "var(--accent-text)" : "var(--pink-dark)", fontWeight: 700 }} />
                         </td>
                         <td style={{ padding: "9px 8px" }}>
-                          <EditableCell value={b.due_day} onChange={v => updateMonthBill(b, "due_day", parseInt(v) || 1)} style={{ color: "var(--ink-muted)" }} />
+                          <EditableCell value={b.due_day} onChange={v => updateMonthBill(b, "due_day", parseInt(v) || 1)} style={{ color: isAccentRow ? "var(--accent-text-muted)" : "var(--ink-muted)" }} />
                         </td>
                         <td style={{ padding: "9px 8px" }}>
                           {b.paid
@@ -1970,7 +2085,8 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                           <button className="btn btn-ghost btn-sm" onClick={() => removeBill(b.id)}><Icon name="icon-trash2" size={13} /></button>
                         </td>
                       </tr>
-                    ))}
+                      );
+                    })}
                     
                   </tbody>
                 )}

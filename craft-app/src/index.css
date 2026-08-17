@@ -45,6 +45,9 @@
 
   --danger: #B5615B;
   --danger-bg: #F5E6E3;
+
+  --accent-text: #FFFCF7;
+  --accent-text-muted: rgba(255, 252, 247, .78);
 }
 
 [data-theme='dark'] {
@@ -87,6 +90,9 @@
 
   --danger: #E08A82;
   --danger-bg: #3B2320;
+
+  --accent-text: #F3D7B1;
+  --accent-text-muted: rgba(243, 215, 177, .78);
 }
 
 /* Light mode: soft gold-tinted glow on hover */
@@ -372,13 +378,40 @@ a {
 /* ================= BADGES ================= */
 
 .badge {
+  display: inline-block;
   padding: 4px 10px;
   border-radius: 999px;
   font-size: 12px;
   font-weight: 600;
+  white-space: nowrap;
   background: var(--sage-light);
   color: var(--green-dark);
   border: 1px solid var(--sage);
+}
+
+.badge-green {
+  background: var(--sage-light);
+  color: var(--green-dark);
+  border-color: var(--sage);
+}
+
+.badge-lavender {
+  background: var(--gold-light-solid);
+  color: var(--gold-dark);
+  border-color: var(--gold);
+}
+
+.badge-pink {
+  background: var(--pink-light-solid);
+  color: var(--pink-dark);
+  border-color: var(--pink);
+}
+
+@media (max-width: 480px) {
+  .badge {
+    padding: 3px 8px;
+    font-size: 10.5px;
+  }
 }
 
 /* ================= INPUTS ================= */

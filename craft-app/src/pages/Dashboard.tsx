@@ -20,6 +20,7 @@ interface Focus {
   completed: boolean;
   date: string;
   carried_over: boolean;
+  priority: boolean;
 }
 
 
@@ -96,12 +97,19 @@ async function loadAll() {
     if (data) setFocuses(prev => prev.map(f => f.id === focus.id ? data : f));
   }
 
+  async function toggleFocusPriority(focus: Focus) {
+    const newPriority = !focus.priority;
+    setFocuses(prev => prev.map(f => f.id === focus.id ? { ...f, priority: newPriority } : f));
+    await supabase.from('focuses').update({ priority: newPriority }).eq('id', focus.id);
+  }
+
   async function deleteFocus(id: string) {
     await supabase.from('focuses').delete().eq('id', id);
     setFocuses(prev => prev.filter(f => f.id !== id));
   }
 
   const completedFocuses = focuses.filter(f => f.completed).length;
+  const sortedFocuses = [...focuses].sort((a, b) => Number(a.completed) - Number(b.completed) || Number(b.priority) - Number(a.priority));
 
   return (
     <div>
@@ -210,7 +218,7 @@ async function loadAll() {
     
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {focuses.map(f => (
+              {sortedFocuses.map(f => (
                 <div
                   key={f.id}
                   style={{
@@ -258,6 +266,21 @@ async function loadAll() {
                       </div>
                     )}
                   </div>
+
+                  <button
+                    onClick={() => toggleFocusPriority(f)}
+                    aria-label={f.priority ? 'Unstar priority' : 'Mark as priority'}
+                    title={f.priority ? 'Priority focus' : 'Mark as priority'}
+                    style={{
+                      background: 'none', border: 'none', cursor: 'pointer', padding: 0,
+                      display: 'flex', alignItems: 'center', flexShrink: 0,
+                      fontSize: '1.15rem', lineHeight: 1,
+                      color: f.priority ? 'var(--gold)' : 'var(--border)',
+                    }}
+                  >
+                    {f.priority ? '★' : '☆'}
+                  </button>
+
                   <button
                     onClick={() => deleteFocus(f.id)}
                     style={{
