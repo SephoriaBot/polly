@@ -1090,10 +1090,10 @@ export default function Grocery() {
     </>
   )}
 </div>
-            </div>
+
 
          
-        <PageTabs tabs={GROCERY_TABS} active={activeTab} onChange={setActiveTab} />
+   <PageTabs tabs={GROCERY_TABS} active={activeTab} onChange={setActiveTab} />
       </div>
 
       <div className="page-body">
