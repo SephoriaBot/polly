@@ -12,6 +12,7 @@ import checklistImg from '../assets/illustrations/checklist.png';
 import celebrationImg from '../assets/illustrations/celebration.png';
 import emptyPlanner from '../assets/icons/empty-planner.png';
 import Icon, { type IconName } from '../components/Icon';
+import PageTabs, { type PageTab } from '../components/PageTabs';
 import { useTheme } from '../context/ThemeContext';
 
 interface DailyTask {
@@ -64,7 +65,7 @@ const SPARK_COLORS = [
   'var(--gold-light-solid)',
 ];
 
-const PLANNER_TABS: { key: 'tasks' | 'appointments' | 'chores' | 'events' | 'goals' | 'notes'; label: string; icon: IconName }[] = [
+const PLANNER_TABS: PageTab<'tasks' | 'appointments' | 'chores' | 'events' | 'goals' | 'notes'>[] = [
   { key: 'tasks', label: 'Tasks', icon: 'icon-listchecks' },
   { key: 'appointments', label: 'Appointments', icon: 'icon-calendar' },
   { key: 'chores', label: 'Chores', icon: 'cleaning-spray' },
@@ -72,44 +73,6 @@ const PLANNER_TABS: { key: 'tasks' | 'appointments' | 'chores' | 'events' | 'goa
   { key: 'goals', label: 'Goals', icon: 'trophy' },
   { key: 'notes', label: 'Notes', icon: 'icon-notebook' },
 ];
-
-function PlannerTabs({ active, onChange }: { active: string; onChange: (key: 'tasks' | 'appointments' | 'chores' | 'events' | 'goals' | 'notes') => void }) {
-  return (
-    <div
-      style={{
-        display: 'flex',
-        gap: 6,
-        overflowX: 'auto',
-        paddingBottom: 4,
-        marginBottom: 16,
-        WebkitOverflowScrolling: 'touch',
-        scrollbarWidth: 'none',
-      }}
-    >
-      {PLANNER_TABS.map(tab => {
-        const isActive = active === tab.key;
-        return (
-          <button
-            key={tab.key}
-            onClick={() => onChange(tab.key)}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0,
-              padding: '8px 14px', borderRadius: 999,
-              border: `1.5px solid ${isActive ? 'var(--primary)' : 'var(--border)'}`,
-              background: isActive ? 'var(--primary)' : 'var(--surface)',
-              color: isActive ? 'var(--btn-ink)' : 'var(--ink-muted)',
-              fontWeight: 700, fontSize: 12.5, cursor: 'pointer',
-              transition: '0.15s ease',
-            }}
-          >
-            <Icon name={tab.icon} size={14} />
-            {tab.label}
-          </button>
-        );
-      })}
-    </div>
-  );
-}
 
 function StitchDivider() {
   return (
@@ -437,7 +400,7 @@ export default function DailyPlanner() {
         </div>
       </div>
 
-      <PlannerTabs active={activeTab} onChange={setActiveTab} />
+      <PageTabs tabs={PLANNER_TABS} active={activeTab} onChange={setActiveTab} />
 
       <div className="page-body">
 
