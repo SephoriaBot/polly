@@ -1066,9 +1066,6 @@ export default function Grocery() {
           <h2>Grocery List <Icon name="basket" size={22} /></h2>
           <Lantern size={50} />
         </div>
-       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-
-</div>
 
 
          
@@ -1185,7 +1182,7 @@ export default function Grocery() {
 
                         {activeTab === 'smart-cart' && (
           <>
-
+  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
   <button className="btn btn-primary" onClick={buildSmartCart}>
 
       <Icon name="shopping-cart" size={20} /> Build Smart Cart
@@ -1209,6 +1206,7 @@ export default function Grocery() {
       <Icon name="icon-externallink" size={20} /> Copy List &amp; Open DoorDash
 
     </button>
+</div>
             
             {/* location input */}
          <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>          <Icon name="icon-mappin" size={16} style={{ color: 'var(--ink-muted)', flexShrink: 0 }} />
