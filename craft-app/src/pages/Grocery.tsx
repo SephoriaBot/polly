@@ -1068,22 +1068,6 @@ export default function Grocery() {
         </div>
        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
 
-  {activeTab === 'smart-cart' && (
-    <>
-      <button className="btn btn-primary" onClick={buildSmartCart}>
-        <Icon name="shopping-cart" size={20} /> Build Smart Cart
-      </button>
-      <button className="btn btn-secondary" onClick={refreshSmartCart}>
-        <Icon name="icon-recur" size={20} /> Refresh
-      </button>
-      <button className="btn btn-ghost" onClick={clearSmartCart}>
-        <Icon name="icon-clear" size={20} /> Clear
-      </button>
-      <button className="btn btn-primary" onClick={openDoorDashList} disabled={!needs.length}>
-        <Icon name="icon-externallink" size={20} /> Copy List &amp; Open DoorDash
-      </button>
-    </>
-  )}
 </div>
 
 
@@ -1201,6 +1185,31 @@ export default function Grocery() {
 
                         {activeTab === 'smart-cart' && (
           <>
+
+  <button className="btn btn-primary" onClick={buildSmartCart}>
+
+      <Icon name="shopping-cart" size={20} /> Build Smart Cart
+
+    </button>
+
+    <button className="btn btn-secondary" onClick={refreshSmartCart}>
+
+      <Icon name="icon-recur" size={20} /> Refresh
+
+    </button>
+
+    <button className="btn btn-ghost" onClick={clearSmartCart}>
+
+      <Icon name="icon-clear" size={20} /> Clear
+
+    </button>
+
+    <button className="btn btn-primary" onClick={openDoorDashList} disabled={!needs.length}>
+
+      <Icon name="icon-externallink" size={20} /> Copy List &amp; Open DoorDash
+
+    </button>
+            
             {/* location input */}
          <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>          <Icon name="icon-mappin" size={16} style={{ color: 'var(--ink-muted)', flexShrink: 0 }} />
           <input
