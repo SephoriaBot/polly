@@ -25,6 +25,7 @@ interface SnapshotRow {
   label: string;
   detail: string;
   page: string;
+  tab?: string;
   empty?: boolean;
 }
 
@@ -33,7 +34,7 @@ function todayISO(): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
-export default function TodaySnapshot({ onNavigate }: { onNavigate?: (page: string) => void }) {
+export default function TodaySnapshot({ onNavigate }: { onNavigate?: (page: string, tab?: string) => void }) {
   const [rows, setRows] = useState<SnapshotRow[] | null>(null);
 
   useEffect(() => {
@@ -71,20 +72,20 @@ export default function TodaySnapshot({ onNavigate }: { onNavigate?: (page: stri
 
       const next: SnapshotRow[] = [
         tasks.length > 0
-          ? { key: 'tasks', icon: 'clipboard-check', label: `${tasks.length} quick task${tasks.length === 1 ? '' : 's'}`, detail: tasks.slice(0, 2).map(t => t.label).join(', '), page: 'dailyplanner' }
-          : { key: 'tasks', icon: 'clipboard-check', label: 'No tasks left today', detail: 'All caught up', page: 'dailyplanner', empty: true },
+          ? { key: 'tasks', icon: 'clipboard-check', label: `${tasks.length} quick task${tasks.length === 1 ? '' : 's'}`, detail: tasks.slice(0, 2).map(t => t.label).join(', '), page: 'dailyplanner', tab: 'tasks' }
+          : { key: 'tasks', icon: 'clipboard-check', label: 'No tasks left today', detail: 'All caught up', page: 'dailyplanner', tab: 'tasks', empty: true },
 
         dueChores.length > 0
-          ? { key: 'chores', icon: 'cleaning-spray', label: `${dueChores.length} chore${dueChores.length === 1 ? '' : 's'} due`, detail: dueChores.slice(0, 2).map(x => x.chore.name).join(', '), page: 'dailyplanner' }
-          : { key: 'chores', icon: 'cleaning-spray', label: 'Chores are caught up', detail: 'Nothing due yet', page: 'dailyplanner', empty: true },
+          ? { key: 'chores', icon: 'cleaning-spray', label: `${dueChores.length} chore${dueChores.length === 1 ? '' : 's'} due`, detail: dueChores.slice(0, 2).map(x => x.chore.name).join(', '), page: 'dailyplanner', tab: 'chores' }
+          : { key: 'chores', icon: 'cleaning-spray', label: 'Chores are caught up', detail: 'Nothing due yet', page: 'dailyplanner', tab: 'chores', empty: true },
 
         appointments.length > 0
-          ? { key: 'appointments', icon: 'calendar', label: `${appointments.length} appointment${appointments.length === 1 ? '' : 's'} coming up`, detail: appointments.slice(0, 2).map(a => `${a.title} (${apptWhen(a.date_time, startOfTomorrow)})`).join(', '), page: 'dailyplanner' }
-          : { key: 'appointments', icon: 'calendar', label: 'Nothing on the calendar', detail: 'Today or tomorrow is clear', page: 'dailyplanner', empty: true },
+          ? { key: 'appointments', icon: 'calendar', label: `${appointments.length} appointment${appointments.length === 1 ? '' : 's'} coming up`, detail: appointments.slice(0, 2).map(a => `${a.title} (${apptWhen(a.date_time, startOfTomorrow)})`).join(', '), page: 'dailyplanner', tab: 'appointments' }
+          : { key: 'appointments', icon: 'calendar', label: 'Nothing on the calendar', detail: 'Today or tomorrow is clear', page: 'dailyplanner', tab: 'appointments', empty: true },
 
         nextBill
-          ? { key: 'money', icon: 'money-bag', label: `${nextBill.name} due ${nextBill.due_day ? `on the ${nextBill.due_day}${daySuffix(nextBill.due_day)}` : 'soon'}`, detail: nextBill.amount != null ? `$${Number(nextBill.amount).toFixed(2)}` : '', page: 'wallet' }
-          : { key: 'money', icon: 'money-bag', label: 'No bills waiting', detail: 'Nothing due this month', page: 'wallet', empty: true },
+          ? { key: 'money', icon: 'money-bag', label: `${nextBill.name} due ${nextBill.due_day ? `on the ${nextBill.due_day}${daySuffix(nextBill.due_day)}` : 'soon'}`, detail: nextBill.amount != null ? `$${Number(nextBill.amount).toFixed(2)}` : '', page: 'wallet', tab: 'bills' }
+          : { key: 'money', icon: 'money-bag', label: 'No bills waiting', detail: 'Nothing due this month', page: 'wallet', tab: 'bills', empty: true },
       ];
 
       setRows(next);
@@ -106,7 +107,7 @@ export default function TodaySnapshot({ onNavigate }: { onNavigate?: (page: stri
       {rows.map(row => (
         <button
           key={row.key}
-          onClick={() => onNavigate?.(row.page)}
+          onClick={() => onNavigate?.(row.page, row.tab)}
           style={{
             display: 'flex', alignItems: 'center', gap: 12, textAlign: 'left',
             background: 'var(--white)', border: '1.5px solid var(--border)',
