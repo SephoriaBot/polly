@@ -322,7 +322,7 @@ function EditableCell({ value, onChange, type = "number", style, className, plac
   );
 }
 
-export default function Wallet() {
+export default function Wallet({ initialView }: { initialView?: 'home' | 'calendar' | 'bills' | 'debts' } = {}) {
   const { theme } = useTheme();
   const [debts, setDebts] = useState<Debt[]>([]);
   const [debtStrategy, setDebtStrategy] =
@@ -332,7 +332,7 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
   const [payments, setPayments] = useState<BillPayment[]>([]);
   const [nextId, setNextId] = useState(20);
   const [nextBillId, setNextBillId] = useState(10);
-  const [view, setView] = useState<"home" | "calendar" | "bills" | "debts">("home");  const [showDeferred, setShowDeferred] = useState(false);
+  const [view, setView] = useState<"home" | "calendar" | "bills" | "debts">(initialView ?? "home");  const [showDeferred, setShowDeferred] = useState(false);
   const [, setLoading] = useState(true);
   const [savedMsg, setSavedMsg] = useState(false);
   const [anytimePay, setAnytimePay] = useState("");
