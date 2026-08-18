@@ -88,7 +88,7 @@ function todayISO() {
   return new Date().toISOString().slice(0, 10);
 }
 
-export default function DailyPlanner() {
+export default function DailyPlanner({ initialTab }: { initialTab?: 'tasks' | 'appointments' | 'chores' | 'events' | 'goals' | 'notes' } = {}) {
   const { theme } = useTheme();
   const [tasks, setTasks] = useState<DailyTask[]>([]);
   const [templates, setTemplates] = useState<DailyTaskTemplate[]>([]);
@@ -106,7 +106,7 @@ export default function DailyPlanner() {
   const [newTaskDays, setNewTaskDays] = useState<number[]>([]);
   const [savingTemplate, setSavingTemplate] = useState(false);
   const [showAttended, setShowAttended] = useState(false); // collapsed by default so attended appts don't stack up
-  const [activeTab, setActiveTab] = useState<'tasks' | 'appointments' | 'chores' | 'events' | 'goals' | 'notes'>('tasks');
+  const [activeTab, setActiveTab] = useState<'tasks' | 'appointments' | 'chores' | 'events' | 'goals' | 'notes'>(initialTab ?? 'tasks');
 
   const upcomingAppts = appointments.filter(a => !a.attended);
   const attendedAppts = appointments.filter(a => a.attended);
