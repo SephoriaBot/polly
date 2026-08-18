@@ -46,7 +46,7 @@ function StitchDivider() {
   );
 }
 
-export default function Dashboard({ onNavigate }: { onNavigate?: (page: string) => void }) {
+export default function Dashboard({ onNavigate }: { onNavigate?: (page: string, tab?: string) => void }) {
   const { theme } = useTheme();
   const { mode } = useEnergy();
   const [focuses, setFocuses] = useState<Focus[]>([]);
