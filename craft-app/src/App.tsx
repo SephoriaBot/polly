@@ -21,9 +21,11 @@ type Page = 'dashboard' | 'grocery' | 'dailyplanner' | 'maidwizard' | 'wallet' |
 
   export default function App() {
   const [page, setPage] = useState<Page>('dashboard');
+  const [initialTab, setInitialTab] = useState<string | undefined>(undefined);
   const [brainDumpOpen, setBrainDumpOpen] = useState(false);
-  function navigate(p: string) {
+  function navigate(p: string, tab?: string) {
     setPage(p as Page);
+    setInitialTab(tab);
     window.scrollTo(0, 0);
   }
   return (
@@ -90,8 +92,8 @@ type Page = 'dashboard' | 'grocery' | 'dailyplanner' | 'maidwizard' | 'wallet' |
               <Suspense fallback={<div className="page-loading">Loading…</div>}>
                 {page === 'dashboard'    && <Dashboard onNavigate={navigate} />}
                 {page === 'grocery'      && <Grocery />}
-                {page === 'dailyplanner' && <DailyPlanner />}
-                {page === 'wallet'       && <Wallet />}
+                {page === 'dailyplanner' && <DailyPlanner initialTab={initialTab as 'tasks' | 'appointments' | 'chores' | 'events' | 'goals' | 'notes' | undefined} />}
+                {page === 'wallet'       && <Wallet initialView={initialTab as 'home' | 'calendar' | 'bills' | 'debts' | undefined} />}
                 {page === 'trackers'     && <TrackerPage />}
                 {page === 'decisions'    && <DecisionTree />}
                 {page === 'habitat'      && <Habitat />}
