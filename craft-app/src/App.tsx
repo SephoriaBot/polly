@@ -16,10 +16,13 @@ const Habitat = lazy(() => import('./hamsters/Habitat'));
 import { ToastProvider } from './hooks/useToast';
 import { HamsterGrowthProvider } from './hamsters/HamsterGrowthContext';
 import WildEncounterAlert from './hamsters/WildEncounterAlert';
+import { useAuth } from './context/AuthContext';
+import Login from './pages/Login';
 
 type Page = 'dashboard' | 'grocery' | 'dailyplanner' | 'maidwizard' | 'wallet' | 'trackers' | 'decisions' | 'habitat';
 
   export default function App() {
+  const { session, loading, signOut } = useAuth();
   const [page, setPage] = useState<Page>('dashboard');
   const [initialTab, setInitialTab] = useState<string | undefined>(undefined);
   const [brainDumpOpen, setBrainDumpOpen] = useState(false);
@@ -28,6 +31,15 @@ type Page = 'dashboard' | 'grocery' | 'dailyplanner' | 'maidwizard' | 'wallet' |
     setInitialTab(tab);
     window.scrollTo(0, 0);
   }
+
+  if (loading) {
+    return <div className="page-loading">Loading…</div>;
+  }
+
+  if (!session) {
+    return <Login />;
+  }
+
   return (
     <ThemeProvider>
     <EnergyProvider>
@@ -85,6 +97,23 @@ type Page = 'dashboard' | 'grocery' | 'dailyplanner' | 'maidwizard' | 'wallet' |
   </span>
   <ThemeToggle />
 </div>
+  <button
+    onClick={() => signOut()}
+    aria-label="Sign out"
+    style={{
+      fontSize: '0.72rem',
+      fontWeight: 700,
+      color: 'var(--ink-muted)',
+      background: 'none',
+      border: '1.5px solid var(--border)',
+      borderRadius: 8,
+      padding: '4px 8px',
+      cursor: 'pointer',
+      whiteSpace: 'nowrap',
+    }}
+  >
+    Sign out
+  </button>
               </div>
             </header>
             <BrainDump open={brainDumpOpen} onClose={() => setBrainDumpOpen(false)} />
