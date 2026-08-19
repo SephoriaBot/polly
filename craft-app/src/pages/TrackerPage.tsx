@@ -21,12 +21,32 @@ function daysAgoISO(days: number) {
   d.setDate(d.getDate() - days);
   return d.toISOString().slice(0, 10);
 }
+function currentMonthKey() {
+  return todayISO().slice(0, 7); // 'YYYY-MM'
+}
+function shiftMonthKey(monthKey: string, delta: number) {
+  const [y, m] = monthKey.split('-').map(Number);
+  const d = new Date(y, m - 1 + delta, 1);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+}
+function monthRange(monthKey: string) {
+  const [y, m] = monthKey.split('-').map(Number);
+  const start = `${monthKey}-01`;
+  const lastDay = new Date(y, m, 0).getDate();
+  const end = `${monthKey}-${String(lastDay).padStart(2, '0')}`;
+  return { start, end };
+}
+function monthLabel(monthKey: string) {
+  const [y, m] = monthKey.split('-').map(Number);
+  return new Date(y, m - 1, 1).toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
+}
 
 type TabType = TrackerType | 'overlap';
 
 export default function TrackerPage() {
   const [activeType, setActiveType] = useState<TabType>('sleep');
   const [date, setDate] = useState(todayISO());
+  const [viewMonth, setViewMonth] = useState(currentMonthKey());
   const [refreshKey, setRefreshKey] = useState(0);
   const [cycleDay, setCycleDay] = useState<number | null>(null);
   const [periodEnded, setPeriodEnded] = useState(false);
@@ -230,10 +250,44 @@ export default function TrackerPage() {
             />
           )}
 
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              margin: '1rem 0 0.5rem',
+            }}
+          >
+            <button
+              className="btn-secondary"
+              onClick={() => setViewMonth((m) => shiftMonthKey(m, -1))}
+              aria-label="Previous month"
+            >
+              <Icon name="icon-arrowleft" size={14} />
+            </button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <strong>{monthLabel(viewMonth)}</strong>
+              {viewMonth !== currentMonthKey() && (
+                <button className="btn-secondary" onClick={() => setViewMonth(currentMonthKey())}>
+                  This month
+                </button>
+              )}
+            </div>
+            <button
+              className="btn-secondary"
+              onClick={() => setViewMonth((m) => shiftMonthKey(m, 1))}
+              disabled={viewMonth >= currentMonthKey()}
+              aria-label="Next month"
+            >
+              <Icon name="icon-arrowleft" size={14} style={{ transform: 'scaleX(-1)' }} />
+            </button>
+          </div>
+
           <TrackerChart
+            key={viewMonth}
             type={activeType}
-            startDate={daysAgoISO(30)}
-            endDate={todayISO()}
+            startDate={monthRange(viewMonth).start}
+            endDate={monthRange(viewMonth).end}
             refreshKey={refreshKey}
             label={activeCustomTracker?.label}
             unit={activeCustomTracker?.unit}
