@@ -8,6 +8,7 @@ type AuthContextValue = {
   loading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: string | null }>;
   signUp: (email: string, password: string) => Promise<{ error: string | null; needsEmailConfirm: boolean }>;
+  signInAsGuest: () => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
 };
 
@@ -47,13 +48,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { error: null, needsEmailConfirm };
   }
 
+  async function signInAsGuest() {
+    const { error } = await supabase.auth.signInAnonymously();
+    return { error: error ? error.message : null };
+  }
+
   async function signOut() {
     await supabase.auth.signOut();
   }
 
   return (
     <AuthContext.Provider
-      value={{ session, user: session?.user ?? null, loading, signIn, signUp, signOut }}
+      value={{ session, user: session?.user ?? null, loading, signIn, signUp, signInAsGuest, signOut }}
     >
       {children}
     </AuthContext.Provider>
