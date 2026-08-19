@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 const LAST_EMAIL_KEY = 'polly:last-email';
 
 export default function Login() {
-  const { signIn, signUp } = useAuth();
+  const { signIn, signUp, signInAsGuest } = useAuth();
   const [mode, setMode] = useState<'signin' | 'signup'>('signin');
   const [email, setEmail] = useState(() => {
     try {
@@ -46,14 +46,28 @@ export default function Login() {
     }
   }
 
+  async function handleGuest() {
+    setError(null);
+    setConfirmMsg(null);
+    setBusy(true);
+    try {
+      const { error } = await signInAsGuest();
+      if (error) setError(error);
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <div
       style={{
         minHeight: '100dvh',
         display: 'flex',
-        alignItems: 'center',
+        alignItems: 'flex-start',
         justifyContent: 'center',
         padding: '24px',
+        paddingTop: 'max(24px, 10dvh)',
+        overflowY: 'auto',
         background: 'var(--color-bg)',
       }}
     >
@@ -171,6 +185,41 @@ export default function Login() {
         >
           {mode === 'signin' ? "Don't have an account? Sign up" : 'Already have an account? Sign in'}
         </button>
+
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 10,
+            margin: '2px 0',
+          }}
+        >
+          <div style={{ flex: 1, height: 1, background: 'var(--color-border)' }} />
+          <span style={{ fontSize: '0.72rem', color: 'var(--color-text-muted)' }}>or</span>
+          <div style={{ flex: 1, height: 1, background: 'var(--color-border)' }} />
+        </div>
+
+        <button
+          type="button"
+          onClick={handleGuest}
+          disabled={busy}
+          style={{
+            background: 'var(--color-surface-raised)',
+            color: 'var(--color-accent-strong)',
+            border: '1.5px solid var(--color-border)',
+            borderRadius: 12,
+            padding: '10px 0',
+            fontWeight: 700,
+            fontSize: '0.85rem',
+            cursor: busy ? 'default' : 'pointer',
+            opacity: busy ? 0.7 : 1,
+          }}
+        >
+          Continue as guest (demo)
+        </button>
+        <div style={{ fontSize: '0.7rem', color: 'var(--color-text-muted)', textAlign: 'center' }}>
+          No email needed. Guest data can be cleared anytime and isn't tied to a real account.
+        </div>
       </form>
     </div>
   );
