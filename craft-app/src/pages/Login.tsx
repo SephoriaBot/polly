@@ -1,10 +1,18 @@
 import { useState, type FormEvent, type CSSProperties } from 'react';
 import { useAuth } from '../context/AuthContext';
 
+const LAST_EMAIL_KEY = 'polly:last-email';
+
 export default function Login() {
   const { signIn, signUp } = useAuth();
   const [mode, setMode] = useState<'signin' | 'signup'>('signin');
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState(() => {
+    try {
+      return localStorage.getItem(LAST_EMAIL_KEY) ?? '';
+    } catch {
+      return '';
+    }
+  });
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -16,6 +24,11 @@ export default function Login() {
     setConfirmMsg(null);
     setBusy(true);
     try {
+      try {
+        localStorage.setItem(LAST_EMAIL_KEY, email);
+      } catch {
+        // ignore storage failures (e.g. private browsing)
+      }
       if (mode === 'signin') {
         const { error } = await signIn(email, password);
         if (error) setError(error);
@@ -100,6 +113,7 @@ export default function Login() {
             type="email"
             required
             autoComplete="email"
+            enterKeyHint="next"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             style={inputStyle}
@@ -113,6 +127,7 @@ export default function Login() {
             required
             minLength={6}
             autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
+            enterKeyHint="go"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             style={inputStyle}
