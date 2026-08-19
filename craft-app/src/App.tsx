@@ -32,16 +32,13 @@ type Page = 'dashboard' | 'grocery' | 'dailyplanner' | 'maidwizard' | 'wallet' |
     window.scrollTo(0, 0);
   }
 
-  if (loading) {
-    return <div className="page-loading">Loading…</div>;
-  }
-
-  if (!session) {
-    return <Login />;
-  }
-
   return (
     <ThemeProvider>
+      {loading ? (
+        <div className="page-loading">Loading…</div>
+      ) : !session ? (
+        <Login />
+      ) : (
     <EnergyProvider>
       <ShapeDefs />
       <ToastProvider>
@@ -133,6 +130,7 @@ type Page = 'dashboard' | 'grocery' | 'dailyplanner' | 'maidwizard' | 'wallet' |
         </HamsterGrowthProvider>
       </ToastProvider>
     </EnergyProvider>
+      )}
     </ThemeProvider>
   );
 }
