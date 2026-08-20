@@ -17,7 +17,7 @@ import Icon from "../components/Icon";
 
 interface Props {
   currentPage: string;
-  onNavigate: (page: string) => void;
+  onNavigate: (page: string, tab?: string) => void;
 }
 
 export default function WildEncounterAlert({ currentPage, onNavigate }: Props) {
