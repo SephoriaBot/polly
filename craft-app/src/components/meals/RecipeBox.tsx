@@ -475,7 +475,7 @@ function DiscoverTab({ onOpenRecipe, onSaved }: { onOpenRecipe: (id: number) => 
           }}>
             <Icon name="icon-database" size={11} /> Recipes from Spoonacular
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 10 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(200px, 100%), 1fr))', gap: 10 }}>
             {meals.map(m => (
               <div key={m.id} className="card" style={{ padding: 0, overflow: 'hidden' }}>
                 {m.image && (
@@ -562,7 +562,7 @@ function SavedTab({
   }
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 10 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(160px, 100%), 1fr))', gap: 10 }}>
       {savedMeals.map(m => {
         const hasIngredients = (m.ingredients ?? []).length > 0
         return (

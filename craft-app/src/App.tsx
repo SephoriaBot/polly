@@ -53,6 +53,7 @@ type Page = 'dashboard' | 'grocery' | 'dailyplanner' | 'maidwizard' | 'wallet' |
               <span className="topbar-mark">Polly</span>
               <div className="topbar-actions">
   <span
+    className="topbar-label"
     style={{
       fontSize: '0.72rem',
       fontWeight: 700,
@@ -82,7 +83,8 @@ type Page = 'dashboard' | 'grocery' | 'dailyplanner' | 'maidwizard' | 'wallet' |
     gap: 6,
   }}
 >
-  <span
+    <span
+    className="topbar-label"
     style={{
       fontSize: '0.72rem',
       fontWeight: 700,
