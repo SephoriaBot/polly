@@ -122,7 +122,8 @@ type Page = 'dashboard' | 'grocery' | 'dailyplanner' | 'maidwizard' | 'wallet' |
                 {page === 'wallet'       && <Wallet initialView={initialTab as 'home' | 'calendar' | 'bills' | 'debts' | undefined} />}
                 {page === 'trackers'     && <TrackerPage />}
                 {page === 'decisions'    && <DecisionTree />}
-                {page === 'habitat'      && <Habitat />}
+                {page === 'habitat'      && <Habitat initialTab={initialTab as 'shelf' | 'nest' | 'wild' | 'collection' | undefined} />}
+
               </Suspense>
             </main>
             <BottomNav currentPage={page} onNavigate={navigate} />
