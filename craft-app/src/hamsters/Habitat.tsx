@@ -19,8 +19,8 @@ const HABITAT_TABS: PageTab<HabitatTab>[] = [
   { key: 'collection', label: 'Collection', icon: 'trophy' },
 ];
 
-export default function Habitat() {
-  const [activeTab, setActiveTab] = useState<HabitatTab>('shelf');
+export default function Habitat({ initialTab }: { initialTab?: HabitatTab }) {
+  const [activeTab, setActiveTab] = useState<HabitatTab>(initialTab ?? 'shelf');
 
   return (
     <div>
