@@ -496,8 +496,8 @@ export default function HabitatScene() {
             marginBottom: 8,
           }}
         >
-          Pick up to {MAX_PER_SHELF} unlocked items per shelf. Locked items cost
-          points to unlock — earned the same way hamster points are, but kept in a separate pool so decorating never affects hatching.
+          Pick up to {MAX_PER_SHELF} items per shelf. Items cost
+          points to unlock- get working on your day and enjoy these collectibles as you go.
         </div>
         {unlockError && (
           <div
