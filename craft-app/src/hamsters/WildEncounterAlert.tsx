@@ -45,7 +45,7 @@ export default function WildEncounterAlert({ currentPage, onNavigate }: Props) {
   return (
     <div
       role="button"
-      onClick={() => onNavigate("habitat")}
+            onClick={() => onNavigate("habitat", "wild")}
       style={{
         position: "fixed",
         top: visible ? 14 : -80,
