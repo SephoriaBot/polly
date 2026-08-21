@@ -120,18 +120,20 @@ function normalizeForDedup(name: string): string {
 type Tab = 'discover' | 'saved'
 type DiscoverMode = 'random' | 'search'
 
-interface NewGroceryItem { name: string; qty: string; checked: boolean; list_name: string }
+interface NewGroceryItem { name: string; qty: string; checked: boolean; list_name: string; list_id: string | null }
 
 interface RecipeBoxProps {
   /** name of the grocery list ingredients should be added to */
   currentList: string
+  /** id of that same list — the real join key, list_name is kept only for display/back-compat */
+  currentListId: string | null
   /** names already on that list, used to skip duplicates */
   existingItemNames: string[]
   /** called with the rows actually inserted, so the parent can update its own item state */
   onItemsAdded: (rows: NewGroceryItem[]) => void
 }
 
-export default function RecipeBox({ currentList, existingItemNames, onItemsAdded }: RecipeBoxProps) {
+export default function RecipeBox({ currentList, currentListId, existingItemNames, onItemsAdded }: RecipeBoxProps) {
   const { showToast } = useToast()
   const [tab, setTab] = useState<Tab>('discover')
   const [openRecipeId, setOpenRecipeId] = useState<number | null>(null)
@@ -171,7 +173,7 @@ export default function RecipeBox({ currentList, existingItemNames, onItemsAdded
     const existingKeys = new Set(existingItemNames.map(normalizeForDedup))
     const rows: NewGroceryItem[] = Array.from(seen.entries())
       .filter(([key]) => !existingKeys.has(key))
-      .map(([, name]) => ({ name, qty: '', checked: false, list_name: currentList }))
+      .map(([, name]) => ({ name, qty: '', checked: false, list_name: currentList, list_id: currentListId }))
 
     if (rows.length) {
       const { data } = await supabase.from('grocery_items').insert(rows).select()
