@@ -44,6 +44,10 @@ const POINTS = {
   daily_task_list_complete: 5,
   daily_focuses_complete: 7,
   appointment_attended: 10,
+  goal_step_completed: 3,
+  chore_completed: 5,
+  life_event_item_completed: 3,
+  grocery_list_completed: 10,
 } as const;
 
 
@@ -105,6 +109,10 @@ export const SOURCE_LABELS: Record<string, { text: string; icon: IconName }> = {
   daily_task_list_complete: { text: "Full task list", icon: "clipboard-check" },
     daily_focuses_complete: { text: "All focuses completed", icon: "clipboard-check"},
   appointment_attended: { text: "Appointment attended", icon: "notebook-pen" },
+  goal_step_completed: { text: "Goal step completed", icon: "clipboard-check" },
+  chore_completed: { text: "Chore done", icon: "house" },
+  life_event_item_completed: { text: "Life event step", icon: "clipboard-check" },
+  grocery_list_completed: { text: "Grocery list finished", icon: "notebook-pen" },
 };
 
 export function useHamsterGrowthState() {
@@ -415,7 +423,9 @@ export function useHamsterGrowthState() {
   const runGrowthCheck = useCallback(async () => {
     let { data: lastCheck } = await supabase
       .from("hamster_last_check")
-      .select("last_bill_check, last_log_check, last_tracker_check, focus_all_done_awarded, debt_snapshot, tasks_all_done_awarded")
+      .select(
+        "last_bill_check, last_log_check, last_tracker_check, focus_all_done_awarded, debt_snapshot, tasks_all_done_awarded, last_chore_check, grocery_snapshot"
+      )
       .eq("id", 1)
       .maybeSingle();
 
@@ -433,6 +443,8 @@ export function useHamsterGrowthState() {
         focus_all_done_awarded: false,
         debt_snapshot: {},
         tasks_all_done_awarded: false,
+        last_chore_check: "2000-01-01T00:00:00.000Z",
+        grocery_snapshot: {},
       };
       const { error: seedError } = await supabase.from("hamster_last_check").upsert(seed);
       if (reportError("Seed hamster_last_check", seedError)) return;
@@ -582,6 +594,81 @@ export function useHamsterGrowthState() {
       reportError(`Lock credit for appointment #${appt.id}`, creditError);
     }
 
+    // 8. Goal steps checked off — same credited-flag pattern as bills/
+    // appointments so unchecking-then-rechecking the SAME step can't
+    // double-award, but a genuinely new step always can.
+    const { data: doneSteps } = await supabase
+      .from("goal_steps")
+      .select("id, hamster_credited")
+      .eq("done", true)
+      .or("hamster_credited.is.null,hamster_credited.eq.false");
+
+    for (const step of doneSteps || []) {
+      runningPoints = await addPoints(POINTS.goal_step_completed, "goal_step_completed", runningPoints);
+      const { error: creditError } = await supabase
+        .from("goal_steps")
+        .update({ hamster_credited: true })
+        .eq("id", step.id);
+      reportError(`Lock credit for goal step #${step.id}`, creditError);
+    }
+
+    // 9. Life event checklist items checked off — same pattern.
+    const { data: doneLifeItems } = await supabase
+      .from("life_event_items")
+      .select("id, hamster_credited")
+      .eq("done", true)
+      .or("hamster_credited.is.null,hamster_credited.eq.false");
+
+    for (const item of doneLifeItems || []) {
+      runningPoints = await addPoints(POINTS.life_event_item_completed, "life_event_item_completed", runningPoints);
+      const { error: creditError } = await supabase
+        .from("life_event_items")
+        .update({ hamster_credited: true })
+        .eq("id", item.id);
+      reportError(`Lock credit for life event item #${item.id}`, creditError);
+    }
+
+    // 10. Chores marked done — chores don't have a settle-able "done" flag,
+    // just a `last_done_at` that gets bumped every time you complete a
+    // recurring chore, so this is a cursor comparison like the savings/
+    // tracker checks above rather than a credited-flag pattern.
+    const { data: doneChores } = await supabase
+      .from("chores")
+      .select("id, last_done_at")
+      .gt("last_done_at", lastCheck.last_chore_check);
+
+    for (const _ of doneChores || []) {
+      runningPoints = await addPoints(POINTS.chore_completed, "chore_completed", runningPoints);
+    }
+
+    // 11. Grocery lists fully checked off — tracked as a per-list snapshot
+    // (keyed by list_name, the only join key grocery_items actually has)
+    // like the debt balance snapshot above: award once when a list flips
+    // from "not fully checked" to "fully checked", and re-arm if it's no
+    // longer fully checked so finishing it again later can re-award.
+    // Known edge case: deleting a finished list and later creating a new
+    // one with the exact same name inherits its old "already awarded"
+    // state — acceptable trade-off given grocery_items has no list id.
+    const { data: groceryItems } = await supabase.from("grocery_items").select("list_name, checked");
+    const prevGrocery: Record<string, boolean> = lastCheck.grocery_snapshot || {};
+    const newGrocery: Record<string, boolean> = {};
+    const byList: Record<string, { total: number; checked: number }> = {};
+
+    for (const item of groceryItems || []) {
+      const key = item.list_name || "Default";
+      if (!byList[key]) byList[key] = { total: 0, checked: 0 };
+      byList[key].total += 1;
+      if (item.checked) byList[key].checked += 1;
+    }
+
+    for (const [listName, counts] of Object.entries(byList)) {
+      const fullyChecked = counts.total > 0 && counts.checked === counts.total;
+      newGrocery[listName] = fullyChecked;
+      if (fullyChecked && !prevGrocery[listName]) {
+        runningPoints = await addPoints(POINTS.grocery_list_completed, "grocery_list_completed", runningPoints);
+      }
+    }
+
     setPoints(runningPoints);
 
     const { error: finalSaveError } = await supabase
@@ -594,6 +681,8 @@ export function useHamsterGrowthState() {
         focus_all_done_awarded: focusAllDoneAwarded,
         debt_snapshot: newSnapshot,
         tasks_all_done_awarded: tasksAllDoneAwarded,
+        last_chore_check: now,
+        grocery_snapshot: newGrocery,
       });
 
     // The other write that caused the original bug: if the awarded flags
@@ -696,6 +785,28 @@ export function useHamsterGrowthState() {
       window.removeEventListener("focus", onFocus);
     };
   }, [loading, checkForNewGrowth]);
+
+  // Safety net only — focus/visibilitychange above only fire on switching
+  // tabs/apps and back, which never happens on plain in-app navigation
+  // (e.g. Wallet -> Habitat via the router, same tab). That's why a manual
+  // refresh used to be the only reliable way to see new points. The real
+  // fix is notifyGrowth() below, called right after each point-earning
+  // write; this interval just catches anything that writes to the DB
+  // without going through notifyGrowth (another device/tab, a future page
+  // that forgets to call it) so points never sit stale for long.
+  useEffect(() => {
+    if (loading) return;
+    const id = setInterval(() => { checkForNewGrowth(); }, 45_000);
+    return () => clearInterval(id);
+  }, [loading, checkForNewGrowth]);
+
+  // Call this immediately after any write that could earn points (paying a
+  // bill, checking off a chore, finishing a grocery list, etc.) instead of
+  // waiting for the next focus event or a manual refresh tap. Safe to call
+  // from anywhere via useHamsterGrowth() — checkingRef already guards
+  // against overlapping runs, so firing this from several pages in quick
+  // succession just coalesces into whichever check is already in flight.
+  const notifyGrowth = useCallback(() => { checkForNewGrowth(); }, [checkForNewGrowth]);
 
   const clearJustHatched = useCallback(() => setJustHatched(null), []);
   const clearJustEvolved = useCallback(() => setJustEvolved(null), []);
@@ -845,6 +956,7 @@ export function useHamsterGrowthState() {
     loading,
     refreshing,
     refresh,
+    notifyGrowth,
     points,
     threshold,
     progressPct: Math.min(100, Math.round((points / threshold) * 100)),
