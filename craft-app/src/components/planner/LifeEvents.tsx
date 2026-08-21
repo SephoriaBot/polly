@@ -12,6 +12,7 @@ import { useToast } from '../../hooks/useToast';
 import Icon from '../Icon';
 import { useTheme } from '../../context/ThemeContext';
 import { LIFE_EVENT_TEMPLATES, type LifeEventTemplate } from '../../lib/lifeEventTemplates';
+import { useHamsterGrowth } from '../../hamsters/HamsterGrowthContext';
 
 interface LifeEventRow {
   id: string;
@@ -32,6 +33,7 @@ interface LifeEventItemRow {
 export default function LifeEvents() {
   const { theme } = useTheme();
   const { showToast } = useToast();
+  const { notifyGrowth } = useHamsterGrowth();
   const [events, setEvents] = useState<LifeEventRow[]>([]);
   const [itemsByEvent, setItemsByEvent] = useState<Record<string, LifeEventItemRow[]>>({});
   const [loading, setLoading] = useState(true);
@@ -84,6 +86,7 @@ export default function LifeEvents() {
       [item.life_event_id]: prev[item.life_event_id].map(i => i.id === item.id ? { ...i, done: newDone } : i),
     }));
     await supabase.from('life_event_items').update({ done: newDone }).eq('id', item.id);
+    if (newDone) notifyGrowth();
   }
 
   async function archiveEvent(id: string) {
