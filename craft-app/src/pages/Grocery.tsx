@@ -11,6 +11,7 @@ import dizzyImg from '../assets/illustrations/error_dizzy.png';
 import emptyGrocery from '../assets/icons/empty-grocery.png';
 import RecipeBox from '../components/meals/RecipeBox';
 import PageTabs, { type PageTab } from '../components/PageTabs';
+import { useHamsterGrowth } from '../hamsters/HamsterGrowthContext';
 
 interface GroceryList { id: string; name: string; created_at: string }
 
@@ -252,6 +253,7 @@ const GROCERY_TABS: PageTab<'list' | 'recipes' | 'smart-cart' | 'price-watch'>[]
 
 export default function Grocery() {
   const { theme } = useTheme();
+  const { notifyGrowth } = useHamsterGrowth();
   const [items, setItems] = useState<GroceryItem[]>([])
   const [currentList, setCurrentList] = useState('Default')
   const [lists, setLists] = useState<GroceryList[]>([])
@@ -785,6 +787,9 @@ export default function Grocery() {
   async function toggle(id: string, checked: boolean) {
     await supabase.from('grocery_items').update({ checked: !checked }).eq('id', id)
     setItems(prev => prev.map(i => i.id === id ? { ...i, checked: !checked } : i))
+    // Only checking something ON can possibly complete a list — the growth
+    // check itself figures out whether the WHOLE list is now done.
+    if (!checked) notifyGrowth();
   }
 
   async function removeItem(id: string) {
