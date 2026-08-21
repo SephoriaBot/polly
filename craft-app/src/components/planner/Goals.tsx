@@ -11,6 +11,7 @@ import { supabase } from '../../lib/supabase';
 import { useToast } from '../../hooks/useToast';
 import Icon from '../Icon';
 import { useTheme } from '../../context/ThemeContext';
+import { useHamsterGrowth } from '../../hamsters/HamsterGrowthContext';
 
 interface GoalRow {
   id: string;
@@ -106,6 +107,7 @@ async function generateSubsteps(goalTitle: string, stepLabel: string, stepCount:
 export default function Goals() {
   const { theme } = useTheme();
   const { showToast } = useToast();
+  const { notifyGrowth } = useHamsterGrowth();
   const [goals, setGoals] = useState<GoalRow[]>([]);
   const [stepsByGoal, setStepsByGoal] = useState<Record<string, GoalStepRow[]>>({});
   const [loading, setLoading] = useState(true);
@@ -175,6 +177,9 @@ export default function Goals() {
       [step.goal_id]: prev[step.goal_id].map(s => s.id === step.id ? { ...s, done: newDone } : s),
     }));
     await supabase.from('goal_steps').update({ done: newDone }).eq('id', step.id);
+    // Only newly-completing a step can earn points (the growth check's own
+    // credited flag is the real guard against double-awarding either way).
+    if (newDone) notifyGrowth();
   }
 
   async function breakdownStep(goalTitle: string, step: GoalStepRow, subCount: number) {
