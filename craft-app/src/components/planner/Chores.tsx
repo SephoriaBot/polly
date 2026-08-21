@@ -13,6 +13,7 @@ import Icon, { type IconName } from '../Icon';
 import EmptyState from '../EmptyState';
 import checklistImg from '../../assets/illustrations/checklist.png';
 import { type Chore as ChoreBase, statusFor } from '../../lib/chores';
+import { useHamsterGrowth } from '../../hamsters/HamsterGrowthContext';
 
 interface Chore extends ChoreBase {
   icon: IconName;
@@ -22,6 +23,7 @@ const CHORE_ICONS: IconName[] = ['cleaning-spray', 'washing-machine', 'sparkle-s
 
 export default function Chores() {
   const { showToast } = useToast();
+  const { notifyGrowth } = useHamsterGrowth();
   const [chores, setChores] = useState<Chore[]>([]);
   const [loading, setLoading] = useState(true);
   const [name, setName] = useState('');
@@ -64,6 +66,7 @@ export default function Chores() {
     const { error } = await supabase.from('chores').update({ last_done_at: nowIso }).eq('id', chore.id);
     if (error) { showToast("Couldn't save that — try again?", 'error'); load(); return; }
     showToast(`${chore.name} — nice work! 🧺`);
+    notifyGrowth();
   }
 
   async function removeChore(id: string) {
