@@ -642,29 +642,29 @@ export function useHamsterGrowthState() {
     }
 
     // 11. Grocery lists fully checked off — tracked as a per-list snapshot
-    // (keyed by list_name, the only join key grocery_items actually has)
-    // like the debt balance snapshot above: award once when a list flips
-    // from "not fully checked" to "fully checked", and re-arm if it's no
-    // longer fully checked so finishing it again later can re-award.
-    // Known edge case: deleting a finished list and later creating a new
-    // one with the exact same name inherits its old "already awarded"
-    // state — acceptable trade-off given grocery_items has no list id.
-    const { data: groceryItems } = await supabase.from("grocery_items").select("list_name, checked");
+    // keyed by list_id (a real FK now, added specifically so this can't be
+    // fooled by deleting a finished list and creating a new one with the
+    // same name — that new list gets a fresh id and starts with a clean
+    // slate) like the debt balance snapshot above: award once when a list
+    // flips from "not fully checked" to "fully checked", and re-arm if
+    // it's no longer fully checked so finishing it again later can re-award.
+    const { data: groceryItems } = await supabase.from("grocery_items").select("list_id, checked");
     const prevGrocery: Record<string, boolean> = lastCheck.grocery_snapshot || {};
     const newGrocery: Record<string, boolean> = {};
     const byList: Record<string, { total: number; checked: number }> = {};
 
     for (const item of groceryItems || []) {
-      const key = item.list_name || "Default";
+      if (!item.list_id) continue; // pre-migration row that never got backfilled
+      const key = item.list_id;
       if (!byList[key]) byList[key] = { total: 0, checked: 0 };
       byList[key].total += 1;
       if (item.checked) byList[key].checked += 1;
     }
 
-    for (const [listName, counts] of Object.entries(byList)) {
+    for (const [listId, counts] of Object.entries(byList)) {
       const fullyChecked = counts.total > 0 && counts.checked === counts.total;
-      newGrocery[listName] = fullyChecked;
-      if (fullyChecked && !prevGrocery[listName]) {
+      newGrocery[listId] = fullyChecked;
+      if (fullyChecked && !prevGrocery[listId]) {
         runningPoints = await addPoints(POINTS.grocery_list_completed, "grocery_list_completed", runningPoints);
       }
     }
