@@ -256,6 +256,7 @@ export default function Grocery() {
   const { notifyGrowth } = useHamsterGrowth();
   const [items, setItems] = useState<GroceryItem[]>([])
   const [currentList, setCurrentList] = useState('Default')
+  const [currentListId, setCurrentListId] = useState<string | null>(null)
   const [lists, setLists] = useState<GroceryList[]>([])
   const [listsLoading, setListsLoading] = useState(true)
   const [newListName, setNewListName] = useState('')
@@ -329,6 +330,12 @@ export default function Grocery() {
     fetchWatches()
   }, [])
 
+  // Derive the active list's id from its name + the loaded lists table,
+  // rather than threading id through every setCurrentList call site.
+  useEffect(() => {
+    setCurrentListId(lists.find(l => l.name === currentList)?.id ?? null)
+  }, [currentList, lists])
+
   useEffect(() => {
     fetchItems()
     fetchPrices()
@@ -399,7 +406,10 @@ export default function Grocery() {
     if (lists.length <= 1) return // always keep at least one list around
     if (!window.confirm(`Delete "${list.name}" and everything on it? This can't be undone.`)) return
 
-    await supabase.from('grocery_items').delete().eq('list_name', list.name)
+    // list_id has ON DELETE CASCADE now, so deleting the list row alone
+    // would clean up its items — but keep the explicit delete too as a
+    // belt-and-suspenders for any pre-migration rows still missing list_id.
+    await supabase.from('grocery_items').delete().eq('list_id', list.id)
     await supabase.from('grocery_lists').delete().eq('id', list.id)
 
     setLists(prev => {
@@ -495,6 +505,7 @@ export default function Grocery() {
           qty: newQty.trim(),
           checked: false,
           list_name: currentList,
+          list_id: currentListId,
         })
         .select().single()
       if (data) setItems(prev => [...prev, data])
@@ -506,6 +517,7 @@ export default function Grocery() {
         qty: '',
         checked: false,
         list_name: currentList,
+        list_id: currentListId,
       }))
       const { data } = await supabase
         .from('grocery_items')
@@ -553,7 +565,7 @@ export default function Grocery() {
     const existingNames = new Set(items.map(i => i.name.toLowerCase()))
     const payload = toAdd
       .filter(i => !existingNames.has(i.name.toLowerCase()))
-      .map(i => ({ name: i.name, qty: i.qty, checked: false, list_name: currentList }))
+      .map(i => ({ name: i.name, qty: i.qty, checked: false, list_name: currentList, list_id: currentListId }))
 
     if (payload.length > 0) {
       const { data } = await supabase.from('grocery_items').insert(payload).select()
@@ -1387,6 +1399,7 @@ export default function Grocery() {
         {activeTab === 'recipes' && (
           <RecipeBox
             currentList={currentList}
+            currentListId={currentListId}
             existingItemNames={items.map(i => i.name)}
             onItemsAdded={newRows => setItems(prev => [...prev, ...(newRows as GroceryItem[])])}
           />
