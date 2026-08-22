@@ -155,67 +155,6 @@ interface HabitatThemeRow {
   decor_keys: string[] | null;
 }
 
-// Ambient lighting wash for the shelf, keyed to time of day. Interpolated
-// linearly between neighboring keyframes so it drifts gradually rather than
-// snapping — deep cool navy overnight, a soft peach dawn, fully clear
-// through the daytime hours, then a golden dusk sliding back into night.
-interface LightKeyframe {
-  hour: number;
-  rgb: [number, number, number];
-  opacity: number;
-}
-
-const LIGHT_KEYFRAMES: LightKeyframe[] = [
-  { hour: 0, rgb: [33, 27, 61], opacity: 0.42 }, // deep night
-  { hour: 5, rgb: [33, 27, 61], opacity: 0.42 },
-  { hour: 7, rgb: [246, 184, 138], opacity: 0.24 }, // dawn glow
-  { hour: 9, rgb: [246, 184, 138], opacity: 0 }, // full daylight
-  { hour: 17, rgb: [246, 184, 138], opacity: 0 },
-  { hour: 19, rgb: [232, 147, 95], opacity: 0.28 }, // golden dusk
-  { hour: 21, rgb: [46, 37, 85], opacity: 0.38 }, // twilight into night
-  { hour: 24, rgb: [33, 27, 61], opacity: 0.42 },
-];
-
-function lerp(a: number, b: number, t: number): number {
-  return a + (b - a) * t;
-}
-
-function shelfLighting(fractionalHour: number): string {
-  for (let i = 0; i < LIGHT_KEYFRAMES.length - 1; i++) {
-    const a = LIGHT_KEYFRAMES[i];
-    const b = LIGHT_KEYFRAMES[i + 1];
-    if (fractionalHour >= a.hour && fractionalHour <= b.hour) {
-      const t = (fractionalHour - a.hour) / (b.hour - a.hour);
-      const r = Math.round(lerp(a.rgb[0], b.rgb[0], t));
-      const g = Math.round(lerp(a.rgb[1], b.rgb[1], t));
-      const bl = Math.round(lerp(a.rgb[2], b.rgb[2], t));
-      const opacity = lerp(a.opacity, b.opacity, t);
-      return `rgba(${r}, ${g}, ${bl}, ${opacity.toFixed(3)})`;
-    }
-  }
-  const last = LIGHT_KEYFRAMES[LIGHT_KEYFRAMES.length - 1];
-  return `rgba(${last.rgb[0]}, ${last.rgb[1]}, ${last.rgb[2]}, ${last.opacity})`;
-}
-
-// Re-reads the clock once a minute so the wash drifts through the day
-// without needing a page reload.
-function useFractionalHour(): number {
-  const [hour, setHour] = useState(() => {
-    const now = new Date();
-    return now.getHours() + now.getMinutes() / 60;
-  });
-
-  useEffect(() => {
-    const id = setInterval(() => {
-      const now = new Date();
-      setHour(now.getHours() + now.getMinutes() / 60);
-    }, 60000);
-    return () => clearInterval(id);
-  }, []);
-
-  return hour;
-}
-
 export default function HabitatScene() {
   const { loading, decorPoints, spendDecorPoints } = useHamsterGrowth();
   const [decor, setDecor] = useState<string[]>([]);
@@ -224,7 +163,6 @@ export default function HabitatScene() {
   const [unlockingKey, setUnlockingKey] = useState<string | null>(null);
   const [unlockError, setUnlockError] = useState<string | null>(null);
   const [selectedShelf, setSelectedShelf] = useState<ShelfNum>(1);
-  const fractionalHour = useFractionalHour();
 
   // Load the saved theme + unlocked items once on mount.
   useEffect(() => {
@@ -269,13 +207,11 @@ export default function HabitatScene() {
 
   function toggleDecor(key: string) {
     if (!unlocked.includes(key)) return;
-
     const item = HABITAT_ITEMS.find(i => i.key === key);
     if (!item) return;
 
     setDecor(prev => {
       let next: string[];
-
       if (prev.includes(key)) {
         next = prev.filter(k => k !== key);
       } else {
@@ -285,7 +221,6 @@ export default function HabitatScene() {
           const other = HABITAT_ITEMS.find(h => h.key === k);
           return other?.shelf === item.shelf;
         });
-
         if (sameShelfKeys.length >= MAX_PER_SHELF) {
           const oldestOnShelf = sameShelfKeys[0];
           next = [...prev.filter(k => k !== oldestOnShelf), key];
@@ -293,7 +228,6 @@ export default function HabitatScene() {
           next = [...prev, key];
         }
       }
-
       void saveTheme(next);
       return next;
     });
@@ -306,7 +240,6 @@ export default function HabitatScene() {
 
     const cost = costFor(key);
     const result = await spendDecorPoints(cost);
-
     if (!result.ok) {
       setUnlockError(result.reason || "Couldn't unlock that yet");
       setUnlockingKey(null);
@@ -337,7 +270,6 @@ export default function HabitatScene() {
   const activeDecor = HABITAT_ITEMS.filter(
     item => decor.includes(item.key) && unlocked.includes(item.key)
   );
-
   const visibleItems = HABITAT_ITEMS.filter(item => item.shelf === selectedShelf);
 
   return (
@@ -362,6 +294,7 @@ export default function HabitatScene() {
             {decorPoints} pts
           </div>
         </div>
+
         <div
           style={{
             position: 'relative',
@@ -387,6 +320,7 @@ export default function HabitatScene() {
               zIndex: 1,
             }}
           />
+
           {SHELVES.map(({ key: shelfNum }) => {
             const shelfItems = activeDecor.filter(item => item.shelf === shelfNum);
             const bottom = `${SHELF_BOTTOM[shelfNum]}%`;
@@ -445,20 +379,8 @@ export default function HabitatScene() {
               );
             });
           })}
-          {/* Ambient lighting wash — sits above the shelf and every placed
-              item so the whole scene dims and warms together through the
-              day, rather than just tinting the background art. */}
-          <div
-            style={{
-              position: 'absolute',
-              inset: 0,
-              background: shelfLighting(fractionalHour),
-              zIndex: 50,
-              pointerEvents: 'none',
-              transition: 'background 3s ease',
-            }}
-          />
         </div>
+
         <div
           style={{
             display: 'flex',
@@ -489,6 +411,7 @@ export default function HabitatScene() {
             </button>
           ))}
         </div>
+
         <div
           style={{
             fontSize: '0.62rem',
@@ -499,6 +422,7 @@ export default function HabitatScene() {
           Pick up to {MAX_PER_SHELF} items per shelf. Items cost
           points to unlock- get working on your day and enjoy these collectibles as you go.
         </div>
+
         {unlockError && (
           <div
             style={{
@@ -510,6 +434,7 @@ export default function HabitatScene() {
             {unlockError}
           </div>
         )}
+
         <div
           style={{
             display: 'grid',
