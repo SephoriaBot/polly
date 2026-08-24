@@ -227,7 +227,7 @@ const ChoicesStep: FC<{
       {choices.map((c) => (
         <div key={c.id} style={styles.chip}>
           <span style={styles.chipLabel}>{c.label}</span>
-          <button style={styles.removeBtn} onClick={() => removeChoice(c.id)}><Icon name="trash-can" size={14} /></button>
+          <button style={styles.removeBtn} onClick={() => removeChoice(c.id)}><Icon name="icon-trash2" size={14} /></button>
         </div>
       ))}
 
@@ -297,7 +297,7 @@ const OutcomesStep: FC<{
             {o.probability != null && <span style={{ color: 'var(--ink-muted)', fontWeight: 400 }}> — {o.probability}%</span>}
             {o.payoffValue != null && <span style={{ color: 'var(--ink-muted)', fontWeight: 400 }}> · payoff {o.payoffValue}</span>}
           </span>
-          <button style={styles.removeBtn} onClick={() => removeOutcome(o.id)}><Icon name="trash-can" size={14} /></button>
+          <button style={styles.removeBtn} onClick={() => removeOutcome(o.id)}><Icon name="icon-trash2" size={14} /></button>
         </div>
       ))}
 
