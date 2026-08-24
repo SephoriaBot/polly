@@ -279,7 +279,7 @@ export default function TrackerPage() {
               disabled={viewMonth >= currentMonthKey()}
               aria-label="Next month"
             >
-              <Icon name="icon-arrowleft" size={14} style={{ transform: 'scaleX(-1)' }} />
+              <Icon name="icon-arrowright" size={14} />
             </button>
           </div>
 
