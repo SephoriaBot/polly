@@ -68,7 +68,7 @@ export default function AppointmentNotes({
       {carryOverItems.length > 0 && (
         <section className={`${styles.section} ${styles.carryOverSection}`}>
           <div className={styles.sectionHeader}>
-            <Icon name="icon-refreshcw" size={14} />
+            <Icon name="icon-recur" size={14} />
             <span>Still open from last time</span>
           </div>
           {carryOverItems.map((item) => (
