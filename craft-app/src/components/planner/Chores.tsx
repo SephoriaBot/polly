@@ -19,7 +19,7 @@ interface Chore extends ChoreBase {
   icon: IconName;
 }
 
-const CHORE_ICONS: IconName[] = ['cleaning-spray', 'washing-machine', 'sparkle-single', 'trash-can', 'clipboard-check'];
+const CHORE_ICONS: IconName[] = ['cleaning-spray', 'washing-machine', 'sparkle-single', 'icon-trash2', 'clipboard-check'];
 
 export default function Chores() {
   const { showToast } = useToast();
