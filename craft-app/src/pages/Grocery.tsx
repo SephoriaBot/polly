@@ -1316,7 +1316,7 @@ export default function Grocery() {
                     ? <><Icon name={BASICS_PRESETS[basicsPreset].icon} size={18} /> {BASICS_PRESETS[basicsPreset].label}</>
                     : 'Build a Basics List'}
                 </h3>
-                <button className="close-btn" onClick={() => setShowBasicsModal(false)}><X size={16} /></button>
+                <button className="close-btn" onClick={() => setShowBasicsModal(false)}><Icon name="icon-clear" size={16} /></button>
               </div>
               <div className="modal-body">
                 {!basicsPreset ? (
