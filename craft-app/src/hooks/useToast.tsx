@@ -29,7 +29,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
       <div className="toast-container">
         {toasts.map(t => (
           <div key={t.id} className={`toast toast-${t.type}`}>
-            <Icon name={t.type === 'success' ? 'clipboard-check' : 'trash-can'} size={14} /> {t.message}
+            <Icon name={t.type === 'success' ? 'clipboard-check' : 'icon-trash2'} size={14} /> {t.message}
           </div>
         ))}
       </div>
