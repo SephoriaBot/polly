@@ -94,7 +94,7 @@ export default function HamsterNest() {
               opacity: refreshing ? 0.6 : 1,
             }}
           >
-            <Icon name="icon-refreshcw"
+            <Icon name="icon-recur"
               size={13}
               color="var(--pink-dark)"
               style={refreshing ? { animation: "hamsterRefreshSpin 0.8s linear infinite" } : undefined}
