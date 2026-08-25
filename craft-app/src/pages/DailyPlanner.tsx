@@ -6,7 +6,6 @@ import Chores from '../components/planner/Chores';
 import LifeEvents from '../components/planner/LifeEvents';
 import Goals from '../components/planner/Goals';
 import { useAppointmentNoteMap } from '../hooks/useAppointmentNoteMap';
-import Lantern from "../components/Lantern";
 import EmptyState from '../components/EmptyState';
 import checklistImg from '../assets/illustrations/checklist.png';
 import celebrationImg from '../assets/illustrations/celebration.png';
@@ -385,7 +384,7 @@ export default function DailyPlanner({ initialTab }: { initialTab?: 'tasks' | 'a
         <div>
           <div className="title-row">
             <h2>Planner</h2>
-            <Lantern />
+           
           </div>
           <p style={{ color: allDone ? 'var(--pink-dark)' : 'var(--ink-muted)' }}>
             {allDone ? 'All done! Good job.' : `${doneCount} of ${tasks.length} done today`}

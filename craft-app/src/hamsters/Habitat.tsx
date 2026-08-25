@@ -3,7 +3,6 @@ import HamsterNest from "../hamsters/HamsterNest";
 import HamsterHabitat from "../hamsters/HamsterHabitat";
 import WildEncounter from "../hamsters/WildEncounter";
 import HabitatScene from "../hamsters/HabitatScene";
-import Lantern from "../components/Lantern";
 import PageTabs, { type PageTab } from "../components/PageTabs";
 
 // HamsterGrowthProvider now wraps the whole app in App.tsx (so the growth
@@ -27,7 +26,7 @@ export default function Habitat({ initialTab }: { initialTab?: HabitatTab }) {
       <div className="page-header">
         <div className="title-row">
           <h1>Habitat</h1>
-          <Lantern />
+         
         </div>
       </div>
 

@@ -3,9 +3,7 @@ import type { GroceryItem } from '../types/legacy';
 import { supabase } from '../lib/supabase';
 import Icon, { type IconName } from '../components/Icon';
 import { useTheme } from '../context/ThemeContext';
-import Lantern from "../components/Lantern";
 import EmptyState from '../components/EmptyState';
-import breadBasketImg from '../assets/illustrations/bread_basket.png';
 import hourglassImg from '../assets/illustrations/hourglass.png';
 import dizzyImg from '../assets/illustrations/error_dizzy.png';
 import emptyGrocery from '../assets/icons/empty-grocery.png';
@@ -1082,7 +1080,7 @@ export default function Grocery() {
       <div className="page-header">
         <div className="title-row">
           <h2>Grocery List <Icon name="basket" size={22} /></h2>
-          <Lantern size={50} />
+          
         </div>
 
         <PageTabs tabs={GROCERY_TABS} active={activeTab} onChange={setActiveTab} />

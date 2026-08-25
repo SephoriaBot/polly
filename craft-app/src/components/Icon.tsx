@@ -11,10 +11,8 @@ export type IconName =
   | 'moon-waxing-gibbous' | 'moon-full' | 'moon-waning-gibbous' | 'moon-last-quarter'
   | 'moon-waning-crescent' | 'notebook-pen' | 'notepad-pencil' | 'piggy-bank'
   | 'potted-plant' | 'settings-gear' | 'sparkle-single' | 'sparkles-cluster' | 'sun-cloud'
-  | 'trophy' | 'washing-machine' | 'aries' | 'taurus' | 'gemini' | 'cancer' | 'leo'
-  | 'virgo' | 'libra' | 'scorpio' | 'sagittarius' | 'capricorn' | 'aquarius' | 'pisces'
-  | 'groq_2' | 'groq_5' | 'groq_6' | 'groq_7' | 'groq_9' | 'empty_jar'
-  | 'icon-alertcircle' | 'icon-archive' | 'icon-arrowleft' | 'icon-calendar'
+  | 'trophy' | 'washing-machine' | 'empty_jar'
+  | 'icon-alertcircle' | 'icon-archive' | 'icon-arrowleft' | 'icon-arrowright' | 'icon-calendar'
   | 'icon-chefhat' | 'icon-chevrondown' | 'icon-chevronup' | 'icon-circle'
   | 'icon-clipboardlist' | 'icon-database' | 'icon-decisions' | 'icon-externallink'
   | 'icon-flower' | 'icon-folderplus' | 'icon-grocery' | 'icon-habitat' | 'icon-heart'
@@ -24,7 +22,7 @@ export type IconName =
   | 'icon-trash2' | 'icon-wallet' | 'icon_housepet' | 'heartempty' | 'heartfull'
   | 'flowerfull' | 'icon-clear' | 'full_sun' | 'empty_sun' | 'full_moon' | 'empty_moon'
   | 'icon-recur' | 'shopping-cart' | 'pagedivider' | 'empty-wallet' | 'empty-dashboard'
-  | 'empty-grocery' | 'empty-habitat' | 'empty-planner' | 'empty-trackers';
+  | 'empty-grocery' | 'empty-habitat' | 'empty-planner' | 'empty-trackers'| '_extra-unnamed-heart';
 
 
 interface IconProps {

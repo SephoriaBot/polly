@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import Icon from '../Icon';
-import Lantern from "../Lantern";
 import {
   ResponsiveContainer,
   BarChart,

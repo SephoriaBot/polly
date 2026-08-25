@@ -3,8 +3,7 @@ import type { CSSProperties } from "react";
 import { supabase } from '../lib/supabase';
 import Icon from '../components/Icon';
 import PageTabs, { type PageTab } from '../components/PageTabs';
-import { useTheme } from '../context/ThemeContext';import Lantern from "../components/Lantern";
-import walletPouchImg from '../assets/illustrations/wallet_pouch.png';
+import { useTheme } from '../context/ThemeContext';
 import celebrationImg from '../assets/illustrations/celebration.png';
 import emptyWallet from '../assets/icons/empty-wallet.png';
 import EmptyState from '../components/EmptyState';
@@ -1407,7 +1406,7 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
       <div className="page-header">
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <h2>{VIEW_TITLES[view].icon && <Icon name={VIEW_TITLES[view].icon!} size={20} />} {VIEW_TITLES[view].text}</h2>
-          <Lantern />
+          
         </div>
         {savedMsg && <span className="badge badge-green">Saved!</span>}
       </div>

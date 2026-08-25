@@ -258,33 +258,6 @@ export default function App() {
                     <span className="topbar-mark">Polly</span>
 
                     <div className="topbar-actions">
-                      {/* REFRESH */}
-                      <button
-                        type="button"
-                        onClick={refreshPolly}
-                        aria-label="Refresh Polly"
-                        title="Refresh Polly"
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          width: 32,
-                          height: 32,
-                          borderRadius: '50%',
-                          background: 'var(--surface)',
-                          border: '1.5px solid var(--border)',
-                          cursor: 'pointer',
-                          color: 'var(--ink-muted)',
-                          fontSize: '1rem',
-                          fontWeight: 700,
-                          lineHeight: 1,
-                          padding: 0,
-                          flexShrink: 0,
-                          WebkitTapHighlightColor: 'transparent',
-                        }}
-                      >
-                        ↻
-                      </button>
 
                       {/* BRAIN DUMP */}
                       <span
@@ -341,7 +314,7 @@ export default function App() {
                             whiteSpace: 'nowrap',
                           }}
                         >
-                          Day / Night
+                          Mode Toggle
                         </span>
 
                         <ThemeToggle />
@@ -366,6 +339,35 @@ export default function App() {
                       >
                         Sign out
                       </button>
+
+                    {/* REFRESH */}
+                      <button
+                        type="button"
+                        onClick={refreshPolly}
+                        aria-label="Refresh Polly"
+                        title="Refresh Polly"
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          width: 32,
+                          height: 32,
+                          borderRadius: '50%',
+                          background: 'var(--surface)',
+                          border: '1.5px solid var(--border)',
+                          cursor: 'pointer',
+                          color: 'var(--ink-muted)',
+                          fontSize: '1rem',
+                          fontWeight: 700,
+                          lineHeight: 1,
+                          padding: 0,
+                          flexShrink: 0,
+                          WebkitTapHighlightColor: 'transparent',
+                        }}
+                      >
+                        ↻
+                      </button>
+
                     </div>
                   </header>
 

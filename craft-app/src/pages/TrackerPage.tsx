@@ -11,7 +11,6 @@ import { TRACKER_CONFIG } from '../data/trackerConfig';
 import type { TrackerType, PeriodValue, CustomTrackerDef } from '../types/tracker';
 import { getTrackerLogsInRange, listCustomTrackers, addCustomTracker, removeCustomTracker } from '../lib/trackerApi';
 import { getMoonPhase, MOON_ICON_BY_PHASE, type MoonPhase } from '../lib/almanac';
-import Lantern from "../components/Lantern";
 
 function todayISO() {
   return new Date().toISOString().slice(0, 10);
@@ -134,7 +133,7 @@ export default function TrackerPage() {
       <div className="page-header">
         <div className="title-row">
           <h1>Tracker</h1>
-          <Lantern />
+          
         </div>
       </div>
 

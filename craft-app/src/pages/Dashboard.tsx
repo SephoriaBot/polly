@@ -1,12 +1,10 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
-import Lantern from "../components/Lantern";
 import MoonWidget from "../components/MoonWidget";
 import TodaySnapshot from "../components/TodaySnapshot";
 import LowEnergyChecklist from "../components/LowEnergyChecklist";
 import EnergyModeSwitch from "../components/EnergyModeSwitch";
 import { useEnergy } from "../context/EnergyContext";
-import sleepingNestImg from '../assets/illustrations/sleeping_nest.png';
 import emptyDash from '../assets/icons/empty-dashboard.png';
 import WeatherBadge from '../components/WeatherBadge';
 import Icon, { type IconName } from '../components/Icon';
@@ -117,7 +115,7 @@ async function loadAll() {
         <div>
           <div className="title-row">
             <h1>{getGreeting()}</h1>
-            <Lantern />
+           
           </div>
           <div className="dash-subdate">
             {todayName}, {new Date().toLocaleDateString(undefined, { month: 'long', day: 'numeric' })}

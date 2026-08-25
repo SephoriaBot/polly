@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
 import type { FC } from 'react';
-import { supabase } from '../lib/supabase'; // adjust path to your existing client
+import { supabase } from '../lib/supabase';
 import Icon from '../components/Icon';
-import Lantern from "../components/Lantern";
 import EmptyState from '../components/EmptyState';
 import emptyDecision from '../assets/icons/empty-decisions.png';
 import QuickDecide from '../components/decisions/QuickDecide';
@@ -713,7 +712,7 @@ const DecisionPage: FC = () => {
     <div style={styles.page}>
       <div className="title-row" style={{ marginBottom: 12 }}>
         <h2 style={styles.pageTitle}>Decisions</h2>
-        <Lantern />
+        
       </div>
 
       <div style={{ display: 'flex', gap: 6, marginBottom: 16 }}>

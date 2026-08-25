@@ -37,17 +37,17 @@ import type { WildHamster, TrainedStats } from "./battle";
 
 const POINTS = {
   bill_paid_on_time: 20,
-  debt_payment_logged: 12,
+  debt_payment_logged: 10,
   debt_paid_off: 40,
   savings_contribution: 8,
   tracker_log_entry: 4,
-  daily_task_list_complete: 5,
+  daily_task_list_complete: 3,
   daily_focuses_complete: 7,
   appointment_attended: 10,
-  goal_step_completed: 3,
-  chore_completed: 5,
-  life_event_item_completed: 3,
-  grocery_list_completed: 10,
+  goal_step_completed: 2,
+  chore_completed: 3,
+  life_event_item_completed: 2,
+  grocery_list_completed: 5,
 } as const;
 
 
