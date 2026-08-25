@@ -392,7 +392,7 @@ export default function DailyPlanner({ initialTab }: { initialTab?: 'tasks' | 'a
           </p>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
-          {tasks.length > 0 && (
+          {activeTab === 'tasks' && tasks.length > 0 && (
             <button className="btn btn-ghost" onClick={resetAll}>
               <Icon name="icon-recur" size={14} /> Reset
             </button>
