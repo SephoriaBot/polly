@@ -241,7 +241,7 @@ export default function RecipeModal({ mealId, onClose }: RecipeModalProps) {
                 disabled={addingToCart || addedToCart}
               >
                 {addedToCart
-                  ? <><Icon name="groq_7" size={13} /> Added!</>
+                  ? <><Icon name="clipboard-check" size={13} /> Added!</>
                   : addingToCart
                     ? <><Icon name="icon-loader2" size={13} style={{ animation: 'cookSpin 0.7s linear infinite' }} /> Adding...</>
                     : <><Icon name="shopping-cart" size={13} /> Add missing to cart</>}
@@ -340,7 +340,7 @@ export default function RecipeModal({ mealId, onClose }: RecipeModalProps) {
                           color: state === 'pending' ? 'var(--ink-muted)' : '#fff',
                           fontSize: '0.62rem', fontWeight: 700,
                         }}>
-                          {i < step ? <Icon name="groq_7" size={11} /> : i + 1}
+                          {i < step ? <Icon name="clipboard-check" size={11} /> : i + 1}
                         </div>
                         <div style={{ fontSize: '0.85rem', lineHeight: 1.55, color: state === 'done' ? 'var(--ink-muted)' : 'var(--ink)' }}>
                           {s}
@@ -365,7 +365,7 @@ export default function RecipeModal({ mealId, onClose }: RecipeModalProps) {
                     onClick={() => step < meal.steps.length - 1 ? setStep(s => s + 1) : undefined}
                   >
                     {step === meal.steps.length - 1
-                      ? <><Icon name="groq_7" size={14} /> Done!</>
+                      ? <><Icon name="clipboard-check" size={14} /> Done!</>
                       : <>Next <ArrowRight size={14} /></>}
                   </button>
                 </div>
