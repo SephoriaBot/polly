@@ -211,7 +211,7 @@ export default function RecipeBox({ currentList, currentListId, existingItemName
 
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 12 }}>
         <button style={chipStyle(tab === 'discover')} onClick={() => setTab('discover')}>
-          <Icon name="groq_2" size={12} style={{ marginRight: 4, verticalAlign: -1 }} /> Find Meals
+          <Icon name="_extra-unnamed-heart" size={12} style={{ marginRight: 4, verticalAlign: -1 }} /> Find Meals
         </button>
         <button style={chipStyle(tab === 'saved')} onClick={() => setTab('saved')}>
           <Icon name="icon-heart" size={12} style={{ marginRight: 4, verticalAlign: -1 }} /> Saved ({savedMeals.length})
@@ -364,7 +364,7 @@ function DiscoverTab({ onOpenRecipe, onSaved }: { onOpenRecipe: (id: number) => 
           </div>
         </div>
         <button className="btn btn-primary" onClick={() => setShowDietModal(true)}>
-          <Icon name="groq_2" size={14} /> Ask Dr. Groq
+          <Icon name="_extra-unnamed-heart" size={14} /> Ask Dr. Groq
         </button>
       </div>
 
@@ -377,7 +377,7 @@ function DiscoverTab({ onOpenRecipe, onSaved }: { onOpenRecipe: (id: number) => 
         <div style={{ marginBottom: 10 }}>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
             <button style={chipStyle(mode === 'random')} onClick={() => switchMode('random')}>
-              <Icon name="groq_2" size={12} style={{ marginRight: 4, verticalAlign: -1 }} /> Surprise Me
+              <Icon name="_extra-unnamed-heart" size={12} style={{ marginRight: 4, verticalAlign: -1 }} /> Surprise Me
             </button>
             <button style={chipStyle(mode === 'search')} onClick={() => switchMode('search')}>
               <Icon name="icon-search" size={12} style={{ marginRight: 4, verticalAlign: -1 }} /> Search
@@ -451,7 +451,7 @@ function DiscoverTab({ onOpenRecipe, onSaved }: { onOpenRecipe: (id: number) => 
             ? <><Icon name="icon-loader2" size={14} style={{ animation: 'recipeBoxSpin 0.7s linear infinite' }} /> Loading...</>
             : mode === 'search'
               ? <><Icon name="icon-search" size={14} /> Search Recipes</>
-              : <><Icon name="groq_2" size={14} /> Surprise Me</>}
+              : <><Icon name="_extra-unnamed-heart" size={14} /> Surprise Me</>}
         </button>
       </div>
 
