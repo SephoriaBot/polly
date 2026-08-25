@@ -1734,25 +1734,28 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                 )}
 
                 {(() => {
-  // Future months whose calendar starts mid-week are missing the
-  // Sunday–Saturday week that began before the 1st. Show that
-  // completed week's hours here so the following Wednesday release
-  // is still calculated correctly.
+  // Future months need a manual-hours card for the Sunday–Saturday
+  // week that closes immediately before the month's first Wednesday.
+  // This is the week whose remaining payout is released on that
+  // first Wednesday.
+
   if (isCalendarCurrentMonth) return null;
 
-  const firstDay = new Date(selectedYear, selectedMonth - 1, 1);
+  const firstOfMonth = new Date(selectedYear, selectedMonth - 1, 1);
 
-  // If the month starts on Sunday, the calendar contains the complete
-  // first week, so there is nothing missing.
-  if (firstDay.getDay() === 0) return null;
+  // Find the first Wednesday of the selected month.
+  const firstWednesday = new Date(firstOfMonth);
+  while (firstWednesday.getDay() !== 3) {
+    firstWednesday.setDate(firstWednesday.getDate() + 1);
+  }
 
-  const periodStartSunday = new Date(firstDay);
-  periodStartSunday.setDate(
-    periodStartSunday.getDate() - periodStartSunday.getDay()
-  );
+  // The pay week closes the Saturday immediately before that Wednesday.
+  const closingSaturday = new Date(firstWednesday);
+  closingSaturday.setDate(closingSaturday.getDate() - 4);
 
-  const closingSaturday = new Date(periodStartSunday);
-  closingSaturday.setDate(closingSaturday.getDate() + 6);
+  // Sunday starting that closed week.
+  const periodStartSunday = new Date(closingSaturday);
+  periodStartSunday.setDate(periodStartSunday.getDate() - 6);
 
   const periodStartKey = dateKey(periodStartSunday);
   const fmt = (d: Date) =>
@@ -1782,9 +1785,10 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
           marginBottom: 8,
         }}
       >
-        This week began before the calendar's visible window, so it never
-        had a row to log hours into. Enter it here so the following
-        Wednesday release uses the same math as everywhere else.
+        This week already closed out before the calendar's visible window,
+        so it never had a row to log hours into. Enter it here and
+        Wednesday {fmt(firstWednesday)} will show its release using the
+        same math as everywhere else.
       </div>
 
       <div style={{ display: "flex", gap: 8 }}>
