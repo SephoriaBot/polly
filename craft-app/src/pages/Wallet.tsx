@@ -611,15 +611,18 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
   const calendarDays = useMemo(() => {
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const lastOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    const isCurrentMonth = selectedYear === today.getFullYear() && selectedMonth === today.getMonth() + 1;
+    const firstOfSelected = new Date(selectedYear, selectedMonth - 1, 1);
+    const rangeStart = isCurrentMonth ? today : firstOfSelected;
+    const lastOfSelected = new Date(selectedYear, selectedMonth, 0);
     const days: Date[] = [];
-    const d = new Date(today);
-    while (d <= lastOfMonth) {
+    const d = new Date(rangeStart);
+    while (d <= lastOfSelected) {
       days.push(new Date(d));
       d.setDate(d.getDate() + 1);
     }
     return days;
-  }, []);
+  }, [selectedMonth, selectedYear]);
 
   const billsByDate = useMemo(() => {
     const map: Record<string, { id: number; name: string; amount: number }[]> = {};
@@ -1539,7 +1542,20 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                 <div style={{ fontSize: 24, lineHeight: 1 }}><Icon name="calendar" size={24} /></div>
                 <div style={{ fontSize: 14, fontWeight: 800, color: "var(--ink)" }}>Money Calendar</div>
                 <div style={{ fontSize: 11, color: "var(--pink-dark)", marginBottom: 14 }}>
-                  Runs from today forward. Log the hours you're working (or plan to work) each day. Your early-pay eligible percentage comes from your last paycheck's net-to-gross ratio (post-tax ÷ pre-tax), applied against your cumulative pool for the week, minus that check's flat deductions and a growing safety buffer — whatever's unclaimed by Saturday night lands as a lump catch-up the following Wednesday.
+                  Runs from today through the end of the selected month (or the 1st through the end for a future month). Log the hours you're working (or plan to work) each day. Your early-pay eligible percentage comes from your last paycheck's net-to-gross ratio (post-tax ÷ pre-tax), applied against your cumulative pool for the week, minus that check's flat deductions and a growing safety buffer — whatever's unclaimed by Saturday night lands as a lump catch-up the following Wednesday.
+                </div>
+
+                <div style={{ display: "flex", gap: 6, overflowX: "auto", paddingBottom: 4, marginBottom: 14 }}>
+                  {availableMonths.map(({ month, year, label }) => (
+                    <button
+                      key={`${month}-${year}`}
+                      onClick={() => { setSelectedMonth(month); setSelectedYear(year); }}
+                      className={selectedMonth === month && selectedYear === year ? "btn btn-primary btn-sm" : "btn btn-ghost btn-sm"}
+                      style={{ whiteSpace: "nowrap" }}
+                    >
+                      {label}
+                    </button>
+                  ))}
                 </div>
 
                 <div style={{ marginBottom: 14 }}>
