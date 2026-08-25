@@ -112,7 +112,7 @@ export default function CreateAppointmentNote({ onCreate, onCancel }: CreateAppo
 
       {appointmentId && !checkingType && existingType && (
         <p className={styles.helperText}>
-          <Icon name="groq_2" size={12} style={{ verticalAlign: '-1px', marginRight: 4 }} />
+          <Icon name="_extra-unnamed-heart" size={12} style={{ verticalAlign: '-1px', marginRight: 4 }} />
           This appointment already has "{existingType}" notes — picking up where you left off.
         </p>
       )}
