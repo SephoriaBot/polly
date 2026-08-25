@@ -418,6 +418,8 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
           { data: extraFundsData },
           { data: extraExpensesData },
           { data: payPeriodData },
+          { data: recurringHoursData },
+          { data: monthBalancesData },
         ] = await Promise.all([
           supabase.from("debts").select("*"),
           supabase.from("budget").select("*").eq("id", 1).maybeSingle(),
@@ -430,6 +432,8 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
           supabase.from("extra_funds_log").select("*"),
           supabase.from("extra_expenses_log").select("*"),
           supabase.from("wallet_pay_period").select("*").eq("id", 1).maybeSingle(),
+          supabase.from("recurring_hours").select("*"),
+          supabase.from("wallet_month_balances").select("*"),
         ]);
 
         if (debtData && debtData.length > 0) {
@@ -519,6 +523,22 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
               ot: payPeriodData.closed_week_ot || "",
             });
           }
+        }
+
+        if (recurringHoursData && recurringHoursData.length > 0) {
+          const map: Record<number, { reg: string; ot: string }> = {};
+          recurringHoursData.forEach((row: { weekday: number; reg: string; ot: string }) => {
+            map[row.weekday] = { reg: row.reg || "", ot: row.ot || "" };
+          });
+          setRecurringHours(map);
+        }
+
+        if (monthBalancesData && monthBalancesData.length > 0) {
+          const map: Record<string, string> = {};
+          monthBalancesData.forEach((row: { month: number; year: number; starting_balance: number | null }) => {
+            map[`${row.year}-${row.month}`] = row.starting_balance != null ? String(row.starting_balance) : "";
+          });
+          setMonthBalances(map);
         }
       } catch (err) {
         console.error("Wallet loadData failed:", err);
@@ -690,6 +710,69 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
     setDailyHours(prev => ({ ...prev, [key]: { reg: prev[key]?.reg || "", ot: prev[key]?.ot || "", [field]: value } }));
   }
 
+  // Weekly recurring hours template (0=Sun..6=Sat). A day with no explicit
+  // dailyHours entry falls back to its weekday's recurring value, so
+  // future months don't sit blank unless you want them to. An explicit
+  // dailyHours entry for a specific date always wins over the template.
+  const [recurringHours, setRecurringHours] = useState<Record<number, { reg: string; ot: string }>>({});
+  const recurringHoursSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (!walletSettingsLoaded) return;
+    if (recurringHoursSaveTimer.current) clearTimeout(recurringHoursSaveTimer.current);
+    recurringHoursSaveTimer.current = setTimeout(() => {
+      const rows = Object.entries(recurringHours).map(([weekday, v]) => ({ weekday: Number(weekday), reg: v.reg || "", ot: v.ot || "" }));
+      if (rows.length === 0) return;
+      supabase.from("recurring_hours").upsert(rows, { onConflict: "weekday" }).then(({ error }) => {
+        if (error) console.error("recurring_hours save failed:", error);
+      });
+    }, 800);
+    return () => { if (recurringHoursSaveTimer.current) clearTimeout(recurringHoursSaveTimer.current); };
+  }, [recurringHours, walletSettingsLoaded]);
+
+  async function toggleRecurringWeekday(dow: number, key: string, on: boolean) {
+    if (on) {
+      const current = dailyHours[key] || recurringHours[dow] || { reg: "", ot: "" };
+      setRecurringHours(prev => ({ ...prev, [dow]: { reg: current.reg || "", ot: current.ot || "" } }));
+    } else {
+      setRecurringHours(prev => {
+        const next = { ...prev };
+        delete next[dow];
+        return next;
+      });
+      const { error } = await supabase.from("recurring_hours").delete().eq("weekday", dow);
+      if (error) console.error("recurring_hours delete failed:", error);
+    }
+  }
+
+  // Per-month starting balance for the Money Calendar, keyed "YYYY-M".
+  // Only the current month uses budget.current_balance (today's real
+  // balance) — every other month starts blank until set here, so future
+  // months never silently inherit another month's number.
+  const [monthBalances, setMonthBalances] = useState<Record<string, string>>({});
+  const monthBalancesSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (!walletSettingsLoaded) return;
+    if (monthBalancesSaveTimer.current) clearTimeout(monthBalancesSaveTimer.current);
+    monthBalancesSaveTimer.current = setTimeout(() => {
+      const rows = Object.entries(monthBalances)
+        .filter(([, v]) => v !== "")
+        .map(([ym, v]) => {
+          const [year, month] = ym.split("-").map(Number);
+          return { month, year, starting_balance: parseFloat(v) || 0 };
+        });
+      if (rows.length === 0) return;
+      supabase.from("wallet_month_balances").upsert(rows, { onConflict: "month,year" }).then(({ error }) => {
+        if (error) console.error("wallet_month_balances save failed:", error);
+      });
+    }, 800);
+    return () => { if (monthBalancesSaveTimer.current) clearTimeout(monthBalancesSaveTimer.current); };
+  }, [monthBalances, walletSettingsLoaded]);
+
+  function setMonthBalance(month: number, year: number, value: string) {
+    setMonthBalances(prev => ({ ...prev, [`${year}-${month}`]: value }));
+  }
+
+
   function currentWeekStartKey() {
     const now = new Date();
     const sunday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay());
@@ -829,8 +912,8 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
     const billsToday = billsByDate[key] || [];
     const billsTotal = billsToday.reduce((s, b) => s + b.amount, 0);
 
-    const regHoursToday = parseFloat(dailyHours[key]?.reg) || 0;
-    const otHoursToday = parseFloat(dailyHours[key]?.ot) || 0;
+    const regHoursToday = parseFloat(dailyHours[key]?.reg ?? recurringHours[dow]?.reg ?? "") || 0;
+    const otHoursToday = parseFloat(dailyHours[key]?.ot ?? recurringHours[dow]?.ot ?? "") || 0;
     const hoursToday = regHoursToday + otHoursToday;
 
     const fullEarnedToday =
@@ -875,9 +958,15 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
 }
 
 
+  const isCalendarCurrentMonth = selectedYear === today.getFullYear() && selectedMonth === today.getMonth() + 1;
+  const calendarMonthKey = `${selectedYear}-${selectedMonth}`;
+  const calendarStartingBalance = isCalendarCurrentMonth
+    ? (budget.current_balance || 0)
+    : (parseFloat(monthBalances[calendarMonthKey]) || 0);
+
   const moneyCalendarResult = useMemo(
-    () => buildMoneyCalendarRows(calendarDays, budget.current_balance || 0),
-    [calendarDays, billsByDate, dailyHours, extraFunds, extraExpenses, netHourlyWage, netOtWage, budget.current_balance, budget.net_to_gross_ratio, budget.flat_deductions_prev, priorWeekHours, closedWeekHours]
+    () => buildMoneyCalendarRows(calendarDays, calendarStartingBalance),
+    [calendarDays, billsByDate, dailyHours, recurringHours, extraFunds, extraExpenses, netHourlyWage, netOtWage, calendarStartingBalance, budget.net_to_gross_ratio, budget.flat_deductions_prev, priorWeekHours, closedWeekHours]
   );
   const moneyCalendarWeekChunks = useMemo(() => {
     const rows = moneyCalendarResult.rows;
@@ -1694,18 +1783,36 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                 })()}
 
                 <div style={{ marginBottom: 14 }}>
-                  <div className="form-label">Current Balance</div>
-                  <EditableCell
-                    type="number"
-                    className="form-input"
-                    placeholder="check your bank app, enter it here"
-                    value={budget.current_balance || ""}
-                    onChange={v => updateBudget("current_balance", parseFloat(v) || 0)}
-                    style={{ fontSize: 18, fontWeight: 700 }}
-                  />
-                  <div style={{ fontSize: 10, color: "var(--ink-muted)", marginTop: 4 }}>
-                    The calendar's running balance starts from this number. Update it whenever you check your real balance for the most accurate picture — it won't drift correct on its own. Syncs across devices now.
-                  </div>
+                  <div className="form-label">{isCalendarCurrentMonth ? "Current Balance" : `Starting Balance — ${MONTH_NAMES[selectedMonth - 1]}`}</div>
+                  {isCalendarCurrentMonth ? (
+                    <>
+                      <EditableCell
+                        type="number"
+                        className="form-input"
+                        placeholder="check your bank app, enter it here"
+                        value={budget.current_balance || ""}
+                        onChange={v => updateBudget("current_balance", parseFloat(v) || 0)}
+                        style={{ fontSize: 18, fontWeight: 700 }}
+                      />
+                      <div style={{ fontSize: 10, color: "var(--ink-muted)", marginTop: 4 }}>
+                        The calendar's running balance starts from this number. Update it whenever you check your real balance for the most accurate picture — it won't drift correct on its own. Syncs across devices now.
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <input
+                        type="number"
+                        className="form-input"
+                        placeholder="not set yet — enter a projected balance when you get closer"
+                        value={monthBalances[calendarMonthKey] || ""}
+                        onChange={e => setMonthBalance(selectedMonth, selectedYear, e.target.value)}
+                        style={{ fontSize: 18, fontWeight: 700 }}
+                      />
+                      <div style={{ fontSize: 10, color: "var(--ink-muted)", marginTop: 4 }}>
+                        Each future month starts blank — it doesn't inherit today's balance or any other month's number. Enter a projected starting balance for {MONTH_NAMES[selectedMonth - 1]} once you have a sense of it.
+                      </div>
+                    </>
+                  )}
                 </div>
 
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 10 }}>
@@ -1839,7 +1946,7 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                                   type="number"
                                   className="form-input"
                                   placeholder="0"
-                                  value={dailyHours[row.key]?.reg || ""}
+                                  value={dailyHours[row.key]?.reg ?? recurringHours[row.date.getDay()]?.reg ?? ""}
                                   onChange={e => setDailyHourField(row.key, "reg", e.target.value)}
                                   style={{ flex: 1, fontSize: 12, padding: "4px 8px" }}
                                 />
@@ -1848,7 +1955,7 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                                   type="number"
                                   className="form-input"
                                   placeholder="0"
-                                  value={dailyHours[row.key]?.ot || ""}
+                                  value={dailyHours[row.key]?.ot ?? recurringHours[row.date.getDay()]?.ot ?? ""}
                                   onChange={e => setDailyHourField(row.key, "ot", e.target.value)}
                                   style={{ flex: 1, fontSize: 12, padding: "4px 8px" }}
                                 />
@@ -1857,6 +1964,18 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                                   <span style={{ fontSize: 11, color: isToday ? "var(--pink-dark)" : "var(--green-dark)", fontWeight: 700, whiteSpace: "nowrap" }}>+{fmt(row.availableToday)}</span>
                                 )}
                               </div>
+
+                              <label style={{ display: "flex", alignItems: "center", gap: 4, marginTop: 4, cursor: "pointer" }}>
+                                <input
+                                  type="checkbox"
+                                  checked={!!recurringHours[row.date.getDay()]}
+                                  onChange={e => toggleRecurringWeekday(row.date.getDay(), row.key, e.target.checked)}
+                                />
+                                <span style={{ fontSize: 9, color: "var(--ink-muted)" }}>
+                                  Recurring every {row.date.toLocaleDateString(undefined, { weekday: "long" })}
+                                </span>
+                              </label>
+
 
                               {row.hoursToday > 0 && (
                                 <div style={{ fontSize: 9, color: "var(--ink-muted)", marginTop: 3 }}>
