@@ -193,7 +193,7 @@ export default function UnlinkedNotes({
                         aria-label="Mark not covered"
                         type="button"
                       >
-                        <Icon name="groq_7" size={18} className={notesStyles.coveredIcon} />
+                        <Icon name="clipboard-check" size={18} className={notesStyles.coveredIcon} />
                       </button>
                       <span className={`${notesStyles.itemText} ${notesStyles.strikethrough}`}>
                         {item.content}
@@ -244,7 +244,7 @@ export default function UnlinkedNotes({
                       type="button"
                     >
                       {item.status === 'done' ? (
-                        <Icon name="groq_7" size={18} className={notesStyles.coveredIcon} />
+                        <Icon name="clipboard-check" size={18} className={notesStyles.coveredIcon} />
                       ) : (
                         <Icon name="icon-circle" size={18} />
                       )}
