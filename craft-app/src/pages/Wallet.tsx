@@ -608,21 +608,22 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
   }
 
-  const calendarWeeks = useMemo(() => {
+  const calendarDays = useMemo(() => {
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const lastOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
     const days: Date[] = [];
-    for (let i = 0; i < 14; i++) {
-      const d = new Date(today);
-      d.setDate(today.getDate() + i);
-      days.push(d);
+    const d = new Date(today);
+    while (d <= lastOfMonth) {
+      days.push(new Date(d));
+      d.setDate(d.getDate() + 1);
     }
-    return { week1: days.slice(0, 7), week2: days.slice(7, 14) };
+    return days;
   }, []);
 
   const billsByDate = useMemo(() => {
     const map: Record<string, { id: number; name: string; amount: number }[]> = {};
-    const allDays = [...calendarWeeks.week1, ...calendarWeeks.week2];
+    const allDays = calendarDays;
     const monthsInView = new Set(allDays.map(d => `${d.getFullYear()}-${d.getMonth() + 1}`));
 
     bills.forEach(bill => {
@@ -665,7 +666,7 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
       }
     });
     return map;
-  }, [bills, payments, calendarWeeks]);
+  }, [bills, payments, calendarDays]);
 
   const [dailyHours, setDailyHours] = useState<Record<string, { reg: string; ot: string }>>({});
   const dailyHoursSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -872,11 +873,23 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
 
 
   const moneyCalendarResult = useMemo(
-    () => buildMoneyCalendarRows([...calendarWeeks.week1, ...calendarWeeks.week2], budget.current_balance || 0),
-    [calendarWeeks, billsByDate, dailyHours, extraFunds, extraExpenses, netHourlyWage, netOtWage, budget.current_balance, budget.net_to_gross_ratio, budget.flat_deductions_prev, priorWeekHours, closedWeekHours]
+    () => buildMoneyCalendarRows(calendarDays, budget.current_balance || 0),
+    [calendarDays, billsByDate, dailyHours, extraFunds, extraExpenses, netHourlyWage, netOtWage, budget.current_balance, budget.net_to_gross_ratio, budget.flat_deductions_prev, priorWeekHours, closedWeekHours]
   );
-  const week1Result = { rows: moneyCalendarResult.rows.slice(0, 7) };
-  const week2Result = { rows: moneyCalendarResult.rows.slice(7, 14) };
+  const moneyCalendarWeekChunks = useMemo(() => {
+    const rows = moneyCalendarResult.rows;
+    const chunks: { title: string; rows: typeof rows }[] = [];
+    for (let i = 0; i < rows.length; i += 7) {
+      const chunkRows = rows.slice(i, i + 7);
+      const first = chunkRows[0].date;
+      const last = chunkRows[chunkRows.length - 1].date;
+      const title = first.getTime() === last.getTime()
+        ? first.toLocaleDateString(undefined, { month: "short", day: "numeric" })
+        : `${first.toLocaleDateString(undefined, { month: "short", day: "numeric" })} – ${last.toLocaleDateString(undefined, { month: "short", day: "numeric" })}`;
+      chunks.push({ title, rows: chunkRows });
+    }
+    return chunks;
+  }, [moneyCalendarResult]);
 
   const monthBills = useMemo(() => {
     const rows: (Bill & { name: string; amount: number; due_day: number; paid: boolean; late: boolean; days: number; paymentId?: number })[] = [];
@@ -1616,7 +1629,7 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                 )}
 
                 {(() => {
-                  const allDays = [...calendarWeeks.week1, ...calendarWeeks.week2];
+                  const allDays = calendarDays;
                   const firstSaturdayIdx = allDays.findIndex(d => d.getDay() === 6);
                   const firstWednesdayIdx = allDays.findIndex(d => d.getDay() === 3);
                   const needsClosedWeek =
@@ -1775,11 +1788,11 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                 {budget.hourly_wage <= 0 ? (
                   <div style={{ fontSize: 12, color: "var(--ink-muted)" }}>Enter your hourly wage above to see your calendar.</div>
                 ) : (
-                  [{ title: "Next 7 Days", result: week1Result }, { title: "Following 7 Days", result: week2Result }].map(({ title, result }) => (
+                  moneyCalendarWeekChunks.map(({ title, rows }) => (
                     <div key={title} style={{ marginBottom: 18 }}>
                       <div style={{ fontSize: 12, fontWeight: 700, color: "var(--ink)", marginBottom: 8 }}>{title}</div>
                       <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                        {result.rows.map(row => {
+                        {rows.map(row => {
                           const isToday = row.key === dateKey(new Date());
                           return (
                             <div key={row.key} id={`money-day-${row.key}`} style={{ border: `1.5px solid ${isToday ? "var(--pink-dark)" : "var(--border)"}`, borderRadius: 14, padding: "10px 12px", background: isToday ? "var(--accent)" : "transparent" }}>
