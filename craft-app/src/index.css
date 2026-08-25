@@ -51,48 +51,71 @@
 }
 
 [data-theme='dark'] {
-  --bg: #211610;
-  --surface: #2E2015;
-  --text: #F0D9B8;
+  /* ---------- FOUNDATION ---------- */
 
-  --primary: #E3A85E;
-  --secondary: #C9A876;
-  --accent: #8A6D4C;
-  --mint: #B99B72;
+  --bg: #1C1510;
+  --surface: #2A1E16;
+  --text: #F3E5D0;
 
-  --border: rgba(227, 168, 94, .16);
-  --shadow: 0 14px 30px rgba(0,0,0,.55);
+  /* ---------- BRAND ---------- */
 
-  --ink: #F0D9B8;
-  --ink-soft: #CBAE87;
-  --ink-muted: #99816A;
-  --btn-ink: #2A1B10;
+  --primary: #C99555;
+  --secondary: #B98B57;
+  --accent: #7F8C6A;
+  --mint: #9AA27C;
 
-  --white: #362619;
-  --cream: #2A1C12;
-  --blush: #3D2A1E;
+  /* ---------- BORDERS / SHADOWS ---------- */
 
-  --green-dark: #E3A85E;
-  --citrus-blue: #6E5638;
-  --sage: #4A3B28;
-  --sage-dark: #E3A85E;
-  --sage-light: #2A1F15;
+  --border: rgba(243, 229, 208, .12);
+  --shadow: 0 10px 28px rgba(0, 0, 0, .28);
 
-  --pink: #D99A66;
-  --pink-dark: #EFC290;
-  --pink-light: #3D2C1E;
+  /* ---------- TEXT ---------- */
 
-  --sky: #B99B72;
+  --ink: #F3E5D0;
+  --ink-soft: #CDB89B;
+  --ink-muted: #96836D;
+  --btn-ink: #24170F;
 
-  --gold: #E3A85E;
-  --gold-dark: #F0D9B8;
-  --gold-light: #3D2C18;
+  /* ---------- NEUTRALS ---------- */
 
-  --danger: #E08A82;
-  --danger-bg: #3B2320;
+  --white: #34261B;
+  --cream: #241A13;
 
-  --accent-text: #F0D9B8;
-  --accent-text-muted: rgba(240, 217, 184, .78);
+  /* ---------- BOTANICAL ---------- */
+
+  --green-dark: #A5AD86;
+  --citrus-blue: #88956F;
+  --sage: #687052;
+  --sage-dark: #A5AD86;
+  --sage-light: rgba(165, 173, 134, .13);
+
+  /* ---------- WARM BLUSH ---------- */
+
+  --pink: #B77D68;
+  --pink-dark: #D3A28C;
+  --pink-light: rgba(183, 125, 104, .14);
+  --pink-light-solid: #493027;
+
+  /* ---------- BLUE / COOL ---------- */
+
+  --sky: #8EA6A0;
+
+  /* ---------- ANTIQUE GOLD ---------- */
+
+  --gold: #D0A45F;
+  --gold-dark: #E1C28B;
+  --gold-light: rgba(208, 164, 95, .14);
+  --gold-light-solid: #49391F;
+
+  /* ---------- DANGER ---------- */
+
+  --danger: #D4877D;
+  --danger-bg: #422724;
+
+  /* ---------- TEXT ON ACCENTS ---------- */
+
+  --accent-text: #FFF5E6;
+  --accent-text-muted: rgba(255, 245, 230, .76);
 }
 
 /* Light mode: soft gold-tinted glow on hover */
@@ -102,6 +125,14 @@
 [data-theme='light'] .plant-card:hover,
 [data-theme='light'] .wizard-box:hover {
   box-shadow: 0 12px 28px rgba(75, 70, 65, .12);
+}
+
+[data-theme='dark'] .card::before,
+[data-theme='dark'] .stat-card::before,
+[data-theme='dark'] .pet-card::before,
+[data-theme='dark'] .plant-card::before,
+[data-theme='dark'] .wizard-box::before {
+  border-color: rgba(208, 164, 95, .075);
 }
 
 [data-theme='light'] .btn:hover,
@@ -547,9 +578,21 @@ p {
 
 body {
   background-color: var(--bg);
-  background-image: radial-gradient(circle, rgba(61, 43, 31, .055) 1px, transparent 1.4px);
-  background-size: 22px 22px;
+  background-image: radial-gradient(
+    circle,
+    rgba(208, 164, 95, .035) 1px,
+    transparent 1.4px
+  );
+  background-size: 24px 24px;
   background-repeat: repeat;
+}
+
+[data-theme='dark'] body {
+  background-image: radial-gradient(
+    circle,
+    rgba(208, 164, 95, .028) 1px,
+    transparent 1.4px
+  );
 }
 
 .dash-greeting {
