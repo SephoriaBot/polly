@@ -1734,53 +1734,109 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                 )}
 
                 {(() => {
-                  const allDays = calendarDays;
-                  const firstSaturdayIdx = allDays.findIndex(d => d.getDay() === 6);
-                  const firstWednesdayIdx = allDays.findIndex(d => d.getDay() === 3);
-                  const needsClosedWeek =
-                    firstWednesdayIdx !== -1 && (firstSaturdayIdx === -1 || firstWednesdayIdx < firstSaturdayIdx);
-                  if (!needsClosedWeek) return null;
+  // Future months whose calendar starts mid-week are missing the
+  // Sunday–Saturday week that began before the 1st. Show that
+  // completed week's hours here so the following Wednesday release
+  // is still calculated correctly.
+  if (isCalendarCurrentMonth) return null;
 
-                  const firstWednesday = allDays[firstWednesdayIdx];
-                  const closingSaturday = new Date(firstWednesday);
-                  closingSaturday.setDate(closingSaturday.getDate() - 4);
-                  const periodStartSunday = new Date(closingSaturday);
-                  periodStartSunday.setDate(periodStartSunday.getDate() - 6);
-                  const periodStartKey = dateKey(periodStartSunday);
-                  const fmt = (d: Date) => d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+  const firstDay = new Date(selectedYear, selectedMonth - 1, 1);
 
-                  return (
-                    <div style={{
-                      marginBottom: 14, padding: "10px 12px", borderRadius: "var(--radius-sm)",
-                      background: "var(--blush)", border: "1px solid var(--pink-light)",
-                    }}>
-                      <div className="form-label" style={{ marginBottom: 4 }}>
-                        Hours worked {fmt(periodStartSunday)}–{fmt(closingSaturday)}
-                      </div>
-                      <div style={{ fontSize: 11, color: "var(--ink-muted)", marginBottom: 8 }}>
-                        This week already closed out before the calendar's visible window, so it never had a row to log hours into. Enter it here and Wednesday {fmt(firstWednesday)} will show its release using the same math as everywhere else.
-                      </div>
-                      <div style={{ display: "flex", gap: 8 }}>
-                        <div style={{ flex: 1 }}>
-                          <div className="form-label" style={{ fontSize: 10 }}>Regular hrs</div>
-                          <input
-                            type="number" className="form-input" placeholder="0"
-                            value={closedWeekHours.weekStart === periodStartKey ? closedWeekHours.reg : ""}
-                            onChange={e => setClosedWeekHourField(periodStartKey, "reg", e.target.value)}
-                          />
-                        </div>
-                        <div style={{ flex: 1 }}>
-                          <div className="form-label" style={{ fontSize: 10 }}>OT hrs</div>
-                          <input
-                            type="number" className="form-input" placeholder="0"
-                            value={closedWeekHours.weekStart === periodStartKey ? closedWeekHours.ot : ""}
-                            onChange={e => setClosedWeekHourField(periodStartKey, "ot", e.target.value)}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })()}
+  // If the month starts on Sunday, the calendar contains the complete
+  // first week, so there is nothing missing.
+  if (firstDay.getDay() === 0) return null;
+
+  const periodStartSunday = new Date(firstDay);
+  periodStartSunday.setDate(
+    periodStartSunday.getDate() - periodStartSunday.getDay()
+  );
+
+  const closingSaturday = new Date(periodStartSunday);
+  closingSaturday.setDate(closingSaturday.getDate() + 6);
+
+  const periodStartKey = dateKey(periodStartSunday);
+  const fmt = (d: Date) =>
+    d.toLocaleDateString(undefined, {
+      month: "short",
+      day: "numeric",
+    });
+
+  return (
+    <div
+      style={{
+        marginBottom: 14,
+        padding: "10px 12px",
+        borderRadius: "var(--radius-sm)",
+        background: "var(--blush)",
+        border: "1px solid var(--pink-light)",
+      }}
+    >
+      <div className="form-label" style={{ marginBottom: 4 }}>
+        Hours worked {fmt(periodStartSunday)}–{fmt(closingSaturday)}
+      </div>
+
+      <div
+        style={{
+          fontSize: 11,
+          color: "var(--ink-muted)",
+          marginBottom: 8,
+        }}
+      >
+        This week began before the calendar's visible window, so it never
+        had a row to log hours into. Enter it here so the following
+        Wednesday release uses the same math as everywhere else.
+      </div>
+
+      <div style={{ display: "flex", gap: 8 }}>
+        <div style={{ flex: 1 }}>
+          <div className="form-label" style={{ fontSize: 10 }}>
+            Regular hrs
+          </div>
+          <input
+            type="number"
+            className="form-input"
+            placeholder="0"
+            value={
+              closedWeekHours.weekStart === periodStartKey
+                ? closedWeekHours.reg
+                : ""
+            }
+            onChange={e =>
+              setClosedWeekHourField(
+                periodStartKey,
+                "reg",
+                e.target.value
+              )
+            }
+          />
+        </div>
+
+        <div style={{ flex: 1 }}>
+          <div className="form-label" style={{ fontSize: 10 }}>
+            OT hrs
+          </div>
+          <input
+            type="number"
+            className="form-input"
+            placeholder="0"
+            value={
+              closedWeekHours.weekStart === periodStartKey
+                ? closedWeekHours.ot
+                : ""
+            }
+            onChange={e =>
+              setClosedWeekHourField(
+                periodStartKey,
+                "ot",
+                e.target.value
+              )
+            }
+          />
+        </div>
+      </div>
+    </div>
+  );
+})()}
 
                 <div style={{ marginBottom: 14 }}>
                   <div className="form-label">{isCalendarCurrentMonth ? "Current Balance" : `Starting Balance — ${MONTH_NAMES[selectedMonth - 1]}`}</div>
