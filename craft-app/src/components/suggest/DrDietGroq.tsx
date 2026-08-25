@@ -369,7 +369,7 @@ Never mention calories, macros, or specific weight numbers. If the goal involves
                   disabled={step === 0}
                   onClick={() => setStep(s => s - 1)}
                 >
-                  <Icon name="groq_5" size={14} /> Back
+                  <Icon name="icon-arrowleft" size={14} /> Back
                 </button>
                 {step < STEP_COUNT - 1 ? (
                   <button
@@ -378,11 +378,11 @@ Never mention calories, macros, or specific weight numbers. If the goal involves
                     disabled={!canAdvance()}
                     onClick={() => setStep(s => s + 1)}
                   >
-                    Next <Icon name="groq_6" size={14} />
+                    Next <Icon name="icon-arrowright" size={14} />
                   </button>
                 ) : (
                   <button className="btn btn-primary" style={{ flex: 1, justifyContent: 'center' }} onClick={submit}>
-                    <Icon name="groq_2" size={14} /> Get My Check-In
+                    <Icon name="_extra-unnamed-heart" size={14} /> Get My Check-In
                   </button>
                 )}
               </div>
