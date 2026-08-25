@@ -1701,7 +1701,7 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                   )}
                 </div>
 
-                {new Date().getDay() !== 0 && (
+                {isCalendarCurrentMonth && new Date().getDay() !== 0 && (
                   <div style={{
                     marginBottom: 14, padding: "10px 12px", borderRadius: "var(--radius-sm)",
                     background: "var(--blush)", border: "1px solid var(--pink-light)",
