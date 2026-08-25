@@ -523,7 +523,7 @@ function DiscoverTab({ onOpenRecipe, onSaved }: { onOpenRecipe: (id: number) => 
 
       {!loading && !error && meals.length === 0 && (
         <div className="empty-state">
-          <Icon name="groq_9" size={20} />
+          <Icon name="cooking-pot" size={20} />
           {mode === 'search' ? 'Search for a recipe by name' : 'Hit Surprise Me for a random pick'}
         </div>
       )}
