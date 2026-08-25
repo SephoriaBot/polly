@@ -437,7 +437,7 @@ Never mention calories, macros, or specific weight numbers. If the goal involves
                         <div style={{ marginTop: 10, paddingTop: 10, borderTop: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: 6 }}>
                           {area.tips.map((tip, ti) => (
                             <div key={ti} style={{ display: 'flex', alignItems: 'flex-start', gap: 6, fontSize: '0.8rem', color: 'var(--ink-soft)', lineHeight: 1.5 }}>
-                              <Icon name="groq_7" size={13} style={{ color: 'var(--pink-dark)', flexShrink: 0, marginTop: 2 }} />
+                              <Icon name="clipboard-check" size={13} style={{ color: 'var(--pink-dark)', flexShrink: 0, marginTop: 2 }} />
                               {tip}
                             </div>
                           ))}
