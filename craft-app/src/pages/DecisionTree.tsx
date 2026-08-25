@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase'; // adjust path to your existing clie
 import Icon from '../components/Icon';
 import Lantern from "../components/Lantern";
 import EmptyState from '../components/EmptyState';
-import thinkingHamsterImg from '../assets/illustrations/thinking_hamster.png';
+import emptyDecision from '../assets/icons/empty-decisions.png';
 import QuickDecide from '../components/decisions/QuickDecide';
 
 
@@ -659,7 +659,7 @@ const DecisionTreeList: FC<{ onSelect: (id: string) => void; onNew: () => void; 
       {deleteError && <p style={styles.errorText}>Couldn't delete: {deleteError}</p>}
       {status === 'ready' && trees.length === 0 && (
         <EmptyState
-        image={thinkingHamsterImg}
+        image={emptyDecision}
         message="Nothing decided yet"
     subMessage="Add your first decision below"
   />
