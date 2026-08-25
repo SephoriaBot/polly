@@ -1279,7 +1279,7 @@ export default function Grocery() {
 
                 <div className="card">
                   <div className="section-label" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Icon name="groq_7" size={13} /> Already Have</span>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Icon name="clipboard-check" size={13} /> Already Have</span>
                     <span style={{ fontWeight: 500 }}>{have.length} items</span>
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 420, overflowY: 'auto' }}>
