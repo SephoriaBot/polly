@@ -391,18 +391,19 @@ export default function DailyPlanner({ initialTab }: { initialTab?: 'tasks' | 'a
             {allDone ? 'All done! Good job.' : `${doneCount} of ${tasks.length} done today`}
           </p>
         </div>
-        <div style={{ display: 'flex', gap: 8 }}>
+      </div>
+
+      <PageTabs tabs={PLANNER_TABS} active={activeTab} onChange={setActiveTab} />
+
+      <div className="page-body">
+
+<div style={{ display: 'flex', gap: 8 }}>
           {activeTab === 'tasks' && tasks.length > 0 && (
             <button className="btn btn-ghost" onClick={resetAll}>
               <Icon name="icon-recur" size={14} /> Reset
             </button>
           )}
         </div>
-      </div>
-
-      <PageTabs tabs={PLANNER_TABS} active={activeTab} onChange={setActiveTab} />
-
-      <div className="page-body">
 
         {activeTab === 'tasks' && tasks.length > 0 && (
           <div style={{ marginBottom: 4, maxWidth: 560 }}>
