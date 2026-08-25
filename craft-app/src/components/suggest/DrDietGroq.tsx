@@ -245,7 +245,7 @@ Never mention calories, macros, or specific weight numbers. If the goal involves
       <div className="modal" style={{ maxWidth: 580 }} onClick={e => e.stopPropagation()}>
         <div className="modal-header" style={{ background: 'var(--blush)', color: 'var(--pink-dark)' }}>
           <span style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 700, fontSize: '0.95rem' }}>
-            <Icon name="groq_9" size={17} /> Ask Dr. Groq — Diet Check-In
+            <Icon name="cooking-pot" size={17} /> Ask Dr. Groq — Diet Check-In
           </span>
           <button className="close-btn" onClick={onClose}><Icon name="icon-clear" size={16} /></button>
         </div>
