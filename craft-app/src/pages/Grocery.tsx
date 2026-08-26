@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import type { GroceryItem } from '../types/legacy';
 import { supabase } from '../lib/supabase';
 import Icon, { type IconName } from '../components/Icon';
@@ -264,6 +264,13 @@ export default function Grocery() {
   const [cart, setCart] = useState<any[]>([])
   const [loadingCart, setLoadingCart] = useState(false)
   const [cartError, setCartError] = useState<string | null>(null)
+  // Guards against overlapping buildSmartCart() runs — clicking Refresh (or
+  // the per-item retry button) while a build is already in flight used to
+  // start a second run that reset `cart` out from under the first one,
+  // producing duplicate/flickering rows until both settled. Each run stamps
+  // this ref with its own id; any state update checks it's still the most
+  // recent run before applying, so a superseded run just quietly no-ops.
+  const cartRunRef = useRef(0)
   const [prices, setPrices] = useState<PriceEntry[]>([])
   const [watches, setWatches] = useState<PriceWatch[]>([])
   const [expandedItem, setExpandedItem] = useState<string | null>(null)
@@ -622,6 +629,7 @@ export default function Grocery() {
   }
 
   async function buildSmartCart() {
+    const runId = ++cartRunRef.current
     const needItems = items.filter(i => !i.checked)
 
     setLoadingCart(true)
@@ -771,17 +779,20 @@ export default function Grocery() {
         )
 
         results.push(...batchResults)
+        if (cartRunRef.current !== runId) return // a newer build superseded this one — drop stale results
         setCart(prev => [...prev, ...batchResults])
       }
     } finally {
-      setLoadingCart(false)
-      // A single item still failing after 3 retry attempts doesn't mean the
-      // service is "down" — it just means that one item didn't come back in
-      // time. Only show the big banner when NOTHING came back, since that's
-      // the actual outage case. Individual failed items still show their own
-      // inline "tap to retry" below.
-      const allFailed = results.length > 0 && results.every(r => r.error)
-      setCartError(allFailed ? firstError : null)
+      if (cartRunRef.current === runId) {
+        setLoadingCart(false)
+        // A single item still failing after 3 retry attempts doesn't mean the
+        // service is "down" — it just means that one item didn't come back in
+        // time. Only show the big banner when NOTHING came back, since that's
+        // the actual outage case. Individual failed items still show their own
+        // inline "tap to retry" below.
+        const allFailed = results.length > 0 && results.every(r => r.error)
+        setCartError(allFailed ? firstError : null)
+      }
     }
   }
 
@@ -1416,13 +1427,13 @@ export default function Grocery() {
             </div>
 
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-              <button className="btn btn-primary" onClick={buildSmartCart}>
-                <Icon name="shopping-cart" size={20} /> Build Smart Cart
+              <button className="btn btn-primary" onClick={buildSmartCart} disabled={loadingCart}>
+                <Icon name="shopping-cart" size={20} /> {loadingCart ? 'Building…' : 'Build Smart Cart'}
               </button>
-              <button className="btn btn-secondary" onClick={refreshSmartCart}>
+              <button className="btn btn-secondary" onClick={refreshSmartCart} disabled={loadingCart}>
                 <Icon name="icon-recur" size={20} /> Refresh
               </button>
-              <button className="btn btn-ghost" onClick={clearSmartCart}>
+              <button className="btn btn-ghost" onClick={clearSmartCart} disabled={loadingCart}>
                 <Icon name="icon-clear" size={20} /> Clear
               </button>
               <button className="btn btn-primary" onClick={openDoorDashList} disabled={!needs.length}>
@@ -1439,10 +1450,10 @@ export default function Grocery() {
                 placeholder="ZIP"
                 value={location}
                 onChange={e => saveLocation(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && buildSmartCart()}
+                onKeyDown={e => e.key === 'Enter' && !loadingCart && buildSmartCart()}
                 style={{ width: 280 }}
               />
-              <button className="btn btn-primary" onClick={buildSmartCart} disabled={!location}>
+              <button className="btn btn-primary" onClick={buildSmartCart} disabled={!location || loadingCart}>
                 Build Smart Cart for {location}
               </button>
               <button className="btn btn-ghost" onClick={() => setShowStoreSettings(s => !s)}>
