@@ -112,22 +112,20 @@ async function loadAll() {
   return (
     <div>
       <div className="page-header dash-greeting">
-        <div>
-          <div className="title-row">
-            <h1>{getGreeting()}</h1>
-           
-          </div>
-          <div className="dash-subdate">
-            {todayName}, {new Date().toLocaleDateString(undefined, { month: 'long', day: 'numeric' })}
-          </div>
+  <div>
+    <div className="title-row" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+      <h1>{getGreeting()}</h1>
+      <MoonWidget compact />
+    </div>
+    <div className="dash-subdate">
+      {todayName}, {new Date().toLocaleDateString(undefined, { month: 'long', day: 'numeric' })}
+    </div>
+    {/* WEATHER BADGE MINI WIDGET */}
+    <WeatherBadge />
+    <EnergyModeSwitch />
+  </div>
+</div>
 
-        {/* WEATHER BADGE MINI WIDGET */}
-        <WeatherBadge />
-
-        <EnergyModeSwitch />
-
-        </div>
-      </div>
 
       <div className="page-body">
 
@@ -150,11 +148,6 @@ async function loadAll() {
           </>
         ) : (
         <>
-
-        {/* ── MOON + ZODIAC ── */}
-        <section>
-          <MoonWidget />
-        </section>
 
                 {/* ── TODAY'S FOCUS ── */}
         <section>
