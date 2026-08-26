@@ -388,7 +388,18 @@ export default function App() {
                         <Dashboard onNavigate={navigate} />
                       )}
 
-                      {page === 'grocery' && <Grocery />}
+                      {page === 'grocery' && (
+                        <Grocery
+                          initialTab={
+                            initialTab as
+                              | 'list'
+                              | 'recipes'
+                              | 'smart-cart'
+                              | 'price-watch'
+                              | undefined
+                          }
+                        />
+                      )}
 
                       {page === 'dailyplanner' && (
                         <DailyPlanner
