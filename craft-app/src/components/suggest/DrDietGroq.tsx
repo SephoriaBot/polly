@@ -133,7 +133,7 @@ export default function DrDietGroq({ onClose }: { onClose: () => void }) {
     setAddedToCart(false)
   }
 
-  async function submit() {
+    async function submit() {
     setError('')
     setWizardState('loading')
 
@@ -162,7 +162,6 @@ Foods to avoid: ${avoid.size > 0 ? [...avoid].join(', ') : 'none specified'}.
 Eating challenges they identified: ${challengeLabels.length > 0 ? challengeLabels.join(', ') : 'none specified'}.
 Activity level: ${activityLabel}.
 Cooking style: ${cookingLabel}.
-
 ${challengeGuidanceText ? `How to handle their eating challenges — follow this closely:\n${challengeGuidanceText}\n` : ''}
 Notes in their own words — THIS IS THE MOST IMPORTANT INPUT. Read it carefully and make sure every specific thing mentioned here (foods, struggles, a diagnosis, a texture, a routine, a fear, anything) is directly and visibly reflected somewhere in your response, not just generically acknowledged:
 "${notes.trim() || 'nothing else provided'}"
@@ -180,6 +179,7 @@ Respond ONLY with a valid JSON object, no markdown, no backticks, no explanation
   "foodsToLimit": ["4 to 6 food or food categories to eat less often, phrased gently, never 'never eat' or absolute language"],
   "groceryPicks": ["10 to 15 concrete, plain grocery item names (no quantities) pulled from foodsToEmphasize, ready to drop onto a shopping list"]
 }
+
 Never mention calories, macros, or specific weight numbers. If the goal involves managing a health condition, keep foodsToEmphasize/foodsToLimit general and gently note in the summary that a doctor or registered dietitian should guide anything condition-specific. Keep the tone encouraging, never restrictive or shame-based.`
 
     try {
@@ -191,24 +191,34 @@ Never mention calories, macros, or specific weight numbers. If the goal involves
         },
         body: JSON.stringify({
           model: 'openai/gpt-oss-120b',
-          max_tokens: 900,
+          max_tokens: 1800,
           messages: [{ role: 'user', content: prompt }],
         }),
       })
 
+      if (!response.ok) {
+        const errText = await response.text()
+        console.error('DrDietGroq: Groq API error', response.status, errText)
+        throw new Error(`Groq API ${response.status}`)
+      }
+
       const data = await response.json()
       const raw = data.choices?.[0]?.message?.content ?? ''
+      console.log('DrDietGroq: raw content', raw)
+
       const clean = raw.replace(/```json|```/g, '').trim()
       const parsed: DietAssessment = JSON.parse(clean)
       setAssessment(parsed)
       setSelectedPicks(new Set(parsed.groceryPicks))
       setWizardState('result')
-    } catch {
+    } catch (err) {
+      console.error('DrDietGroq: submit failed', err)
       setError('Something went wrong getting your check-in. Please try again.')
       setWizardState('quiz')
       setStep(STEP_COUNT - 1)
     }
   }
+
 
   function togglePick(item: string) {
     setSelectedPicks(prev => {
