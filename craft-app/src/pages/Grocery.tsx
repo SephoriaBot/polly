@@ -249,7 +249,7 @@ const GROCERY_TABS: PageTab<'list' | 'recipes' | 'smart-cart' | 'price-watch'>[]
   { key: 'price-watch', label: 'Price Watch', icon: 'icon-search' },
 ];
 
-export default function Grocery() {
+export default function Grocery({ initialTab }: { initialTab?: 'list' | 'recipes' | 'smart-cart' | 'price-watch' } = {}) {
   const { theme } = useTheme();
   const { notifyGrowth } = useHamsterGrowth();
   const [items, setItems] = useState<GroceryItem[]>([])
@@ -290,7 +290,7 @@ export default function Grocery() {
   const [newStoreName, setNewStoreName] = useState('')
   const [newStoreAliases, setNewStoreAliases] = useState('')
   const [storeSettingsLoaded, setStoreSettingsLoaded] = useState(false)
-  const [activeTab, setActiveTab] = useState<'list' | 'recipes' | 'smart-cart' | 'price-watch'>('list');
+  const [activeTab, setActiveTab] = useState<'list' | 'recipes' | 'smart-cart' | 'price-watch'>(initialTab ?? 'list');
 
 
 
@@ -792,6 +792,30 @@ export default function Grocery() {
         // inline "tap to retry" below.
         const allFailed = results.length > 0 && results.every(r => r.error)
         setCartError(allFailed ? firstError : null)
+
+        // Dashboard shows a one-line "smart cart total" (see TodaySnapshot)
+        // without pulling in item contents — grocery isn't used as a pantry
+        // view, just a price total. Rather than duplicate computeTally's
+        // store-ranking logic in another file (and risk it drifting out of
+        // sync — see the note above buildPriceMaps), we just persist the
+        // result of the same function this page already uses. An empty
+        // needed-list clears the summary instead of leaving a stale total.
+        if (needItems.length === 0) {
+          supabase.from('grocery_settings')
+            .upsert({ id: 1, smart_cart_total: null, smart_cart_item_count: 0, smart_cart_updated_at: new Date().toISOString() })
+            .then(() => {})
+        } else if (!allFailed) {
+          const cheapest = computeTally(results)[0]
+          // computeTally can come back empty if no single store covers every
+          // item (missingCount > 0 everywhere) — in that case there's no
+          // trustworthy total to show, so leave the last known-good summary
+          // in place rather than overwrite it with nothing.
+          if (cheapest) {
+            supabase.from('grocery_settings')
+              .upsert({ id: 1, smart_cart_total: cheapest.total, smart_cart_item_count: results.length, smart_cart_updated_at: new Date().toISOString() })
+              .then(() => {})
+          }
+        }
       }
     }
   }
@@ -803,6 +827,9 @@ export default function Grocery() {
   function clearSmartCart() {
     setCart([])
     setCartError(null)
+    supabase.from('grocery_settings')
+      .upsert({ id: 1, smart_cart_total: null, smart_cart_item_count: 0, smart_cart_updated_at: new Date().toISOString() })
+      .then(() => {})
   }
 
   async function toggle(id: string, checked: boolean) {
