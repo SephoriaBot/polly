@@ -87,10 +87,12 @@ export default function DrDietGroq({ onClose }: { onClose: () => void }) {
 
   const [error, setError] = useState('')
   const [assessment, setAssessment] = useState<DietAssessment | null>(null)
+  const [previousAssessments, setPreviousAssessments] = useState<DietAssessment[]>([])
   const [expandedArea, setExpandedArea] = useState<number | null>(null)
   const [selectedPicks, setSelectedPicks] = useState<Set<string>>(new Set())
   const [addingToCart, setAddingToCart] = useState(false)
   const [addedToCart, setAddedToCart] = useState(false)
+  const [regenerating, setRegenerating] = useState(false)
 
   function toggleAvoid(v: string) {
     setAvoid(prev => {
@@ -128,14 +130,19 @@ export default function DrDietGroq({ onClose }: { onClose: () => void }) {
     setNotes('')
     setError('')
     setAssessment(null)
+    setPreviousAssessments([])
     setExpandedArea(null)
     setSelectedPicks(new Set())
     setAddedToCart(false)
   }
 
-    async function submit() {
+    async function submit(isRegenerate = false) {
     setError('')
-    setWizardState('loading')
+    if (isRegenerate) {
+      setRegenerating(true)
+    } else {
+      setWizardState('loading')
+    }
 
     const goalLabel = GOALS.find(g => g.value === goal)?.label
     const patternLabel = PATTERNS.find(p => p.value === pattern)?.label
@@ -165,6 +172,10 @@ Cooking style: ${cookingLabel}.
 ${challengeGuidanceText ? `How to handle their eating challenges — follow this closely:\n${challengeGuidanceText}\n` : ''}
 Notes in their own words — THIS IS THE MOST IMPORTANT INPUT. Read it carefully and make sure every specific thing mentioned here (foods, struggles, a diagnosis, a texture, a routine, a fear, anything) is directly and visibly reflected somewhere in your response, not just generically acknowledged:
 "${notes.trim() || 'nothing else provided'}"
+${previousAssessments.length > 0 ? `
+This person already ran this check-in ${previousAssessments.length} time(s) with the exact same answers above and wants a genuinely different check-in this time, not a reshuffled version of the same one. Here is what they already got, so you can actively avoid repeating it:
+${previousAssessments.map((a, i) => `Previous result #${i + 1} — focus areas: ${a.focusAreas.map(f => f.title).join(', ')}. Emphasized: ${a.foodsToEmphasize.join(', ')}.`).join('\n')}
+Pick different focus areas than all of the above where the notes/goal reasonably allow it, and favor different specific foods in foodsToEmphasize and groceryPicks (still respecting the avoid list and diet pattern). It's fine if a couple of foundational items repeat, but the overall angle should feel like a new check-in, not a copy.` : ''}
 
 Respond ONLY with a valid JSON object, no markdown, no backticks, no explanation. Use this exact shape:
 {
@@ -192,6 +203,7 @@ Never mention calories, macros, or specific weight numbers. If the goal involves
         body: JSON.stringify({
           model: 'openai/gpt-oss-120b',
           max_tokens: 1800,
+          temperature: isRegenerate ? 1.05 : 0.7,
           messages: [{ role: 'user', content: prompt }],
         }),
       })
@@ -208,14 +220,22 @@ Never mention calories, macros, or specific weight numbers. If the goal involves
 
       const clean = raw.replace(/```json|```/g, '').trim()
       const parsed: DietAssessment = JSON.parse(clean)
-      setAssessment(parsed)
+      setAssessment(prev => {
+        if (prev) setPreviousAssessments(hist => [...hist, prev])
+        return parsed
+      })
       setSelectedPicks(new Set(parsed.groceryPicks))
+      setExpandedArea(null)
       setWizardState('result')
     } catch (err) {
       console.error('DrDietGroq: submit failed', err)
       setError('Something went wrong getting your check-in. Please try again.')
-      setWizardState('quiz')
-      setStep(STEP_COUNT - 1)
+      if (!isRegenerate) {
+        setWizardState('quiz')
+        setStep(STEP_COUNT - 1)
+      }
+    } finally {
+      setRegenerating(false)
     }
   }
 
@@ -391,7 +411,7 @@ Never mention calories, macros, or specific weight numbers. If the goal involves
                     Next <Icon name="icon-arrowright" size={14} />
                   </button>
                 ) : (
-                  <button className="btn btn-primary" style={{ flex: 1, justifyContent: 'center' }} onClick={submit}>
+                  <button className="btn btn-primary" style={{ flex: 1, justifyContent: 'center' }} onClick={() => submit(false)}>
                     <Icon name="_extra-unnamed-heart" size={14} /> Get My Check-In
                   </button>
                 )}
@@ -511,8 +531,17 @@ Never mention calories, macros, or specific weight numbers. If the goal involves
                     : <><Icon name="shopping-cart" size={14} /> Add {selectedPicks.size} Item{selectedPicks.size === 1 ? '' : 's'} to Grocery List</>}
               </button>
 
+              <button
+                className="btn btn-ghost"
+                style={{ width: '100%', justifyContent: 'center', marginTop: 8 }}
+                onClick={() => submit(true)}
+                disabled={regenerating}
+              >
+                <Icon name="icon-recur" size={13} /> {regenerating ? 'Getting a new angle…' : 'Try a Different Angle (Same Answers)'}
+              </button>
+
               <button className="btn btn-ghost" style={{ width: '100%', justifyContent: 'center', marginTop: 8 }} onClick={reset}>
-                <Icon name="icon-recur" size={13} /> Start Over
+                <Icon name="icon-clear" size={13} /> Start Over With New Answers
               </button>
             </div>
           )}
