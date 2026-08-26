@@ -42,11 +42,12 @@ export default function TodaySnapshot({ onNavigate }: { onNavigate?: (page: stri
       const today = todayISO();
       const now = new Date();
 
-      const [choresRes, dueChoresRes, apptRes, unpaidBills] = await Promise.all([
+      const [choresRes, dueChoresRes, apptRes, unpaidBills, cartSettingsRes] = await Promise.all([
         supabase.from('daily_tasks').select('id,label,done').eq('task_date', today).eq('done', false).order('created_at'),
         supabase.from('chores').select('id,name,interval_days,last_done_at,icon,created_at'),
         supabase.from('appointments').select('id,title,date_time').order('date_time'),
         getUnpaidBillsThisMonth(),
+        supabase.from('grocery_settings').select('smart_cart_total,smart_cart_item_count,smart_cart_updated_at').eq('id', 1).maybeSingle(),
       ]);
 
       const tasks = choresRes.data ?? [];
@@ -70,6 +71,10 @@ export default function TodaySnapshot({ onNavigate }: { onNavigate?: (page: stri
 
       const nextBill = pickNextBill(unpaidBills, now);
 
+      const cartSettings = cartSettingsRes.data;
+      const cartTotal = cartSettings?.smart_cart_total != null ? Number(cartSettings.smart_cart_total) : null;
+      const cartItemCount = cartSettings?.smart_cart_item_count ?? 0;
+
       const next: SnapshotRow[] = [
         tasks.length > 0
           ? { key: 'tasks', icon: 'clipboard-check', label: `${tasks.length} quick task${tasks.length === 1 ? '' : 's'}`, detail: tasks.slice(0, 2).map(t => t.label).join(', '), page: 'dailyplanner', tab: 'tasks' }
@@ -86,6 +91,10 @@ export default function TodaySnapshot({ onNavigate }: { onNavigate?: (page: stri
         nextBill
           ? { key: 'money', icon: 'money-bag', label: `${nextBill.name} due ${nextBill.due_day ? `on the ${nextBill.due_day}${daySuffix(nextBill.due_day)}` : 'soon'}`, detail: nextBill.amount != null ? `$${Number(nextBill.amount).toFixed(2)}` : '', page: 'wallet', tab: 'bills' }
           : { key: 'money', icon: 'money-bag', label: 'No bills waiting', detail: 'Nothing due this month', page: 'wallet', tab: 'bills', empty: true },
+
+        cartTotal != null && cartItemCount > 0
+          ? { key: 'smart-cart', icon: 'shopping-cart', label: `Smart Cart: $${cartTotal.toFixed(2)}`, detail: `${cartItemCount} item${cartItemCount === 1 ? '' : 's'} · updated ${timeAgo(cartSettings!.smart_cart_updated_at!)}`, page: 'grocery', tab: 'smart-cart' }
+          : { key: 'smart-cart', icon: 'shopping-cart', label: 'No smart cart total yet', detail: 'Build one from your grocery list', page: 'grocery', tab: 'smart-cart', empty: true },
       ];
 
       setRows(next);
@@ -137,4 +146,15 @@ function apptWhen(dateTime: string, startOfTomorrow: Date): string {
   const dayLabel = t >= startOfTomorrow ? 'Tomorrow' : 'Today';
   const timeLabel = t.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
   return `${dayLabel} ${timeLabel}`;
+}
+
+function timeAgo(iso: string): string {
+  const diffMs = Date.now() - new Date(iso).getTime();
+  const mins = Math.round(diffMs / 60000);
+  if (mins < 1) return 'just now';
+  if (mins < 60) return `${mins}m ago`;
+  const hours = Math.round(mins / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.round(hours / 24);
+  return `${days}d ago`;
 }
