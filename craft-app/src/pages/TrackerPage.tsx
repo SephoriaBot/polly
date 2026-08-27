@@ -42,8 +42,8 @@ function monthLabel(monthKey: string) {
 
 type TabType = TrackerType | 'overlap';
 
-export default function TrackerPage() {
-  const [activeType, setActiveType] = useState<TabType>('sleep');
+export default function TrackerPage({ initialTab }: { initialTab?: TabType } = {}) {
+  const [activeType, setActiveType] = useState<TabType>(initialTab ?? 'sleep');
   const [date, setDate] = useState(todayISO());
   const [viewMonth, setViewMonth] = useState(currentMonthKey());
   const [refreshKey, setRefreshKey] = useState(0);
