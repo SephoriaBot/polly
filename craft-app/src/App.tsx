@@ -256,144 +256,146 @@ export default function App() {
 
                 <div className="app-shell">
                   <header className="topbar">
-                    <span className="topbar-mark">Polly</span>
+  <div className="topbar-header-row">
+    <span className="topbar-mark">Polly</span>
 
-                    <div className="topbar-actions">
+    <div className="topbar-account-actions">
+      {/* REFRESH */}
+      <button
+        type="button"
+        onClick={refreshPolly}
+        aria-label="Refresh Polly"
+        title="Refresh Polly"
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          width: 32,
+          height: 32,
+          borderRadius: '50%',
+          background: 'var(--surface)',
+          border: '1.5px solid var(--border)',
+          cursor: 'pointer',
+          color: 'var(--ink-muted)',
+          fontSize: '1rem',
+          fontWeight: 700,
+          lineHeight: 1,
+          padding: 0,
+          flexShrink: 0,
+          WebkitTapHighlightColor: 'transparent',
+        }}
+      >
+        ↻
+      </button>
 
-                      {/* BRAIN DUMP */}
-                      <span
-                        className="topbar-label"
-                        style={{
-                          fontSize: '0.72rem',
-                          fontWeight: 700,
-                          color: 'var(--ink-muted)',
-                          whiteSpace: 'nowrap',
-                        }}
-                      >
-                        Brain Dump
-                      </span>
+      {/* SIGN OUT */}
+      <button
+        type="button"
+        onClick={() => signOut()}
+        aria-label="Sign out"
+        style={{
+          fontSize: '0.72rem',
+          fontWeight: 700,
+          color: 'var(--ink-muted)',
+          background: 'none',
+          border: '1.5px solid var(--border)',
+          borderRadius: 8,
+          padding: '4px 8px',
+          cursor: 'pointer',
+          whiteSpace: 'nowrap',
+        }}
+      >
+        Sign out
+      </button>
+    </div>
+  </div>
 
-                      <button
-                        type="button"
-                        onClick={() => setBrainDumpOpen(true)}
-                        aria-label="Get it out of my head"
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          width: 32,
-                          height: 32,
-                          borderRadius: '50%',
-                          background: 'var(--blush)',
-                          border: '1.5px solid var(--border)',
-                          cursor: 'pointer',
-                          color: 'var(--pink-dark)',
-                          fontSize: '1.1rem',
-                          fontWeight: 700,
-                          lineHeight: 1,
-                          padding: 0,
-                          flexShrink: 0,
-                        }}
-                      >
-                        +
-                      </button>
+  <div className="topbar-actions">
+    {/* BRAIN DUMP */}
+    <span
+      className="topbar-label"
+      style={{
+        fontSize: '0.72rem',
+        fontWeight: 700,
+        color: 'var(--ink-muted)',
+        whiteSpace: 'nowrap',
+      }}
+    >
+      Brain Dump
+    </span>
 
-                      {/* LOOK / PALETTE */}
-                      <div
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 6,
-                        }}
-                      >
-                        <span
-                          className="topbar-label"
-                          style={{
-                            fontSize: '0.72rem',
-                            fontWeight: 700,
-                            color: 'var(--ink-muted)',
-                            whiteSpace: 'nowrap',
-                          }}
-                        >
-                          Look
-                        </span>
+    <button
+      type="button"
+      onClick={() => setBrainDumpOpen(true)}
+      aria-label="Get it out of my head"
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        width: 32,
+        height: 32,
+        borderRadius: '50%',
+        background: 'var(--blush)',
+        border: '1.5px solid var(--border)',
+        cursor: 'pointer',
+        color: 'var(--pink-dark)',
+        fontSize: '1.1rem',
+        fontWeight: 700,
+        lineHeight: 1,
+        padding: 0,
+        flexShrink: 0,
+      }}
+    >
+      +
+    </button>
 
-                        <PaletteDropdown />
-                      </div>
+    {/* LOOK / PALETTE */}
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 6,
+      }}
+    >
+      <span
+        className="topbar-label"
+        style={{
+          fontSize: '0.72rem',
+          fontWeight: 700,
+          color: 'var(--ink-muted)',
+          whiteSpace: 'nowrap',
+        }}
+      >
+        Look
+      </span>
 
-                      {/* DAY / NIGHT */}
-                      <div
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 6,
-                        }}
-                      >
-                        <span
-                          className="topbar-label"
-                          style={{
-                            fontSize: '0.72rem',
-                            fontWeight: 700,
-                            color: 'var(--ink-muted)',
-                            whiteSpace: 'nowrap',
-                          }}
-                        >
-                          Mode Toggle
-                        </span>
+      <PaletteDropdown />
+    </div>
 
-                        <ThemeToggle />
-                      </div>
+    {/* DAY / NIGHT */}
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 6,
+      }}
+    >
+      <span
+        className="topbar-label"
+        style={{
+          fontSize: '0.72rem',
+          fontWeight: 700,
+          color: 'var(--ink-muted)',
+          whiteSpace: 'nowrap',
+        }}
+      >
+        Mode Toggle
+      </span>
 
-                      {/* SIGN OUT */}
-                      <button
-                        type="button"
-                        onClick={() => signOut()}
-                        aria-label="Sign out"
-                        style={{
-                          fontSize: '0.72rem',
-                          fontWeight: 700,
-                          color: 'var(--ink-muted)',
-                          background: 'none',
-                          border: '1.5px solid var(--border)',
-                          borderRadius: 8,
-                          padding: '4px 8px',
-                          cursor: 'pointer',
-                          whiteSpace: 'nowrap',
-                        }}
-                      >
-                        Sign out
-                      </button>
-
-                    {/* REFRESH */}
-                      <button
-                        type="button"
-                        onClick={refreshPolly}
-                        aria-label="Refresh Polly"
-                        title="Refresh Polly"
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          width: 32,
-                          height: 32,
-                          borderRadius: '50%',
-                          background: 'var(--surface)',
-                          border: '1.5px solid var(--border)',
-                          cursor: 'pointer',
-                          color: 'var(--ink-muted)',
-                          fontSize: '1rem',
-                          fontWeight: 700,
-                          lineHeight: 1,
-                          padding: 0,
-                          flexShrink: 0,
-                          WebkitTapHighlightColor: 'transparent',
-                        }}
-                      >
-                        ↻
-                      </button>
-
-                    </div>
-                  </header>
+      <ThemeToggle />
+    </div>
+  </div>
+</header>
 
                   <BrainDump
                     open={brainDumpOpen}
