@@ -127,6 +127,110 @@
    needed for it.
    ============================================ */
 
+/* ---------- tux (light) ---------- */
+[data-palette='tuxedo'][data-theme='light'] {
+  --bg: #F3F1EE;
+  --surface: #FFFFFF;
+  --text: #29282A;
+
+  --primary: #29282A;
+  --secondary: #4A484B;
+  --accent: #9B3038;
+  --mint: #68716B;
+
+  --border: rgba(41, 40, 42, 0.15);
+  --shadow: 0 8px 24px rgba(30, 28, 29, 0.12);
+
+  --ink: #29282A;
+  --ink-soft: #5C595D;
+  --ink-muted: #918C91;
+  --btn-ink: #FFFFFF;
+
+  --white: #FFFFFF;
+  --cream: #F4F0EB;
+
+  --blush: rgba(155, 48, 56, 0.10);
+
+  --green-dark: #4F5B52;
+  --citrus-blue: #596674;
+  --sage: #7B867D;
+  --sage-dark: #4F5B52;
+  --sage-light: rgba(79, 91, 82, 0.12);
+
+  --pink: #A75D65;
+  --pink-dark: #793A42;
+  --pink-light: rgba(167, 93, 101, 0.11);
+  --pink-light-solid: #EBD9DA;
+
+  --sky: #687A8B;
+
+  --gold: #A89062;
+  --gold-dark: #75613A;
+  --gold-light: rgba(168, 144, 98, 0.13);
+  --gold-light-solid: #EDE6D7;
+
+  --danger: #A8323A;
+  --danger-bg: #F3DFE0;
+
+  --accent-text: #FFFFFF;
+  --accent-text-muted: rgba(255, 255, 255, 0.78);
+
+  --active-bg: #E4DCDD;
+  --active-text: #742D35;
+}
+
+/* ---------- tux (dark) ---------- */
+[data-palette='tuxedo'][data-theme='dark'] {
+  --bg: #111112;
+  --surface: #1D1D20;
+  --text: #F1EEEE;
+
+  --primary: #E8E4E4;
+  --secondary: #AAA4A6;
+  --accent: #B63A43;
+  --mint: #778178;
+
+  --border: rgba(241, 238, 238, 0.12);
+  --shadow: 0 12px 30px rgba(0, 0, 0, 0.42);
+
+  --ink: #F1EEEE;
+  --ink-soft: #C6C0C2;
+  --ink-muted: #858083;
+  --btn-ink: #111112;
+
+  --white: #29292C;
+  --cream: #19191B;
+
+  --blush: rgba(182, 58, 67, 0.15);
+
+  --green-dark: #9AA79D;
+  --citrus-blue: #8997A4;
+  --sage: #68736B;
+  --sage-dark: #9AA79D;
+  --sage-light: rgba(154, 167, 157, 0.12);
+
+  --pink: #B96C74;
+  --pink-dark: #E09BA2;
+  --pink-light: rgba(185, 108, 116, 0.14);
+  --pink-light-solid: #42282B;
+
+  --sky: #8292A0;
+
+  --gold: #C2A56A;
+  --gold-dark: #E0C98E;
+  --gold-light: rgba(194, 165, 106, 0.14);
+  --gold-light-solid: #3B3323;
+
+  --danger: #D4515A;
+  --danger-bg: #472327;
+
+  --accent-text: #FFF8F7;
+  --accent-text-muted: rgba(255, 248, 247, 0.76);
+
+  --active-bg: #54262C;
+  --active-text: #F2D9DB;
+}
+
 /* ---------- princess pink (light) ---------- */
 [data-palette='pink'][data-theme='light'] {
   --bg: #FFF8F7;
