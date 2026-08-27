@@ -5,7 +5,8 @@ export type Palette =
   | 'teddy-bear'
   | 'blurple'
   | 'sunny-skies'
-  | 'pink';
+  | 'pink'
+  | 'tuxedo' ;
 
 export interface PaletteOption {
   id: Palette;
@@ -18,6 +19,7 @@ export const PALETTES: PaletteOption[] = [
   { id: 'blurple', label: 'blurple', emoji: '🫐' },
   { id: 'sunny-skies', label: 'Sunny Skies', emoji: '☀️' },
   { id: 'pink', label: 'Princess Pink', emoji: '🎀' },
+  { id: 'tuxedo', label: 'Tuxedo', emoji: '🎩' },
 ];
 
 interface ThemeContextValue {
@@ -37,7 +39,8 @@ function isPalette(value: string | null): value is Palette {
   value === 'teddy-bear' ||
   value === 'blurple' ||
   value === 'sunny-skies' ||
-  value === 'pink'
+  value === 'pink' ||
+  value === 'tuxedo'
 );
 }
 
