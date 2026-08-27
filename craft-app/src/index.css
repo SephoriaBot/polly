@@ -454,7 +454,7 @@
 
   --ink: #2B3A55;
   --ink-soft: #5C6E8C;
-  --ink-muted: #94A3BC;
+  --ink-muted: rgba(43, 58, 85, .78);
   --btn-ink: #2B3A55;
 
   --white: #FFFFFF;
@@ -502,7 +502,7 @@
 
   --ink: #FDF0D5;
   --ink-soft: #C7D3E0;
-  --ink-muted: #8FA0B8;
+  --ink-muted: rgba(20, 32, 46, .76);
   --btn-ink: #14202E;
 
   --white: #1E2E40;
