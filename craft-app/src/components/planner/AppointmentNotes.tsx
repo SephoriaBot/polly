@@ -108,7 +108,7 @@ export default function AppointmentNotes({
               aria-label="Delete"
               type="button"
             >
-              <Icon name="icon-clear" size={15} />
+              <Icon name="icon-clear" size={20} />
             </button>
           </div>
         ))}
@@ -142,7 +142,7 @@ export default function AppointmentNotes({
                   aria-label="Mark not covered"
                   type="button"
                 >
-                  <Icon name="clipboard-check" size={18} className={styles.coveredIcon} />
+                  <Icon name="clipboard-check" size={20} className={styles.coveredIcon} />
                 </button>
                 <span className={`${styles.itemText} ${styles.strikethrough}`}>{item.content}</span>
                 <button
@@ -151,7 +151,7 @@ export default function AppointmentNotes({
                   aria-label="Delete"
                   type="button"
                 >
-                  <Icon name="icon-clear" size={15} />
+                  <Icon name="icon-clear" size={20} />
                 </button>
               </div>
 
@@ -192,7 +192,7 @@ export default function AppointmentNotes({
               type="button"
             >
               {item.status === 'done' ? (
-                <Icon name="clipboard-check" size={18} className={styles.coveredIcon} />
+                <Icon name="clipboard-check" size={20} className={styles.coveredIcon} />
               ) : (
                 <Icon name="icon-circle" size={18} />
               )}
@@ -208,7 +208,7 @@ export default function AppointmentNotes({
               aria-label="Delete"
               type="button"
             >
-              <Icon name="icon-clear" size={15} />
+              <Icon name="icon-clear" size={20} />
             </button>
           </div>
         ))}

@@ -510,7 +510,7 @@ export default function DailyPlanner({ initialTab }: { initialTab?: 'tasks' | 'a
                         onClick={() => deleteTask(task.id)}
                         style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-muted)', padding: 0, display: 'flex', alignItems: 'center', opacity: 0.4 }}
                       >
-                        <Icon name="icon-clear" size={13} />
+                        <Icon name="icon-clear" size={18} />
                       </button>
                     </div>
                   ))}
@@ -590,7 +590,7 @@ export default function DailyPlanner({ initialTab }: { initialTab?: 'tasks' | 'a
                           onClick={() => deleteUpcomingTask(task.id)}
                           style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-muted)', padding: 0, display: 'flex', alignItems: 'center', opacity: 0.4 }}
                         >
-                          <Icon name="icon-clear" size={12} />
+                          <Icon name="icon-clear" size={17} />
                         </button>
                       </div>
                     ))}
@@ -668,7 +668,7 @@ export default function DailyPlanner({ initialTab }: { initialTab?: 'tasks' | 'a
                           title="Cancel"
                           style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-muted)', padding: 0, display: 'flex', alignItems: 'center', opacity: 0.4 }}
                         >
-                          <Icon name="icon-clear" size={13} />
+                          <Icon name="icon-clear" size={18} />
                         </button>
                       </div>
                     );
@@ -716,7 +716,7 @@ export default function DailyPlanner({ initialTab }: { initialTab?: 'tasks' | 'a
                             title="Remove"
                             style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-muted)', padding: 0, display: 'flex', alignItems: 'center', opacity: 0.4, flexShrink: 0 }}
                           >
-                            <Icon name="icon-clear" size={12} />
+                            <Icon name="icon-clear" size={17} />
                           </button>
                         </div>
                       ))}

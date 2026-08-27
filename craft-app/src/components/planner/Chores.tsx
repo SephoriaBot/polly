@@ -126,7 +126,7 @@ export default function Chores() {
                     style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-muted)', padding: 0, opacity: 0.4, flexShrink: 0 }}
                     aria-label="Remove chore"
                   >
-                    <Icon name="icon-clear" size={13} />
+                    <Icon name="icon-clear" size={18} />
                   </button>
                 </div>
               );

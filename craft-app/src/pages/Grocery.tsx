@@ -1263,7 +1263,7 @@ export default function Grocery({ initialTab }: { initialTab?: 'list' | 'recipes
                                         <span style={{ flex: 1, color: 'var(--pink-dark)', fontWeight: 600 }}>${p.price.toFixed(2)}</span>
                                         <span style={{ flex: 1, color: isStale(p.updated_at) ? 'var(--gold-dark)' : 'var(--ink-muted)', fontSize: '0.66rem' }}>{p.updated_at}</span>
                                         <button onClick={() => deletePrice(p.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-muted)', opacity: 0.5 }}>
-                                          <Icon name="icon-clear" size={12} />
+                                          <Icon name="icon-clear" size={17} />
                                         </button>
                                       </div>
                                     ))}
@@ -1352,7 +1352,7 @@ export default function Grocery({ initialTab }: { initialTab?: 'list' | 'recipes
                     ? <><Icon name={BASICS_PRESETS[basicsPreset].icon} size={18} /> {BASICS_PRESETS[basicsPreset].label}</>
                     : 'Build a Basics List'}
                 </h3>
-                <button className="close-btn" onClick={() => setShowBasicsModal(false)}><Icon name="icon-clear" size={16} /></button>
+                <button className="close-btn" onClick={() => setShowBasicsModal(false)}><Icon name="icon-clear" size={20} /></button>
               </div>
               <div className="modal-body">
                 {!basicsPreset ? (

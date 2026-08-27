@@ -1703,12 +1703,12 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                 {isCalendarCurrentMonth && new Date().getDay() !== 0 && (
                   <div style={{
                     marginBottom: 14, padding: "10px 12px", borderRadius: "var(--radius-sm)",
-                    background: "var(--blush)", border: "1px solid var(--pink-light)",
+                    background: "var(--info-card-bg)", border: "1px solid var(--info-card-border)",
                   }}>
                     <div className="form-label" style={{ marginBottom: 4 }}>
                       Hours already worked this week (Sun–yesterday)
                     </div>
-                    <div style={{ fontSize: 11, color: "var(--ink-muted)", marginBottom: 8 }}>
+                    <div style={{ fontSize: 11, color: "var(--info-card-text)", marginBottom: 8 }}>
                       The calendar below only starts from today, so this fills in the rest of the pool it can't see — otherwise this week's ramp % gets applied to a smaller pool than you've actually earned.
                     </div>
                     <div style={{ display: "flex", gap: 8 }}>
@@ -1769,8 +1769,7 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
         marginBottom: 14,
         padding: "10px 12px",
         borderRadius: "var(--radius-sm)",
-        background: "var(--blush)",
-        border: "1px solid var(--pink-light)",
+        background: "var(--info-card-bg)", border: "1px solid var(--info-card-border)",
       }}
     >
       <div className="form-label" style={{ marginBottom: 4 }}>
@@ -1780,7 +1779,7 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
       <div
         style={{
           fontSize: 11,
-          color: "var(--ink-muted)",
+          color: "var(--info-card-text)",
           marginBottom: 8,
         }}
       >

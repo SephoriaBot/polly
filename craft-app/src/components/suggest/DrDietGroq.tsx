@@ -277,7 +277,7 @@ Never mention calories, macros, or specific weight numbers. If the goal involves
           <span style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 700, fontSize: '0.95rem' }}>
             <Icon name="cooking-pot" size={17} /> Ask Dr. Groq — Diet Check-In
           </span>
-          <button className="close-btn" onClick={onClose}><Icon name="icon-clear" size={16} /></button>
+          <button className="close-btn" onClick={onClose}><Icon name="icon-clear" size={20} /></button>
         </div>
 
         <div className="modal-body" style={{ maxHeight: '70vh', overflowY: 'auto' }}>
@@ -541,7 +541,7 @@ Never mention calories, macros, or specific weight numbers. If the goal involves
               </button>
 
               <button className="btn btn-ghost" style={{ width: '100%', justifyContent: 'center', marginTop: 8 }} onClick={reset}>
-                <Icon name="icon-clear" size={13} /> Start Over With New Answers
+                <Icon name="icon-clear" size={18} /> Start Over With New Answers
               </button>
             </div>
           )}

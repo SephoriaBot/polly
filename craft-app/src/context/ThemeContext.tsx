@@ -11,15 +11,14 @@ export type Palette =
 export interface PaletteOption {
   id: Palette;
   label: string;
-  emoji: string;
 }
 
 export const PALETTES: PaletteOption[] = [
-  { id: 'teddy-bear', label: 'Teddy Bear', emoji: '🧸' },
-  { id: 'blurple', label: 'blurple', emoji: '🫐' },
-  { id: 'sunny-skies', label: 'Sunny Skies', emoji: '☀️' },
-  { id: 'pink', label: 'Princess Pink', emoji: '🎀' },
-  { id: 'tuxedo', label: 'Tuxedo', emoji: '🎩' },
+  { id: 'teddy-bear', label: 'Teddy Bear'},
+  { id: 'blurple', label: 'Blurple'},
+  { id: 'sunny-skies', label: 'Sunny Skies'},
+  { id: 'pink', label: 'Princess Pink'},
+  { id: 'tuxedo', label: 'Tuxedo'},
 ];
 
 interface ThemeContextValue {
