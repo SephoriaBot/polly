@@ -127,99 +127,210 @@
    needed for it.
    ============================================ */
 
-/* ---------- STRAWBERRY (light) ---------- */
-[data-palette='strawberry'][data-theme='light'] {
-  --bg: #FFF5F7;
-  --surface: #FFFFFF;
-  --text: #5A2A38;
 
-  --primary: #E85D75;
-  --secondary: #F6A6C1;
-  --accent: #7A9B57;
-  --mint: #8FAE6E;
+[data-palette='pink'][data-theme='light'] {
+  --bg: #FFF8F7;
+  --surface: #FFFEFC;
+  --text: #573B45;
 
-  --border: rgba(90, 42, 56, .14);
-  --shadow: 0 8px 24px rgba(90, 42, 56, .09);
+  --primary: #D990A8;
+  --secondary: #EBC4D0;
+  --accent: #B88962;
+  --mint: #A9B49A;
 
-  --ink: #5A2A38;
-  --ink-soft: #8C5163;
-  --ink-muted: #B98A97;
-  --btn-ink: #FFF5F7;
+  --border: rgba(87, 59, 69, 0.13);
+  --shadow: 0 8px 24px rgba(145, 92, 110, 0.10);
+
+  --ink: #573B45;
+  --ink-soft: #80606B;
+  --ink-muted: #AD8F99;
+  --btn-ink: #FFFFFF;
 
   --white: #FFFFFF;
-  --cream: #FFF5F7;
-  --blush: rgba(232, 93, 117, .13);
+  --cream: #FFF8F1;
 
-  --green-dark: #5F7A42;
-  --citrus-blue: #5F7A42;
-  --sage: #7A9B57;
-  --sage-dark: #5F7A42;
-  --sage-light: rgba(122, 155, 87, .13);
+  --blush: rgba(217, 144, 168, 0.14);
 
-  --pink: #E85D75;
-  --pink-dark: #B23A52;
-  --pink-light: rgba(232, 93, 117, .13);
-  --pink-light-solid: #FBD3DC;
+  --green-dark: #71806A;
+  --citrus-blue: #8FA39A;
+  --sage: #A9B49A;
+  --sage-dark: #71806A;
+  --sage-light: rgba(113, 128, 106, 0.13);
 
-  --sky: #4FA5A5;
+  --pink: #D990A8;
+  --pink-dark: #9B586F;
+  --pink-light: rgba(217, 144, 168, 0.14);
+  --pink-light-solid: #F4DCE3;
 
-  --gold: #F0B429;
-  --gold-dark: #B8860B;
-  --gold-light: rgba(240, 180, 41, .15);
-  --gold-light-solid: #FCE8B8;
+  --sky: #A9BBC0;
 
-  --danger: #C23B3B;
-  --danger-bg: #FBEAEA;
+  --gold: #CBA56A;
+  --gold-dark: #9C743E;
+  --gold-light: rgba(203, 165, 106, 0.15);
+  --gold-light-solid: #F3E4C9;
 
-  --accent-text: #FFF5F7;
-  --accent-text-muted: rgba(255, 245, 247, .78);
+  --danger: #B9656A;
+  --danger-bg: #F8E7E7;
+
+  --accent-text: #FFFFFF;
+  --accent-text-muted: rgba(255, 255, 255, 0.78);
+  --active-bg: #F4DCE3;
+--active-text: #7D485A;
+
+}
+
+[data-palette='pink'][data-theme='dark'] {
+  --bg: #24181E;
+  --surface: #332129;
+  --text: #F8E7E9;
+
+  --primary: #D99AAF;
+  --secondary: #B98298;
+  --accent: #BFA071;
+  --mint: #9BA98C;
+
+  --border: rgba(248, 231, 233, 0.12);
+  --shadow: 0 10px 28px rgba(0, 0, 0, 0.30);
+
+  --ink: #F8E7E9;
+  --ink-soft: #D9B9C1;
+  --ink-muted: #A98A93;
+  --btn-ink: #24181E;
+
+  --white: #3B2831;
+  --cream: #291C22;
+
+  --blush: rgba(217, 154, 175, 0.15);
+
+  --green-dark: #AAB99A;
+  --citrus-blue: #91A8A2;
+  --sage: #78866B;
+  --sage-dark: #AAB99A;
+  --sage-light: rgba(170, 185, 154, 0.13);
+
+  --pink: #D99AAF;
+  --pink-dark: #F0C5D0;
+  --pink-light: rgba(217, 154, 175, 0.15);
+  --pink-light-solid: #4A2D39;
+
+  --sky: #8FA7A8;
+
+  --gold: #D5B276;
+  --gold-dark: #E7CC9B;
+  --gold-light: rgba(213, 178, 118, 0.14);
+  --gold-light-solid: #493B27;
+
+  --danger: #D27D82;
+  --danger-bg: #45272B;
+
+  --accent-text: #FFF7F2;
+  --accent-text-muted: rgba(255, 247, 242, 0.76);
+  --active-bg: #4A2D39;
+--active-text: #F0C5D0;
+
+}
+
+/* ---------- STRAWBERRY (light) ---------- */
+[data-palette='strawberry'][data-theme='light'] {
+  --bg: #FFF9F0;
+  --surface: #FFFEFA;
+  --text: #4E3932;
+
+  --primary: #C85C62;
+  --secondary: #E7A0A1;
+  --accent: #72845C;
+  --mint: #9EAD7C;
+
+  --border: rgba(78, 57, 50, 0.14);
+  --shadow: 0 8px 24px rgba(120, 75, 60, 0.09);
+
+  --ink: #4E3932;
+  --ink-soft: #765C51;
+  --ink-muted: #A18A7E;
+  --btn-ink: #FFFFFF;
+
+  --white: #FFFFFF;
+  --cream: #FFF4DC;
+
+  --blush: rgba(200, 92, 98, 0.13);
+
+  --green-dark: #586D48;
+  --citrus-blue: #718B72;
+  --sage: #8FA275;
+  --sage-dark: #586D48;
+  --sage-light: rgba(88, 109, 72, 0.13);
+
+  --pink: #C85C62;
+  --pink-dark: #963E46;
+  --pink-light: rgba(200, 92, 98, 0.13);
+  --pink-light-solid: #F2D0CB;
+
+  --sky: #9EB9B0;
+
+  --gold: #D8AE55;
+  --gold-dark: #9B742A;
+  --gold-light: rgba(216, 174, 85, 0.15);
+  --gold-light-solid: #F4E3B8;
+
+  --danger: #B94E4E;
+  --danger-bg: #F7E4E1;
+
+  --accent-text: #FFFFFF;
+  --accent-text-muted: rgba(255, 255, 255, 0.78);
+  --active-bg: #F2D0CB;
+--active-text: #71383D;
+
 }
 
 /* ---------- STRAWBERRY (dark) ---------- */
 [data-palette='strawberry'][data-theme='dark'] {
-  --bg: #2A1017;
-  --surface: #3D1620;
-  --text: #FBD9E0;
+  --bg: #241A18;
+  --surface: #342522;
+  --text: #F8E9DF;
 
-  --primary: #F27C93;
-  --secondary: #E39BB0;
-  --accent: #9AB37D;
-  --mint: #A8C285;
+  --primary: #D97878;
+  --secondary: #B96D70;
+  --accent: #A3AD7C;
+  --mint: #8F9D6D;
 
-  --border: rgba(251, 217, 224, .12);
-  --shadow: 0 10px 28px rgba(0, 0, 0, .28);
+  --border: rgba(248, 233, 223, 0.12);
+  --shadow: 0 10px 28px rgba(0, 0, 0, 0.30);
 
-  --ink: #FBD9E0;
-  --ink-soft: #D9A3B2;
-  --ink-muted: #A97A88;
-  --btn-ink: #2A1017;
+  --ink: #F8E9DF;
+  --ink-soft: #D9BDB1;
+  --ink-muted: #A58C82;
+  --btn-ink: #241A18;
 
-  --white: #3D1620;
-  --cream: #2E1219;
+  --white: #3C2B27;
+  --cream: #2B201D;
 
-  --green-dark: #A8C285;
-  --citrus-blue: #9AB37D;
-  --sage: #7C9860;
-  --sage-dark: #A8C285;
-  --sage-light: rgba(168, 194, 133, .13);
+  --blush: rgba(217, 120, 120, 0.15);
 
-  --pink: #E39BB0;
-  --pink-dark: #F5C4D2;
-  --pink-light: rgba(227, 155, 176, .14);
-  --pink-light-solid: #4A2530;
+  --green-dark: #A8B58A;
+  --citrus-blue: #8EA9A0;
+  --sage: #788864;
+  --sage-dark: #A8B58A;
+  --sage-light: rgba(168, 181, 138, 0.13);
 
-  --sky: #6FB8B8;
+  --pink: #D97878;
+  --pink-dark: #F0B4B0;
+  --pink-light: rgba(217, 120, 120, 0.15);
+  --pink-light-solid: #4A292A;
 
-  --gold: #E8C468;
-  --gold-dark: #F2D896;
-  --gold-light: rgba(232, 196, 104, .14);
-  --gold-light-solid: #4A3B1E;
+  --sky: #8EA9A0;
 
-  --danger: #E88888;
-  --danger-bg: #3D2020;
+  --gold: #D5B66B;
+  --gold-dark: #E5CF99;
+  --gold-light: rgba(213, 182, 107, 0.14);
+  --gold-light-solid: #483B25;
 
-  --accent-text: #FFF0F3;
-  --accent-text-muted: rgba(255, 240, 243, .76);
+  --danger: #D47A70;
+  --danger-bg: #472824;
+
+  --accent-text: #FFF8F1;
+  --accent-text-muted: rgba(255, 248, 241, 0.76);
+  --active-bg: #4A292A;
+--active-text: #F0B4B0;
 }
 
 /* ---------- SUNNY SKIES (light) ---------- */
