@@ -394,21 +394,31 @@ a {
 .topbar {
   display: flex;
   flex-direction: column;
-  align-items: stretch;
   gap: 12px;
   padding: 14px 20px;
   border-bottom: 1px solid var(--border);
   background: var(--surface);
 }
 
+.topbar-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.topbar-account-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
 
 .topbar-actions {
   display: flex;
   align-items: center;
-  gap: 12px;
-  overflow-x: auto;
-  scrollbar-width: none;
-  -webkit-overflow-scrolling: touch;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
 }
 
 .topbar-actions::-webkit-scrollbar {
