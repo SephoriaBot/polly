@@ -1,7 +1,11 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 
 type Theme = 'light' | 'dark';
-export type Palette = 'teddy-bear' | 'strawberry' | 'sunny-skies';
+export type Palette =
+  | 'teddy-bear'
+  | 'strawberry'
+  | 'sunny-skies'
+  | 'pink';
 
 export interface PaletteOption {
   id: Palette;
@@ -13,6 +17,7 @@ export const PALETTES: PaletteOption[] = [
   { id: 'teddy-bear', label: 'Teddy Bear', emoji: '🧸' },
   { id: 'strawberry', label: 'Strawberry', emoji: '🍓' },
   { id: 'sunny-skies', label: 'Sunny Skies', emoji: '☀️' },
+  { id: 'pink', label: 'Princess Pink', emoji: '🎀' },
 ];
 
 interface ThemeContextValue {
@@ -28,7 +33,12 @@ const STORAGE_KEY = 'polly-theme';
 const PALETTE_STORAGE_KEY = 'polly-palette';
 
 function isPalette(value: string | null): value is Palette {
-  return value === 'teddy-bear' || value === 'strawberry' || value === 'sunny-skies';
+ return (
+  value === 'teddy-bear' ||
+  value === 'strawberry' ||
+  value === 'sunny-skies' ||
+  value === 'pink'
+);
 }
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
