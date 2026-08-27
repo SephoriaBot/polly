@@ -1972,17 +1972,19 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                   moneyCalendarWeekChunks.map(({ title, rows }) => (
                     <div key={title} style={{ marginBottom: 18 }}>
                       <div style={{ fontSize: 12, fontWeight: 700, color: "var(--ink)", marginBottom: 8 }}>{title}</div>
-                      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                                            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                         {rows.map(row => {
                           const isToday = row.key === dateKey(new Date());
+                          const textColor = isToday ? "var(--accent-text)" : "var(--ink)";
+                          const mutedColor = isToday ? "var(--accent-text-muted)" : "var(--ink-muted)";
                           return (
                             <div key={row.key} id={`money-day-${row.key}`} style={{ border: `1.5px solid ${isToday ? "var(--pink-dark)" : "var(--border)"}`, borderRadius: 14, padding: "10px 12px", background: isToday ? "var(--accent)" : "transparent" }}>
                               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
-                                <div style={{ fontSize: 12, fontWeight: 700, color: "var(--ink)" }}>
+                                <div style={{ fontSize: 12, fontWeight: 700, color: textColor }}>
                                   {row.date.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })}
-                                  {isToday && <span style={{ color: "var(--pink-dark)", marginLeft: 6, fontSize: 10 }}>TODAY</span>}
+                                  {isToday && <span style={{ color: "var(--accent-text)", marginLeft: 6, fontSize: 10 }}>TODAY</span>}
                                 </div>
-                                <div style={{ fontSize: 13, fontWeight: 800, color: row.balance < 0 ? "var(--danger)" : (isToday ? "var(--pink-dark)" : "var(--green-dark)") }}>
+                                <div style={{ fontSize: 13, fontWeight: 800, color: isToday ? "var(--accent-text)" : (row.balance < 0 ? "var(--danger)" : "var(--green-dark)") }}>
                                   {fmt(row.balance)}
                                 </div>
                               </div>
@@ -1990,7 +1992,7 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                               {row.billsToday.length > 0 && (
                                 <div style={{ marginBottom: 6 }}>
                                   {row.billsToday.map(b => (
-                                    <div key={b.id} style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: "var(--pink-dark)" }}>
+                                    <div key={b.id} style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: isToday ? "var(--accent-text)" : "var(--pink-dark)" }}>
                                       <span><Icon name="house" size={14} /> {b.name}</span>
                                       <span style={{ fontWeight: 700 }}>-{fmt(b.amount)}</span>
                                     </div>
@@ -1999,7 +2001,7 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                               )}
 
                               <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                                <span style={{ fontSize: 10, color: "var(--ink-muted)", whiteSpace: "nowrap" }}>Reg</span>
+                                <span style={{ fontSize: 10, color: mutedColor, whiteSpace: "nowrap" }}>Reg</span>
                                 <input
                                   type="number"
                                   className="form-input"
@@ -2008,7 +2010,7 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                                   onChange={e => setDailyHourField(row.key, "reg", e.target.value)}
                                   style={{ flex: 1, fontSize: 12, padding: "4px 8px" }}
                                 />
-                                <span style={{ fontSize: 10, color: "var(--ink-muted)", whiteSpace: "nowrap" }}>OT</span>
+                                <span style={{ fontSize: 10, color: mutedColor, whiteSpace: "nowrap" }}>OT</span>
                                 <input
                                   type="number"
                                   className="form-input"
@@ -2019,7 +2021,7 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                                 />
 
                                 {row.hoursToday > 0 && (
-                                  <span style={{ fontSize: 11, color: isToday ? "var(--pink-dark)" : "var(--green-dark)", fontWeight: 700, whiteSpace: "nowrap" }}>+{fmt(row.availableToday)}</span>
+                                  <span style={{ fontSize: 11, color: isToday ? "var(--accent-text)" : "var(--green-dark)", fontWeight: 700, whiteSpace: "nowrap" }}>+{fmt(row.availableToday)}</span>
                                 )}
                               </div>
 
@@ -2029,14 +2031,14 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                                   checked={!!recurringHours[row.date.getDay()]}
                                   onChange={e => toggleRecurringWeekday(row.date.getDay(), row.key, e.target.checked)}
                                 />
-                                <span style={{ fontSize: 9, color: "var(--ink-muted)" }}>
+                                <span style={{ fontSize: 9, color: mutedColor }}>
                                   Recurring every {row.date.toLocaleDateString(undefined, { weekday: "long" })}
                                 </span>
                               </label>
 
 
                               {row.hoursToday > 0 && (
-                                <div style={{ fontSize: 9, color: "var(--ink-muted)", marginTop: 3 }}>
+                                <div style={{ fontSize: 9, color: mutedColor, marginTop: 3 }}>
                                   {Math.round(row.eligiblePct * 100)}% of period pool available
                                   {row.heldInPool > 0.005 && ` · ${fmt(row.heldInPool)} still held this period`}
                                   {row.withdrawnBeforeToday > 0.005 && (
@@ -2048,13 +2050,13 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                               )}
 
                               {row.releasedToday > 0.005 && (
-                                <div style={{ fontSize: 11, color: "var(--gold)", fontWeight: 700, marginTop: 4 }}>
+                                <div style={{ fontSize: 11, color: isToday ? "var(--accent-text)" : "var(--gold)", fontWeight: 700, marginTop: 4 }}>
                                   <Icon name="money-bag" size={14} /> +{fmt(row.releasedToday)} payday catch-up
                                 </div>
                               )}
 
                               <div style={{ marginTop: 8 }}>
-                                <span style={{ fontSize: 10, color: "var(--ink-muted)" }}>
+                                <span style={{ fontSize: 10, color: mutedColor }}>
                                   Expected Extra Funds
                                 </span>
 
@@ -2076,7 +2078,7 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                                 <div
                                   style={{
                                     fontSize: 11,
-                                    color: "var(--gold)",
+                                    color: isToday ? "var(--accent-text)" : "var(--gold)",
                                     fontWeight: 700,
                                     marginTop: 4,
                                   }}
@@ -2086,7 +2088,7 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                               )}
 
                               <div style={{ marginTop: 8 }}>
-                                <span style={{ fontSize: 10, color: "var(--ink-muted)" }}>
+                                <span style={{ fontSize: 10, color: mutedColor }}>
                                   Expected Purchase / Expense
                                 </span>
 
@@ -2108,7 +2110,7 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                                 <div
                                   style={{
                                     fontSize: 11,
-                                    color: "var(--danger)",
+                                    color: isToday ? "var(--accent-text)" : "var(--danger)",
                                     fontWeight: 700,
                                     marginTop: 4,
                                   }}
