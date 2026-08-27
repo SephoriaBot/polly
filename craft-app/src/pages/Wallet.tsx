@@ -1705,7 +1705,7 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                     marginBottom: 14, padding: "10px 12px", borderRadius: "var(--radius-sm)",
                     background: "var(--info-card-bg)", border: "1px solid var(--info-card-border)",
                   }}>
-                    <div className="form-label" style={{ marginBottom: 4 }}>
+                                        <div className="form-label" style={{ marginBottom: 4, color: "var(--info-card-text)" }}>
                       Hours already worked this week (Sun–yesterday)
                     </div>
                     <div style={{ fontSize: 11, color: "var(--info-card-text)", marginBottom: 8 }}>
@@ -1772,7 +1772,7 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
         background: "var(--info-card-bg)", border: "1px solid var(--info-card-border)",
       }}
     >
-      <div className="form-label" style={{ marginBottom: 4 }}>
+            <div className="form-label" style={{ marginBottom: 4, color: "var(--info-card-text)" }}>
         Hours worked {fmt(periodStartSunday)}–{fmt(closingSaturday)}
       </div>
 
