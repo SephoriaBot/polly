@@ -18,6 +18,8 @@ import { supabase } from '../lib/supabase';
 import Icon from './Icon';
 import { type Chore, statusFor } from '../lib/chores';
 import { getUnpaidBillsThisMonth, pickNextBill, daySuffix } from '../lib/money';
+import { listCustomTrackers } from '../lib/trackerApi';
+import { TRACKER_CONFIG } from '../data/trackerConfig';
 
 interface SnapshotRow {
   key: string;
@@ -34,6 +36,12 @@ function todayISO(): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
+function daysAgoISO(days: number): string {
+  const d = new Date();
+  d.setDate(d.getDate() - days);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
 export default function TodaySnapshot({ onNavigate }: { onNavigate?: (page: string, tab?: string) => void }) {
   const [rows, setRows] = useState<SnapshotRow[] | null>(null);
 
@@ -42,12 +50,14 @@ export default function TodaySnapshot({ onNavigate }: { onNavigate?: (page: stri
       const today = todayISO();
       const now = new Date();
 
-      const [choresRes, dueChoresRes, apptRes, unpaidBills, cartSettingsRes] = await Promise.all([
+      const [choresRes, dueChoresRes, apptRes, unpaidBills, cartSettingsRes, recentLogsRes, customTrackers] = await Promise.all([
         supabase.from('daily_tasks').select('id,label,done').eq('task_date', today).eq('done', false).order('created_at'),
         supabase.from('chores').select('id,name,interval_days,last_done_at,icon,created_at'),
         supabase.from('appointments').select('id,title,date_time').order('date_time'),
         getUnpaidBillsThisMonth(),
         supabase.from('grocery_settings').select('smart_cart_total,smart_cart_item_count,smart_cart_updated_at').eq('id', 1).maybeSingle(),
+        supabase.from('tracker_logs').select('type,log_date').gte('log_date', daysAgoISO(30)),
+        listCustomTrackers().catch(() => []),
       ]);
 
       const tasks = choresRes.data ?? [];
@@ -75,6 +85,17 @@ export default function TodaySnapshot({ onNavigate }: { onNavigate?: (page: stri
       const cartTotal = cartSettings?.smart_cart_total != null ? Number(cartSettings.smart_cart_total) : null;
       const cartItemCount = cartSettings?.smart_cart_item_count ?? 0;
 
+      // Only trackers with real recent history get a "log today" prompt —
+      // per request, this deliberately excludes tracker types you've never
+      // used or abandoned, rather than nagging about every built-in type.
+      const recentLogs = recentLogsRes.data ?? [];
+      const activeTypes = Array.from(new Set(recentLogs.map(l => l.type)));
+      const loggedTodayTypes = new Set(recentLogs.filter(l => l.log_date === today).map(l => l.type));
+      const dueTypes = activeTypes.filter(t => !loggedTodayTypes.has(t));
+
+      const trackerLabel = (type: string): string =>
+        TRACKER_CONFIG[type]?.label ?? customTrackers.find((c: any) => c.id === type)?.label ?? type;
+
       const next: SnapshotRow[] = [
         tasks.length > 0
           ? { key: 'tasks', icon: 'clipboard-check', label: `${tasks.length} quick task${tasks.length === 1 ? '' : 's'}`, detail: tasks.slice(0, 2).map(t => t.label).join(', '), page: 'dailyplanner', tab: 'tasks' }
@@ -96,6 +117,14 @@ export default function TodaySnapshot({ onNavigate }: { onNavigate?: (page: stri
           ? { key: 'smart-cart', icon: 'shopping-cart', label: `Smart Cart: $${cartTotal.toFixed(2)}`, detail: `${cartItemCount} item${cartItemCount === 1 ? '' : 's'} · updated ${timeAgo(cartSettings!.smart_cart_updated_at!)}`, page: 'grocery', tab: 'smart-cart' }
           : { key: 'smart-cart', icon: 'shopping-cart', label: 'No smart cart total yet', detail: 'Build one from your grocery list', page: 'grocery', tab: 'smart-cart', empty: true },
       ];
+
+      if (activeTypes.length > 0) {
+        next.push(
+          dueTypes.length > 0
+            ? { key: 'trackers', icon: 'icon-trackers', label: `${dueTypes.length} tracker${dueTypes.length === 1 ? '' : 's'} to log`, detail: dueTypes.slice(0, 3).map(trackerLabel).join(', '), page: 'trackers', tab: dueTypes[0] }
+            : { key: 'trackers', icon: 'icon-trackers', label: 'Trackers logged today', detail: 'All caught up', page: 'trackers', tab: activeTypes[0], empty: true }
+        );
+      }
 
       setRows(next);
     })();
