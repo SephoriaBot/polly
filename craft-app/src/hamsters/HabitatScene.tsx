@@ -48,6 +48,17 @@ const HABITAT_ITEMS: HabitatItem[] = [
   { key: 'skeleton-coin', label: 'Skeleton Coin', image: `${SHELF_PATH}/skeleton_coin.png`, shelf: 1 },
   { key: 'ouija-planchette', label: 'Ouija Planchette', image: `${SHELF_PATH}/ouija_planchette.png`, shelf: 1 },
   { key: 'ghost-bottle', label: 'Ghost in a Bottle', image: `${SHELF_PATH}/ghost_bottle.png`, shelf: 1 },
+  // New batch, generated for the daily-market expansion
+  { key: 'honey-jar', label: 'Honey Jar', image: `${SHELF_PATH}/icon_01_01.png`, shelf: 1 },
+  { key: 'strawberry-cake', label: 'Strawberry Cake', image: `${SHELF_PATH}/icon_01_02.png`, shelf: 1 },
+  { key: 'hot-cocoa', label: 'Hot Cocoa', image: `${SHELF_PATH}/icon_01_03.png`, shelf: 1 },
+  { key: 'macaron-basket', label: 'Macaron Basket', image: `${SHELF_PATH}/icon_01_04.png`, shelf: 1 },
+  { key: 'jam-jar', label: 'Jam Jar', image: `${SHELF_PATH}/icon_01_05.png`, shelf: 1 },
+  { key: 'cherry-bowl', label: 'Bowl of Cherries', image: `${SHELF_PATH}/icon_01_06.png`, shelf: 1 },
+  { key: 'mini-teapot', label: 'Mini Teapot', image: `${SHELF_PATH}/icon_01_07.png`, shelf: 1 },
+  // Narrow/tall crop reads small at the same width % as its neighbors
+  { key: 'ice-cream-cone', label: 'Ice Cream Cone', image: `${SHELF_PATH}/icon_01_08.png`, shelf: 1, scale: 1.15 },
+  { key: 'gingerbread-cookie', label: 'Gingerbread Cookie', image: `${SHELF_PATH}/icon_01_10.png`, shelf: 1 },
 
   // Shelf 2 — study & hobby corner
   { key: 'books', label: 'Books', image: `${SHELF_PATH}/icon-books.png`, shelf: 2 },
@@ -63,6 +74,16 @@ const HABITAT_ITEMS: HabitatItem[] = [
   { key: 'astrolabe', label: 'Astrolabe', image: `${SHELF_PATH}/astrolabe.png`, shelf: 2 },
   { key: 'music-box', label: 'Music Box', image: `${SHELF_PATH}/music_box.png`, shelf: 2 },
   { key: 'clockwork-beetle', label: 'Clockwork Beetle', image: `${SHELF_PATH}/clockwork_beetle.png`, shelf: 2 },
+  // New batch, generated for the daily-market expansion
+  { key: 'typewriter', label: 'Typewriter', image: `${SHELF_PATH}/icon_02_01.png`, shelf: 2 },
+  { key: 'pincushion', label: 'Pincushion & Scissors', image: `${SHELF_PATH}/icon_02_04.png`, shelf: 2 },
+  { key: 'paint-palette', label: 'Paint Palette', image: `${SHELF_PATH}/icon_02_05.png`, shelf: 2 },
+  // Narrow/tall crop reads small at the same width % as its neighbors
+  { key: 'chess-knight', label: 'Chess Knight', image: `${SHELF_PATH}/icon_02_06.png`, shelf: 2, scale: 1.15 },
+  { key: 'compass', label: 'Compass', image: `${SHELF_PATH}/icon_02_07.png`, shelf: 2 },
+  { key: 'key-ring', label: 'Antique Key Ring', image: `${SHELF_PATH}/icon_02_08.png`, shelf: 2 },
+  { key: 'sheet-music', label: 'Sheet Music Roll', image: `${SHELF_PATH}/icon_02_09.png`, shelf: 2 },
+  { key: 'embroidery-hoop', label: 'Embroidery Hoop', image: `${SHELF_PATH}/icon_02_10.png`, shelf: 2 },
 
   // Shelf 3 — cozy & botanical
   { key: 'candle', label: 'Candle', image: `${SHELF_PATH}/icon-candle.png`, shelf: 3 },
@@ -78,6 +99,18 @@ const HABITAT_ITEMS: HabitatItem[] = [
   { key: 'moon-cauldron', label: 'Moon Cauldron', image: `${SHELF_PATH}/moon_cauldron.png`, shelf: 3 },
   { key: 'framed-butterfly', label: 'Framed Butterfly', image: `${SHELF_PATH}/framed_butterfly.png`, shelf: 3 },
   { key: 'jackalope', label: 'Jackalope', image: `${SHELF_PATH}/jackalope.png`, shelf: 3 },
+  // New batch, generated for the daily-market expansion
+  { key: 'flower-book', label: 'Pressed Flower Book', image: `${SHELF_PATH}/icon_03_01.png`, shelf: 3 },
+  { key: 'watering-can', label: 'Watering Can', image: `${SHELF_PATH}/icon_03_02.png`, shelf: 3 },
+  { key: 'succulent', label: 'Potted Succulent', image: `${SHELF_PATH}/icon_03_03.png`, shelf: 3 },
+  { key: 'lavender-bundle', label: 'Lavender Bundle', image: `${SHELF_PATH}/icon_03_04.png`, shelf: 3 },
+  { key: 'snail-shell', label: 'Snail Shell', image: `${SHELF_PATH}/icon_03_05.png`, shelf: 3 },
+  { key: 'moss-terrarium', label: 'Moss Terrarium', image: `${SHELF_PATH}/icon_03_06.png`, shelf: 3 },
+  { key: 'acorn-cluster', label: 'Acorn Cluster', image: `${SHELF_PATH}/icon_03_07.png`, shelf: 3 },
+  // Narrow/tall crop reads small at the same width % as its neighbors
+  { key: 'butterfly-net', label: 'Butterfly Net', image: `${SHELF_PATH}/icon_03_08.png`, shelf: 3, scale: 1.15 },
+  { key: 'honeycomb', label: 'Honeycomb', image: `${SHELF_PATH}/icon_03_09.png`, shelf: 3 },
+  { key: 'birds-nest', label: "Bird's Nest", image: `${SHELF_PATH}/icon_03_10.png`, shelf: 3 },
 
   // Shelf 4 (bottom) — curiosities
   { key: 'birdhouse', label: 'Birdhouse', image: `${SHELF_PATH}/icon-birdhouse.png`, shelf: 4 },
@@ -96,6 +129,17 @@ const HABITAT_ITEMS: HabitatItem[] = [
   { key: 'bound-bones', label: 'Bound Bones', image: `${SHELF_PATH}/bound_bones.png`, shelf: 4 },
   { key: 'eyeball-jar', label: 'Eyeball Jar', image: `${SHELF_PATH}/eyeball_jar.png`, shelf: 4 },
   { key: 'moth-skull', label: 'Moth Skull', image: `${SHELF_PATH}/moth_skull.png`, shelf: 4 },
+  // New batch, generated for the daily-market expansion
+  { key: 'crystal-ball', label: 'Crystal Ball', image: `${SHELF_PATH}/icon_04_01.png`, shelf: 4 },
+  // Wide/short crop reads a touch big at the same width % as its neighbors
+  { key: 'raven-skull', label: 'Raven Skull', image: `${SHELF_PATH}/icon_04_02.png`, shelf: 4, scale: 0.9 },
+  { key: 'spellbook', label: 'Spellbook', image: `${SHELF_PATH}/icon_04_03.png`, shelf: 4 },
+  { key: 'black-cat', label: 'Black Cat', image: `${SHELF_PATH}/icon_04_04.png`, shelf: 4 },
+  { key: 'tiny-cauldron', label: 'Tiny Cauldron', image: `${SHELF_PATH}/icon_04_05.png`, shelf: 4 },
+  { key: 'bat-wing-charm', label: 'Bat Wing Charm', image: `${SHELF_PATH}/icon_04_06.png`, shelf: 4 },
+  { key: 'glowing-potion', label: 'Glowing Potion Vial', image: `${SHELF_PATH}/icon_04_08.png`, shelf: 4 },
+  { key: 'tarot-deck', label: 'Tarot Deck', image: `${SHELF_PATH}/icon_04_09.png`, shelf: 4 },
+  { key: 'pocket-watch', label: 'Pocket Watch', image: `${SHELF_PATH}/icon_04_10.png`, shelf: 4 },
 ];
 
 const SHELVES: { key: ShelfNum; label: string }[] = [
