@@ -429,7 +429,9 @@ export default function App() {
                         />
                       )}
 
-                      {page === 'trackers' && <TrackerPage />}
+                      {page === 'trackers' && (
+                        <TrackerPage initialTab={initialTab as any} />
+                      )}
 
                       {page === 'decisions' && <DecisionTree />}
 
