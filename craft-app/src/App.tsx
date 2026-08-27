@@ -9,6 +9,7 @@ import {
 
 import BottomNav from './components/BottomNav';
 import ThemeToggle from './components/ThemeToggle';
+import PaletteDropdown from './components/PaletteDropdown';
 import BrainDump from './components/BrainDump';
 
 import { ThemeProvider } from './context/ThemeContext';
@@ -296,6 +297,29 @@ export default function App() {
                       >
                         +
                       </button>
+
+                      {/* LOOK / PALETTE */}
+                      <div
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 6,
+                        }}
+                      >
+                        <span
+                          className="topbar-label"
+                          style={{
+                            fontSize: '0.72rem',
+                            fontWeight: 700,
+                            color: 'var(--ink-muted)',
+                            whiteSpace: 'nowrap',
+                          }}
+                        >
+                          Look
+                        </span>
+
+                        <PaletteDropdown />
+                      </div>
 
                       {/* DAY / NIGHT */}
                       <div
