@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { useHamsterGrowth } from './HamsterGrowthContext';
 
@@ -6,6 +6,10 @@ const SHELF_PATH = '/shelf';
 const MAX_PER_SHELF = 4;
 const REGULAR_COST = 15;
 const LARGE_COST = 25;
+
+// How many locked items are purchasable on any given day. Everything
+// already unlocked stays visible/placeable regardless of this.
+const DAILY_MARKET_SIZE = 4;
 
 type ShelfNum = 1 | 2 | 3 | 4;
 
@@ -155,6 +159,113 @@ interface HabitatThemeRow {
   decor_keys: string[] | null;
 }
 
+// Ambient lighting wash for the shelf, keyed to time of day. Interpolated
+// linearly between neighboring keyframes so it drifts gradually rather than
+// snapping — deep cool navy overnight, a soft peach dawn, fully clear
+// through the daytime hours, then a golden dusk sliding back into night.
+interface LightKeyframe {
+  hour: number;
+  rgb: [number, number, number];
+  opacity: number;
+}
+
+const LIGHT_KEYFRAMES: LightKeyframe[] = [
+  { hour: 0, rgb: [33, 27, 61], opacity: 0.42 }, // deep night
+  { hour: 5, rgb: [33, 27, 61], opacity: 0.42 },
+  { hour: 7, rgb: [246, 184, 138], opacity: 0.24 }, // dawn glow
+  { hour: 9, rgb: [246, 184, 138], opacity: 0 }, // full daylight
+  { hour: 17, rgb: [246, 184, 138], opacity: 0 },
+  { hour: 19, rgb: [232, 147, 95], opacity: 0.28 }, // golden dusk
+  { hour: 21, rgb: [46, 37, 85], opacity: 0.38 }, // twilight into night
+  { hour: 24, rgb: [33, 27, 61], opacity: 0.42 },
+];
+
+function lerp(a: number, b: number, t: number): number {
+  return a + (b - a) * t;
+}
+
+function shelfLighting(fractionalHour: number): string {
+  for (let i = 0; i < LIGHT_KEYFRAMES.length - 1; i++) {
+    const a = LIGHT_KEYFRAMES[i];
+    const b = LIGHT_KEYFRAMES[i + 1];
+    if (fractionalHour >= a.hour && fractionalHour <= b.hour) {
+      const t = (fractionalHour - a.hour) / (b.hour - a.hour);
+      const r = Math.round(lerp(a.rgb[0], b.rgb[0], t));
+      const g = Math.round(lerp(a.rgb[1], b.rgb[1], t));
+      const bl = Math.round(lerp(a.rgb[2], b.rgb[2], t));
+      const opacity = lerp(a.opacity, b.opacity, t);
+      return `rgba(${r}, ${g}, ${bl}, ${opacity.toFixed(3)})`;
+    }
+  }
+  const last = LIGHT_KEYFRAMES[LIGHT_KEYFRAMES.length - 1];
+  return `rgba(${last.rgb[0]}, ${last.rgb[1]}, ${last.rgb[2]}, ${last.opacity})`;
+}
+
+// Re-reads the clock once a minute so the wash drifts through the day
+// without needing a page reload.
+function useFractionalHour(): number {
+  const [hour, setHour] = useState(() => {
+    const now = new Date();
+    return now.getHours() + now.getMinutes() / 60;
+  });
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      const now = new Date();
+      setHour(now.getHours() + now.getMinutes() / 60);
+    }, 60000);
+    return () => clearInterval(id);
+  }, []);
+
+  return hour;
+}
+
+// --- Daily rotating market -------------------------------------------
+//
+// Only a handful of locked items are purchasable on any given day, so
+// the shop feels like it's stocked fresh rather than a static catalog.
+// Everything already unlocked stays visible/placeable regardless.
+
+// Small deterministic PRNG, seeded from a plain date string (not a
+// timestamp), so the draw is stable all day and only changes when the
+// calendar date rolls over.
+function mulberry32(seed: number) {
+  return function () {
+    seed |= 0;
+    seed = (seed + 0x6d2b79f5) | 0;
+    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function hashString(str: string): number {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = (Math.imul(31, hash) + str.charCodeAt(i)) | 0;
+  }
+  return hash;
+}
+
+function todayKey(): string {
+  const now = new Date();
+  return `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}`;
+}
+
+// Picks today's rotating market from the full catalog, seeded by the
+// calendar date. Owned items can still land in the draw — harmless,
+// since they're already unlocked and the "today's pick" styling is
+// just a no-op for those.
+function pickDailyMarket(dateStr: string, allKeys: string[], count: number): Set<string> {
+  const rng = mulberry32(hashString(dateStr));
+  const pool = [...allKeys];
+  for (let i = pool.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    [pool[i], pool[j]] = [pool[j], pool[i]];
+  }
+  return new Set(pool.slice(0, count));
+}
+
 export default function HabitatScene() {
   const { loading, decorPoints, spendDecorPoints } = useHamsterGrowth();
   const [decor, setDecor] = useState<string[]>([]);
@@ -163,6 +274,14 @@ export default function HabitatScene() {
   const [unlockingKey, setUnlockingKey] = useState<string | null>(null);
   const [unlockError, setUnlockError] = useState<string | null>(null);
   const [selectedShelf, setSelectedShelf] = useState<ShelfNum>(1);
+  const fractionalHour = useFractionalHour();
+
+  // Today's 4 purchasable locked items. Recomputed only when the date
+  // string changes (i.e. effectively once per calendar day).
+  const todaysMarket = useMemo(
+    () => pickDailyMarket(todayKey(), HABITAT_ITEMS.map(i => i.key), DAILY_MARKET_SIZE),
+    []
+  );
 
   // Load the saved theme + unlocked items once on mount.
   useEffect(() => {
@@ -235,6 +354,8 @@ export default function HabitatScene() {
 
   async function unlockItem(key: string) {
     if (unlocked.includes(key) || unlockingKey) return;
+    if (!todaysMarket.has(key)) return; // not in today's rotation
+
     setUnlockError(null);
     setUnlockingKey(key);
 
@@ -270,6 +391,7 @@ export default function HabitatScene() {
   const activeDecor = HABITAT_ITEMS.filter(
     item => decor.includes(item.key) && unlocked.includes(item.key)
   );
+
   const visibleItems = HABITAT_ITEMS.filter(item => item.shelf === selectedShelf);
 
   return (
@@ -379,6 +501,20 @@ export default function HabitatScene() {
               );
             });
           })}
+
+          {/* Ambient lighting wash — sits above the shelf and every placed
+              item so the whole scene dims and warms together through the
+              day, rather than just tinting the background art. */}
+          <div
+            style={{
+              position: 'absolute',
+              inset: 0,
+              background: shelfLighting(fractionalHour),
+              zIndex: 50,
+              pointerEvents: 'none',
+              transition: 'background 3s ease',
+            }}
+          />
         </div>
 
         <div
@@ -419,8 +555,8 @@ export default function HabitatScene() {
             marginBottom: 8,
           }}
         >
-          Pick up to {MAX_PER_SHELF} items per shelf. Items cost
-          points to unlock- get working on your day and enjoy these collectibles as you go.
+          Pick up to {MAX_PER_SHELF} items per shelf. Only {DAILY_MARKET_SIZE} items
+          are up for grabs in today's market — the rest will rotate in another day ✨
         </div>
 
         {unlockError && (
@@ -444,18 +580,27 @@ export default function HabitatScene() {
         >
           {visibleItems.map(item => {
             const isUnlocked = unlocked.includes(item.key);
+            const inMarketToday = todaysMarket.has(item.key);
             const active = decor.includes(item.key);
             const cost = costFor(item.key);
             const busy = unlockingKey === item.key;
+            const purchasable = isUnlocked || inMarketToday;
 
             return (
               <button
                 key={item.key}
-                onClick={() =>
-                  isUnlocked ? toggleDecor(item.key) : unlockItem(item.key)
+                onClick={() => {
+                  if (isUnlocked) toggleDecor(item.key);
+                  else if (inMarketToday) unlockItem(item.key);
+                }}
+                disabled={busy || !purchasable}
+                title={
+                  isUnlocked
+                    ? item.label
+                    : inMarketToday
+                    ? `${item.label} — ${cost} pts to unlock (today's pick!)`
+                    : `${item.label} — not in today's market, check back tomorrow`
                 }
-                disabled={busy}
-                title={isUnlocked ? item.label : `${item.label} — ${cost} pts to unlock`}
                 style={{
                   position: 'relative',
                   display: 'flex',
@@ -470,12 +615,16 @@ export default function HabitatScene() {
                     ? 'var(--blush)'
                     : 'var(--white)',
                   border: `1.5px solid ${
-                    active ? 'var(--pink-dark)' : 'var(--border)'
+                    active
+                      ? 'var(--pink-dark)'
+                      : inMarketToday && !isUnlocked
+                      ? '#caa14d'
+                      : 'var(--border)'
                   }`,
-                  cursor: busy ? 'wait' : 'pointer',
+                  cursor: busy ? 'wait' : purchasable ? 'pointer' : 'not-allowed',
                   fontFamily: 'inherit',
                   overflow: 'hidden',
-                  opacity: isUnlocked ? 1 : 0.55,
+                  opacity: isUnlocked ? 1 : inMarketToday ? 0.55 : 0.3,
                 }}
               >
                 <img
@@ -497,7 +646,7 @@ export default function HabitatScene() {
                     lineHeight: 1.1,
                   }}
                 >
-                  {isUnlocked ? item.label : `🔒 ${cost} pts`}
+                  {isUnlocked ? item.label : inMarketToday ? `✨ ${cost} pts` : '🔒 —'}
                 </span>
               </button>
             );
