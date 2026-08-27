@@ -118,6 +118,205 @@
   --accent-text-muted: rgba(255, 245, 230, .76);
 }
 
+/* ============================================
+   THEME FAMILIES (palettes)
+   Layered on top of the base light/dark tokens above.
+   [data-palette] + [data-theme] together decide the
+   actual colors; 'teddy-bear' is the default and uses
+   the base tokens untouched, so no override block is
+   needed for it.
+   ============================================ */
+
+/* ---------- STRAWBERRY (light) ---------- */
+[data-palette='strawberry'][data-theme='light'] {
+  --bg: #FFF5F7;
+  --surface: #FFFFFF;
+  --text: #5A2A38;
+
+  --primary: #E85D75;
+  --secondary: #F6A6C1;
+  --accent: #7A9B57;
+  --mint: #8FAE6E;
+
+  --border: rgba(90, 42, 56, .14);
+  --shadow: 0 8px 24px rgba(90, 42, 56, .09);
+
+  --ink: #5A2A38;
+  --ink-soft: #8C5163;
+  --ink-muted: #B98A97;
+  --btn-ink: #FFF5F7;
+
+  --white: #FFFFFF;
+  --cream: #FFF5F7;
+  --blush: rgba(232, 93, 117, .13);
+
+  --green-dark: #5F7A42;
+  --citrus-blue: #5F7A42;
+  --sage: #7A9B57;
+  --sage-dark: #5F7A42;
+  --sage-light: rgba(122, 155, 87, .13);
+
+  --pink: #E85D75;
+  --pink-dark: #B23A52;
+  --pink-light: rgba(232, 93, 117, .13);
+  --pink-light-solid: #FBD3DC;
+
+  --sky: #4FA5A5;
+
+  --gold: #F0B429;
+  --gold-dark: #B8860B;
+  --gold-light: rgba(240, 180, 41, .15);
+  --gold-light-solid: #FCE8B8;
+
+  --danger: #C23B3B;
+  --danger-bg: #FBEAEA;
+
+  --accent-text: #FFF5F7;
+  --accent-text-muted: rgba(255, 245, 247, .78);
+}
+
+/* ---------- STRAWBERRY (dark) ---------- */
+[data-palette='strawberry'][data-theme='dark'] {
+  --bg: #2A1017;
+  --surface: #3D1620;
+  --text: #FBD9E0;
+
+  --primary: #F27C93;
+  --secondary: #E39BB0;
+  --accent: #9AB37D;
+  --mint: #A8C285;
+
+  --border: rgba(251, 217, 224, .12);
+  --shadow: 0 10px 28px rgba(0, 0, 0, .28);
+
+  --ink: #FBD9E0;
+  --ink-soft: #D9A3B2;
+  --ink-muted: #A97A88;
+  --btn-ink: #2A1017;
+
+  --white: #3D1620;
+  --cream: #2E1219;
+
+  --green-dark: #A8C285;
+  --citrus-blue: #9AB37D;
+  --sage: #7C9860;
+  --sage-dark: #A8C285;
+  --sage-light: rgba(168, 194, 133, .13);
+
+  --pink: #E39BB0;
+  --pink-dark: #F5C4D2;
+  --pink-light: rgba(227, 155, 176, .14);
+  --pink-light-solid: #4A2530;
+
+  --sky: #6FB8B8;
+
+  --gold: #E8C468;
+  --gold-dark: #F2D896;
+  --gold-light: rgba(232, 196, 104, .14);
+  --gold-light-solid: #4A3B1E;
+
+  --danger: #E88888;
+  --danger-bg: #3D2020;
+
+  --accent-text: #FFF0F3;
+  --accent-text-muted: rgba(255, 240, 243, .76);
+}
+
+/* ---------- SUNNY SKIES (light) ---------- */
+[data-palette='sunny-skies'][data-theme='light'] {
+  --bg: #FFFBF0;
+  --surface: #FFFFFF;
+  --text: #2B3A55;
+
+  --primary: #FFC93C;
+  --secondary: #5FB4E8;
+  --accent: #4A90D9;
+  --mint: #7FC9E8;
+
+  --border: rgba(43, 58, 85, .14);
+  --shadow: 0 8px 24px rgba(43, 58, 85, .09);
+
+  --ink: #2B3A55;
+  --ink-soft: #5C6E8C;
+  --ink-muted: #94A3BC;
+  --btn-ink: #2B3A55;
+
+  --white: #FFFFFF;
+  --cream: #FFFBF0;
+  --blush: rgba(255, 201, 60, .15);
+
+  --green-dark: #3E7C99;
+  --citrus-blue: #3E7C99;
+  --sage: #5FB4E8;
+  --sage-dark: #3E7C99;
+  --sage-light: rgba(95, 180, 232, .13);
+
+  --pink: #FFC93C;
+  --pink-dark: #D9A017;
+  --pink-light: rgba(255, 201, 60, .13);
+  --pink-light-solid: #FFE9AE;
+
+  --sky: #5FB4E8;
+
+  --gold: #FFC93C;
+  --gold-dark: #D9A017;
+  --gold-light: rgba(255, 201, 60, .15);
+  --gold-light-solid: #FFE9AE;
+
+  --danger: #E0645A;
+  --danger-bg: #FDEAE8;
+
+  --accent-text: #2B3A55;
+  --accent-text-muted: rgba(43, 58, 85, .78);
+}
+
+/* ---------- SUNNY SKIES (dark) ---------- */
+[data-palette='sunny-skies'][data-theme='dark'] {
+  --bg: #14202E;
+  --surface: #1E2E40;
+  --text: #FDF0D5;
+
+  --primary: #FFD966;
+  --secondary: #6FC1F0;
+  --accent: #6FC1F0;
+  --mint: #8ED4F0;
+
+  --border: rgba(253, 240, 213, .12);
+  --shadow: 0 10px 28px rgba(0, 0, 0, .28);
+
+  --ink: #FDF0D5;
+  --ink-soft: #C7D3E0;
+  --ink-muted: #8FA0B8;
+  --btn-ink: #14202E;
+
+  --white: #1E2E40;
+  --cream: #182534;
+
+  --green-dark: #8ED4F0;
+  --citrus-blue: #6FC1F0;
+  --sage: #4F9FCB;
+  --sage-dark: #8ED4F0;
+  --sage-light: rgba(142, 212, 240, .13);
+
+  --pink: #FFD966;
+  --pink-dark: #FFE9A3;
+  --pink-light: rgba(255, 217, 102, .14);
+  --pink-light-solid: #3D3418;
+
+  --sky: #6FC1F0;
+
+  --gold: #FFD966;
+  --gold-dark: #FFE9A3;
+  --gold-light: rgba(255, 217, 102, .14);
+  --gold-light-solid: #3D3418;
+
+  --danger: #F0958C;
+  --danger-bg: #3A2320;
+
+  --accent-text: #14202E;
+  --accent-text-muted: rgba(20, 32, 46, .76);
+}
+
 /* Light mode: soft gold-tinted glow on hover */
 [data-theme='light'] .card:hover,
 [data-theme='light'] .stat-card:hover,
