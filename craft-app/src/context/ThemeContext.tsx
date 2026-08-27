@@ -17,7 +17,7 @@ export const PALETTES: PaletteOption[] = [
   { id: 'teddy-bear', label: 'Teddy Bear'},
   { id: 'blurple', label: 'Blurple'},
   { id: 'sunny-skies', label: 'Sunny Skies'},
-  { id: 'pink', label: 'Princess Pink'},
+  { id: 'pink', label: 'Pastel Goth'},
   { id: 'tuxedo', label: 'Tuxedo'},
 ];
 
