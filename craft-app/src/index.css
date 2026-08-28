@@ -1121,6 +1121,33 @@ body {
 .stitch-divider .mark::before { transform: translateY(-50%) rotate(45deg); }
 .stitch-divider .mark::after  { transform: translateY(-50%) rotate(-45deg); }
 
+/* ---------- pastel goth: bat stitch mark ---------- */
+
+[data-palette='pink'] .stitch-divider .mark {
+  width: 20px;
+  height: 14px;
+  background-color: var(--pink-dark);
+  -webkit-mask-image: url('/bat-mark.svg');
+  mask-image: url('/bat-mark.svg');
+  -webkit-mask-size: contain;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+  animation: bat-flutter 2.4s ease-in-out infinite;
+}
+
+[data-palette='pink'] .stitch-divider .mark::before,
+[data-palette='pink'] .stitch-divider .mark::after {
+  content: none !important;
+}
+
+@keyframes bat-flutter {
+  0%, 100% { transform: scaleY(1); }
+  50%      { transform: scaleY(0.8); }
+}
+
 .lantern-img {
   filter: drop-shadow(0 2px 6px rgba(184, 164, 245, 0.35));
   animation: lantern-sway 4s ease-in-out infinite;
