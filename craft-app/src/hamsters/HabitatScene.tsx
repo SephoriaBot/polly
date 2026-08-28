@@ -440,15 +440,15 @@ export default function HabitatScene() {
     item => decor.includes(item.key) && unlocked.includes(item.key)
   );
 
-  // Collection view: only items you already own, for the selected shelf.
-  // Market view: only items in today's rotation that you don't already
-  // own, for the selected shelf. Anything locked-and-not-today never
-  // renders in either view.
-  const visibleItems = HABITAT_ITEMS.filter(item => {
-    if (item.shelf !== selectedShelf) return false;
-    const owned = unlocked.includes(item.key);
-    return viewMode === 'collection' ? owned : !owned && todaysMarket.has(item.key);
-  });
+  // Collection view: items you already own, for the selected shelf — this
+  // is what the shelf tabs are for.
+  // Market view: today's rotating picks, pulled from ONE bank across the
+  // whole catalog (not per shelf) — you don't know which shelf they'll
+  // belong to until you see them. Shelf tabs don't apply here.
+  const visibleItems =
+    viewMode === 'collection'
+      ? HABITAT_ITEMS.filter(item => item.shelf === selectedShelf && unlocked.includes(item.key))
+      : HABITAT_ITEMS.filter(item => !unlocked.includes(item.key) && todaysMarket.has(item.key));
 
   return (
     <div className="card">
@@ -618,36 +618,38 @@ export default function HabitatScene() {
           ))}
         </div>
 
-        <div
-          style={{
-            display: 'flex',
-            gap: 6,
-            marginBottom: 10,
-            flexWrap: 'wrap',
-          }}
-        >
-          {SHELVES.map(shelf => (
-            <button
-              key={shelf.key}
-              onClick={() => setSelectedShelf(shelf.key)}
-              style={{
-                padding: '5px 10px',
-                borderRadius: 999,
-                fontSize: '0.62rem',
-                fontWeight: 700,
-                fontFamily: 'inherit',
-                cursor: 'pointer',
-                border: `1.5px solid ${
-                  selectedShelf === shelf.key ? 'var(--pink-dark)' : 'var(--border)'
-                }`,
-                background: selectedShelf === shelf.key ? 'var(--blush)' : 'var(--white)',
-                color: 'var(--ink)',
-              }}
-            >
-              {shelf.label}
-            </button>
-          ))}
-        </div>
+        {viewMode === 'collection' && (
+          <div
+            style={{
+              display: 'flex',
+              gap: 6,
+              marginBottom: 10,
+              flexWrap: 'wrap',
+            }}
+          >
+            {SHELVES.map(shelf => (
+              <button
+                key={shelf.key}
+                onClick={() => setSelectedShelf(shelf.key)}
+                style={{
+                  padding: '5px 10px',
+                  borderRadius: 999,
+                  fontSize: '0.62rem',
+                  fontWeight: 700,
+                  fontFamily: 'inherit',
+                  cursor: 'pointer',
+                  border: `1.5px solid ${
+                    selectedShelf === shelf.key ? 'var(--pink-dark)' : 'var(--border)'
+                  }`,
+                  background: selectedShelf === shelf.key ? 'var(--blush)' : 'var(--white)',
+                  color: 'var(--ink)',
+                }}
+              >
+                {shelf.label}
+              </button>
+            ))}
+          </div>
+        )}
 
         <div
           style={{
@@ -658,7 +660,7 @@ export default function HabitatScene() {
         >
           {viewMode === 'collection'
             ? `Tap an item you own to place or remove it from this shelf. Up to ${MAX_PER_SHELF} per shelf.`
-            : `Only ${DAILY_MARKET_SIZE} items are up for grabs today, across all shelves — the rest will rotate in another day ✨`}
+            : `Only ${DAILY_MARKET_SIZE} items are up for grabs today, pulled from every shelf's catalog — you won't know which shelf they land on until you see them here ✨`}
         </div>
 
         {unlockError && (
@@ -686,7 +688,7 @@ export default function HabitatScene() {
           >
             {viewMode === 'collection'
               ? "You don't own anything for this shelf yet — check Today's Market ✨"
-              : 'No specials on this shelf today — try another shelf, or check back tomorrow ✨'}
+              : "That's odd — no specials today. Try refreshing, or check back tomorrow ✨"}
           </div>
         ) : (
           <div
@@ -761,6 +763,19 @@ export default function HabitatScene() {
                   >
                     {viewMode === 'collection' ? item.label : `✨ ${cost} pts`}
                   </span>
+                  {viewMode === 'market' && (
+                    <span
+                      style={{
+                        fontSize: '0.48rem',
+                        color: '#a4813a',
+                        fontWeight: 600,
+                        textAlign: 'center',
+                        lineHeight: 1,
+                      }}
+                    >
+                      {SHELVES.find(s => s.key === item.shelf)?.label}
+                    </span>
+                  )}
                 </button>
               );
             })}
