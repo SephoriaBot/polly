@@ -1163,3 +1163,257 @@ body {
   font-size: 0.82rem;
   color: var(--ink-muted);
 }
+
+/* =========================================================
+   PASTEL GOTH — DOILY / FRILLED STATIONERY
+   Visual styling only — palette remains unchanged.
+   ========================================================= */
+
+/* ---------- cards ---------- */
+
+[data-palette='pink'][data-theme='light'] .card,
+[data-palette='pink'][data-theme='light'] .stat-card,
+[data-palette='pink'][data-theme='light'] .pet-card,
+[data-palette='pink'][data-theme='light'] .plant-card,
+[data-palette='pink'][data-theme='light'] .wizard-box {
+
+  border: 1px solid rgba(74, 46, 68, 0.18);
+  border-radius: 18px;
+  box-shadow:
+    0 3px 0 rgba(217, 160, 194, 0.20),
+    0 8px 20px rgba(74, 46, 68, 0.09),
+    0 14px 30px rgba(217, 160, 194, 0.07);
+}
+
+/* delicate inner lace frame */
+[data-palette='pink'][data-theme='light'] .card::before,
+[data-palette='pink'][data-theme='light'] .stat-card::before,
+[data-palette='pink'][data-theme='light'] .pet-card::before,
+[data-palette='pink'][data-theme='light'] .plant-card::before,
+[data-palette='pink'][data-theme='light'] .wizard-box::before {
+
+  inset: 6px;
+  border: 1px dashed rgba(74, 46, 68, 0.16);
+  border-radius: 13px;
+}
+
+/* tiny decorative dots along the top of cards */
+[data-palette='pink'][data-theme='light'] .card::after,
+[data-palette='pink'][data-theme='light'] .stat-card::after,
+[data-palette='pink'][data-theme='light'] .pet-card::after,
+[data-palette='pink'][data-theme='light'] .plant-card::after,
+[data-palette='pink'][data-theme='light'] .wizard-box::after {
+
+  content: '·  ·  ·';
+  position: absolute;
+  top: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: var(--pink-dark);
+  opacity: 0.35;
+  font-size: 13px;
+  letter-spacing: 3px;
+  line-height: 1;
+  pointer-events: none;
+}
+
+
+/* ---------- list items ---------- */
+
+[data-palette='pink'][data-theme='light'] .list-item {
+  border: 1px solid rgba(74, 46, 68, 0.16);
+  border-radius: 15px;
+  box-shadow:
+    0 3px 0 rgba(217, 160, 194, 0.16),
+    0 6px 16px rgba(74, 46, 68, 0.07);
+}
+
+[data-palette='pink'][data-theme='light'] .list-item::before {
+  inset: 5px;
+  border: 1px dashed rgba(74, 46, 68, 0.13);
+  border-radius: 10px;
+}
+
+
+/* ---------- hover ---------- */
+
+[data-palette='pink'][data-theme='light'] .card:hover,
+[data-palette='pink'][data-theme='light'] .stat-card:hover,
+[data-palette='pink'][data-theme='light'] .pet-card:hover,
+[data-palette='pink'][data-theme='light'] .plant-card:hover,
+[data-palette='pink'][data-theme='light'] .wizard-box:hover {
+
+  transform: translateY(-3px);
+
+  box-shadow:
+    0 4px 0 rgba(217, 160, 194, 0.25),
+    0 11px 24px rgba(74, 46, 68, 0.11),
+    0 16px 32px rgba(217, 160, 194, 0.09);
+}
+
+
+/* ---------- buttons ---------- */
+
+[data-palette='pink'][data-theme='light'] .btn,
+[data-palette='pink'][data-theme='light'] .btn-primary {
+
+  border: 1px solid rgba(74, 46, 68, 0.12);
+  border-radius: 12px;
+
+  box-shadow:
+    0 3px 0 rgba(74, 46, 68, 0.12),
+    0 5px 12px rgba(74, 46, 68, 0.08);
+
+  position: relative;
+}
+
+[data-palette='pink'][data-theme='light'] .btn:hover,
+[data-palette='pink'][data-theme='light'] .btn-primary:hover {
+
+  transform: translateY(-2px);
+
+  box-shadow:
+    0 4px 0 rgba(74, 46, 68, 0.13),
+    0 8px 16px rgba(74, 46, 68, 0.10);
+}
+
+[data-palette='pink'][data-theme='light'] .btn-secondary,
+[data-palette='pink'][data-theme='light'] .btn-danger {
+
+  border-radius: 12px;
+}
+
+
+/* ---------- inputs — little stationery cards ---------- */
+
+[data-palette='pink'][data-theme='light'] input,
+[data-palette='pink'][data-theme='light'] textarea,
+[data-palette='pink'][data-theme='light'] select {
+
+  border-radius: 12px;
+  border: 1px solid rgba(74, 46, 68, 0.16);
+
+  box-shadow:
+    inset 0 1px 2px rgba(74, 46, 68, 0.03),
+    0 2px 6px rgba(217, 160, 194, 0.06);
+}
+
+[data-palette='pink'][data-theme='light'] input:focus,
+[data-palette='pink'][data-theme='light'] textarea:focus,
+[data-palette='pink'][data-theme='light'] select:focus {
+
+  border-color: var(--pink-dark);
+
+  box-shadow:
+    0 0 0 3px rgba(217, 160, 194, 0.18),
+    0 3px 8px rgba(74, 46, 68, 0.06);
+}
+
+
+/* ---------- badges — little vintage labels ---------- */
+
+[data-palette='pink'][data-theme='light'] .badge {
+
+  border-radius: 8px;
+  box-shadow:
+    0 2px 4px rgba(74, 46, 68, 0.05);
+}
+
+
+/* ---------- top bar ---------- */
+
+[data-palette='pink'][data-theme='light'] .topbar {
+
+  border-bottom: 1px solid rgba(74, 46, 68, 0.12);
+
+  box-shadow:
+    0 3px 12px rgba(74, 46, 68, 0.04);
+}
+
+
+/* ---------- bottom navigation ---------- */
+
+[data-palette='pink'][data-theme='light'] .bottombar {
+
+  border-top: 1px solid rgba(74, 46, 68, 0.13);
+
+  box-shadow:
+    0 -4px 14px rgba(74, 46, 68, 0.07);
+}
+
+[data-palette='pink'][data-theme='light'] .bottombar-tab.active {
+
+  position: relative;
+}
+
+[data-palette='pink'][data-theme='light'] .bottombar-tab.active::before {
+
+  content: '♡';
+  position: absolute;
+  top: -2px;
+  font-size: 9px;
+  color: var(--pink-dark);
+  opacity: 0.7;
+}
+
+
+/* ---------- background — extremely subtle paper texture ---------- */
+
+[data-palette='pink'][data-theme='light'] body {
+
+  background-image:
+    radial-gradient(
+      circle,
+      rgba(74, 46, 68, 0.035) 1px,
+      transparent 1.4px
+    );
+
+  background-size: 18px 18px;
+}
+
+
+/* ---------- decorative dividers ---------- */
+
+[data-palette='pink'][data-theme='light'] .stitch-divider .line,
+[data-palette='pink'][data-theme='light'] .lantern-divider .line {
+
+  border-top-style: dotted;
+  border-top-color: rgba(74, 46, 68, 0.20);
+}
+
+[data-palette='pink'][data-theme='light'] .stitch-divider .mark {
+
+  transform: rotate(45deg);
+}
+
+[data-palette='pink'][data-theme='light'] .stitch-divider .mark::before,
+[data-palette='pink'][data-theme='light'] .stitch-divider .mark::after {
+
+  background: var(--pink-dark);
+}
+
+
+/* ---------- section labels ---------- */
+
+[data-palette='pink'][data-theme='light'] .section-label {
+
+  letter-spacing: 0.13em;
+  font-size: 0.66rem;
+}
+
+
+/* ---------- subtle card entrance depth ---------- */
+
+[data-palette='pink'][data-theme='light'] .card,
+[data-palette='pink'][data-theme='light'] .stat-card,
+[data-palette='pink'][data-theme='light'] .pet-card,
+[data-palette='pink'][data-theme='light'] .plant-card,
+[data-palette='pink'][data-theme='light'] .wizard-box {
+
+  background-image:
+    linear-gradient(
+      135deg,
+      rgba(255,255,255,0.35),
+      transparent 45%
+    );
+}
