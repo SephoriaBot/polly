@@ -1,91 +1,139 @@
 <svg xmlns="http://www.w3.org/2000/svg"
-     width="40"
-     height="40"
-     viewBox="0 0 40 40"
+     width="60"
+     height="60"
+     viewBox="0 0 60 60"
      fill="none">
 
-  <!-- TOP -->
+  <!-- =====================================================
+       9-SLICE LACE BORDER
+
+       Corners: 20 × 20
+       Edges:   20 × 20 repeating areas
+       Center:  transparent
+       ===================================================== -->
+
+
+  <!-- TOP EDGE -->
   <path
-    d="M8 5
-       C9.5 1.5 13.5 1.5 15 5
-       C16.5 8.5 20.5 8.5 22 5
-       C23.5 1.5 27.5 1.5 29 5
-       C30.5 8.5 34.5 8.5 36 5"
+    d="
+      M20 6
+      C22 2 26 2 28 6
+      C30 10 34 10 36 6
+      C38 2 42 2 44 6
+      C46 10 50 10 52 6
+    "
     stroke="#FFFFFF"
-    stroke-width="3"
+    stroke-width="5"
     stroke-linecap="round"
+    fill="none"
   />
 
-  <!-- BOTTOM -->
+
+  <!-- BOTTOM EDGE -->
   <path
-    d="M8 35
-       C9.5 38.5 13.5 38.5 15 35
-       C16.5 31.5 20.5 31.5 22 35
-       C23.5 38.5 27.5 38.5 29 35
-       C30.5 31.5 34.5 31.5 36 35"
+    d="
+      M20 54
+      C22 58 26 58 28 54
+      C30 50 34 50 36 54
+      C38 58 42 58 44 54
+      C46 50 50 50 52 54
+    "
     stroke="#FFFFFF"
-    stroke-width="3"
+    stroke-width="5"
     stroke-linecap="round"
+    fill="none"
   />
 
-  <!-- LEFT -->
+
+  <!-- LEFT EDGE -->
   <path
-    d="M5 8
-       C1.5 9.5 1.5 13.5 5 15
-       C8.5 16.5 8.5 20.5 5 22
-       C1.5 23.5 1.5 27.5 5 29
-       C8.5 30.5 8.5 34.5 5 36"
+    d="
+      M6 20
+      C2 22 2 26 6 28
+      C10 30 10 34 6 36
+      C2 38 2 42 6 44
+      C10 46 10 50 6 52
+    "
     stroke="#FFFFFF"
-    stroke-width="3"
+    stroke-width="5"
     stroke-linecap="round"
+    fill="none"
   />
 
-  <!-- RIGHT -->
+
+  <!-- RIGHT EDGE -->
   <path
-    d="M35 8
-       C38.5 9.5 38.5 13.5 35 15
-       C31.5 16.5 31.5 20.5 35 22
-       C38.5 23.5 38.5 27.5 35 29
-       C31.5 30.5 31.5 34.5 35 36"
+    d="
+      M54 20
+      C58 22 58 26 54 28
+      C50 30 50 34 54 36
+      C58 38 58 42 54 44
+      C50 46 50 50 54 52
+    "
     stroke="#FFFFFF"
-    stroke-width="3"
+    stroke-width="5"
     stroke-linecap="round"
+    fill="none"
   />
+
 
   <!-- TOP-LEFT CORNER -->
   <path
-    d="M8 5
-       C4.7 5 5 8 5 11
-       V8
-       C5 6.3 6.3 5 8 5Z"
-    fill="#FFFFFF"
+    d="
+      M20 3
+      H14
+      C7.9 3 3 7.9 3 14
+      V20
+    "
+    stroke="#FFFFFF"
+    stroke-width="5"
+    stroke-linecap="round"
+    fill="none"
   />
+
 
   <!-- TOP-RIGHT CORNER -->
   <path
-    d="M32 5
-       C35.3 5 35 8 35 11
-       V8
-       C35 6.3 33.7 5 32 5Z"
-    fill="#FFFFFF"
+    d="
+      M40 3
+      H46
+      C52.1 3 57 7.9 57 14
+      V20
+    "
+    stroke="#FFFFFF"
+    stroke-width="5"
+    stroke-linecap="round"
+    fill="none"
   />
+
 
   <!-- BOTTOM-LEFT CORNER -->
   <path
-    d="M5 32
-       C5 35.3 8 35 11 35
-       H8
-       C6.3 35 5 33.7 5 32Z"
-    fill="#FFFFFF"
+    d="
+      M3 40
+      V46
+      C3 52.1 7.9 57 14 57
+      H20
+    "
+    stroke="#FFFFFF"
+    stroke-width="5"
+    stroke-linecap="round"
+    fill="none"
   />
+
 
   <!-- BOTTOM-RIGHT CORNER -->
   <path
-    d="M35 32
-       C35 35.3 32 35 29 35
-       H32
-       C33.7 35 35 33.7 35 32Z"
-    fill="#FFFFFF"
+    d="
+      M57 40
+      V46
+      C57 52.1 52.1 57 46 57
+      H40
+    "
+    stroke="#FFFFFF"
+    stroke-width="5"
+    stroke-linecap="round"
+    fill="none"
   />
 
 </svg>
