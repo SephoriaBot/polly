@@ -1199,3 +1199,12 @@ body {
 [data-palette='pink'][data-theme='light'] .card::before {
   content: none;
 }
+
+/* ============================================================
+   PASTEL GOTH — LET LACE SHOW THROUGH
+   ============================================================ */
+
+[data-palette='pink'][data-theme='light'] .card-body {
+  background: transparent;
+  border: none;
+}
