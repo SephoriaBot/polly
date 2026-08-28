@@ -1148,6 +1148,81 @@ body {
   50%      { transform: scaleY(0.8); }
 }
 
+/* ---------- tuxedo: bowtie stitch mark ---------- */
+
+[data-palette='tuxedo'] .stitch-divider .mark {
+  width: 20px;
+  height: 12px;
+  background-color: var(--pink-dark);
+  -webkit-mask-image: url('/bowtie-mark.svg');
+  mask-image: url('/bowtie-mark.svg');
+  -webkit-mask-size: contain;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+}
+
+[data-palette='tuxedo'] .stitch-divider .mark::before,
+[data-palette='tuxedo'] .stitch-divider .mark::after {
+  content: none !important;
+}
+
+/* ---------- blurple: twinkling star stitch mark ---------- */
+
+[data-palette='blurple'] .stitch-divider .mark {
+  width: 16px;
+  height: 16px;
+  background-color: var(--pink-dark);
+  -webkit-mask-image: url('/star-mark.svg');
+  mask-image: url('/star-mark.svg');
+  -webkit-mask-size: contain;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+  animation: star-twinkle 2.2s ease-in-out infinite;
+}
+
+[data-palette='blurple'] .stitch-divider .mark::before,
+[data-palette='blurple'] .stitch-divider .mark::after {
+  content: none !important;
+}
+
+@keyframes star-twinkle {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50%      { transform: scale(0.8); opacity: 0.6; }
+}
+
+/* ---------- sunny skies: pulsing sun stitch mark ---------- */
+
+[data-palette='sunny-skies'] .stitch-divider .mark {
+  width: 16px;
+  height: 16px;
+  background-color: var(--pink-dark);
+  -webkit-mask-image: url('/sun-mark.svg');
+  mask-image: url('/sun-mark.svg');
+  -webkit-mask-size: contain;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+  animation: sun-pulse 2.6s ease-in-out infinite;
+}
+
+[data-palette='sunny-skies'] .stitch-divider .mark::before,
+[data-palette='sunny-skies'] .stitch-divider .mark::after {
+  content: none !important;
+}
+
+@keyframes sun-pulse {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.12); }
+}
+
 .lantern-img {
   filter: drop-shadow(0 2px 6px rgba(184, 164, 245, 0.35));
   animation: lantern-sway 4s ease-in-out infinite;
