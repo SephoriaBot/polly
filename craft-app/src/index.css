@@ -1165,50 +1165,39 @@ body {
 }
 
 /* ============================================================
-   PASTEL GOTH — LACE FRAME
+   PASTEL GOTH — LACE BORDER TEST
    ============================================================ */
 
 [data-palette='pink'][data-theme='light'] .card {
-  position: relative;
-
   background: var(--surface);
 
-  border: none;
+  /*
+   * The SVG is the actual border.
+   * The center of the SVG is transparent,
+   * so your existing card remains readable.
+   */
+  border: 10px solid transparent;
+
+  border-image-source: url('/pastel-goth-lace.svg');
+
+  /*
+   * The SVG is 60 × 60.
+   * The 20px corner sections stay intact while
+   * the edge sections stretch/repeat.
+   */
+  border-image-slice: 20;
+
+  border-image-width: 10px;
+
+  border-image-repeat: round;
+
   border-radius: 0;
 
   box-shadow:
     0 5px 14px rgba(74, 46, 68, 0.10);
 
-  margin: 10px;
-}
-
-
-/* Lace frame */
-
-[data-palette='pink'][data-theme='light'] .card::before {
-  content: '';
-
-  position: absolute;
-
-  inset: -9px;
-
-  background-image:
-    url('/pastel-goth-lace.svg');
-
-  background-size: 100% 100%;
-  background-repeat: no-repeat;
-
-  pointer-events: none;
-
-  z-index: 0;
-}
-
-
-/*
- * Keep all actual card content above the lace frame.
- */
-
-[data-palette='pink'][data-theme='light'] .card > * {
-  position: relative;
-  z-index: 1;
+  /*
+   * Important: keep content inside the card.
+   */
+  overflow: hidden;
 }
