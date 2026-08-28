@@ -261,7 +261,6 @@ export default function HabitatScene() {
   // today's rotating specials, the only locked items you can currently
   // buy. Everything else stays hidden rather than shown-but-disabled.
   const [viewMode, setViewMode] = useState<'collection' | 'market'>('collection');
-  const fractionalHour = useFractionalHour();
 
   // Today's 4 purchasable locked items. Recomputed only when the date
   // string changes (i.e. effectively once per calendar day).
@@ -496,21 +495,6 @@ export default function HabitatScene() {
               );
             });
           })}
-
-          {/* Ambient lighting wash — sits above the shelf and every placed
-              item so the whole scene dims and warms together through the
-              day, rather than just tinting the background art. */}
-          <div
-            style={{
-              position: 'absolute',
-              inset: 0,
-              background: shelfLighting(fractionalHour),
-              zIndex: 50,
-              pointerEvents: 'none',
-              transition: 'background 3s ease',
-            }}
-          />
-        </div>
 
         <div
           style={{
