@@ -1169,18 +1169,23 @@ body {
    PASTEL GOTH — FRILLY LACE CARDS
    ============================================================ */
 
-[data-palette='pink'][data-theme='light'] .card {
+[data-palette='pink'][data-theme='light'] .card,
+[data-palette='pink'][data-theme='light'] .stat-card,
+[data-palette='pink'][data-theme='light'] .pet-card,
+[data-palette='pink'][data-theme='light'] .plant-card,
+[data-palette='pink'][data-theme='light'] .wizard-box,
+[data-palette='pink'][data-theme='light'] .list-item {
   position: relative;
 
   background: var(--surface);
 
   /* Lace border */
-  border: 10px solid transparent !important;
-  border-image: url('/pastel-goth-lace.svg') 20 / 10px / 0 round !important;
+  border: 16px solid transparent !important;
+  border-image: url('/pastel-goth-lace.svg') 20 / 16px / 0 round !important;
 
   border-radius: 0 !important;
 
-  box-shadow: 0 5px 14px rgba(74, 46, 68, 0.10);
+  box-shadow: 0 6px 18px rgba(74, 46, 68, 0.16);
 
   /*
    * IMPORTANT:
@@ -1190,9 +1195,34 @@ body {
   overflow: visible;
 }
 
+[data-palette='pink'][data-theme='dark'] .card,
+[data-palette='pink'][data-theme='dark'] .stat-card,
+[data-palette='pink'][data-theme='dark'] .pet-card,
+[data-palette='pink'][data-theme='dark'] .plant-card,
+[data-palette='pink'][data-theme='dark'] .wizard-box,
+[data-palette='pink'][data-theme='dark'] .list-item {
+  position: relative;
+
+  background: var(--surface);
+
+  /* Lace border (dark variant SVG, lighter strokes) */
+  border: 16px solid transparent !important;
+  border-image: url('/pastel-goth-lace-dark.svg') 20 / 16px / 0 round !important;
+
+  border-radius: 0 !important;
+
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+
+  overflow: visible;
+}
 
 /* Remove Polly's normal inset decorative line */
-[data-palette='pink'][data-theme='light'] .card::before {
+[data-palette='pink'] .card::before,
+[data-palette='pink'] .stat-card::before,
+[data-palette='pink'] .pet-card::before,
+[data-palette='pink'] .plant-card::before,
+[data-palette='pink'] .wizard-box::before,
+[data-palette='pink'] .list-item::before {
   content: none !important;
 }
 
@@ -1202,7 +1232,7 @@ body {
  * It is only a wrapper and should not create another
  * background, border, or clipping layer.
  */
-[data-palette='pink'][data-theme='light'] .card-body {
+[data-palette='pink'] .card-body {
   background: transparent;
   border: none;
 }
