@@ -13,6 +13,7 @@ import Icon from '../Icon';
 import { useTheme } from '../../context/ThemeContext';
 import { LIFE_EVENT_TEMPLATES, type LifeEventTemplate } from '../../lib/lifeEventTemplates';
 import { useHamsterGrowth } from '../../hamsters/HamsterGrowthContext';
+import CheckMark from '../CheckMark';
 
 interface LifeEventRow {
   id: string;
@@ -144,8 +145,7 @@ export default function LifeEvents() {
                             borderRadius: 12, padding: '8px 10px',
                           }}
                         >
-                          <Icon name={item.done ? (theme === 'light' ? 'full_sun' : 'full_moon') : (theme === 'light' ? 'empty_sun' : 'empty_moon')} size={16} style={{ color: item.done ? 'var(--pink-dark)' : 'var(--border)', flexShrink: 0 }} />
-                          <span style={{
+                          <CheckMark completed={item.done} size={16} />                          <span style={{
                             fontSize: '0.78rem', fontWeight: 600, flex: 1,
                             color: item.done ? 'var(--ink-muted)' : 'var(--ink)',
                             textDecoration: item.done ? 'line-through' : 'none',

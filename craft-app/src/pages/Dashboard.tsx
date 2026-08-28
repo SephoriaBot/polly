@@ -11,6 +11,7 @@ import Icon, { type IconName } from '../components/Icon';
 import { useTheme } from '../context/ThemeContext';
 import EmptyState from '../components/EmptyState';
 import StitchDivider from '../components/StitchDivider';
+import CheckMark from '../components/CheckMark';
 
 interface Focus {
   id: string;
@@ -221,10 +222,9 @@ async function loadAll() {
                           alignItems: 'center', justifyContent: 'center',
                         }}
                       >
-                        {f.completed
-                          ? <Icon name={theme === 'light' ? 'full_sun' : 'full_moon'} size={22} style={{ color: 'var(--pink-dark)' }} />
-                          : <Icon name={theme === 'light' ? 'empty_sun' : 'empty_moon'} size={22} style={{ color: 'var(--border)' }} />
-                        }
+                        
+                      <CheckMark completed={f.completed} size={22} />
+                        
                       </button>
 
                   <div style={{ flex: 1 }}>

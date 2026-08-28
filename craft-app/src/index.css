@@ -1223,6 +1223,81 @@ body {
   50%      { transform: scale(1.12); }
 }
 
+/* ================= THEME-AWARE CHECKMARKS ================= */
+
+.theme-check {
+  display: inline-block;
+  flex-shrink: 0;
+  -webkit-mask-size: contain;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+}
+
+/* ---------- teddy bear (default) ---------- */
+
+.theme-check--full {
+  background-color: var(--pink-dark);
+  -webkit-mask-image: url('/teddybear-full.svg');
+  mask-image: url('/teddybear-full.svg');
+}
+
+.theme-check--empty {
+  background-color: var(--border);
+  -webkit-mask-image: url('/teddybear-empty.svg');
+  mask-image: url('/teddybear-empty.svg');
+}
+
+/* ---------- pastel goth: heart ---------- */
+
+[data-palette='pink'] .theme-check--full {
+  -webkit-mask-image: url('/heart-full.svg');
+  mask-image: url('/heart-full.svg');
+}
+
+[data-palette='pink'] .theme-check--empty {
+  -webkit-mask-image: url('/heart-empty.svg');
+  mask-image: url('/heart-empty.svg');
+}
+
+/* ---------- sunny skies: sun ---------- */
+
+[data-palette='sunny-skies'] .theme-check--full {
+  -webkit-mask-image: url('/sun-full.svg');
+  mask-image: url('/sun-full.svg');
+}
+
+[data-palette='sunny-skies'] .theme-check--empty {
+  -webkit-mask-image: url('/sun-empty.svg');
+  mask-image: url('/sun-empty.svg');
+}
+
+/* ---------- blurple: star ---------- */
+
+[data-palette='blurple'] .theme-check--full {
+  -webkit-mask-image: url('/star-full.svg');
+  mask-image: url('/star-full.svg');
+}
+
+[data-palette='blurple'] .theme-check--empty {
+  -webkit-mask-image: url('/star-empty.svg');
+  mask-image: url('/star-empty.svg');
+}
+
+/* ---------- tuxedo: circle ---------- */
+
+[data-palette='tuxedo'] .theme-check--full {
+  -webkit-mask-image: url('/circle-full.svg');
+  mask-image: url('/circle-full.svg');
+}
+
+[data-palette='tuxedo'] .theme-check--empty {
+  -webkit-mask-image: url('/circle-empty.svg');
+  mask-image: url('/circle-empty.svg');
+}
+
 .lantern-img {
   filter: drop-shadow(0 2px 6px rgba(184, 164, 245, 0.35));
   animation: lantern-sway 4s ease-in-out infinite;

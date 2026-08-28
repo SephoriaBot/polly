@@ -8,6 +8,7 @@ import celebrationImg from '../assets/illustrations/celebration.png';
 import emptyWallet from '../assets/icons/empty-wallet.png';
 import EmptyState from '../components/EmptyState';
 import StitchDivider from '../components/StitchDivider';
+import CheckMark from '../components/CheckMark';
 
 interface Debt {
   id: number;
@@ -1587,10 +1588,7 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                                   alignItems: "center", justifyContent: "center",
                                 }}
                               >
-                                {item.done
-                                  ? <Icon name={theme === 'light' ? 'full_sun' : 'full_moon'} size={17} style={{ color: "var(--pink-dark)" }} />
-                                  : <Icon name={theme === 'light' ? 'empty_sun' : 'empty_moon'} size={17} style={{ color: "var(--border)" }} />
-                                }
+                                <CheckMark completed={item.done} size={17} />
                               </button>
                               <div style={{ flex: 1, fontSize: 13, color: item.done ? "var(--ink-muted)" : "var(--ink)", textDecoration: item.done ? "line-through" : "none" }}>
                                 {item.label}
@@ -2262,10 +2260,7 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                               alignItems: "center", justifyContent: "center",
                             }}
                           >
-                            {b.paid
-                              ? <Icon name={theme === 'light' ? 'full_sun' : 'full_moon'} size={22} />
-                              : <Icon name={theme === 'light' ? 'empty_sun' : 'empty_moon'} size={22} />
-                            }
+                            <CheckMark completed={b.paid} size={22} />
                           </button>
                         </td>
                         <td style={{ padding: "9px 8px", textDecoration: b.paid ? "line-through" : "none" }}>
@@ -2395,7 +2390,7 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                                   alignItems: "center", justifyContent: "center",
                                 }}
                               >
-                                <Icon name={theme === 'light' ? 'empty_sun' : 'empty_moon'} size={22} />
+                                <CheckMark completed={false} size={22} />
             </button>
                             </td>
                             <td style={{ padding: "9px 8px" }}>
@@ -2448,7 +2443,7 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                                 alignItems: "center", justifyContent: "center",
                               }}
                             >
-                            <Icon name={theme === 'light' ? 'full_sun' : 'full_moon'} size={22} />
+                            <CheckMark completed={true} size={22} />
           </button>
                           </td>
                           <td style={{ padding: "9px 8px", textDecoration: "line-through", color: "var(--green-dark)", fontWeight: 700 }}>{d.name}</td>

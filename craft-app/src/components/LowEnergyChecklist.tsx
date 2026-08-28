@@ -8,6 +8,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import Icon from './Icon';
 import { useTheme } from '../context/ThemeContext';
+import CheckMark from './CheckMark';
 
 const CHECKLIST_KEY = 'polly-no-energy-checklist';
 
@@ -128,11 +129,7 @@ function ChecklistRow({ label, done, onToggle }: { label: string; done: boolean;
         borderRadius: 18, padding: '12px 14px',
       }}
     >
-      <Icon
-        name={done ? (theme === 'light' ? 'full_sun' : 'full_moon') : (theme === 'light' ? 'empty_sun' : 'empty_moon')}
-        size={22}
-        style={{ color: done ? 'var(--pink-dark)' : 'var(--border)', flexShrink: 0 }}
-      />
+      <CheckMark completed={done} size={22} />
       <div style={{
         flex: 1, fontSize: '0.88rem', fontWeight: 600,
         color: done ? 'var(--ink-muted)' : 'var(--ink)',

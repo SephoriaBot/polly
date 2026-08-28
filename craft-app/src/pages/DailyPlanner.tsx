@@ -13,6 +13,7 @@ import emptyPlanner from '../assets/icons/empty-planner.png';
 import Icon, { type IconName } from '../components/Icon';
 import PageTabs, { type PageTab } from '../components/PageTabs';
 import { useTheme } from '../context/ThemeContext';
+import CheckMark from '../components/CheckMark';
 
 interface DailyTask {
   id: string;
@@ -466,10 +467,7 @@ export default function DailyPlanner({ initialTab }: { initialTab?: 'tasks' | 'a
                           alignItems: 'center', justifyContent: 'center',
                         }}
                       >
-                        {task.done
-                          ? <Icon name={theme === 'light' ? 'full_sun' : 'full_moon'} size={22} style={{ color: 'var(--pink-dark)' }} />
-                          : <Icon name={theme === 'light' ? 'empty_sun' : 'empty_moon'} size={22} style={{ color: 'var(--border)' }} />
-                        }
+                        <CheckMark completed={task.done} size={22} />
                       </button>
 
                       <span style={{

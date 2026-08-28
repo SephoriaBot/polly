@@ -11,6 +11,7 @@ import RecipeBox from '../components/meals/RecipeBox';
 import PageTabs, { type PageTab } from '../components/PageTabs';
 import { useHamsterGrowth } from '../hamsters/HamsterGrowthContext';
 import StitchDivider from '../components/StitchDivider';
+import CheckMark from '../components/CheckMark';
 
 interface GroceryList { id: string; name: string; created_at: string }
 
@@ -1238,7 +1239,7 @@ export default function Grocery({ initialTab }: { initialTab?: 'list' | 'recipes
                           <div key={item.id}>
                             <div style={itemRowStyle(false)}>
                               <button onClick={() => toggle(item.id, item.checked)} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', display: 'flex', flexShrink: 0 }}>
-                                <Icon name={theme === 'light' ? 'empty_sun' : 'empty_moon'} size={20} />
+                               <CheckMark completed={false} size={20} /> 
                               </button>
                               <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--ink)' }}>{item.name}</span>
                               <span style={{ fontSize: '0.72rem', color: 'var(--ink-muted)', whiteSpace: 'nowrap' }}>{item.qty}</span>
@@ -1332,7 +1333,7 @@ export default function Grocery({ initialTab }: { initialTab?: 'list' | 'recipes
                       : have.map(item => (
                         <div key={item.id} style={itemRowStyle(true)}>
                           <button onClick={() => toggle(item.id, item.checked)} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', display: 'flex', flexShrink: 0 }}>
-                            <Icon name={theme === 'light' ? 'full_sun' : 'full_moon'} size={20} />
+                            <CheckMark completed={true} size={20} />
                           </button>
                           <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--ink-muted)', textDecoration: 'line-through' }}>{item.name}</span>
                           <span style={{ fontSize: '0.72rem', color: 'var(--ink-muted)', whiteSpace: 'nowrap' }}>{item.qty}</span>
@@ -1417,7 +1418,7 @@ export default function Grocery({ initialTab }: { initialTab?: 'list' | 'recipes
                               color: 'var(--ink)',
                             }}
                           >
-                            <Icon name={checked ? (theme === 'light' ? 'full_sun' : 'full_moon') : (theme === 'light' ? 'empty_sun' : 'empty_moon')} size={18} />
+                            <CheckMark completed={checked} size={18} />
                             <span style={{ flex: 1, fontSize: '0.86rem', color: 'var(--ink)' }}>{item.name}</span>
                             <span style={{ fontSize: '0.76rem', color: 'var(--ink-muted)' }}>{item.qty}</span>
                             {alreadyOnList && <span style={{ fontSize: '0.7rem', color: 'var(--ink-muted)' }}>on list</span>}

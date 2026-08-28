@@ -12,6 +12,7 @@ import { useToast } from '../../hooks/useToast';
 import Icon from '../Icon';
 import { useTheme } from '../../context/ThemeContext';
 import { useHamsterGrowth } from '../../hamsters/HamsterGrowthContext';
+import CheckMark from '../CheckMark';
 
 interface GoalRow {
   id: string;
@@ -288,8 +289,7 @@ export default function Goals() {
                                 onClick={() => toggleStep(step)}
                                 style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, cursor: 'pointer', minWidth: 0 }}
                               >
-                                <Icon name={step.done ? (theme === 'light' ? 'full_sun' : 'full_moon') : (theme === 'light' ? 'empty_sun' : 'empty_moon')} size={16} style={{ color: step.done ? 'var(--pink-dark)' : 'var(--border)', flexShrink: 0 }} />
-                                <span style={{
+                                <CheckMark completed={step.done} size={16} />                                <span style={{
                                   fontSize: '0.78rem', fontWeight: 600, flex: 1,
                                   color: step.done ? 'var(--ink-muted)' : 'var(--ink)',
                                   textDecoration: step.done ? 'line-through' : 'none',
@@ -344,8 +344,8 @@ export default function Goals() {
                                       borderRadius: 10, padding: '6px 9px',
                                     }}
                                   >
-                                    <Icon name={sub.done ? (theme === 'light' ? 'full_sun' : 'full_moon') : (theme === 'light' ? 'empty_sun' : 'empty_moon')} size={13} style={{ color: sub.done ? 'var(--pink-dark)' : 'var(--border)', flexShrink: 0 }} />
-                                    <span style={{
+                                   <CheckMark completed={sub.done} size={13} />
+                                      <span style={{
                                       fontSize: '0.72rem', fontWeight: 600, flex: 1,
                                       color: sub.done ? 'var(--ink-muted)' : 'var(--ink)',
                                       textDecoration: sub.done ? 'line-through' : 'none',
