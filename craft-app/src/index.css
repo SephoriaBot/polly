@@ -1170,33 +1170,39 @@ body {
    ============================================================ */
 
 [data-palette='pink'][data-theme='light'] .card {
-  background: var(--surface);
-  border: 10px solid transparent !important;
+  position: relative;
 
-  border-image-source: url('/pastel-goth-lace.svg');
-  border-image-slice: 20;
-  border-image-width: 10px;
-  border-image-outset: 0;
-  border-image-repeat: round;
+  background: var(--surface);
+
+  /* Lace border */
+  border: 10px solid transparent !important;
+  border-image: url('/pastel-goth-lace.svg') 20 / 10px / 0 round !important;
 
   border-radius: 0 !important;
 
   box-shadow: 0 5px 14px rgba(74, 46, 68, 0.10);
 
-  overflow: hidden;
+  /*
+   * IMPORTANT:
+   * The lace is the actual border area.
+   * Do not let the card clip its own border.
+   */
+  overflow: visible;
 }
 
 
-/* The inner wrapper must NOT cover the lace */
-
-[data-palette='pink'][data-theme='light'] .card-body {
-  background: transparent !important;
-  border: none !important;
-}
-
-
-/* Remove the normal inset decorative line */
-
+/* Remove Polly's normal inset decorative line */
 [data-palette='pink'][data-theme='light'] .card::before {
   content: none !important;
+}
+
+
+/*
+ * Keep card-body completely neutral.
+ * It is only a wrapper and should not create another
+ * background, border, or clipping layer.
+ */
+[data-palette='pink'][data-theme='light'] .card-body {
+  background: transparent;
+  border: none;
 }
