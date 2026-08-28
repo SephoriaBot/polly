@@ -16,7 +16,7 @@ import { getTrackerLogsInRange, deleteTrackerLog } from '../../lib/trackerApi';
 import type { TrackerType, TrackerLog, PeriodValue } from '../../types/tracker';
 import EmptyState from '../EmptyState';
 import emptyTracker from '../../assets/icons/empty-trackers.png';
-import StitchDivider from '../components/StitchDivider';
+import StitchDivider from '../StitchDivider';
 
 interface Props {
   type: TrackerType;
