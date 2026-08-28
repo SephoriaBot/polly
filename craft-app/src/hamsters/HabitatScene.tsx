@@ -262,11 +262,18 @@ export default function HabitatScene() {
   // buy. Everything else stays hidden rather than shown-but-disabled.
   const [viewMode, setViewMode] = useState<'collection' | 'market'>('collection');
 
-  // Today's 4 purchasable locked items. Recomputed only when the date
-  // string changes (i.e. effectively once per calendar day).
+  // Today's 4 purchasable locked items, drawn only from items not yet
+  // owned — otherwise the daily draw can land entirely on items you
+  // already have, leaving the market empty. Recomputed once the
+  // unlocked list has loaded, and again only if the date or the
+  // unlocked set changes (e.g. after buying something today).
+  const lockedKeys = useMemo(
+    () => HABITAT_ITEMS.filter(i => !unlocked.includes(i.key)).map(i => i.key),
+    [unlocked]
+  );
   const todaysMarket = useMemo(
-    () => pickDailyMarket(todayKey(), HABITAT_ITEMS.map(i => i.key), DAILY_MARKET_SIZE),
-    []
+    () => pickDailyMarket(todayKey(), lockedKeys, DAILY_MARKET_SIZE),
+    [lockedKeys]
   );
 
   // Load the saved theme + unlocked items once on mount.
