@@ -1165,70 +1165,50 @@ body {
 }
 
 /* ============================================================
-   PASTEL GOTH — SCALLOPED DOILY CARDS
+   PASTEL GOTH — LACE FRAME
    ============================================================ */
 
-[data-palette='pink'][data-theme='light'] .card,
-[data-palette='pink'][data-theme='light'] .stat-card,
-[data-palette='pink'][data-theme='light'] .pet-card,
-[data-palette='pink'][data-theme='light'] .plant-card,
-[data-palette='pink'][data-theme='light'] .wizard-box {
+[data-palette='pink'][data-theme='light'] .card {
   position: relative;
 
   background: var(--surface);
+
   border: none;
   border-radius: 0;
 
-  /*
-    The mask cuts little rounded scallops
-    around the entire outside edge.
-  */
-  -webkit-mask:
-    radial-gradient(
-      9px at 9px 9px,
-      #0000 98%,
-      #000
-    ) -9px -9px / 18px 18px repeat;
+  box-shadow:
+    0 5px 14px rgba(74, 46, 68, 0.10);
 
-  mask:
-    radial-gradient(
-      9px at 9px 9px,
-      #0000 98%,
-      #000
-    ) -9px -9px / 18px 18px repeat;
-
-  padding: 22px;
-  
-  box-shadow: none;
+  margin: 10px;
 }
 
 
-/* Put the shadow behind the scalloped card */
+/* Lace frame */
 
-[data-palette='pink'][data-theme='light'] .card::before,
-[data-palette='pink'][data-theme='light'] .stat-card::before,
-[data-palette='pink'][data-theme='light'] .pet-card::before,
-[data-palette='pink'][data-theme='light'] .plant-card::before,
-[data-palette='pink'][data-theme='light'] .wizard-box::before {
+[data-palette='pink'][data-theme='light'] .card::before {
   content: '';
 
   position: absolute;
-  inset: 0;
 
-  background: rgba(74, 46, 68, 0.12);
+  inset: -9px;
 
-  transform: translateY(4px);
+  background-image:
+    url('/pastel-goth-lace.svg');
 
-  z-index: -1;
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+
+  pointer-events: none;
+
+  z-index: 0;
 }
 
 
-/* Remove the previous decorative pseudo-element */
+/*
+ * Keep all actual card content above the lace frame.
+ */
 
-[data-palette='pink'][data-theme='light'] .card::after,
-[data-palette='pink'][data-theme='light'] .stat-card::after,
-[data-palette='pink'][data-theme='light'] .pet-card::after,
-[data-palette='pink'][data-theme='light'] .plant-card::after,
-[data-palette='pink'][data-theme='light'] .wizard-box::after {
-  content: none;
+[data-palette='pink'][data-theme='light'] .card > * {
+  position: relative;
+  z-index: 1;
 }
