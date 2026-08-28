@@ -35,16 +35,6 @@ function getGreeting() {
   return 'Winding down';
 }
 
-function StitchDivider() {
-  return (
-    <div className="stitch-divider">
-      <span className="line" />
-      <span className="mark" />
-      <span className="line" />
-    </div>
-  );
-}
-
 export default function Dashboard({ onNavigate }: { onNavigate?: (page: string, tab?: string) => void }) {
   const { theme } = useTheme();
   const { mode } = useEnergy();
