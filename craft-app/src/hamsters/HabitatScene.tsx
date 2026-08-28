@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { useHamsterGrowth } from './HamsterGrowthContext';
 
@@ -262,19 +262,22 @@ export default function HabitatScene() {
   // buy. Everything else stays hidden rather than shown-but-disabled.
   const [viewMode, setViewMode] = useState<'collection' | 'market'>('collection');
 
-  // Today's 4 purchasable locked items, drawn only from items not yet
-  // owned — otherwise the daily draw can land entirely on items you
-  // already have, leaving the market empty. Recomputed once the
-  // unlocked list has loaded, and again only if the date or the
-  // unlocked set changes (e.g. after buying something today).
-  const lockedKeys = useMemo(
-    () => HABITAT_ITEMS.filter(i => !unlocked.includes(i.key)).map(i => i.key),
-    [unlocked]
-  );
-  const todaysMarket = useMemo(
-    () => pickDailyMarket(todayKey(), lockedKeys, DAILY_MARKET_SIZE),
-    [lockedKeys]
-  );
+  // Today's 4 purchasable locked items. Drawn once, right after the
+  // unlocked list finishes loading, from only the items not yet owned
+  // at that moment — this keeps the market from landing entirely on
+  // stuff you already have. Deliberately NOT recomputed when `unlocked`
+  // changes afterward, so buying one of today's picks doesn't reshuffle
+  // the other three out from under you.
+  const [todaysMarket, setTodaysMarket] = useState<Set<string>>(new Set());
+  useEffect(() => {
+    if (!themeLoaded) return;
+    setTodaysMarket(prev => {
+      if (prev.size > 0) return prev; // already drawn for today
+      const lockedKeys = HABITAT_ITEMS.filter(i => !unlocked.includes(i.key)).map(i => i.key);
+      return pickDailyMarket(todayKey(), lockedKeys, DAILY_MARKET_SIZE);
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [themeLoaded]);
 
   // Load the saved theme + unlocked items once on mount.
   useEffect(() => {
