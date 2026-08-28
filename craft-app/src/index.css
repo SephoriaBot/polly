@@ -1168,27 +1168,19 @@ body {
    PASTEL GOTH — LACE BORDER TEST
    ============================================================ */
 
-[data-palette='pink'][data-theme='light'] .card {
+[data-palette='pink'][data-theme='light'] .card,
+[data-palette='pink'][data-theme='light'] .stat-card,
+[data-palette='pink'][data-theme='light'] .pet-card,
+[data-palette='pink'][data-theme='light'] .plant-card,
+[data-palette='pink'][data-theme='light'] .wizard-box {
+
   background: var(--surface);
 
-  /*
-   * The SVG is the actual border.
-   * The center of the SVG is transparent,
-   * so your existing card remains readable.
-   */
   border: 10px solid transparent;
 
   border-image-source: url('/pastel-goth-lace.svg');
-
-  /*
-   * The SVG is 60 × 60.
-   * The 20px corner sections stay intact while
-   * the edge sections stretch/repeat.
-   */
   border-image-slice: 20;
-
   border-image-width: 10px;
-
   border-image-repeat: round;
 
   border-radius: 0;
@@ -1196,8 +1188,5 @@ body {
   box-shadow:
     0 5px 14px rgba(74, 46, 68, 0.10);
 
-  /*
-   * Important: keep content inside the card.
-   */
   overflow: hidden;
 }
