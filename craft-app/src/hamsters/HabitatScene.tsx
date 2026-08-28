@@ -318,6 +318,10 @@ export default function HabitatScene() {
   const [unlockingKey, setUnlockingKey] = useState<string | null>(null);
   const [unlockError, setUnlockError] = useState<string | null>(null);
   const [selectedShelf, setSelectedShelf] = useState<ShelfNum>(1);
+  // Collection = items you own, browsable/placeable any time. Market =
+  // today's rotating specials, the only locked items you can currently
+  // buy. Everything else stays hidden rather than shown-but-disabled.
+  const [viewMode, setViewMode] = useState<'collection' | 'market'>('collection');
   const fractionalHour = useFractionalHour();
 
   // Today's 4 purchasable locked items. Recomputed only when the date
@@ -436,7 +440,15 @@ export default function HabitatScene() {
     item => decor.includes(item.key) && unlocked.includes(item.key)
   );
 
-  const visibleItems = HABITAT_ITEMS.filter(item => item.shelf === selectedShelf);
+  // Collection view: only items you already own, for the selected shelf.
+  // Market view: only items in today's rotation that you don't already
+  // own, for the selected shelf. Anything locked-and-not-today never
+  // renders in either view.
+  const visibleItems = HABITAT_ITEMS.filter(item => {
+    if (item.shelf !== selectedShelf) return false;
+    const owned = unlocked.includes(item.key);
+    return viewMode === 'collection' ? owned : !owned && todaysMarket.has(item.key);
+  });
 
   return (
     <div className="card">
@@ -566,6 +578,51 @@ export default function HabitatScene() {
             display: 'flex',
             gap: 6,
             marginBottom: 10,
+          }}
+        >
+          {(
+            [
+              { key: 'collection' as const, label: 'My Collection' },
+              { key: 'market' as const, label: "Today's Market ✨" },
+            ]
+          ).map(tab => (
+            <button
+              key={tab.key}
+              onClick={() => setViewMode(tab.key)}
+              style={{
+                flex: 1,
+                padding: '7px 10px',
+                borderRadius: 10,
+                fontSize: '0.64rem',
+                fontWeight: 700,
+                fontFamily: 'inherit',
+                cursor: 'pointer',
+                border: `1.5px solid ${
+                  viewMode === tab.key
+                    ? tab.key === 'market'
+                      ? '#caa14d'
+                      : 'var(--pink-dark)'
+                    : 'var(--border)'
+                }`,
+                background:
+                  viewMode === tab.key
+                    ? tab.key === 'market'
+                      ? '#faf1de'
+                      : 'var(--blush)'
+                    : 'var(--white)',
+                color: 'var(--ink)',
+              }}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        <div
+          style={{
+            display: 'flex',
+            gap: 6,
+            marginBottom: 10,
             flexWrap: 'wrap',
           }}
         >
@@ -599,8 +656,9 @@ export default function HabitatScene() {
             marginBottom: 8,
           }}
         >
-          Pick up to {MAX_PER_SHELF} items per shelf. Only {DAILY_MARKET_SIZE} items
-          are up for grabs in today's market — the rest will rotate in another day ✨
+          {viewMode === 'collection'
+            ? `Tap an item you own to place or remove it from this shelf. Up to ${MAX_PER_SHELF} per shelf.`
+            : `Only ${DAILY_MARKET_SIZE} items are up for grabs today, across all shelves — the rest will rotate in another day ✨`}
         </div>
 
         {unlockError && (
@@ -615,87 +673,99 @@ export default function HabitatScene() {
           </div>
         )}
 
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(4, 1fr)',
-            gap: 6,
-          }}
-        >
-          {visibleItems.map(item => {
-            const isUnlocked = unlocked.includes(item.key);
-            const inMarketToday = todaysMarket.has(item.key);
-            const active = decor.includes(item.key);
-            const cost = costFor(item.key);
-            const busy = unlockingKey === item.key;
-            const purchasable = isUnlocked || inMarketToday;
+        {visibleItems.length === 0 ? (
+          <div
+            style={{
+              padding: '18px 10px',
+              textAlign: 'center',
+              fontSize: '0.64rem',
+              color: 'var(--ink-muted)',
+              border: '1.5px dashed var(--border)',
+              borderRadius: 12,
+            }}
+          >
+            {viewMode === 'collection'
+              ? "You don't own anything for this shelf yet — check Today's Market ✨"
+              : 'No specials on this shelf today — try another shelf, or check back tomorrow ✨'}
+          </div>
+        ) : (
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(4, 1fr)',
+              gap: 6,
+            }}
+          >
+            {visibleItems.map(item => {
+              // In collection mode every item here is already owned; in
+              // market mode every item here is today's purchasable pick.
+              // No third state to render — hidden items never reach this
+              // list at all.
+              const active = decor.includes(item.key);
+              const cost = costFor(item.key);
+              const busy = unlockingKey === item.key;
 
-            return (
-              <button
-                key={item.key}
-                onClick={() => {
-                  if (isUnlocked) toggleDecor(item.key);
-                  else if (inMarketToday) unlockItem(item.key);
-                }}
-                disabled={busy || !purchasable}
-                title={
-                  isUnlocked
-                    ? item.label
-                    : inMarketToday
-                    ? `${item.label} — ${cost} pts to unlock (today's pick!)`
-                    : `${item.label} — not in today's market, check back tomorrow`
-                }
-                style={{
-                  position: 'relative',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 4,
-                  minHeight: 76,
-                  padding: '6px 4px',
-                  borderRadius: 12,
-                  background: active
-                    ? 'var(--blush)'
-                    : 'var(--white)',
-                  border: `1.5px solid ${
-                    active
-                      ? 'var(--pink-dark)'
-                      : inMarketToday && !isUnlocked
-                      ? '#caa14d'
-                      : 'var(--border)'
-                  }`,
-                  cursor: busy ? 'wait' : purchasable ? 'pointer' : 'not-allowed',
-                  fontFamily: 'inherit',
-                  overflow: 'hidden',
-                  opacity: isUnlocked ? 1 : inMarketToday ? 0.55 : 0.3,
-                }}
-              >
-                <img
-                  src={item.image}
-                  alt={item.label}
-                  style={{
-                    width: 48,
-                    height: 48,
-                    objectFit: 'contain',
-                    filter: isUnlocked ? 'none' : 'grayscale(60%)',
+              return (
+                <button
+                  key={item.key}
+                  onClick={() => {
+                    if (viewMode === 'collection') toggleDecor(item.key);
+                    else unlockItem(item.key);
                   }}
-                />
-                <span
+                  disabled={busy}
+                  title={
+                    viewMode === 'collection'
+                      ? item.label
+                      : `${item.label} — ${cost} pts to unlock (today's pick!)`
+                  }
                   style={{
-                    fontSize: '0.55rem',
-                    color: 'var(--ink-muted)',
-                    fontWeight: 600,
-                    textAlign: 'center',
-                    lineHeight: 1.1,
+                    position: 'relative',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 4,
+                    minHeight: 76,
+                    padding: '6px 4px',
+                    borderRadius: 12,
+                    background: active ? 'var(--blush)' : 'var(--white)',
+                    border: `1.5px solid ${
+                      active
+                        ? 'var(--pink-dark)'
+                        : viewMode === 'market'
+                        ? '#caa14d'
+                        : 'var(--border)'
+                    }`,
+                    cursor: busy ? 'wait' : 'pointer',
+                    fontFamily: 'inherit',
+                    overflow: 'hidden',
                   }}
                 >
-                  {isUnlocked ? item.label : inMarketToday ? `✨ ${cost} pts` : '🔒 —'}
-                </span>
-              </button>
-            );
-          })}
-        </div>
+                  <img
+                    src={item.image}
+                    alt={item.label}
+                    style={{
+                      width: 48,
+                      height: 48,
+                      objectFit: 'contain',
+                    }}
+                  />
+                  <span
+                    style={{
+                      fontSize: '0.55rem',
+                      color: 'var(--ink-muted)',
+                      fontWeight: 600,
+                      textAlign: 'center',
+                      lineHeight: 1.1,
+                    }}
+                  >
+                    {viewMode === 'collection' ? item.label : `✨ ${cost} pts`}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        )}
       </div>
     </div>
   );
