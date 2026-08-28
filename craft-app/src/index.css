@@ -1164,12 +1164,139 @@ body {
   color: var(--ink-muted);
 }
 
-/* =========================================================
-   PASTEL GOTH — DOILY / FRILLED STATIONERY
-   Visual styling only — palette remains unchanged.
-   ========================================================= */
+/* ============================================================
+   PASTEL GOTH — FRILLED / DOILY / DOLLHOUSE
+   Visual treatment only — existing palette stays untouched.
+   ============================================================ */
 
-/* ---------- cards ---------- */
+
+/* ------------------------------------------------------------
+   BACKGROUND
+   ------------------------------------------------------------ */
+
+[data-palette='pink'][data-theme='light'] body {
+  background-color: var(--bg);
+
+  /* tiny lace / stationery dot pattern */
+  background-image:
+    radial-gradient(circle, rgba(74, 46, 68, 0.055) 1px, transparent 1.5px),
+    radial-gradient(circle, rgba(217, 160, 194, 0.10) 1px, transparent 1.5px);
+
+  background-size: 18px 18px, 36px 36px;
+}
+
+
+/* ------------------------------------------------------------
+   TOP BAR
+   ------------------------------------------------------------ */
+
+[data-palette='pink'][data-theme='light'] .topbar {
+  background:
+    linear-gradient(
+      to bottom,
+      var(--surface),
+      rgba(255, 248, 241, 0.96)
+    );
+
+  border-bottom: 2px solid var(--pink-light-solid);
+
+  box-shadow:
+    0 3px 0 rgba(74, 46, 68, 0.05),
+    0 7px 18px rgba(74, 46, 68, 0.08);
+
+  position: relative;
+}
+
+[data-palette='pink'][data-theme='light'] .topbar::after {
+  content: '♡  ·  ✦  ·  ♡';
+
+  position: absolute;
+  left: 50%;
+  bottom: -9px;
+  transform: translateX(-50%);
+
+  padding: 0 12px;
+
+  background: var(--surface);
+  color: var(--pink-dark);
+
+  font-family: 'Fraunces', serif;
+  font-size: 10px;
+  letter-spacing: 3px;
+
+  white-space: nowrap;
+  z-index: 2;
+}
+
+
+/* ------------------------------------------------------------
+   PAGE HEADERS
+   ------------------------------------------------------------ */
+
+[data-palette='pink'][data-theme='light'] .page-header {
+  position: relative;
+  padding: 4px 8px 10px;
+}
+
+[data-palette='pink'][data-theme='light'] .page-header::after {
+  content: '─────  ♡  ─────';
+
+  display: block;
+
+  position: absolute;
+  left: 50%;
+  bottom: -5px;
+
+  transform: translateX(-50%);
+
+  color: var(--pink-dark);
+  opacity: 0.55;
+
+  font-family: 'Fraunces', serif;
+  font-size: 11px;
+  letter-spacing: 2px;
+
+  white-space: nowrap;
+}
+
+
+/* ------------------------------------------------------------
+   SECTION LABELS
+   ------------------------------------------------------------ */
+
+[data-palette='pink'][data-theme='light'] .section-label {
+  color: var(--pink-dark);
+
+  font-family: 'Fraunces', serif;
+  font-size: 0.78rem;
+  font-weight: 600;
+
+  text-transform: none;
+  letter-spacing: 0.04em;
+
+  position: relative;
+
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+
+  margin-bottom: 12px;
+}
+
+[data-palette='pink'][data-theme='light'] .section-label::before {
+  content: '♡';
+  font-size: 0.75rem;
+}
+
+[data-palette='pink'][data-theme='light'] .section-label::after {
+  content: '♡';
+  font-size: 0.75rem;
+}
+
+
+/* ------------------------------------------------------------
+   MAIN CARDS — THE BIG CHANGE
+   ------------------------------------------------------------ */
 
 [data-palette='pink'][data-theme='light'] .card,
 [data-palette='pink'][data-theme='light'] .stat-card,
@@ -1177,65 +1304,85 @@ body {
 [data-palette='pink'][data-theme='light'] .plant-card,
 [data-palette='pink'][data-theme='light'] .wizard-box {
 
-  border: 1px solid rgba(74, 46, 68, 0.18);
-  border-radius: 18px;
+  background:
+    linear-gradient(
+      135deg,
+      rgba(255,255,255,0.95),
+      var(--surface) 55%,
+      rgba(240,217,234,0.20)
+    );
+
+  border: 1.5px solid rgba(74, 46, 68, 0.20);
+
+  border-radius: 20px;
+
   box-shadow:
-    0 3px 0 rgba(217, 160, 194, 0.20),
-    0 8px 20px rgba(74, 46, 68, 0.09),
-    0 14px 30px rgba(217, 160, 194, 0.07);
+    0 2px 0 rgba(217,160,194,0.35),
+    0 5px 0 rgba(74,46,68,0.05),
+    0 10px 22px rgba(74,46,68,0.10);
+
+  padding: 18px;
+
+  position: relative;
 }
 
-/* delicate inner lace frame */
+
+/* outer decorative frame */
+
 [data-palette='pink'][data-theme='light'] .card::before,
 [data-palette='pink'][data-theme='light'] .stat-card::before,
 [data-palette='pink'][data-theme='light'] .pet-card::before,
 [data-palette='pink'][data-theme='light'] .plant-card::before,
 [data-palette='pink'][data-theme='light'] .wizard-box::before {
 
+  content: '';
+
+  position: absolute;
   inset: 6px;
-  border: 1px dashed rgba(74, 46, 68, 0.16);
-  border-radius: 13px;
+
+  border: 1px solid rgba(74,46,68,0.15);
+
+  border-radius: 15px;
+
+  pointer-events: none;
 }
 
-/* tiny decorative dots along the top of cards */
+
+/* inner lace-like dotted frame */
+
 [data-palette='pink'][data-theme='light'] .card::after,
 [data-palette='pink'][data-theme='light'] .stat-card::after,
 [data-palette='pink'][data-theme='light'] .pet-card::after,
 [data-palette='pink'][data-theme='light'] .plant-card::after,
 [data-palette='pink'][data-theme='light'] .wizard-box::after {
 
-  content: '·  ·  ·';
+  content: '✦  ·  ·  ·  ·  ✦';
+
   position: absolute;
-  top: 4px;
+
+  top: 3px;
   left: 50%;
+
   transform: translateX(-50%);
+
   color: var(--pink-dark);
-  opacity: 0.35;
-  font-size: 13px;
+
+  opacity: 0.48;
+
+  font-family: 'Fraunces', serif;
+  font-size: 9px;
+
   letter-spacing: 3px;
-  line-height: 1;
+
+  white-space: nowrap;
+
   pointer-events: none;
 }
 
 
-/* ---------- list items ---------- */
-
-[data-palette='pink'][data-theme='light'] .list-item {
-  border: 1px solid rgba(74, 46, 68, 0.16);
-  border-radius: 15px;
-  box-shadow:
-    0 3px 0 rgba(217, 160, 194, 0.16),
-    0 6px 16px rgba(74, 46, 68, 0.07);
-}
-
-[data-palette='pink'][data-theme='light'] .list-item::before {
-  inset: 5px;
-  border: 1px dashed rgba(74, 46, 68, 0.13);
-  border-radius: 10px;
-}
-
-
-/* ---------- hover ---------- */
+/* ------------------------------------------------------------
+   CARD HOVER
+   ------------------------------------------------------------ */
 
 [data-palette='pink'][data-theme='light'] .card:hover,
 [data-palette='pink'][data-theme='light'] .stat-card:hover,
@@ -1243,59 +1390,215 @@ body {
 [data-palette='pink'][data-theme='light'] .plant-card:hover,
 [data-palette='pink'][data-theme='light'] .wizard-box:hover {
 
-  transform: translateY(-3px);
+  transform: translateY(-4px) rotate(-0.2deg);
 
   box-shadow:
-    0 4px 0 rgba(217, 160, 194, 0.25),
-    0 11px 24px rgba(74, 46, 68, 0.11),
-    0 16px 32px rgba(217, 160, 194, 0.09);
+    0 3px 0 rgba(217,160,194,0.42),
+    0 7px 0 rgba(74,46,68,0.06),
+    0 15px 30px rgba(74,46,68,0.14);
+
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.18s ease;
 }
 
 
-/* ---------- buttons ---------- */
+/* ------------------------------------------------------------
+   LIST ITEMS
+   ------------------------------------------------------------ */
 
-[data-palette='pink'][data-theme='light'] .btn,
-[data-palette='pink'][data-theme='light'] .btn-primary {
+[data-palette='pink'][data-theme='light'] .list-item {
 
-  border: 1px solid rgba(74, 46, 68, 0.12);
-  border-radius: 12px;
+  background: var(--surface);
+
+  border: 1px solid rgba(74,46,68,0.17);
+
+  border-radius: 15px;
 
   box-shadow:
-    0 3px 0 rgba(74, 46, 68, 0.12),
-    0 5px 12px rgba(74, 46, 68, 0.08);
+    0 3px 0 rgba(217,160,194,0.25),
+    0 7px 15px rgba(74,46,68,0.07);
 
   position: relative;
 }
 
+[data-palette='pink'][data-theme='light'] .list-item::before {
+
+  inset: 5px;
+
+  border:
+    1px dashed rgba(74,46,68,0.16);
+
+  border-radius: 11px;
+}
+
+
+/* little heart at the right edge */
+
+[data-palette='pink'][data-theme='light'] .list-item::after {
+
+  content: '♡';
+
+  position: absolute;
+
+  right: 9px;
+  top: 7px;
+
+  color: var(--pink-dark);
+
+  font-size: 10px;
+
+  opacity: 0.4;
+
+  pointer-events: none;
+}
+
+
+/* ------------------------------------------------------------
+   BADGES
+   ------------------------------------------------------------ */
+
+[data-palette='pink'][data-theme='light'] .badge {
+
+  border-radius: 9px;
+
+  border-width: 1px;
+
+  box-shadow:
+    0 2px 0 rgba(74,46,68,0.08),
+    inset 0 1px rgba(255,255,255,0.55);
+
+  position: relative;
+}
+
+[data-palette='pink'][data-theme='light'] .badge-pink {
+  border-style: double;
+}
+
+[data-palette='pink'][data-theme='light'] .badge-lavender {
+  border-style: double;
+}
+
+
+/* ------------------------------------------------------------
+   BUTTONS — RIBBON / ORNAMENTAL FEEL
+   ------------------------------------------------------------ */
+
+[data-palette='pink'][data-theme='light'] .btn,
+[data-palette='pink'][data-theme='light'] .btn-primary {
+
+  border:
+    1.5px solid rgba(74,46,68,0.20);
+
+  border-radius: 13px;
+
+  box-shadow:
+    0 3px 0 rgba(74,46,68,0.12),
+    0 6px 12px rgba(74,46,68,0.08),
+    inset 0 1px rgba(255,255,255,0.45);
+
+  position: relative;
+}
+
+[data-palette='pink'][data-theme='light'] .btn::before,
+[data-palette='pink'][data-theme='light'] .btn-primary::before {
+
+  content: '♡';
+
+  position: absolute;
+
+  left: 7px;
+  top: 50%;
+
+  transform: translateY(-50%);
+
+  font-size: 9px;
+
+  opacity: 0.5;
+}
+
+[data-palette='pink'][data-theme='light'] .btn::after,
+[data-palette='pink'][data-theme='light'] .btn-primary::after {
+
+  content: '♡';
+
+  position: absolute;
+
+  right: 7px;
+  top: 50%;
+
+  transform: translateY(-50%);
+
+  font-size: 9px;
+
+  opacity: 0.5;
+}
+
+
 [data-palette='pink'][data-theme='light'] .btn:hover,
 [data-palette='pink'][data-theme='light'] .btn-primary:hover {
 
-  transform: translateY(-2px);
+  transform: translateY(-3px);
 
   box-shadow:
-    0 4px 0 rgba(74, 46, 68, 0.13),
-    0 8px 16px rgba(74, 46, 68, 0.10);
+    0 4px 0 rgba(74,46,68,0.14),
+    0 9px 16px rgba(74,46,68,0.11);
 }
 
-[data-palette='pink'][data-theme='light'] .btn-secondary,
+
+/* secondary buttons */
+
+[data-palette='pink'][data-theme='light'] .btn-secondary {
+
+  border: 1.5px solid var(--pink-dark);
+
+  border-radius: 13px;
+
+  background:
+    linear-gradient(
+      to bottom,
+      var(--surface),
+      var(--pink-light-solid)
+    );
+
+  box-shadow:
+    0 3px 0 rgba(74,46,68,0.08);
+}
+
+
+/* danger button */
+
 [data-palette='pink'][data-theme='light'] .btn-danger {
 
-  border-radius: 12px;
+  border-radius: 13px;
+
+  box-shadow:
+    0 3px 0 rgba(74,46,68,0.10);
 }
 
 
-/* ---------- inputs — little stationery cards ---------- */
+/* ------------------------------------------------------------
+   INPUTS — LITTLE VINTAGE PAPER FRAMES
+   ------------------------------------------------------------ */
 
 [data-palette='pink'][data-theme='light'] input,
 [data-palette='pink'][data-theme='light'] textarea,
 [data-palette='pink'][data-theme='light'] select {
 
+  background:
+    linear-gradient(
+      to bottom,
+      #FFFFFF,
+      rgba(240,217,234,0.18)
+    );
+
+  border: 1.5px solid rgba(74,46,68,0.17);
+
   border-radius: 12px;
-  border: 1px solid rgba(74, 46, 68, 0.16);
 
   box-shadow:
-    inset 0 1px 2px rgba(74, 46, 68, 0.03),
-    0 2px 6px rgba(217, 160, 194, 0.06);
+    inset 0 2px 4px rgba(74,46,68,0.035),
+    0 2px 5px rgba(74,46,68,0.05);
 }
 
 [data-palette='pink'][data-theme='light'] input:focus,
@@ -1305,104 +1608,260 @@ body {
   border-color: var(--pink-dark);
 
   box-shadow:
-    0 0 0 3px rgba(217, 160, 194, 0.18),
-    0 3px 8px rgba(74, 46, 68, 0.06);
+    0 0 0 3px rgba(217,160,194,0.20),
+    0 4px 10px rgba(74,46,68,0.07);
 }
 
 
-/* ---------- badges — little vintage labels ---------- */
+/* ------------------------------------------------------------
+   DASHBOARD DIVIDERS
+   ------------------------------------------------------------ */
 
-[data-palette='pink'][data-theme='light'] .badge {
+[data-palette='pink'][data-theme='light'] .stitch-divider {
 
-  border-radius: 8px;
-  box-shadow:
-    0 2px 4px rgba(74, 46, 68, 0.05);
+  margin: 8px 0 12px;
 }
 
+[data-palette='pink'][data-theme='light'] .stitch-divider .line {
 
-/* ---------- top bar ---------- */
-
-[data-palette='pink'][data-theme='light'] .topbar {
-
-  border-bottom: 1px solid rgba(74, 46, 68, 0.12);
-
-  box-shadow:
-    0 3px 12px rgba(74, 46, 68, 0.04);
-}
-
-
-/* ---------- bottom navigation ---------- */
-
-[data-palette='pink'][data-theme='light'] .bottombar {
-
-  border-top: 1px solid rgba(74, 46, 68, 0.13);
-
-  box-shadow:
-    0 -4px 14px rgba(74, 46, 68, 0.07);
-}
-
-[data-palette='pink'][data-theme='light'] .bottombar-tab.active {
-
-  position: relative;
-}
-
-[data-palette='pink'][data-theme='light'] .bottombar-tab.active::before {
-
-  content: '♡';
-  position: absolute;
-  top: -2px;
-  font-size: 9px;
-  color: var(--pink-dark);
-  opacity: 0.7;
-}
-
-
-/* ---------- background — extremely subtle paper texture ---------- */
-
-[data-palette='pink'][data-theme='light'] body {
-
-  background-image:
-    radial-gradient(
-      circle,
-      rgba(74, 46, 68, 0.035) 1px,
-      transparent 1.4px
-    );
-
-  background-size: 18px 18px;
-}
-
-
-/* ---------- decorative dividers ---------- */
-
-[data-palette='pink'][data-theme='light'] .stitch-divider .line,
-[data-palette='pink'][data-theme='light'] .lantern-divider .line {
-
-  border-top-style: dotted;
-  border-top-color: rgba(74, 46, 68, 0.20);
+  border-top:
+    1px dotted rgba(74,46,68,0.25);
 }
 
 [data-palette='pink'][data-theme='light'] .stitch-divider .mark {
 
-  transform: rotate(45deg);
+  width: 22px;
+  height: 22px;
+
+  margin: 0 8px;
+
+  transform: none;
 }
 
-[data-palette='pink'][data-theme='light'] .stitch-divider .mark::before,
+[data-palette='pink'][data-theme='light'] .stitch-divider .mark::before {
+
+  content: '♡';
+
+  background: none;
+
+  width: auto;
+  height: auto;
+
+  top: 50%;
+  left: 50%;
+
+  transform: translate(-50%, -50%);
+
+  color: var(--pink-dark);
+
+  font-size: 16px;
+}
+
 [data-palette='pink'][data-theme='light'] .stitch-divider .mark::after {
 
-  background: var(--pink-dark);
+  display: none;
 }
 
 
-/* ---------- section labels ---------- */
+/* ------------------------------------------------------------
+   LANTERN DIVIDERS
+   ------------------------------------------------------------ */
 
-[data-palette='pink'][data-theme='light'] .section-label {
+[data-palette='pink'][data-theme='light'] .lantern-divider .line {
 
-  letter-spacing: 0.13em;
-  font-size: 0.66rem;
+  border-top:
+    1px dotted rgba(74,46,68,0.22);
 }
 
 
-/* ---------- subtle card entrance depth ---------- */
+/* ------------------------------------------------------------
+   TITLE ROWS
+   ------------------------------------------------------------ */
+
+[data-palette='pink'][data-theme='light'] .title-row {
+
+  position: relative;
+
+  padding-bottom: 5px;
+}
+
+[data-palette='pink'][data-theme='light'] .title-row::after {
+
+  content: '✦';
+
+  color: var(--pink-dark);
+
+  font-size: 9px;
+
+  opacity: 0.6;
+
+  margin-left: 2px;
+}
+
+
+/* ------------------------------------------------------------
+   GREETING / DASHBOARD
+   ------------------------------------------------------------ */
+
+[data-palette='pink'][data-theme='light'] .dash-greeting {
+
+  padding: 4px 4px 8px;
+
+  position: relative;
+}
+
+[data-palette='pink'][data-theme='light'] .dash-greeting::after {
+
+  content: '♡  ✦  ♡';
+
+  position: absolute;
+
+  right: 0;
+  bottom: -4px;
+
+  color: var(--pink-dark);
+
+  opacity: 0.55;
+
+  font-family: 'Fraunces', serif;
+
+  font-size: 10px;
+
+  letter-spacing: 3px;
+}
+
+
+/* ------------------------------------------------------------
+   BOTTOM NAV — MAKE IT A LITTLE GIRLY TOO
+   ------------------------------------------------------------ */
+
+[data-palette='pink'][data-theme='light'] .bottombar {
+
+  background:
+    linear-gradient(
+      to bottom,
+      var(--surface),
+      var(--cream)
+    );
+
+  border-top:
+    2px solid rgba(74,46,68,0.13);
+
+  box-shadow:
+    0 -3px 0 rgba(217,160,194,0.25),
+    0 -10px 24px rgba(74,46,68,0.10);
+
+  position: relative;
+}
+
+[data-palette='pink'][data-theme='light'] .bottombar::before {
+
+  content: '♡  ·  ✦  ·  ♡';
+
+  position: absolute;
+
+  top: -9px;
+  left: 50%;
+
+  transform: translateX(-50%);
+
+  background: var(--surface);
+
+  padding: 0 12px;
+
+  color: var(--pink-dark);
+
+  font-size: 9px;
+
+  letter-spacing: 3px;
+
+  white-space: nowrap;
+}
+
+[data-palette='pink'][data-theme='light'] .bottombar-tab {
+
+  border-radius: 12px;
+
+  margin: 0 2px;
+
+  transition:
+    transform 0.15s ease,
+    background 0.15s ease;
+}
+
+[data-palette='pink'][data-theme='light'] .bottombar-tab.active {
+
+  background:
+    linear-gradient(
+      to bottom,
+      var(--pink-light-solid),
+      rgba(217,160,194,0.12)
+    );
+
+  color: var(--pink-dark);
+
+  box-shadow:
+    inset 0 0 0 1px rgba(74,46,68,0.10),
+    0 2px 5px rgba(74,46,68,0.07);
+
+  transform: translateY(-3px);
+}
+
+[data-palette='pink'][data-theme='light'] .bottombar-tab.active svg {
+
+  stroke: var(--pink-dark);
+
+  filter:
+    drop-shadow(0 2px 2px rgba(74,46,68,0.10));
+}
+
+
+/* ------------------------------------------------------------
+   EXPANDED NAV
+   ------------------------------------------------------------ */
+
+[data-palette='pink'][data-theme='light'] .bottombar-expand {
+
+  background:
+    linear-gradient(
+      to bottom,
+      var(--cream),
+      var(--surface)
+    );
+
+  border-top:
+    1px dotted rgba(74,46,68,0.20);
+
+  box-shadow:
+    0 -5px 15px rgba(74,46,68,0.06);
+}
+
+
+/* ------------------------------------------------------------
+   EMPTY MEALS CARD
+   ------------------------------------------------------------ */
+
+[data-palette='pink'][data-theme='light'] .meals-empty {
+
+  background:
+    linear-gradient(
+      135deg,
+      var(--surface),
+      var(--pink-light-solid)
+    );
+
+  border:
+    1.5px dashed rgba(74,46,68,0.25);
+
+  box-shadow:
+    0 3px 0 rgba(217,160,194,0.22),
+    0 7px 14px rgba(74,46,68,0.06);
+}
+
+
+/* ------------------------------------------------------------
+   SPECIAL — MAKE THE EXISTING INNER CARD FRAME MORE VISIBLE
+   ------------------------------------------------------------ */
 
 [data-palette='pink'][data-theme='light'] .card,
 [data-palette='pink'][data-theme='light'] .stat-card,
@@ -1410,10 +1869,29 @@ body {
 [data-palette='pink'][data-theme='light'] .plant-card,
 [data-palette='pink'][data-theme='light'] .wizard-box {
 
-  background-image:
-    linear-gradient(
-      135deg,
-      rgba(255,255,255,0.35),
-      transparent 45%
-    );
+  isolation: isolate;
+}
+
+
+/* ------------------------------------------------------------
+   MOBILE: KEEP THE FRILLS FROM GETTING CROWDED
+   ------------------------------------------------------------ */
+
+@media (max-width: 480px) {
+
+  [data-palette='pink'][data-theme='light'] .card::after,
+  [data-palette='pink'][data-theme='light'] .stat-card::after,
+  [data-palette='pink'][data-theme='light'] .pet-card::after,
+  [data-palette='pink'][data-theme='light'] .plant-card::after,
+  [data-palette='pink'][data-theme='light'] .wizard-box::after {
+
+    font-size: 7px;
+    letter-spacing: 2px;
+  }
+
+  [data-palette='pink'][data-theme='light'] .topbar::after {
+
+    font-size: 8px;
+    letter-spacing: 2px;
+  }
 }
