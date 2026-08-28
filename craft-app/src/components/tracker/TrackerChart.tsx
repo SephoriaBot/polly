@@ -16,6 +16,7 @@ import { getTrackerLogsInRange, deleteTrackerLog } from '../../lib/trackerApi';
 import type { TrackerType, TrackerLog, PeriodValue } from '../../types/tracker';
 import EmptyState from '../EmptyState';
 import emptyTracker from '../../assets/icons/empty-trackers.png';
+import StitchDivider from '../components/StitchDivider';
 
 interface Props {
   type: TrackerType;
@@ -72,9 +73,7 @@ export default function TrackerChart({ type, startDate, endDate, refreshKey, lab
     loadLogs();
   }
 
-  <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-  <Icon name="pagedivider" size={85} />
-</div>
+  <StitchDivider />
 
   {/* ENTRIES LIST */}
 

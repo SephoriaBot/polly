@@ -10,6 +10,7 @@ import WeatherBadge from '../components/WeatherBadge';
 import Icon, { type IconName } from '../components/Icon';
 import { useTheme } from '../context/ThemeContext';
 import EmptyState from '../components/EmptyState';
+import StitchDivider from '../components/StitchDivider';
 
 interface Focus {
   id: string;
@@ -136,9 +137,8 @@ async function loadAll() {
               <LowEnergyChecklist onNavigate={onNavigate} />
             </section>
 
-            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-              <Icon name="pagedivider" size={85} />
-            </div>
+            <StitchDivider />
+
             <section style={{ marginTop: 4 }}>
               <div style={{ fontSize: '0.68rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--ink-muted)', marginBottom: 8 }}>
                 Also on your radar
@@ -289,9 +289,7 @@ async function loadAll() {
           )}
         </section>
 
-     <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-  <Icon name="pagedivider" size={85} />
-</div>
+     <StitchDivider />
 
         {/* ── TODAY SNAPSHOT ── pulls live from chores, appointments, and money */}
         <section style={{ marginTop: 4 }}>

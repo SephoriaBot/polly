@@ -10,6 +10,7 @@ import emptyGrocery from '../assets/icons/empty-grocery.png';
 import RecipeBox from '../components/meals/RecipeBox';
 import PageTabs, { type PageTab } from '../components/PageTabs';
 import { useHamsterGrowth } from '../hamsters/HamsterGrowthContext';
+import StitchDivider from '../components/StitchDivider';
 
 interface GroceryList { id: string; name: string; created_at: string }
 
@@ -1203,6 +1204,11 @@ export default function Grocery({ initialTab }: { initialTab?: 'list' | 'recipes
               </div>
             </div>
 
+            <StitchDivider />
+
+
+            {/* LIST AND ALREADY HAVE LIST */}
+
             {have.length > 0 && (
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                 <button className="btn btn-ghost" onClick={clearChecked}>
@@ -1312,6 +1318,8 @@ export default function Grocery({ initialTab }: { initialTab?: 'list' | 'recipes
                     </button>
                   </div>
                 </div>
+
+                {/* ALREADY HAVE */}
 
                 <div className="card">
                   <div className="section-label" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>

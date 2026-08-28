@@ -7,6 +7,7 @@ import { useTheme } from '../context/ThemeContext';
 import celebrationImg from '../assets/illustrations/celebration.png';
 import emptyWallet from '../assets/icons/empty-wallet.png';
 import EmptyState from '../components/EmptyState';
+import StitchDivider from '../components/StitchDivider';
 
 interface Debt {
   id: number;
@@ -1463,6 +1464,8 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
               </div>
             </div>
 
+             <StitchDivider />
+
             {/* EQUITY MODE CHECK / TODAYS PAYCHECK CALCULATOR */}
 
             {isCrisis && (
@@ -1523,9 +1526,7 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
               </div>
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-  <Icon name="pagedivider" size={85} />
-</div>
+            <StitchDivider />
 
             {/* ── LISTS ── */}
             <div className="card">
@@ -2305,39 +2306,9 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
 
         {view === "debts" && (
           <>
-            <div className="card">
-              <div className="card-body">
-                <div className="section-header">
-                  <div className="section-label" style={{ marginBottom: 0 }}>Monthly Fixed Expenses</div>
-                </div>
-                <input
-                  type="number"
-                  className="form-input"
-                  placeholder="e.g. 1800"
-                  value={budget.fixed_expenses || ""}
-                  onChange={e => updateBudget("fixed_expenses", parseFloat(e.target.value) || 0)}
-                />
-                <div style={{ fontSize: 11, color: "var(--ink-muted)", marginTop: 6 }}>rent + transport + non-debt bills — used to calculate your snowball extra</div>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 16, paddingTop: 14, borderTop: "1px solid var(--border)" }}>
-                  <div>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: extraDebtPayment >= 0 ? "var(--green-dark)" : "var(--danger)" }}>True Debt Payment Extra</div>
-                    <div style={{ fontSize: 11, color: "var(--ink-muted)" }}>take-home ({fmt(budget.take_home)}) minus fixed expenses and {fmt(totalMins)} in minimums</div>
-                  </div>
-                  <div style={{ fontSize: 20, fontWeight: 800, color: extraDebtPayment >= 0 ? "var(--green-dark)" : "var(--danger)" }}>{fmt(extraDebtPayment)}</div>
-                </div>
-                {extraDebtPayment < 0 && (
-                  <div style={{ marginTop: 10, fontSize: 12, color: "var(--danger)", fontWeight: 600 }}>
-                    <Icon name="lightning" size={13} /> Minimums + fixed expenses exceed your take-home pay. Update your Budget Calculator on the home page.
-                  </div>
-                )}
-              </div>
-            </div>
 
+{/* SELECT DEBT PAYOFF STRATEGY */}      
 
-
-
-
-           
 <div className="card" style={{ marginBottom: 12 }}>
   <div className="card-body">
     <div style={{ fontWeight: 700, marginBottom: 10 }}>
@@ -2373,7 +2344,12 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
 
   </div>
 </div>
- <div className="card">
+
+<StitchDivider />
+
+{/* ACTIVE DEBTS */}  
+
+              <div className="card">
               <div className="card-body">
                 <div className="section-header">
 
@@ -2489,6 +2465,8 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
               </div>
             )}
 
+{/* DEFERRED DEBTS */}  
+
             <div className="card" style={{ opacity: 0.85 }}>
               <div className="card-body">
                 <div className="section-header">
@@ -2527,6 +2505,9 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
               </div>
             </div>
 
+            <StitchDivider />
+
+{/* PAYOFF SCHEDULE */}  
 
             <div className="section-label" style={{ marginTop: 4 }}><Icon name="clipboard-list" size={16} /> Payoff Schedule</div>
             {extraDebtPayment < 0 && (
@@ -2581,6 +2562,10 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                 </div>
               </div>
             </div>
+
+            <StitchDivider />
+
+            {/* DEFERRED LOANS (ACCRUING) */}  
 
             {deferredDebts.length > 0 && (
               <div className="card">

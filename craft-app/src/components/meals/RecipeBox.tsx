@@ -8,6 +8,7 @@ import RecipeModal from './RecipeModal';
 import emptyWallet from '../../assets/icons/empty-wallet.png';
 import errorDizzyImg from '../../assets/illustrations/error_dizzy.png';
 import EmptyState from '../EmptyState';
+import StitchDivider from '../components/StitchDivider';
 
 const DIETS = ['vegetarian','vegan','gluten free','ketogenic','paleo','whole30']
 const INTOLERANCES = ['dairy','egg','gluten','peanut','soy','tree nut']
@@ -367,6 +368,8 @@ function DiscoverTab({ onOpenRecipe, onSaved }: { onOpenRecipe: (id: number) => 
           <Icon name="_extra-unnamed-heart" size={14} /> Ask Dr. Groq
         </button>
       </div>
+
+      <StitchDivider />
 
       <div className="card">
         <h2 style={{ fontSize: '1rem', display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>

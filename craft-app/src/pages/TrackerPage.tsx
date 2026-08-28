@@ -11,6 +11,7 @@ import { TRACKER_CONFIG } from '../data/trackerConfig';
 import type { TrackerType, PeriodValue, CustomTrackerDef } from '../types/tracker';
 import { getTrackerLogsInRange, listCustomTrackers, addCustomTracker, removeCustomTracker } from '../lib/trackerApi';
 import { getMoonPhase, MOON_ICON_BY_PHASE, type MoonPhase } from '../lib/almanac';
+import StitchDivider from '../components/StitchDivider';
 
 function todayISO() {
   return new Date().toISOString().slice(0, 10);
@@ -137,6 +138,8 @@ export default function TrackerPage({ initialTab }: { initialTab?: TabType } = {
         </div>
       </div>
 
+      {/* DAY X OF YOUR CYCLE CARD */}
+
       {cycleDay !== null && (
         <div className="card" style={{ background: 'var(--blush)' }}>
           <div>
@@ -160,6 +163,10 @@ export default function TrackerPage({ initialTab }: { initialTab?: TabType } = {
           )}
         </div>
       )}
+
+      <StitchDivider />
+
+      {/* SELECT TRACKER TYPE */}
 
       <div style={{ display: 'flex', gap: '0.5rem', margin: '1rem 0', flexWrap: 'wrap' }}>
         {(Object.keys(TRACKER_CONFIG) as TrackerType[]).map((type) => (
