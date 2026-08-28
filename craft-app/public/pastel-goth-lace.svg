@@ -6,134 +6,60 @@
 
   <!-- =====================================================
        9-SLICE LACE BORDER
-
-       Corners: 20 × 20
-       Edges:   20 × 20 repeating areas
-       Center:  transparent
+       Original lace shape with pastel-goth purple outline
        ===================================================== -->
 
+  <!-- PURPLE OUTLINE -->
+  <g stroke="#4A2E44"
+     stroke-width="7"
+     stroke-linecap="round"
+     fill="none">
 
-  <!-- TOP EDGE -->
-  <path
-    d="
-      M20 6
-      C22 2 26 2 28 6
-      C30 10 34 10 36 6
-      C38 2 42 2 44 6
-      C46 10 50 10 52 6
-    "
-    stroke="#FFFFFF"
-    stroke-width="5"
-    stroke-linecap="round"
-    fill="none"
-  />
+    <path d="M20 6 C22 2 26 2 28 6 C30 10 34 10 36 6 C38 2 42 2 44 6 C46 10 50 10 52 6" />
+    <path d="M20 54 C22 58 26 58 28 54 C30 50 34 50 36 54 C38 58 42 58 44 54 C46 50 50 50 52 54" />
 
+    <path d="M6 20 C2 22 2 26 6 28 C10 30 10 34 6 36 C2 38 2 42 6 44 C10 46 10 50 6 52" />
+    <path d="M54 20 C58 22 58 26 54 28 C50 30 50 34 54 36 C58 38 58 42 54 44 C50 46 50 50 54 52" />
 
-  <!-- BOTTOM EDGE -->
-  <path
-    d="
-      M20 54
-      C22 58 26 58 28 54
-      C30 50 34 50 36 54
-      C38 58 42 58 44 54
-      C46 50 50 50 52 54
-    "
-    stroke="#FFFFFF"
-    stroke-width="5"
-    stroke-linecap="round"
-    fill="none"
-  />
+    <path d="M20 3 H14 C7.9 3 3 7.9 3 14 V20" />
+    <path d="M40 3 H46 C52.1 3 57 7.9 57 14 V20" />
+
+    <path d="M3 40 V46 C3 52.1 7.9 57 14 57 H20" />
+    <path d="M57 40 V46 C57 52.1 52.1 57 46 57 H40" />
+
+  </g>
 
 
-  <!-- LEFT EDGE -->
-  <path
-    d="
-      M6 20
-      C2 22 2 26 6 28
-      C10 30 10 34 6 36
-      C2 38 2 42 6 44
-      C10 46 10 50 6 52
-    "
-    stroke="#FFFFFF"
-    stroke-width="5"
-    stroke-linecap="round"
-    fill="none"
-  />
+  <!-- ORIGINAL WHITE LACE -->
+  <g stroke="#FFFFFF"
+     stroke-width="5"
+     stroke-linecap="round"
+     fill="none">
 
+    <!-- TOP -->
+    <path d="M20 6 C22 2 26 2 28 6 C30 10 34 10 36 6 C38 2 42 2 44 6 C46 10 50 10 52 6" />
 
-  <!-- RIGHT EDGE -->
-  <path
-    d="
-      M54 20
-      C58 22 58 26 54 28
-      C50 30 50 34 54 36
-      C58 38 58 42 54 44
-      C50 46 50 50 54 52
-    "
-    stroke="#FFFFFF"
-    stroke-width="5"
-    stroke-linecap="round"
-    fill="none"
-  />
+    <!-- BOTTOM -->
+    <path d="M20 54 C22 58 26 58 28 54 C30 50 34 50 36 54 C38 58 42 58 44 54 C46 50 50 50 52 54" />
 
+    <!-- LEFT -->
+    <path d="M6 20 C2 22 2 26 6 28 C10 30 10 34 6 36 C2 38 2 42 6 44 C10 46 10 50 6 52" />
 
-  <!-- TOP-LEFT CORNER -->
-  <path
-    d="
-      M20 3
-      H14
-      C7.9 3 3 7.9 3 14
-      V20
-    "
-    stroke="#FFFFFF"
-    stroke-width="5"
-    stroke-linecap="round"
-    fill="none"
-  />
+    <!-- RIGHT -->
+    <path d="M54 20 C58 22 58 26 54 28 C50 30 50 34 54 36 C58 38 58 42 54 44 C50 46 50 50 54 52" />
 
+    <!-- TOP-LEFT -->
+    <path d="M20 3 H14 C7.9 3 3 7.9 3 14 V20" />
 
-  <!-- TOP-RIGHT CORNER -->
-  <path
-    d="
-      M40 3
-      H46
-      C52.1 3 57 7.9 57 14
-      V20
-    "
-    stroke="#FFFFFF"
-    stroke-width="5"
-    stroke-linecap="round"
-    fill="none"
-  />
+    <!-- TOP-RIGHT -->
+    <path d="M40 3 H46 C52.1 3 57 7.9 57 14 V20" />
 
+    <!-- BOTTOM-LEFT -->
+    <path d="M3 40 V46 C3 52.1 7.9 57 14 57 H20" />
 
-  <!-- BOTTOM-LEFT CORNER -->
-  <path
-    d="
-      M3 40
-      V46
-      C3 52.1 7.9 57 14 57
-      H20
-    "
-    stroke="#FFFFFF"
-    stroke-width="5"
-    stroke-linecap="round"
-    fill="none"
-  />
+    <!-- BOTTOM-RIGHT -->
+    <path d="M57 40 V46 C57 52.1 52.1 57 46 57 H40" />
 
-
-  <!-- BOTTOM-RIGHT CORNER -->
-  <path
-    d="
-      M57 40
-      V46
-      C57 52.1 52.1 57 46 57
-      H40
-    "
-    stroke="#FFFFFF"
-    stroke-width="5"
-    stroke-linecap="round"
-    fill="none"
-  />
+  </g>
 
 </svg>
