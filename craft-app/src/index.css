@@ -1166,16 +1166,12 @@ body {
 
 
 /* ============================================================
-   PASTEL GOTH — LACE CARD BORDER
+   PASTEL GOTH — FRILLY LACE CARDS
    ============================================================ */
 
 [data-palette='pink'][data-theme='light'] .card {
-  position: relative;
-
   background: var(--surface);
-
-  /* The SVG IS the border */
-  border: 10px solid transparent;
+  border: 10px solid transparent !important;
 
   border-image-source: url('/pastel-goth-lace.svg');
   border-image-slice: 20;
@@ -1183,34 +1179,24 @@ body {
   border-image-outset: 0;
   border-image-repeat: round;
 
-  border-radius: 0;
+  border-radius: 0 !important;
 
-  box-shadow:
-    0 5px 14px rgba(74, 46, 68, 0.10);
-
-  margin: 10px;
+  box-shadow: 0 5px 14px rgba(74, 46, 68, 0.10);
 
   overflow: hidden;
 }
 
 
-/* Remove Polly's normal inner decorative border */
-
-[data-palette='pink'][data-theme='light'] .card::before {
-  content: none;
-}
-
-/* ============================================================
-   PASTEL GOTH — LET LACE SHOW THROUGH
-   ============================================================ */
+/* The inner wrapper must NOT cover the lace */
 
 [data-palette='pink'][data-theme='light'] .card-body {
-  background: transparent;
-  border: none;
+  background: transparent !important;
+  border: none !important;
 }
 
-[data-palette='pink'][data-theme='light'] .card {
-  border: 10px solid transparent !important;
-  border-image: url('/pastel-goth-lace.svg') 20 round !important;
-  border-radius: 0 !important;
+
+/* Remove the normal inset decorative line */
+
+[data-palette='pink'][data-theme='light'] .card::before {
+  content: none !important;
 }
