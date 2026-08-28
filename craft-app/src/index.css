@@ -1208,3 +1208,9 @@ body {
   background: transparent;
   border: none;
 }
+
+[data-palette='pink'][data-theme='light'] .card {
+  border: 10px solid transparent !important;
+  border-image: url('/pastel-goth-lace.svg') 20 round !important;
+  border-radius: 0 !important;
+}
