@@ -5,14 +5,14 @@
      fill="none">
 
   <!-- =====================================================
-       9-SLICE LACE BORDER
-       Soft rounded petal / U-shaped scallops
-       White lace with pastel-gold outline
+       9-SLICE LACE BORDER — pastel goth (light)
+       Plum outline (--accent) with dusty pink petal (--pink)
+       and picot beads at each scallop tip
        ===================================================== -->
 
-  <!-- PASTEL GOLD OUTLINE -->
-  <g stroke="#D8C28A"
-     stroke-width="7"
+  <!-- PLUM OUTLINE -->
+  <g stroke="#4A2E44"
+     stroke-width="6"
      stroke-linecap="round"
      fill="none">
 
@@ -61,9 +61,9 @@
   </g>
 
 
-  <!-- WHITE PETAL LACE -->
-  <g stroke="#FFFFFF"
-     stroke-width="5"
+  <!-- DUSTY PINK PETAL -->
+  <g stroke="#D9A0C2"
+     stroke-width="4"
      stroke-linecap="round"
      fill="none">
 
@@ -109,6 +109,18 @@
     <path d="M3 40 V46 C3 52.1 7.9 57 14 57 H20" />
     <path d="M57 40 V46 C57 52.1 52.1 57 46 57 H40" />
 
+  </g>
+
+  <!-- PICOT BEADS at scallop tips -->
+  <g fill="#4A2E44">
+    <circle cx="28" cy="4" r="1.6" />
+    <circle cx="44" cy="4" r="1.6" />
+    <circle cx="28" cy="56" r="1.6" />
+    <circle cx="44" cy="56" r="1.6" />
+    <circle cx="4" cy="28" r="1.6" />
+    <circle cx="4" cy="44" r="1.6" />
+    <circle cx="56" cy="28" r="1.6" />
+    <circle cx="56" cy="44" r="1.6" />
   </g>
 
 </svg>
