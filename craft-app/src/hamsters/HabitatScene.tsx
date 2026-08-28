@@ -495,7 +495,7 @@ export default function HabitatScene() {
               );
             });
           })}
-
+        </div>
         <div
           style={{
             display: 'flex',
