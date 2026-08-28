@@ -1164,23 +1164,23 @@ body {
   color: var(--ink-muted);
 }
 
+
 /* ============================================================
-   PASTEL GOTH — LACE BORDER TEST
+   PASTEL GOTH — LACE CARD BORDER
    ============================================================ */
 
-[data-palette='pink'][data-theme='light'] .card,
-[data-palette='pink'][data-theme='light'] .stat-card,
-[data-palette='pink'][data-theme='light'] .pet-card,
-[data-palette='pink'][data-theme='light'] .plant-card,
-[data-palette='pink'][data-theme='light'] .wizard-box {
+[data-palette='pink'][data-theme='light'] .card {
+  position: relative;
 
   background: var(--surface);
 
+  /* The SVG IS the border */
   border: 10px solid transparent;
 
   border-image-source: url('/pastel-goth-lace.svg');
   border-image-slice: 20;
   border-image-width: 10px;
+  border-image-outset: 0;
   border-image-repeat: round;
 
   border-radius: 0;
@@ -1188,5 +1188,14 @@ body {
   box-shadow:
     0 5px 14px rgba(74, 46, 68, 0.10);
 
+  margin: 10px;
+
   overflow: hidden;
+}
+
+
+/* Remove Polly's normal inner decorative border */
+
+[data-palette='pink'][data-theme='light'] .card::before {
+  content: none;
 }
