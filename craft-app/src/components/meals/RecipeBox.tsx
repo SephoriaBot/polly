@@ -8,7 +8,7 @@ import RecipeModal from './RecipeModal';
 import emptyWallet from '../../assets/icons/empty-wallet.png';
 import errorDizzyImg from '../../assets/illustrations/error_dizzy.png';
 import EmptyState from '../EmptyState';
-import StitchDivider from '../components/StitchDivider';
+import StitchDivider from '../StitchDivider';
 
 const DIETS = ['vegetarian','vegan','gluten free','ketogenic','paleo','whole30']
 const INTOLERANCES = ['dairy','egg','gluten','peanut','soy','tree nut']
