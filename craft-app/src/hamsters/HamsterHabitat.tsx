@@ -1,13 +1,13 @@
 import { useEffect, useState } from "react";
 import { useHamsterGrowth } from "./HamsterGrowthContext";
-import { HAMSTERS, imageForForm } from "./hamsters";
+import { ALL_HAMSTERS, imageForForm } from "./hamsters";
 import Icon, { type IconName } from "../components/Icon";
 import HamsterStatTraining from "./HamsterStatTraining";
 import EmptyState from '../components/EmptyState';
 import emptyHabitat from '../assets/icons/empty-habitat.png';
 
 function imageFor(hamsterId: string) {
-  return HAMSTERS.find((h) => h.id === hamsterId)?.image;
+  return ALL_HAMSTERS.find((h) => h.id === hamsterId)?.image;
 }
 
 const STAGE_LABEL: Record<string, { text: string; icon: IconName }> = {
