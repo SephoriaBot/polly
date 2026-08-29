@@ -134,7 +134,7 @@ export default function Goals() {
         (grouped[step.goal_id] ??= []).push(step);
       }
       setStepsByGoal(grouped);
-      if (!expanded) setExpanded(rows[0].id);
+     
     }
     setLoading(false);
   }
