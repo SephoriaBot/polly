@@ -1875,73 +1875,126 @@ body {
 }
 
 
-/* ---------- TWINKLE OVERLAY ---------- */
+/* ============================================================
+   BLURPLE — TWINKLING FAIRY LIGHTS
+   ============================================================ */
 
-[data-palette='blurple'][data-theme='light'] .card::after,
-[data-palette='blurple'][data-theme='light'] .stat-card::after,
-[data-palette='blurple'][data-theme='light'] .pet-card::after,
-[data-palette='blurple'][data-theme='light'] .plant-card::after,
-[data-palette='blurple'][data-theme='light'] .wizard-box::after,
-[data-palette='blurple'][data-theme='light'] .list-item::after {
-
-  content: "";
-
-  position: absolute;
-
-  inset: 0;
-
-  background:
-    url('/blurple-twinkle.svg')
-    center / 240px 240px
-    repeat;
-
-  opacity: 0.34;
-
-  pointer-events: none;
-
-  z-index: 0;
-}
-
-
-/* ---------- DARK TWINKLE ---------- */
-
-[data-palette='blurple'][data-theme='dark'] .card::after,
-[data-palette='blurple'][data-theme='dark'] .stat-card::after,
-[data-palette='blurple'][data-theme='dark'] .pet-card::after,
-[data-palette='blurple'][data-theme='dark'] .plant-card::after,
-[data-palette='blurple'][data-theme='dark'] .wizard-box::after,
-[data-palette='blurple'][data-theme='dark'] .list-item::after {
-
-  content: "";
-
-  position: absolute;
-
-  inset: 0;
-
-  background:
-    url('/blurple-twinkle-dark.svg')
-    center / 240px 240px
-    repeat;
-
-  opacity: 0.40;
-
-  pointer-events: none;
-
-  z-index: 0;
-}
-
-
-/* ---------- KEEP CONTENT ABOVE STARS ---------- */
-
-[data-palette='blurple'] .card > *,
-[data-palette='blurple'] .stat-card > *,
-[data-palette='blurple'] .pet-card > *,
-[data-palette='blurple'] .plant-card > *,
-[data-palette='blurple'] .wizard-box > *,
-[data-palette='blurple'] .list-item > * {
-
+[data-palette='blurple'] .page-body {
   position: relative;
-  z-index: 1;
+}
+
+
+/* The strand */
+
+[data-palette='blurple'] .page-body::before {
+  content: "";
+
+  position: absolute;
+  top: -9px;
+  left: 3%;
+  right: 3%;
+
+  height: 18px;
+
+  background:
+    radial-gradient(
+      circle at 4% 50%,
+      #B99BEF 0 4px,
+      transparent 5px
+    ),
+    radial-gradient(
+      circle at 16% 50%,
+      #86CDE0 0 4px,
+      transparent 5px
+    ),
+    radial-gradient(
+      circle at 28% 50%,
+      #D9A7E8 0 4px,
+      transparent 5px
+    ),
+    radial-gradient(
+      circle at 40% 50%,
+      #9BA9F0 0 4px,
+      transparent 5px
+    ),
+    radial-gradient(
+      circle at 52% 50%,
+      #E7C878 0 4px,
+      transparent 5px
+    ),
+    radial-gradient(
+      circle at 64% 50%,
+      #A98DE5 0 4px,
+      transparent 5px
+    ),
+    radial-gradient(
+      circle at 76% 50%,
+      #82CEDC 0 4px,
+      transparent 5px
+    ),
+    radial-gradient(
+      circle at 88% 50%,
+      #D99BCF 0 4px,
+      transparent 5px
+    ),
+    radial-gradient(
+      circle at 100% 50%,
+      #B99BEF 0 4px,
+      transparent 5px
+    );
+
+  pointer-events: none;
+
+  z-index: 5;
+
+  filter:
+    drop-shadow(0 0 4px rgba(174, 153, 208, .65))
+    drop-shadow(0 0 9px rgba(126, 159, 209, .35));
+
+  animation: blurple-lights 2.8s ease-in-out infinite alternate;
+}
+
+
+/* Tiny hanging wire */
+
+[data-palette='blurple'] .page-body::after {
+  content: "";
+
+  position: absolute;
+  top: -4px;
+  left: 3%;
+  right: 3%;
+
+  height: 7px;
+
+  border-top: 1px solid var(--border);
+
+  border-radius: 50%;
+
+  pointer-events: none;
+
+  z-index: 4;
+}
+
+
+@keyframes blurple-lights {
+  0% {
+    opacity: .72;
+    filter:
+      drop-shadow(0 0 3px rgba(174, 153, 208, .45))
+      drop-shadow(0 0 7px rgba(126, 159, 209, .25));
+  }
+
+  50% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: .78;
+    filter:
+      drop-shadow(0 0 6px rgba(174, 153, 208, .8))
+      drop-shadow(0 0 13px rgba(126, 159, 209, .45));
+  }
 }
 
 
