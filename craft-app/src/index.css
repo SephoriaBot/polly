@@ -1471,7 +1471,7 @@ body {
    border: none;
  }
 
-[data-palette='pink'][data-theme='light'] button.keyboard-key {
+[data-palette='pink'][data-theme='light'] btn.keyboard-key {
   min-width: 2rem;
   height: 2rem;
   padding: 0 0.5rem;
@@ -1491,14 +1491,14 @@ body {
   line-height: 1;
 }
 
-[data-palette='pink'][data-theme='light'] button.keyboard-key:hover {
+[data-palette='pink'][data-theme='light'] btn.keyboard-key:hover {
   transform: translateY(-1px);
   box-shadow:
     0 3px 0 #B77FA2,
     0 4px 7px rgba(74, 46, 68, 0.12);
 }
 
-[data-palette='pink'][data-theme='light'] button.keyboard-key:active {
+[data-palette='pink'][data-theme='light'] btn.keyboard-key:active {
   transform: translateY(2px);
   border-bottom-width: 1px;
   box-shadow:
