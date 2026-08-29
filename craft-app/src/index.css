@@ -1353,22 +1353,12 @@ body {
 [data-palette='pink'][data-theme='light'] .wizard-box,
 [data-palette='pink'][data-theme='light'] .list-item {
   position: relative;
-
   background: var(--surface);
-
   /* Lace border */
   border: 16px solid transparent !important;
   border-image: url('/pastel-goth-lace.svg') 20 / 16px / 0 round !important;
-
   border-radius: 0 !important;
-
   box-shadow: 0 6px 18px rgba(74, 46, 68, 0.16);
-
-  /*
-   * IMPORTANT:
-   * The lace is the actual border area.
-   * Do not let the card clip its own border.
-   */
   overflow: visible;
 }
 
@@ -1379,21 +1369,15 @@ body {
 [data-palette='pink'][data-theme='dark'] .wizard-box,
 [data-palette='pink'][data-theme='dark'] .list-item {
   position: relative;
-
   background: var(--surface);
-
   /* Lace border (dark variant SVG, lighter strokes) */
   border: 16px solid transparent !important;
   border-image: url('/pastel-goth-lace-dark.svg') 20 / 16px / 0 round !important;
-
   border-radius: 0 !important;
-
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
-
   overflow: visible;
 }
 
-/* Remove Polly's normal inset decorative line */
 [data-palette='pink'] .card::before,
 [data-palette='pink'] .stat-card::before,
 [data-palette='pink'] .pet-card::before,
@@ -1403,13 +1387,61 @@ body {
   content: none !important;
 }
 
-
-/*
- * Keep card-body completely neutral.
- * It is only a wrapper and should not create another
- * background, border, or clipping layer.
- */
 [data-palette='pink'] .card-body {
   background: transparent;
   border: none;
 }
+
+/* ============================================================
+   BLURPLE - CLOUDY CARDS
+   ============================================================ */
+
+[data-palette='blurple'][data-theme='light'] .card,
+[data-palette='blurple'][data-theme='light'] .stat-card,
+[data-palette='blurple'][data-theme='light'] .pet-card,
+[data-palette='blurple'][data-theme='light'] .plant-card,
+[data-palette='blurple'][data-theme='light'] .wizard-box,
+[data-palette='blurple'][data-theme='light'] .list-item {
+  position: relative;
+  background: var(--surface);
+  /* cloudy border */
+  border: 16px solid transparent !important;
+  border-image: url('/blurple-cloud.svg') 20 / 16px / 0 round !important;
+  border-radius: 0 !important;
+  box-shadow: 0 6px 18px rgba(74, 46, 68, 0.16);
+  overflow: visible;
+}
+
+[data-palette='blurple'][data-theme='dark'] .card,
+[data-palette='blurple'][data-theme='dark'] .stat-card,
+[data-palette='blurple'][data-theme='dark'] .pet-card,
+[data-palette='blurple'][data-theme='dark'] .plant-card,
+[data-palette='blurple'][data-theme='dark'] .wizard-box,
+[data-palette='blurple'][data-theme='dark'] .list-item {
+  position: relative;
+  background: var(--surface);
+  /* Lace border (dark variant SVG, lighter strokes) */
+  border: 16px solid transparent !important;
+  border-image: url('/blurple-cloud-dark.svg') 20 / 16px / 0 round !important;
+  border-radius: 0 !important;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+  overflow: visible;
+}
+
+[data-palette='blurple'] .card::before,
+[data-palette='blurple'] .stat-card::before,
+[data-palette='blurple'] .pet-card::before,
+[data-palette='blurple'] .plant-card::before,
+[data-palette='blurple'] .wizard-box::before,
+[data-palette='blurple'] .list-item::before {
+  content: none !important;
+}
+
+[data-palette='blurple'] .card-body {
+  background: transparent;
+  border: none;
+}
+
+   /* ============================================================
+   SUNNY SKIES - SUN BEAM CORNERS
+   ============================================================ */
