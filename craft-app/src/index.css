@@ -1393,7 +1393,7 @@ body {
 }
 
 /* ============================================================
-   BLURPLE - CLOUDY CARDS
+   BLURPLE — SOFT CLOUDY CARDS
    ============================================================ */
 
 [data-palette='blurple'][data-theme='light'] .card,
@@ -1402,15 +1402,24 @@ body {
 [data-palette='blurple'][data-theme='light'] .plant-card,
 [data-palette='blurple'][data-theme='light'] .wizard-box,
 [data-palette='blurple'][data-theme='light'] .list-item {
+
   position: relative;
+
   background: var(--surface);
-  /* cloudy border */
-  border: 16px solid transparent !important;
-  border-image: url('/blurple-cloud.svg') 20 / 16px / 0 round !important;
-  border-radius: 0 !important;
-  box-shadow: 0 6px 18px rgba(74, 46, 68, 0.16);
+
+  /* Soft, puffy cloud edge */
+  border: 10px solid transparent !important;
+  border-image: url('/blurple-cloud.svg') 24 / 10px / 0 round !important;
+
+  border-radius: 12px !important;
+
+  box-shadow:
+    0 5px 14px rgba(74, 46, 68, 0.10),
+    0 1px 4px rgba(74, 46, 68, 0.06);
+
   overflow: visible;
 }
+
 
 [data-palette='blurple'][data-theme='dark'] .card,
 [data-palette='blurple'][data-theme='dark'] .stat-card,
@@ -1418,16 +1427,26 @@ body {
 [data-palette='blurple'][data-theme='dark'] .plant-card,
 [data-palette='blurple'][data-theme='dark'] .wizard-box,
 [data-palette='blurple'][data-theme='dark'] .list-item {
+
   position: relative;
+
   background: var(--surface);
-  /* Lace border (dark variant SVG, lighter strokes) */
-  border: 16px solid transparent !important;
-  border-image: url('/blurple-cloud-dark.svg') 20 / 16px / 0 round !important;
-  border-radius: 0 !important;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+
+  /* Softer cloud edge for dark mode */
+  border: 10px solid transparent !important;
+  border-image: url('/blurple-cloud-dark.svg') 24 / 10px / 0 round !important;
+
+  border-radius: 12px !important;
+
+  box-shadow:
+    0 6px 18px rgba(0, 0, 0, 0.28),
+    0 1px 5px rgba(0, 0, 0, 0.16);
+
   overflow: visible;
 }
 
+
+/* Remove any older card decoration */
 [data-palette='blurple'] .card::before,
 [data-palette='blurple'] .stat-card::before,
 [data-palette='blurple'] .pet-card::before,
@@ -1437,11 +1456,115 @@ body {
   content: none !important;
 }
 
+
+/* Keep the inside of the cards clean */
 [data-palette='blurple'] .card-body {
   background: transparent;
   border: none;
 }
-
    /* ============================================================
-   SUNNY SKIES - SUN BEAM CORNERS
+   SUNNY SKIES — SUNSHINE CORNER CARDS
    ============================================================ */
+
+[data-palette='sunny-skies'][data-theme='light'] .card,
+[data-palette='sunny-skies'][data-theme='light'] .stat-card,
+[data-palette='sunny-skies'][data-theme='light'] .pet-card,
+[data-palette='sunny-skies'][data-theme='light'] .plant-card,
+[data-palette='sunny-skies'][data-theme='light'] .wizard-box,
+[data-palette='sunny-skies'][data-theme='light'] .list-item,
+
+[data-palette='sunny-skies'][data-theme='dark'] .card,
+[data-palette='sunny-skies'][data-theme='dark'] .stat-card,
+[data-palette='sunny-skies'][data-theme='dark'] .pet-card,
+[data-palette='sunny-skies'][data-theme='dark'] .plant-card,
+[data-palette='sunny-skies'][data-theme='dark'] .wizard-box,
+[data-palette='sunny-skies'][data-theme='dark'] .list-item {
+
+  position: relative;
+  overflow: visible;
+}
+
+
+/* ------------------------------------------------------------
+   Sunshine corner ornament
+   ------------------------------------------------------------ */
+
+[data-palette='sunny-skies'] .card::after,
+[data-palette='sunny-skies'] .stat-card::after,
+[data-palette='sunny-skies'] .pet-card::after,
+[data-palette='sunny-skies'] .plant-card::after,
+[data-palette='sunny-skies'] .wizard-box::after,
+[data-palette='sunny-skies'] .list-item::after {
+  content: "";
+  position: absolute;
+
+  width: 30px;
+  height: 30px;
+
+  top: -15px;
+  right: -15px;
+
+  background: url('/sunny-corner.svg') center / contain no-repeat;
+
+  pointer-events: none;
+  z-index: 5;
+}
+
+
+/* ------------------------------------------------------------
+   Vary the ornament orientation so every card doesn't look
+   identical
+   ------------------------------------------------------------ */
+
+[data-palette='sunny-skies'] .stat-card::after {
+  top: -10px;
+  right: auto;
+  left: -10px;
+  transform: rotate(-90deg);
+}
+
+[data-palette='sunny-skies'] .pet-card::after {
+  top: auto;
+  right: -10px;
+  bottom: -10px;
+  transform: rotate(90deg);
+}
+
+[data-palette='sunny-skies'] .plant-card::after {
+  top: auto;
+  right: auto;
+  bottom: -10px;
+  left: -10px;
+  transform: rotate(180deg);
+}
+
+[data-palette='sunny-skies'] .wizard-box::after {
+  top: -8px;
+  right: -8px;
+  transform: rotate(20deg);
+}
+
+[data-palette='sunny-skies'] .list-item::after {
+  top: -7px;
+  right: -7px;
+  transform: scale(0.78) rotate(-15deg);
+}
+
+
+/* ------------------------------------------------------------
+   Keep card interiors clean
+   ------------------------------------------------------------ */
+
+[data-palette='sunny-skies'] .card::before,
+[data-palette='sunny-skies'] .stat-card::before,
+[data-palette='sunny-skies'] .pet-card::before,
+[data-palette='sunny-skies'] .plant-card::before,
+[data-palette='sunny-skies'] .wizard-box::before,
+[data-palette='sunny-skies'] .list-item::before {
+  content: none !important;
+}
+
+[data-palette='sunny-skies'] .card-body {
+  background: transparent;
+  border: none;
+}
