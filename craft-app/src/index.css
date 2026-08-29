@@ -1472,6 +1472,213 @@ body {
  }
 
 /* ============================================================
+   PINK / PASTEL GOTH — KEYBOARD KEYCAP BUTTONS
+
+   Square-ish keys with a solid "skirt" beneath the face to
+   fake a 3D keycap. Hover nudges the key up slightly; active
+   presses it flush into its own skirt, like a real key press.
+   ============================================================ */
+
+[data-palette='pink'] .btn,
+[data-palette='pink'] .btn-primary,
+[data-palette='pink'] .btn-secondary,
+[data-palette='pink'] .btn-danger {
+  border-radius: 7px !important;
+  border: none !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.02em;
+  transition: transform 0.08s ease, box-shadow 0.08s ease !important;
+  position: relative;
+  top: 0;
+}
+
+/* ---------- LIGHT ---------- */
+
+[data-palette='pink'][data-theme='light'] .btn,
+[data-palette='pink'][data-theme='light'] .btn-primary {
+  background: var(--primary) !important;
+  color: var(--btn-ink) !important;
+  box-shadow:
+    0 4px 0 var(--pink-dark),
+    0 6px 10px rgba(74, 46, 68, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.35) !important;
+}
+
+[data-palette='pink'][data-theme='light'] .btn-secondary {
+  background: var(--surface) !important;
+  color: var(--ink) !important;
+  box-shadow:
+    0 4px 0 var(--border),
+    0 6px 10px rgba(74, 46, 68, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6) !important;
+}
+
+[data-palette='pink'][data-theme='light'] .btn-danger {
+  background: var(--danger-bg) !important;
+  color: var(--danger) !important;
+  box-shadow:
+    0 4px 0 var(--danger),
+    0 6px 10px rgba(139, 58, 74, 0.20),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4) !important;
+}
+
+/* ---------- DARK ---------- */
+
+[data-palette='pink'][data-theme='dark'] .btn,
+[data-palette='pink'][data-theme='dark'] .btn-primary {
+  background: var(--primary) !important;
+  color: var(--btn-ink) !important;
+  box-shadow:
+    0 4px 0 var(--accent),
+    0 6px 10px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
+}
+
+[data-palette='pink'][data-theme='dark'] .btn-secondary {
+  background: var(--surface) !important;
+  color: var(--ink) !important;
+  box-shadow:
+    0 4px 0 var(--border),
+    0 6px 10px rgba(0, 0, 0, 0.30),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+}
+
+[data-palette='pink'][data-theme='dark'] .btn-danger {
+  background: var(--danger-bg) !important;
+  color: var(--danger) !important;
+  box-shadow:
+    0 4px 0 var(--danger),
+    0 6px 10px rgba(0, 0, 0, 0.30),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12) !important;
+}
+
+/* ---------- HOVER: slight lift, like fingertip resting on the key ---------- */
+
+[data-palette='pink'] .btn:hover,
+[data-palette='pink'] .btn-primary:hover,
+[data-palette='pink'] .btn-secondary:hover,
+[data-palette='pink'] .btn-danger:hover {
+  transform: translateY(-1px) !important;
+}
+
+[data-palette='pink'][data-theme='light'] .btn:hover,
+[data-palette='pink'][data-theme='light'] .btn-primary:hover {
+  box-shadow:
+    0 5px 0 var(--pink-dark),
+    0 8px 12px rgba(74, 46, 68, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.35) !important;
+}
+
+[data-palette='pink'][data-theme='light'] .btn-secondary:hover {
+  background: var(--blush) !important;
+  color: var(--ink) !important;
+  box-shadow:
+    0 5px 0 var(--border),
+    0 8px 12px rgba(74, 46, 68, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6) !important;
+}
+
+[data-palette='pink'][data-theme='light'] .btn-danger:hover {
+  box-shadow:
+    0 5px 0 var(--danger),
+    0 8px 12px rgba(139, 58, 74, 0.24),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4) !important;
+}
+
+[data-palette='pink'][data-theme='dark'] .btn:hover,
+[data-palette='pink'][data-theme='dark'] .btn-primary:hover {
+  box-shadow:
+    0 5px 0 var(--accent),
+    0 8px 12px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
+}
+
+[data-palette='pink'][data-theme='dark'] .btn-secondary:hover {
+  box-shadow:
+    0 5px 0 var(--border),
+    0 8px 12px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+}
+
+[data-palette='pink'][data-theme='dark'] .btn-danger:hover {
+  box-shadow:
+    0 5px 0 var(--danger),
+    0 8px 12px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12) !important;
+}
+
+/* ---------- ACTIVE: key presses flush into its own skirt ---------- */
+
+[data-palette='pink'] .btn:active,
+[data-palette='pink'] .btn-primary:active,
+[data-palette='pink'] .btn-secondary:active,
+[data-palette='pink'] .btn-danger:active {
+  transform: translateY(4px) !important;
+}
+
+[data-palette='pink'][data-theme='light'] .btn:active,
+[data-palette='pink'][data-theme='light'] .btn-primary:active {
+  box-shadow:
+    0 0 0 var(--pink-dark),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
+}
+
+[data-palette='pink'][data-theme='light'] .btn-secondary:active {
+  box-shadow:
+    0 0 0 var(--border),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
+}
+
+[data-palette='pink'][data-theme='light'] .btn-danger:active {
+  box-shadow:
+    0 0 0 var(--danger),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
+}
+
+[data-palette='pink'][data-theme='dark'] .btn:active,
+[data-palette='pink'][data-theme='dark'] .btn-primary:active {
+  box-shadow:
+    0 0 0 var(--accent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12) !important;
+}
+
+[data-palette='pink'][data-theme='dark'] .btn-secondary:active {
+  box-shadow:
+    0 0 0 var(--border),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06) !important;
+}
+
+[data-palette='pink'][data-theme='dark'] .btn-danger:active {
+  box-shadow:
+    0 0 0 var(--danger),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+}
+
+/* Small keys get a shallower skirt so they don't look top-heavy */
+
+[data-palette='pink'] .btn-sm {
+  border-radius: 5px !important;
+}
+
+[data-palette='pink'][data-theme='light'] .btn-sm {
+  box-shadow:
+    0 2.5px 0 var(--pink-dark),
+    0 4px 6px rgba(74, 46, 68, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.35) !important;
+}
+
+[data-palette='pink'][data-theme='dark'] .btn-sm {
+  box-shadow:
+    0 2.5px 0 var(--accent),
+    0 4px 6px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
+}
+
+[data-palette='pink'] .btn-sm:active {
+  transform: translateY(2.5px) !important;
+}
+
+/* ============================================================
    BLURPLE — DREAMY TWINKLE CARDS
    ============================================================ */
 
