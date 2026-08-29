@@ -7,24 +7,26 @@
   <!-- =====================================================
        SUNNY SKIES — CORNER RAYS
 
-       CSS places this at top:-10px; right:-10px on .card,
-       so most of the box floats outside the card, above and
-       to the right. Rays radiate from near the top-right of
-       this viewBox (the point furthest from the card) toward
-       the bottom-left (the point that overlaps the card),
-       so it reads as a sun peeking in from outside the
-       corner rather than a scattered burst.
+       CSS places this at top:-10px; right:-10px on .card, so
+       the icon straddles the card's corner: part overlapping
+       the card, most of it hanging in open space outside it.
+
+       The burst is anchored near the corner apex (bottom-left
+       of this viewBox, where the icon overlaps the card) and
+       rays fan OUTWARD toward the open corner (top-right of
+       this viewBox) -- like a sun peeking around the edge,
+       not shining into the card.
 
        .stat-card / .pet-card / .plant-card reuse this same
        asset via scaleX(-1) / scaleY(-1) / scale(-1) to cover
-       the other three corners — no separate files needed.
+       the other three corners -- no separate files needed.
        ===================================================== -->
 
-  <path d="M30.00 8.90 L32.00 19.70" stroke="#E7C96F" stroke-width="2.4" stroke-linecap="round"/>
-  <path d="M28.30 9.00 L26.90 19.90" stroke="#E7C96F" stroke-width="2.4" stroke-linecap="round"/>
-  <path d="M26.60 8.50 L22.10 18.50" stroke="#E7C96F" stroke-width="2.4" stroke-linecap="round"/>
-  <path d="M25.10 7.50 L17.80 15.80" stroke="#E7C96F" stroke-width="2.4" stroke-linecap="round"/>
-  <path d="M23.90 6.20 L14.60 12.00" stroke="#E7C96F" stroke-width="2.4" stroke-linecap="round"/>
-  <path d="M23.20 4.60 L12.60 7.40" stroke="#E7C96F" stroke-width="2.4" stroke-linecap="round"/>
+  <path d="M2.00 23.10 L0.00 12.30" stroke="#E7C96F" stroke-width="2.4" stroke-linecap="round"/>
+  <path d="M3.70 23.00 L5.10 12.10" stroke="#E7C96F" stroke-width="2.4" stroke-linecap="round"/>
+  <path d="M5.40 23.50 L9.90 13.50" stroke="#E7C96F" stroke-width="2.4" stroke-linecap="round"/>
+  <path d="M6.90 24.50 L14.20 16.20" stroke="#E7C96F" stroke-width="2.4" stroke-linecap="round"/>
+  <path d="M8.10 25.80 L17.40 20.00" stroke="#E7C96F" stroke-width="2.4" stroke-linecap="round"/>
+  <path d="M8.80 27.40 L19.40 24.60" stroke="#E7C96F" stroke-width="2.4" stroke-linecap="round"/>
 
 </svg>
