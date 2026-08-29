@@ -6,20 +6,16 @@
 
   <!-- =====================================================
        SUNNY SKIES — CORNER RAYS
-       Clean geometric rays, no sun/circle
+       Rays radiate from a single implied point (top-left of
+       this box) so it reads as a sunburst peeking round the
+       card corner, rather than scattered dashes.
        ===================================================== -->
 
-  <g
-    stroke="#E7C96F"
-    stroke-width="2"
-    stroke-linecap="round">
-
-    <path d="M16 2 V8" />
-    <path d="M25 5 L21 10" />
-    <path d="M30 14 H24" />
-    <path d="M27 23 L22 19" />
-    <path d="M19 29 L18 23" />
-
-  </g>
+  <path d="M8.80 4.55 L19.42 7.40" stroke="#E7C96F" stroke-width="2.4" stroke-linecap="round"/>
+  <path d="M8.09 6.18 L17.42 12.01" stroke="#E7C96F" stroke-width="2.4" stroke-linecap="round"/>
+  <path d="M6.94 7.53 L14.15 15.83" stroke="#E7C96F" stroke-width="2.4" stroke-linecap="round"/>
+  <path d="M5.44 8.48 L9.91 18.53" stroke="#E7C96F" stroke-width="2.4" stroke-linecap="round"/>
+  <path d="M3.73 8.96 L5.07 19.87" stroke="#E7C96F" stroke-width="2.4" stroke-linecap="round"/>
+  <path d="M1.96 8.91 L0.05 19.74" stroke="#E7C96F" stroke-width="2.4" stroke-linecap="round"/>
 
 </svg>
