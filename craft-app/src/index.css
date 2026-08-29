@@ -1476,8 +1476,10 @@ body {
  }
 
 /* ============================================================
-   BLURPLE — CLOUDY CARDS
+   BLURPLE — DREAMY TWINKLE CARDS
    ============================================================ */
+
+/* ---------- LIGHT ---------- */
 
 [data-palette='blurple'][data-theme='light'] .card,
 [data-palette='blurple'][data-theme='light'] .stat-card,
@@ -1486,37 +1488,22 @@ body {
 [data-palette='blurple'][data-theme='light'] .wizard-box,
 [data-palette='blurple'][data-theme='light'] .list-item {
 
-  background: var(--surface);
+  position: relative;
 
-  border: 14px solid transparent !important;
+  background-color: var(--surface);
 
-  border-image-source: url('/blurple-cloud.svg') !important;
+  border: 2px solid #8B78B8 !important;
 
-  /*
-     30px corners.
-     The browser keeps those corners intact and only
-     repeats the four middle edge sections.
-  */
-  border-image-slice: 30 !important;
-
-  border-image-width: 14px !important;
-
-  border-image-outset: 0 !important;
-
-  border-image-repeat: round !important;
-
-  border-radius: 0 !important;
+  border-radius: 14px !important;
 
   box-shadow:
-    0 6px 18px rgba(74, 46, 68, 0.14);
+    0 5px 16px rgba(74, 46, 68, 0.14);
 
-  overflow: visible;
+  overflow: hidden;
 }
 
 
-/* ============================================================
-   DARK
-   ============================================================ */
+/* ---------- DARK ---------- */
 
 [data-palette='blurple'][data-theme='dark'] .card,
 [data-palette='blurple'][data-theme='dark'] .stat-card,
@@ -1525,59 +1512,110 @@ body {
 [data-palette='blurple'][data-theme='dark'] .wizard-box,
 [data-palette='blurple'][data-theme='dark'] .list-item {
 
-  background: var(--surface);
+  position: relative;
 
-  border: 14px solid transparent !important;
+  background-color: var(--surface);
 
-  border-image-source: url('/blurple-cloud-dark.svg') !important;
+  border: 2px solid #B8A5D5 !important;
 
-  border-image-slice: 30 !important;
-
-  border-image-width: 14px !important;
-
-  border-image-outset: 0 !important;
-
-  border-image-repeat: round !important;
-
-  border-radius: 0 !important;
+  border-radius: 14px !important;
 
   box-shadow:
     0 6px 20px rgba(0, 0, 0, 0.32);
 
+  overflow: hidden;
 }
 
 
-/* ============================================================
-   REMOVE PREVIOUS PSEUDO-ELEMENT DECORATION
-   ============================================================ */
+/* ---------- TWINKLE OVERLAY ---------- */
+
+[data-palette='blurple'][data-theme='light'] .card::after,
+[data-palette='blurple'][data-theme='light'] .stat-card::after,
+[data-palette='blurple'][data-theme='light'] .pet-card::after,
+[data-palette='blurple'][data-theme='light'] .plant-card::after,
+[data-palette='blurple'][data-theme='light'] .wizard-box::after,
+[data-palette='blurple'][data-theme='light'] .list-item::after {
+
+  content: "";
+
+  position: absolute;
+
+  inset: 0;
+
+  background:
+    url('/blurple-twinkle.svg')
+    center / 240px 240px
+    repeat;
+
+  opacity: 0.34;
+
+  pointer-events: none;
+
+  z-index: 0;
+}
+
+
+/* ---------- DARK TWINKLE ---------- */
+
+[data-palette='blurple'][data-theme='dark'] .card::after,
+[data-palette='blurple'][data-theme='dark'] .stat-card::after,
+[data-palette='blurple'][data-theme='dark'] .pet-card::after,
+[data-palette='blurple'][data-theme='dark'] .plant-card::after,
+[data-palette='blurple'][data-theme='dark'] .wizard-box::after,
+[data-palette='blurple'][data-theme='dark'] .list-item::after {
+
+  content: "";
+
+  position: absolute;
+
+  inset: 0;
+
+  background:
+    url('/blurple-twinkle-dark.svg')
+    center / 240px 240px
+    repeat;
+
+  opacity: 0.40;
+
+  pointer-events: none;
+
+  z-index: 0;
+}
+
+
+/* ---------- KEEP CONTENT ABOVE STARS ---------- */
+
+[data-palette='blurple'] .card > *,
+[data-palette='blurple'] .stat-card > *,
+[data-palette='blurple'] .pet-card > *,
+[data-palette='blurple'] .plant-card > *,
+[data-palette='blurple'] .wizard-box > *,
+[data-palette='blurple'] .list-item > * {
+
+  position: relative;
+  z-index: 1;
+}
+
+
+/* ---------- REMOVE OLD CLOUD DECORATION ---------- */
 
 [data-palette='blurple'] .card::before,
-[data-palette='blurple'] .card::after,
 [data-palette='blurple'] .stat-card::before,
-[data-palette='blurple'] .stat-card::after,
 [data-palette='blurple'] .pet-card::before,
-[data-palette='blurple'] .pet-card::after,
 [data-palette='blurple'] .plant-card::before,
-[data-palette='blurple'] .plant-card::after,
 [data-palette='blurple'] .wizard-box::before,
-[data-palette='blurple'] .wizard-box::after,
-[data-palette='blurple'] .list-item::before,
-[data-palette='blurple'] .list-item::after {
+[data-palette='blurple'] .list-item::before {
 
   content: none !important;
-
 }
 
 
-/* ============================================================
-   CARD BODY
-   ============================================================ */
+/* ---------- CARD BODY ---------- */
 
 [data-palette='blurple'] .card-body {
 
   background: transparent;
   border: none;
-
 }
 
 /* ============================================================
@@ -1730,4 +1768,24 @@ body {
   background: transparent;
   border: none;
 
+}
+
+/* ---------- TUXEDO — SIMPLE SINGLE-LINE CARDS ---------- */
+
+[data-palette='tuxedo'][data-theme='light'] .card,
+[data-palette='tuxedo'][data-theme='light'] .stat-card,
+[data-palette='tuxedo'][data-theme='light'] .pet-card,
+[data-palette='tuxedo'][data-theme='light'] .plant-card,
+[data-palette='tuxedo'][data-theme='light'] .wizard-box,
+[data-palette='tuxedo'][data-theme='light'] .list-item,
+[data-palette='tuxedo'][data-theme='dark'] .card,
+[data-palette='tuxedo'][data-theme='dark'] .stat-card,
+[data-palette='tuxedo'][data-theme='dark'] .pet-card,
+[data-palette='tuxedo'][data-theme='dark'] .plant-card,
+[data-palette='tuxedo'][data-theme='dark'] .wizard-box,
+[data-palette='tuxedo'][data-theme='dark'] .list-item {
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius-lg) !important;
+  box-shadow: var(--shadow);
+  overflow: hidden;
 }
