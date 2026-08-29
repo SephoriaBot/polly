@@ -465,6 +465,61 @@
 }
 
 /* ============================================================
+   TEDDY — SOFT SEWN / FABRIC CARDS
+   ============================================================ */
+
+[data-theme='light'] .card,
+[data-theme='light'] .stat-card,
+[data-theme='light'] .pet-card,
+[data-theme='light'] .plant-card,
+[data-theme='light'] .wizard-box,
+[data-theme='light'] .list-item {
+
+  background: var(--surface);
+
+  border: 10px solid transparent !important;
+
+  border-image: url('/teddy-stitch.svg') 20 / 10px / 0 round !important;
+
+  border-radius: 0 !important;
+
+  box-shadow:
+    0 5px 15px rgba(91, 63, 38, 0.12);
+
+  overflow: visible;
+}
+
+
+[data-theme='dark'] .card,
+[data-theme='dark'] .stat-card,
+[data-theme='dark'] .pet-card,
+[data-theme='dark'] .plant-card,
+[data-theme='dark'] .wizard-box,
+[data-theme='dark'] .list-item {
+
+  background: var(--surface);
+
+  border: 10px solid transparent !important;
+
+  border-image: url('/teddy-stitch-dark.svg') 20 / 10px / 0 round !important;
+
+  border-radius: 0 !important;
+
+  box-shadow:
+    0 6px 18px rgba(0, 0, 0, 0.28);
+
+  overflow: visible;
+}
+
+/* keep the radius tokens outside — they don't change by theme */
+:root {
+  --radius-sm: 10px;
+  --radius-md: 16px;
+  --radius-lg: 20px;
+}
+
+
+/* ============================================================
    LUCKY STARS
    Retro magical cereal / marshmallow theme
    ============================================================ */
@@ -938,59 +993,7 @@ input[type='checkbox']:checked::before {
   border-radius: 999px;
 }
 
-/* ============================================================
-   TEDDY — SOFT SEWN / FABRIC CARDS
-   ============================================================ */
 
-[data-theme='light'] .card,
-[data-theme='light'] .stat-card,
-[data-theme='light'] .pet-card,
-[data-theme='light'] .plant-card,
-[data-theme='light'] .wizard-box,
-[data-theme='light'] .list-item {
-
-  background: var(--surface);
-
-  border: 10px solid transparent !important;
-
-  border-image: url('/teddy-stitch.svg') 20 / 10px / 0 round !important;
-
-  border-radius: 0 !important;
-
-  box-shadow:
-    0 5px 15px rgba(91, 63, 38, 0.12);
-
-  overflow: visible;
-}
-
-
-[data-theme='dark'] .card,
-[data-theme='dark'] .stat-card,
-[data-theme='dark'] .pet-card,
-[data-theme='dark'] .plant-card,
-[data-theme='dark'] .wizard-box,
-[data-theme='dark'] .list-item {
-
-  background: var(--surface);
-
-  border: 10px solid transparent !important;
-
-  border-image: url('/teddy-stitch-dark.svg') 20 / 10px / 0 round !important;
-
-  border-radius: 0 !important;
-
-  box-shadow:
-    0 6px 18px rgba(0, 0, 0, 0.28);
-
-  overflow: visible;
-}
-
-/* keep the radius tokens outside — they don't change by theme */
-:root {
-  --radius-sm: 10px;
-  --radius-md: 16px;
-  --radius-lg: 20px;
-}
 
 /* ================= BASE RESET ================= */
 
