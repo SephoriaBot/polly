@@ -1,10 +1,10 @@
 // TodaySnapshot.tsx
 // Tier 1, Step 1 (part 2) + item 4: makes Dashboard pull live from the
 // sections that used to be isolated from each other — Planner (tasks,
-// interval-based chores, appointments) and Wallet (bills) — so "Today"
-// actually answers "what matters right now" instead of just holding a
-// manually-typed focus list. Each row is read-only and tap-through only;
-// editing still happens on the source page.
+// interval-based chores, appointments), Wallet (bills), and Goals — so
+// "Today" actually answers "what matters right now" instead of just
+// holding a manually-typed focus list. Each row is read-only and
+// tap-through only; editing still happens on the source page.
 // Chores due status is computed with the same statusFor() logic the
 // Chores planner card uses (see lib/chores.ts) so the two never disagree
 // on what's overdue.
@@ -12,6 +12,10 @@
 // this month's override from `bill_payments` when one exists (recurring
 // bills only) — matching Wallet's own effectiveDueDay logic, so this card
 // never shows an out-of-date due day for a bill you've adjusted this month.
+// Goals reads goal_steps joined to goals, filtered to top-level
+// (parent_step_id null), incomplete steps on non-archived goals, and
+// surfaces the earliest incomplete step on the oldest active goal —
+// mirrors the "next unchecked step" logic without needing a second round trip.
 
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
@@ -29,6 +33,14 @@ interface SnapshotRow {
   page: string;
   tab?: string;
   empty?: boolean;
+}
+
+interface GoalStepJoinRow {
+  id: string;
+  goal_id: string;
+  label: string;
+  step_order: number;
+  goals: { title: string; created_at: string } | null;
 }
 
 function todayISO(): string {
@@ -50,7 +62,7 @@ export default function TodaySnapshot({ onNavigate }: { onNavigate?: (page: stri
       const today = todayISO();
       const now = new Date();
 
-      const [choresRes, dueChoresRes, apptRes, unpaidBills, cartSettingsRes, recentLogsRes, customTrackers] = await Promise.all([
+      const [choresRes, dueChoresRes, apptRes, unpaidBills, cartSettingsRes, recentLogsRes, customTrackers, goalStepsRes] = await Promise.all([
         supabase.from('daily_tasks').select('id,label,done').eq('task_date', today).eq('done', false).order('created_at'),
         supabase.from('chores').select('id,name,interval_days,last_done_at,icon,created_at'),
         supabase.from('appointments').select('id,title,date_time').order('date_time'),
@@ -58,6 +70,12 @@ export default function TodaySnapshot({ onNavigate }: { onNavigate?: (page: stri
         supabase.from('grocery_settings').select('smart_cart_total,smart_cart_item_count,smart_cart_updated_at').eq('id', 1).maybeSingle(),
         supabase.from('tracker_logs').select('type,log_date').gte('log_date', daysAgoISO(30)),
         listCustomTrackers().catch(() => []),
+        supabase.from('goal_steps')
+          .select('id, goal_id, label, step_order, goals!inner(title, created_at, archived)')
+          .is('parent_step_id', null)
+          .eq('done', false)
+          .eq('goals.archived', false)
+          .order('step_order'),
       ]);
 
       const tasks = choresRes.data ?? [];
@@ -96,6 +114,21 @@ export default function TodaySnapshot({ onNavigate }: { onNavigate?: (page: stri
       const trackerLabel = (type: string): string =>
         TRACKER_CONFIG[type]?.label ?? customTrackers.find((c: any) => c.id === type)?.label ?? type;
 
+      // Collapse to one row per goal (earliest step_order per goal_id), then
+      // take the goal with the oldest created_at — the same "oldest active
+      // goal, earliest unfinished step" rule used elsewhere.
+      const goalStepRows = (goalStepsRes.data ?? []) as unknown as GoalStepJoinRow[];
+      const earliestStepPerGoal = new Map<string, GoalStepJoinRow>();
+      for (const row of goalStepRows) {
+        const existing = earliestStepPerGoal.get(row.goal_id);
+        if (!existing || row.step_order < existing.step_order) {
+          earliestStepPerGoal.set(row.goal_id, row);
+        }
+      }
+      const nextGoalStep = Array.from(earliestStepPerGoal.values())
+        .filter(r => r.goals)
+        .sort((a, b) => (a.goals!.created_at).localeCompare(b.goals!.created_at))[0] ?? null;
+
       const next: SnapshotRow[] = [
         tasks.length > 0
           ? { key: 'tasks', icon: 'clipboard-check', label: `${tasks.length} quick task${tasks.length === 1 ? '' : 's'}`, detail: tasks.slice(0, 2).map(t => t.label).join(', '), page: 'dailyplanner', tab: 'tasks' }
@@ -116,6 +149,10 @@ export default function TodaySnapshot({ onNavigate }: { onNavigate?: (page: stri
         cartTotal != null && cartItemCount > 0
           ? { key: 'smart-cart', icon: 'shopping-cart', label: `Smart Cart: $${cartTotal.toFixed(2)}`, detail: `${cartItemCount} item${cartItemCount === 1 ? '' : 's'} · updated ${timeAgo(cartSettings!.smart_cart_updated_at!)}`, page: 'grocery', tab: 'smart-cart' }
           : { key: 'smart-cart', icon: 'shopping-cart', label: 'No smart cart total yet', detail: 'Build one from your grocery list', page: 'grocery', tab: 'smart-cart', empty: true },
+
+        nextGoalStep
+          ? { key: 'goals', icon: 'trophy', label: nextGoalStep.label, detail: `Next on: ${nextGoalStep.goals!.title}`, page: 'dailyplanner', tab: 'goals' }
+          : { key: 'goals', icon: 'trophy', label: 'No goal steps waiting', detail: 'Set a goal or all caught up', page: 'dailyplanner', tab: 'goals', empty: true },
       ];
 
       if (activeTypes.length > 0) {
