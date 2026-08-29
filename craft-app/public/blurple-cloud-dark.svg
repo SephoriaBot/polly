@@ -4,84 +4,106 @@
      viewBox="0 0 120 120"
      fill="none">
 
-  <g
+  <!-- TOP -->
+  <path
+    d="M30 15
+       C30 15 30 5 37.5 5
+       C45 5 45 15 52.5 15
+       C60 15 60 5 67.5 5
+       C75 5 75 15 82.5 15
+       C90 15 90 5 90 5"
     stroke="#CDBCE5"
-    stroke-width="7"
+    stroke-width="6"
     stroke-linecap="round"
-    stroke-linejoin="round">
+    stroke-linejoin="round"
+  />
 
-    <!-- TOP -->
-    <path d="
-      M30 17
-      C30 6 38 3 43 3
-      C48 3 54 7 54 17
-      C54 7 60 3 65 3
-      C70 3 76 7 76 17
-      C76 7 82 3 87 3
-      C92 3 90 7 90 17
-    "/>
+  <!-- BOTTOM -->
+  <path
+    d="M30 105
+       C30 105 30 115 37.5 115
+       C45 115 45 105 52.5 105
+       C60 105 60 115 67.5 115
+       C75 115 75 105 82.5 105
+       C90 105 90 115 90 115"
+    stroke="#CDBCE5"
+    stroke-width="6"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
 
-    <!-- BOTTOM -->
-    <path d="
-      M30 103
-      C30 114 38 117 43 117
-      C48 117 54 113 54 103
-      C54 113 60 117 65 117
-      C70 117 76 113 76 103
-      C76 113 82 117 87 117
-      C92 117 90 113 90 103
-    "/>
+  <!-- LEFT -->
+  <path
+    d="M15 30
+       C15 30 5 30 5 37.5
+       C5 45 15 45 15 52.5
+       C15 60 5 60 5 67.5
+       C5 75 15 75 15 90"
+    stroke="#CDBCE5"
+    stroke-width="6"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
 
-    <!-- LEFT -->
-    <path d="
-      M17 30
-      C6 30 3 38 3 43
-      C3 48 7 54 17 54
-      C7 54 3 60 3 65
-      C3 70 7 76 17 76
-      C7 76 3 82 3 87
-      C3 92 7 90 17 90
-    "/>
+  <!-- RIGHT -->
+  <path
+    d="M105 30
+       C105 30 115 30 115 37.5
+       C115 45 105 45 105 52.5
+       C105 60 115 60 115 67.5
+       C115 75 105 75 105 90"
+    stroke="#CDBCE5"
+    stroke-width="6"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
 
-    <!-- RIGHT -->
-    <path d="
-      M103 30
-      C114 30 117 38 117 43
-      C117 48 113 54 103 54
-      C113 54 117 60 117 65
-      C117 70 113 76 103 76
-      C113 76 117 82 117 87
-      C117 92 113 90 103 90
-    "/>
+  <!-- TOP LEFT -->
+  <path
+    d="M30 15
+       H18
+       C10.8 15 5 20.8 5 28
+       V30"
+    stroke="#CDBCE5"
+    stroke-width="6"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
 
-    <!-- TOP LEFT -->
-    <path d="
-      M30 17
-      H18
-      C10 17 6 22 6 30
-    "/>
+  <!-- TOP RIGHT -->
+  <path
+    d="M90 15
+       H102
+       C109.2 15 115 20.8 115 28
+       V30"
+    stroke="#CDBCE5"
+    stroke-width="6"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
 
-    <!-- TOP RIGHT -->
-    <path d="
-      M90 17
-      H102
-      C110 17 114 22 114 30
-    "/>
+  <!-- BOTTOM LEFT -->
+  <path
+    d="M5 90
+       V102
+       C5 109.2 10.8 115 18 115
+       H30"
+    stroke="#CDBCE5"
+    stroke-width="6"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
 
-    <!-- BOTTOM LEFT -->
-    <path d="
-      M17 90
-      V102
-      C17 110 22 114 30 114
-    "/>
-
-    <!-- BOTTOM RIGHT -->
-    <path d="
-      M103 90
-      V102
-      C103 110 98 114 90 114
-    "/>
-
-  </g>
+  <!-- BOTTOM RIGHT -->
+  <path
+    d="M115 90
+       V102
+       C115 109.2 109.2 115 102 115
+       H90"
+    stroke="#CDBCE5"
+    stroke-width="6"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
 
 </svg>
