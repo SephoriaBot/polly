@@ -166,13 +166,11 @@
 /* ---------- checkmarks: teddy bear icon ---------- */
 
 [data-palette='teddy-bear'] .theme-check--full {
-  background-color: var(--pink-dark);
   -webkit-mask-image: url('/teddybear-full.svg');
   mask-image: url('/teddybear-full.svg');
 }
 
 [data-palette='teddy-bear'] .theme-check--empty {
-  background-color: var(--border);
   -webkit-mask-image: url('/teddybear-empty.svg');
   mask-image: url('/teddybear-empty.svg');
 }
@@ -1815,6 +1813,18 @@ body {
   mask-repeat: no-repeat;
   -webkit-mask-position: center;
   mask-position: center;
+}
+
+/* shared checkmark color — every palette's icon uses this unless it
+   overrides it itself (lucky-stars does, with !important); only the
+   icon SHAPE (mask-image) is set per-palette, above */
+
+.theme-check--full {
+  background-color: var(--pink-dark);
+}
+
+.theme-check--empty {
+  background-color: var(--border);
 }
 
 .lantern-img {
