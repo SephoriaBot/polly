@@ -152,18 +152,33 @@ export default function Goals() {
       throw new Error('empty steps');
     }
 
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      showToast("You're not signed in — try logging in again?", 'error');
+      throw new Error('no user');
+    }
+
     const { data: goal, error } = await supabase
       .from('goals')
-      .insert({ title: title.trim(), archived: false })
+      .insert({ title: title.trim(), archived: false, user_id: user.id })
       .select()
       .single();
     if (error || !goal) { showToast("Couldn't start that — try again?", 'error'); throw new Error('insert failed'); }
 
-    const { data: stepRows } = await supabase
+    const { data: stepRows, error: stepsError } = await supabase
       .from('goal_steps')
-      .insert(steps.map((label, idx) => ({ goal_id: goal.id, label, step_order: idx, done: false })))
+      .insert(steps.map((label, idx) => ({ goal_id: goal.id, label, step_order: idx, done: false, user_id: user.id })))
       .select()
       .order('step_order');
+
+    if (stepsError) {
+      showToast("Goal saved, but its steps didn't — try again?", 'error');
+      // still register the goal locally so it's not orphaned from view
+      setGoals(prev => [...prev, goal as GoalRow]);
+      setStepsByGoal(prev => ({ ...prev, [goal.id]: [] }));
+      setExpanded(goal.id);
+      throw new Error('steps insert failed');
+    }
 
     setGoals(prev => [...prev, goal as GoalRow]);
     setStepsByGoal(prev => ({ ...prev, [goal.id]: (stepRows as GoalStepRow[]) ?? [] }));
@@ -199,6 +214,8 @@ export default function Goals() {
       return;
     }
 
+    const { data: { user } } = await supabase.auth.getUser();
+
     const { data: subRows, error } = await supabase
       .from('goal_steps')
       .insert(substeps.map((label, idx) => ({
@@ -207,6 +224,7 @@ export default function Goals() {
         step_order: idx,
         done: false,
         parent_step_id: step.id,
+        user_id: user?.id,
       })))
       .select()
       .order('step_order');
