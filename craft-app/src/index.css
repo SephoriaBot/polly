@@ -471,50 +471,72 @@
 
 
 /* ============================================================
-   LIGHT MODE
+   LIGHT PALETTE
    ============================================================ */
 
 [data-palette='lucky-stars'][data-theme='light'] {
   --bg: #FFF9E8;
   --surface: #FFFFFF;
-  --surface-2: #FFF2C9;
-
   --text: #49384F;
-  --text-muted: #806D78;
 
-  --primary: #F4C542;       /* golden star */
-  --secondary: #6BC45A;     /* lucky green */
-  --accent: #E978A5;        /* berry pink */
-  --mint: #69C7D8;          /* blue marshmallow */
+  --primary: #F4C542;
+  --secondary: #69B957;
+  --accent: #E978A5;
+  --mint: #69C7D8;
 
   --border: #DDBB5A;
-  --shadow: rgba(73, 56, 79, 0.12);
+  --shadow: 0 8px 24px rgba(73, 56, 79, 0.12);
 
-  --success: #68B957;
-  --warning: #F2A83B;
-  --danger: #E87575;
+  --ink: #49384F;
+  --ink-soft: #806D78;
+  --ink-muted: #A18F99;
+  --btn-ink: #49384F;
 
-  --card-bg: #FFFFFF;
-  --input-bg: #FFFDF6;
+  --white: #FFFFFF;
+  --cream: #FFF9E8;
 
-  --accent-soft: #F9DFEA;
-  --primary-soft: #FFF0B5;
-  --secondary-soft: #DDF1D5;
-  --mint-soft: #D8F1F5;
+  --blush: #F9DFEA;
+
+  --green-dark: #4F9C45;
+  --sage: #8ACF76;
+  --sage-dark: #4F9C45;
+  --sage-light: #DDF1D5;
+
+  --pink: #E978A5;
+  --pink-dark: #C45783;
+  --pink-light: #F9DFEA;
+  --pink-light-solid: #F9DFEA;
+
+  --sky: #69C7D8;
+
+  --gold: #F4C542;
+  --gold-dark: #C49A24;
+  --gold-light: #FFF0B5;
+  --gold-light-solid: #FFF0B5;
+
+  --danger: #D96F6F;
+  --danger-bg: #F8E2E2;
+
+  --accent-text: #FFFFFF;
+  --accent-text-muted: rgba(255,255,255,.78);
+
+  --active-bg: #FFF0B5;
+  --active-text: #80611A;
+
+  --info-card-bg: #FFF0B5;
+  --info-card-border: #E3BD4F;
+  --info-card-text: #66501C;
 }
 
 
 /* ============================================================
-   DARK MODE
+   DARK PALETTE
    ============================================================ */
 
 [data-palette='lucky-stars'][data-theme='dark'] {
   --bg: #29213A;
   --surface: #392B4A;
-  --surface-2: #49365A;
-
   --text: #FFF3D1;
-  --text-muted: #C9B8C9;
 
   --primary: #F4C542;
   --secondary: #82D66A;
@@ -522,142 +544,97 @@
   --mint: #72D0DD;
 
   --border: #80637A;
-  --shadow: rgba(0, 0, 0, 0.30);
+  --shadow: 0 10px 28px rgba(0,0,0,.32);
 
-  --success: #82D66A;
-  --warning: #F5B84B;
+  --ink: #FFF3D1;
+  --ink-soft: #D0C0CF;
+  --ink-muted: #9F8FA1;
+  --btn-ink: #29213A;
+
+  --white: #49365A;
+  --cream: #29213A;
+
+  --blush: #523447;
+
+  --green-dark: #82D66A;
+  --sage: #718E65;
+  --sage-dark: #82D66A;
+  --sage-light: #30452D;
+
+  --pink: #F083B0;
+  --pink-dark: #F5B5D0;
+  --pink-light: #523447;
+  --pink-light-solid: #523447;
+
+  --sky: #72D0DD;
+
+  --gold: #F4C542;
+  --gold-dark: #E4C76D;
+  --gold-light: #514526;
+  --gold-light-solid: #514526;
+
   --danger: #ED8585;
+  --danger-bg: #43272D;
 
-  --card-bg: #392B4A;
-  --input-bg: #32263F;
+  --accent-text: #29213A;
+  --accent-text-muted: rgba(255,243,209,.76);
 
-  --accent-soft: #523447;
-  --primary-soft: #514526;
-  --secondary-soft: #30452D;
-  --mint-soft: #29434A;
+  --active-bg: #514526;
+  --active-text: #FFF0B5;
+
+  --info-card-bg: #49365A;
+  --info-card-border: #80637A;
+  --info-card-text: #FFF0D0;
 }
 
 
 /* ============================================================
-   LUCKY STARS — BORDERS
+   LUCKY STARS — CARDS
+   IMPORTANT: explicitly cancels Teddy's stitched border
    ============================================================ */
-
-/* Cards / panels */
 
 [data-palette='lucky-stars'] .card,
-[data-palette='lucky-stars'] .panel,
-[data-palette='lucky-stars'] .section-card {
+[data-palette='lucky-stars'] .stat-card,
+[data-palette='lucky-stars'] .pet-card,
+[data-palette='lucky-stars'] .plant-card,
+[data-palette='lucky-stars'] .wizard-box,
+[data-palette='lucky-stars'] .list-item {
+
+  background: var(--surface) !important;
+
   border: 2px solid var(--border) !important;
-  border-radius: 14px;
-  box-shadow:
-    0 3px 0 rgba(73, 56, 79, 0.08),
-    0 6px 14px var(--shadow);
-}
+  border-image: none !important;
+  border-image-source: none !important;
+  border-image-slice: none !important;
+  border-image-width: 1 !important;
+  border-image-outset: 0 !important;
+  border-image-repeat: stretch !important;
 
-
-/* Generic bordered elements */
-
-[data-palette='lucky-stars'] .border,
-[data-palette='lucky-stars'] .bordered {
-  border-color: var(--border) !important;
-}
-
-
-/* Inputs */
-
-[data-palette='lucky-stars'] input,
-[data-palette='lucky-stars'] textarea,
-[data-palette='lucky-stars'] select {
-  border: 2px solid var(--border) !important;
-  border-radius: 9px;
-  background: var(--input-bg);
-  color: var(--text);
-}
-
-[data-palette='lucky-stars'] input:focus,
-[data-palette='lucky-stars'] textarea:focus,
-[data-palette='lucky-stars'] select:focus {
-  border-color: var(--accent) !important;
-  box-shadow: 0 0 0 3px var(--accent-soft);
-}
-
-
-/* ============================================================
-   LUCKY STARS — CHECKBOXES
-   ============================================================ */
-
-/* Native checkbox */
-
-[data-palette='lucky-stars'] input[type='checkbox'] {
-  appearance: none;
-  -webkit-appearance: none;
-
-  width: 20px;
-  height: 20px;
-
-  margin: 0;
-
-  background: #FFFFFF;
-  border: 2px solid #DDBB5A !important;
-  border-radius: 6px;
-
-  display: inline-grid;
-  place-content: center;
-
-  cursor: pointer;
+  border-radius: 14px !important;
 
   box-shadow:
-    0 2px 0 #C5A33F;
+    0 3px 0 rgba(73,56,79,.07),
+    0 7px 18px var(--shadow);
 
-  flex-shrink: 0;
+  overflow: hidden;
 }
 
 
-/* Dark checkbox */
+/* Kill Teddy's inner stitched decoration */
 
-[data-palette='lucky-stars'][data-theme='dark']
-input[type='checkbox'] {
-  background: #49365A;
-  border-color: #80637A !important;
-
-  box-shadow:
-    0 2px 0 #65506A;
-}
-
-
-/* Checked */
-
-[data-palette='lucky-stars']
-input[type='checkbox']:checked {
-  background: var(--secondary);
-  border-color: #55A947 !important;
-
-  box-shadow:
-    0 2px 0 #4C963F;
-}
-
-
-/* Checkmark */
-
-[data-palette='lucky-stars']
-input[type='checkbox']:checked::before {
-  content: '';
-
-  width: 9px;
-  height: 5px;
-
-  border-left: 2px solid #FFFFFF;
-  border-bottom: 2px solid #FFFFFF;
-
-  transform: rotate(-45deg) translate(1px, -1px);
-}
-
-
-/* Hover */
-
-[data-palette='lucky-stars']
-input[type='checkbox']:hover {
-  border-color: var(--accent) !important;
+[data-palette='lucky-stars'] .card::before,
+[data-palette='lucky-stars'] .card::after,
+[data-palette='lucky-stars'] .stat-card::before,
+[data-palette='lucky-stars'] .stat-card::after,
+[data-palette='lucky-stars'] .pet-card::before,
+[data-palette='lucky-stars'] .pet-card::after,
+[data-palette='lucky-stars'] .plant-card::before,
+[data-palette='lucky-stars'] .plant-card::after,
+[data-palette='lucky-stars'] .wizard-box::before,
+[data-palette='lucky-stars'] .wizard-box::after,
+[data-palette='lucky-stars'] .list-item::before,
+[data-palette='lucky-stars'] .list-item::after {
+  content: none !important;
 }
 
 
@@ -665,10 +642,16 @@ input[type='checkbox']:hover {
    LUCKY STARS — BUTTONS
    ============================================================ */
 
-[data-palette='lucky-stars'] .btn {
-  border: 2px solid var(--border) !important;
-  border-radius: 9px;
+[data-palette='lucky-stars'] .btn,
+[data-palette='lucky-stars'] .btn-primary,
+[data-palette='lucky-stars'] .btn-secondary,
+[data-palette='lucky-stars'] .btn-danger {
+
+  border-radius: 9px !important;
   font-weight: 700;
+
+  box-shadow:
+    0 3px 0 rgba(73,56,79,.16);
 }
 
 
@@ -677,11 +660,108 @@ input[type='checkbox']:hover {
 [data-palette='lucky-stars'] .btn-primary {
   background: var(--primary) !important;
   color: #49384F !important;
+  border: 2px solid #D5A92E !important;
+}
 
-  border-color: #D5A92E !important;
+
+/* Secondary */
+
+[data-palette='lucky-stars'] .btn-secondary {
+  background: var(--surface) !important;
+  color: var(--green-dark) !important;
+  border: 2px solid var(--secondary) !important;
+}
+
+
+/* Danger */
+
+[data-palette='lucky-stars'] .btn-danger {
+  background: var(--danger-bg) !important;
+  color: var(--danger) !important;
+  border: 2px solid var(--danger) !important;
+}
+
+
+/* ============================================================
+   LUCKY STARS — CHECKBOXES
+   ============================================================ */
+
+[data-palette='lucky-stars'] input[type='checkbox'] {
+
+  appearance: none !important;
+  -webkit-appearance: none !important;
+
+  width: 20px !important;
+  height: 20px !important;
+
+  padding: 0 !important;
+  margin: 0;
+
+  background: var(--surface) !important;
+
+  border: 2px solid var(--border) !important;
+  border-radius: 6px !important;
 
   box-shadow:
-    0 3px 0 #C5A33F;
+    0 2px 0 rgba(73,56,79,.18) !important;
+
+  display: grid !important;
+  place-content: center;
+
+  cursor: pointer;
+}
+
+
+/* Checked */
+
+[data-palette='lucky-stars'] input[type='checkbox']:checked {
+
+  background: var(--secondary) !important;
+
+  border-color: #4F9C45 !important;
+
+  box-shadow:
+    0 2px 0 #41873A !important;
+}
+
+
+/* Checkmark */
+
+[data-palette='lucky-stars']
+input[type='checkbox']:checked::before {
+
+  content: "";
+
+  width: 9px;
+  height: 5px;
+
+  border-left: 2px solid white;
+  border-bottom: 2px solid white;
+
+  transform: rotate(-45deg) translate(1px,-1px);
+}
+
+
+/* ============================================================
+   LUCKY STARS — THEME CHECK ICONS
+   Prevents Teddy bear SVGs from appearing
+   ============================================================ */
+
+[data-palette='lucky-stars'] .theme-check--full {
+
+  background-color: var(--primary) !important;
+
+  -webkit-mask-image: url('/star-full.svg') !important;
+  mask-image: url('/star-full.svg') !important;
+}
+
+
+[data-palette='lucky-stars'] .theme-check--empty {
+
+  background-color: var(--border) !important;
+
+  -webkit-mask-image: url('/star-empty.svg') !important;
+  mask-image: url('/star-empty.svg') !important;
 }
 
 
@@ -691,61 +771,134 @@ input[type='checkbox']:hover {
 
 [data-palette='lucky-stars'] kbd,
 [data-palette='lucky-stars'] .keyboard-key {
+
   display: inline-flex;
   align-items: center;
   justify-content: center;
 
   min-width: 2rem;
   height: 2rem;
-  padding: 0 0.5rem;
 
-  border-radius: 7px;
+  padding: 0 .55rem;
+
+  background: var(--surface) !important;
+  color: var(--text) !important;
+
+  border: 2px solid var(--border) !important;
+  border-bottom: 4px solid var(--gold-dark) !important;
+
+  border-radius: 7px !important;
 
   font-family: inherit;
-  font-size: 0.8rem;
+  font-size: .8rem;
   font-weight: 700;
-  line-height: 1;
-
-  white-space: nowrap;
-}
-
-
-/* Light */
-
-[data-palette='lucky-stars'][data-theme='light'] kbd,
-[data-palette='lucky-stars'][data-theme='light'] .keyboard-key {
-  background: #FFFFFF;
-  color: #49384F;
-
-  border: 2px solid #DDBB5A !important;
-  border-bottom: 4px solid #C5A33F !important;
 
   box-shadow:
-    0 2px 0 #C5A33F;
+    0 2px 0 var(--gold-dark) !important;
 }
 
 
-/* Dark */
+/* Dark keyboard keys */
 
 [data-palette='lucky-stars'][data-theme='dark'] kbd,
 [data-palette='lucky-stars'][data-theme='dark'] .keyboard-key {
-  background: #49365A;
-  color: #FFF3D1;
 
-  border: 2px solid #80637A !important;
-  border-bottom: 4px solid #65506A !important;
+  background: #49365A !important;
+  color: #FFF3D1 !important;
+
+  border-color: #80637A !important;
+  border-bottom-color: #65506A !important;
 
   box-shadow:
-    0 2px 0 #65506A;
+    0 2px 0 #65506A !important;
 }
 
 
 /* ============================================================
-   LUCKY STARS — CHECKBOX / TOGGLE LABELS
+   LUCKY STARS — INPUTS
    ============================================================ */
 
-[data-palette='lucky-stars'] label {
-  color: var(--text);
+[data-palette='lucky-stars'] input,
+[data-palette='lucky-stars'] textarea,
+[data-palette='lucky-stars'] select {
+
+  background: var(--surface) !important;
+  color: var(--text) !important;
+
+  border: 2px solid var(--border) !important;
+  border-radius: 9px !important;
+}
+
+
+[data-palette='lucky-stars'] input:focus,
+[data-palette='lucky-stars'] textarea:focus,
+[data-palette='lucky-stars'] select:focus {
+
+  border-color: var(--accent) !important;
+
+  box-shadow:
+    0 0 0 3px var(--blush) !important;
+}
+
+
+/* ============================================================
+   LUCKY STARS — BADGES
+   ============================================================ */
+
+[data-palette='lucky-stars'] .badge {
+  border: 2px solid var(--border) !important;
+  border-radius: 999px !important;
+}
+
+
+/* ============================================================
+   LUCKY STARS — DIVIDERS
+   ============================================================ */
+
+[data-palette='lucky-stars'] .stitch-divider .line {
+  border-top-color: var(--border);
+}
+
+
+/* Star instead of Teddy/bat/bowtie decoration */
+
+[data-palette='lucky-stars'] .stitch-divider .mark {
+
+  width: 18px;
+  height: 18px;
+
+  background-color: var(--primary);
+
+  -webkit-mask-image: url('/star-mark.svg');
+  mask-image: url('/star-mark.svg');
+
+  -webkit-mask-size: contain;
+  mask-size: contain;
+
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+
+  -webkit-mask-position: center;
+  mask-position: center;
+
+  animation: lucky-star-twinkle 2s ease-in-out infinite;
+}
+
+
+[data-palette='lucky-stars'] .stitch-divider .mark::before,
+[data-palette='lucky-stars'] .stitch-divider .mark::after {
+  content: none !important;
+}
+
+
+@keyframes lucky-star-twinkle {
+  0%, 100% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(.82) rotate(8deg);
+  }
 }
 
 
@@ -755,10 +908,6 @@ input[type='checkbox']:hover {
 
 [data-palette='lucky-stars'] a {
   color: var(--accent);
-}
-
-[data-palette='lucky-stars'] a:hover {
-  color: var(--secondary);
 }
 
 
@@ -788,6 +937,7 @@ input[type='checkbox']:hover {
   background: var(--primary);
   border-radius: 999px;
 }
+
 /* ============================================================
    TEDDY — SOFT SEWN / FABRIC CARDS
    ============================================================ */
