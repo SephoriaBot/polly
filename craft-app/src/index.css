@@ -464,129 +464,274 @@
 --info-card-text: #DDE2FA;
 }
 
-/* ---------- SUNNY SKIES (light) ---------- */
-[data-palette='sunny-skies'][data-theme='light'] {
-  --bg: #FFFBF0;
+/* ============================================================
+   LUCKY STARS
+   Retro magical cereal-box inspired theme
+   ============================================================ */
+
+/* ---------- LUCKY STARS (light) ---------- */
+
+[data-palette='lucky-stars'][data-theme='light'] {
+  --bg: #FFF9E8;
   --surface: #FFFFFF;
-  --text: #2B3A55;
+  --surface-2: #FFF1C7;
 
-  --primary: #FFC93C;
-  --secondary: #5FB4E8;
-  --accent: #4A90D9;
-  --mint: #7FC9E8;
+  --text: #49384F;
+  --text-muted: #806D78;
 
-  --border: rgba(43, 58, 85, .14);
-  --shadow: 0 8px 24px rgba(43, 58, 85, .09);
+  --primary: #F4C542;
+  --secondary: #73C95B;
+  --accent: #E978A5;
+  --mint: #6FC7D8;
 
-  --ink: #2B3A55;
-  --ink-soft: #5C6E8C;
-  --ink-muted: #5C6E8C;
-  --btn-ink: #2B3A55;
+  --border: #E5C978;
 
-  --white: #FFFFFF;
-  --cream: #FFFBF0;
-  --blush: rgba(255, 201, 60, .15);
+  --success: #69B85A;
+  --warning: #F2A83B;
+  --danger: #E87575;
 
-  --green-dark: #3E7C99;
-  --citrus-blue: #3E7C99;
-  --sage: #5FB4E8;
-  --sage-dark: #3E7C99;
-  --sage-light: rgba(95, 180, 232, .13);
+  --shadow: rgba(73, 56, 79, 0.12);
 
-  --pink: #FFC93C;
-  --pink-dark: #D9A017;
-  --pink-light: rgba(255, 201, 60, .13);
-  --pink-light-solid: #FFE9AE;
+  --card-bg: #FFFFFF;
+  --input-bg: #FFFDF6;
 
-  --sky: #5FB4E8;
+  --header-bg: #FFF4CE;
+  --header-text: #49384F;
 
-  --gold: #FFC93C;
-  --gold-dark: #D9A017;
-  --gold-light: rgba(255, 201, 60, .15);
-  --gold-light-solid: #FFE9AE;
+  --nav-bg: #FFFFFF;
+  --nav-text: #66536A;
+  --nav-active: #E978A5;
 
-  --danger: #E0645A;
-  --danger-bg: #FDEAE8;
-
-  --accent-text: #2B3A55;
-  --accent-text-muted: rgba(43, 58, 85, .78);
-
-  --info-card-bg: #FFF0C7;
---info-card-border: rgba(177, 133, 48, 0.20);
---info-card-text: #66552F;
+  --accent-soft: #FBE0EB;
+  --primary-soft: #FFF0B8;
+  --secondary-soft: #DDF1D5;
+  --mint-soft: #D9F1F5;
 }
 
-/* ---------- SUNNY SKIES (dark) ---------- */
-[data-palette='sunny-skies'][data-theme='dark'] {
-  --bg: #14202E;
-  --surface: #1E2E40;
-  --text: #FDF0D5;
 
-  --primary: #FFD966;
-  --secondary: #6FC1F0;
-  --accent: #6FC1F0;
-  --mint: #8ED4F0;
+/* ---------- LUCKY STARS (dark) ---------- */
 
-  --border: rgba(253, 240, 213, .12);
-  --shadow: 0 10px 28px rgba(0, 0, 0, .28);
+[data-palette='lucky-stars'][data-theme='dark'] {
+  --bg: #29213A;
+  --surface: #392B4A;
+  --surface-2: #49365A;
 
-  --ink: #FDF0D5;
-  --ink-soft: #C7D3E0;
-  --ink-muted: #AEBCCC;
-  --btn-ink: #14202E;
+  --text: #FFF3D1;
+  --text-muted: #C9B8C9;
 
-  --white: #1E2E40;
-  --cream: #182534;
+  --primary: #F4C542;
+  --secondary: #82D66A;
+  --accent: #F083B0;
+  --mint: #72D0DD;
 
-  --green-dark: #8ED4F0;
-  --citrus-blue: #6FC1F0;
-  --sage: #4F9FCB;
-  --sage-dark: #8ED4F0;
-  --sage-light: rgba(142, 212, 240, .13);
+  --border: #715A76;
 
-  --pink: #FFD966;
-  --pink-dark: #FFE9A3;
-  --pink-light: rgba(255, 217, 102, .14);
-  --pink-light-solid: #3D3418;
+  --success: #82D66A;
+  --warning: #F5B84B;
+  --danger: #ED8585;
 
-  --sky: #6FC1F0;
+  --shadow: rgba(0, 0, 0, 0.28);
 
-  --gold: #FFD966;
-  --gold-dark: #FFE9A3;
-  --gold-light: rgba(255, 217, 102, .14);
-  --gold-light-solid: #3D3418;
+  --card-bg: #392B4A;
+  --input-bg: #32263F;
 
-  --danger: #F0958C;
-  --danger-bg: #3A2320;
+  --header-bg: #342743;
+  --header-text: #FFF3D1;
 
-  --accent-text: #14202E;
-  --accent-text-muted: rgba(253, 240, 213, .76);
+  --nav-bg: #32263F;
+  --nav-text: #C9B8C9;
+  --nav-active: #F083B0;
 
-  --info-card-bg: #403A27;
---info-card-border: rgba(220, 188, 104, 0.22);
---info-card-text: #EBDDAF;
+  --accent-soft: #523447;
+  --primary-soft: #514526;
+  --secondary-soft: #30452D;
+  --mint-soft: #29434A;
 }
 
-/* Light mode: soft gold-tinted glow on hover */
-[data-theme='light'] .card:hover,
-[data-theme='light'] .stat-card:hover,
-[data-theme='light'] .pet-card:hover,
-[data-theme='light'] .plant-card:hover,
-[data-theme='light'] .wizard-box:hover {
-  box-shadow: 0 12px 28px rgba(75, 70, 65, .12);
+
+/* ============================================================
+   LUCKY STARS — SHARED DETAILS
+   ============================================================ */
+
+[data-palette='lucky-stars'] {
+  --theme-radius: 12px;
 }
 
-[data-theme='dark'] .card::before,
-[data-theme='dark'] .stat-card::before,
-[data-theme='dark'] .pet-card::before,
-[data-theme='dark'] .plant-card::before,
-[data-theme='dark'] .wizard-box::before {
-  border-color: rgba(208, 164, 95, .075);
+
+/* ---------- Cards ---------- */
+
+[data-palette='lucky-stars'] .card {
+  border-radius: var(--theme-radius);
+  border-color: var(--border);
+  box-shadow:
+    0 2px 0 rgba(73, 56, 79, 0.05),
+    0 5px 14px var(--shadow);
 }
 
-[data-theme='light'] .btn:hover,
-[data-theme='light'] .btn-primary:hover {
-  box-shadow: 0 7px 18px rgba(75, 70, 65, .14);
+
+/* ---------- Buttons ---------- */
+
+[data-palette='lucky-stars'] .btn {
+  border-radius: 9px;
+  font-weight: 700;
+}
+
+
+/* Primary button */
+
+[data-palette='lucky-stars'] .btn-primary {
+  background: var(--primary);
+  color: #49384F;
+  border-color: #D5A92E;
+  box-shadow: 0 2px 0 #D5A92E;
+}
+
+[data-palette='lucky-stars'] .btn-primary:hover {
+  filter: brightness(1.04);
+  transform: translateY(-1px);
+}
+
+
+/* ---------- Inputs ---------- */
+
+[data-palette='lucky-stars'] input,
+[data-palette='lucky-stars'] textarea,
+[data-palette='lucky-stars'] select {
+  border-color: var(--border);
+  background: var(--input-bg);
+  border-radius: 9px;
+}
+
+[data-palette='lucky-stars'] input:focus,
+[data-palette='lucky-stars'] textarea:focus,
+[data-palette='lucky-stars'] select:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+
+/* ============================================================
+   LUCKY STARS — KEYBOARD-STYLE BUTTONS
+   ============================================================ */
+
+[data-palette='lucky-stars'] .keyboard-key,
+[data-palette='lucky-stars'] kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  min-width: 2rem;
+  height: 2rem;
+  padding: 0 0.5rem;
+
+  border-radius: 7px;
+
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: 700;
+  line-height: 1;
+
+  white-space: nowrap;
+}
+
+
+/* Light keyboard keys */
+
+[data-palette='lucky-stars'][data-theme='light'] .keyboard-key,
+[data-palette='lucky-stars'][data-theme='light'] kbd {
+  background: #FFFFFF;
+  color: #49384F;
+
+  border: 1px solid #E0C46B;
+  border-bottom: 3px solid #C5A33F;
+
+  box-shadow:
+    0 2px 0 #C5A33F,
+    0 3px 6px rgba(73, 56, 79, 0.10);
+}
+
+
+/* Dark keyboard keys */
+
+[data-palette='lucky-stars'][data-theme='dark'] .keyboard-key,
+[data-palette='lucky-stars'][data-theme='dark'] kbd {
+  background: #49365A;
+  color: #FFF3D1;
+
+  border: 1px solid #806681;
+  border-bottom: 3px solid #65506A;
+
+  box-shadow:
+    0 2px 0 #65506A,
+    0 3px 7px rgba(0, 0, 0, 0.30);
+}
+
+
+/* Keyboard press */
+
+[data-palette='lucky-stars'] .keyboard-key:active {
+  transform: translateY(2px);
+  border-bottom-width: 1px;
+}
+
+
+/* ============================================================
+   LUCKY STARS — DECORATIVE COLOR CLASSES
+   ============================================================ */
+
+[data-palette='lucky-stars'] .lucky-yellow {
+  color: var(--primary);
+}
+
+[data-palette='lucky-stars'] .lucky-green {
+  color: var(--secondary);
+}
+
+[data-palette='lucky-stars'] .lucky-pink {
+  color: var(--accent);
+}
+
+[data-palette='lucky-stars'] .lucky-blue {
+  color: var(--mint);
+}
+
+
+/* ============================================================
+   LUCKY STARS — BADGES / PILLS
+   ============================================================ */
+
+[data-palette='lucky-stars'] .badge,
+[data-palette='lucky-stars'] .pill {
+  border-radius: 999px;
+  font-weight: 700;
+}
+
+
+/* ============================================================
+   LUCKY STARS — SELECTION
+   ============================================================ */
+
+[data-palette='lucky-stars'] ::selection {
+  background: var(--primary);
+  color: #49384F;
+}
+
+
+/* ============================================================
+   LUCKY STARS — SCROLLBAR
+   ============================================================ */
+
+[data-palette='lucky-stars'] {
+  scrollbar-color: var(--primary) transparent;
+}
+
+[data-palette='lucky-stars']::-webkit-scrollbar {
+  width: 8px;
+}
+
+[data-palette='lucky-stars']::-webkit-scrollbar-thumb {
+  background: var(--primary);
+  border-radius: 999px;
 }
 
 /* ============================================================
@@ -1239,32 +1384,6 @@ body {
   50%      { transform: scale(0.8); opacity: 0.6; }
 }
 
-/* ---------- sunny skies: pulsing sun stitch mark ---------- */
-
-[data-palette='sunny-skies'] .stitch-divider .mark {
-  width: 16px;
-  height: 16px;
-  background-color: var(--pink-dark);
-  -webkit-mask-image: url('/sun-mark.svg');
-  mask-image: url('/sun-mark.svg');
-  -webkit-mask-size: contain;
-  mask-size: contain;
-  -webkit-mask-repeat: no-repeat;
-  mask-repeat: no-repeat;
-  -webkit-mask-position: center;
-  mask-position: center;
-  animation: sun-pulse 2.6s ease-in-out infinite;
-}
-
-[data-palette='sunny-skies'] .stitch-divider .mark::before,
-[data-palette='sunny-skies'] .stitch-divider .mark::after {
-  content: none !important;
-}
-
-@keyframes sun-pulse {
-  0%, 100% { transform: scale(1); }
-  50%      { transform: scale(1.12); }
-}
 
 /* ================= THEME-AWARE CHECKMARKS ================= */
 
