@@ -1,9 +1,26 @@
 @import './styles/theme.css';
 
-/* ================= TOKENS ================= */
+/* ================================================================
+   SHARED TOKENS
+   Not palette-specific — same across every theme.
+   ================================================================ */
 
-[data-theme='light'],
 :root {
+  --radius-sm: 10px;
+  --radius-md: 16px;
+  --radius-lg: 20px;
+}
+
+
+/* ================================================================
+   ================================================================
+   PALETTE: TEDDY BEAR
+   data-palette="teddy-bear"
+   ================================================================
+   ================================================================ */
+
+/* ---------- tokens: light ---------- */
+[data-palette='teddy-bear'][data-theme='light'] {
   --bg: #FFFCF7;
   --surface: #FFFFFF;
   --text: #3D2B1F;
@@ -49,91 +66,143 @@
   --accent-text: #FFFCF7;
   --accent-text-muted: rgba(255, 252, 247, .78);
   --info-card-bg: #F3E9DF;
---info-card-border: rgba(166, 106, 60, 0.20);
---info-card-text: #5C4A3B;
+  --info-card-border: rgba(166, 106, 60, 0.20);
+  --info-card-text: #5C4A3B;
 }
 
-[data-theme='dark'] {
-  /* ---------- FOUNDATION ---------- */
-
+/* ---------- tokens: dark ---------- */
+[data-palette='teddy-bear'][data-theme='dark'] {
+  /* foundation */
   --bg: #1C1510;
   --surface: #2A1E16;
   --text: #F3E5D0;
 
-  /* ---------- BRAND ---------- */
-
+  /* brand */
   --primary: #C99555;
   --secondary: #B98B57;
   --accent: #7F8C6A;
   --mint: #9AA27C;
 
-  /* ---------- BORDERS / SHADOWS ---------- */
-
+  /* borders / shadows */
   --border: rgba(243, 229, 208, .12);
   --shadow: 0 10px 28px rgba(0, 0, 0, .28);
 
-  /* ---------- TEXT ---------- */
-
+  /* text */
   --ink: #F3E5D0;
   --ink-soft: #CDB89B;
   --ink-muted: #96836D;
   --btn-ink: #24170F;
 
-  /* ---------- NEUTRALS ---------- */
-
+  /* neutrals */
   --white: #34261B;
   --cream: #241A13;
 
-  /* ---------- BOTANICAL ---------- */
-
+  /* botanical */
   --green-dark: #A5AD86;
   --citrus-blue: #88956F;
   --sage: #687052;
   --sage-dark: #A5AD86;
   --sage-light: rgba(165, 173, 134, .13);
 
-  /* ---------- WARM BLUSH ---------- */
-
+  /* warm blush */
   --pink: #B77D68;
   --pink-dark: #D3A28C;
   --pink-light: rgba(183, 125, 104, .14);
   --pink-light-solid: #493027;
 
-  /* ---------- BLUE / COOL ---------- */
-
+  /* blue / cool */
   --sky: #8EA6A0;
 
-  /* ---------- ANTIQUE GOLD ---------- */
-
+  /* antique gold */
   --gold: #D0A45F;
   --gold-dark: #E1C28B;
   --gold-light: rgba(208, 164, 95, .14);
   --gold-light-solid: #49391F;
 
-  /* ---------- DANGER ---------- */
-
+  /* danger */
   --danger: #D4877D;
   --danger-bg: #422724;
 
-  /* ---------- TEXT ON ACCENTS ---------- */
-
+  /* text on accents */
   --accent-text: #FFF5E6;
   --accent-text-muted: rgba(255, 245, 230, .76);
   --info-card-bg: #302824;
---info-card-border: rgba(217, 164, 123, 0.22);
---info-card-text: #E8D6C5;
+  --info-card-border: rgba(217, 164, 123, 0.22);
+  --info-card-text: #E8D6C5;
 }
 
-/* ============================================
-   THEME FAMILIES (palettes)
-   Layered on top of the base light/dark tokens above.
-   [data-palette] + [data-theme] together decide the
-   actual colors; 'teddy-bear' is the default and uses
-   the base tokens untouched, so no override block is
-   needed for it.
-   ============================================ */
+/* ---------- cards: soft sewn / stitched fabric border ---------- */
 
-/* ---------- tux (light) ---------- */
+[data-palette='teddy-bear'][data-theme='light'] .card,
+[data-palette='teddy-bear'][data-theme='light'] .stat-card,
+[data-palette='teddy-bear'][data-theme='light'] .pet-card,
+[data-palette='teddy-bear'][data-theme='light'] .plant-card,
+[data-palette='teddy-bear'][data-theme='light'] .wizard-box,
+[data-palette='teddy-bear'][data-theme='light'] .list-item {
+
+  background: var(--surface);
+  border: 10px solid transparent !important;
+  border-image: url('/teddy-stitch.svg') 20 / 10px / 0 round !important;
+  border-radius: 0 !important;
+  box-shadow: 0 5px 15px rgba(91, 63, 38, 0.12);
+  overflow: visible;
+}
+
+[data-palette='teddy-bear'][data-theme='dark'] .card,
+[data-palette='teddy-bear'][data-theme='dark'] .stat-card,
+[data-palette='teddy-bear'][data-theme='dark'] .pet-card,
+[data-palette='teddy-bear'][data-theme='dark'] .plant-card,
+[data-palette='teddy-bear'][data-theme='dark'] .wizard-box,
+[data-palette='teddy-bear'][data-theme='dark'] .list-item {
+
+  background: var(--surface);
+  border: 10px solid transparent !important;
+  border-image: url('/teddy-stitch-dark.svg') 20 / 10px / 0 round !important;
+  border-radius: 0 !important;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.28);
+  overflow: visible;
+}
+
+/* ---------- checkmarks: teddy bear icon ---------- */
+
+[data-palette='teddy-bear'] .theme-check--full {
+  background-color: var(--pink-dark);
+  -webkit-mask-image: url('/teddybear-full.svg');
+  mask-image: url('/teddybear-full.svg');
+}
+
+[data-palette='teddy-bear'] .theme-check--empty {
+  background-color: var(--border);
+  -webkit-mask-image: url('/teddybear-empty.svg');
+  mask-image: url('/teddybear-empty.svg');
+}
+
+/* ---------- stitch divider: plus/cross stitch mark ---------- */
+
+[data-palette='teddy-bear'] .stitch-divider .mark::before,
+[data-palette='teddy-bear'] .stitch-divider .mark::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: var(--pink-dark);
+  border-radius: 1px;
+}
+
+[data-palette='teddy-bear'] .stitch-divider .mark::before { transform: translateY(-50%) rotate(45deg); }
+[data-palette='teddy-bear'] .stitch-divider .mark::after  { transform: translateY(-50%) rotate(-45deg); }
+
+
+/* ================================================================
+   ================================================================
+   PALETTE: TUXEDO
+   data-palette="tuxedo"
+   ================================================================
+   ================================================================ */
+
+/* ---------- tokens: light ---------- */
 [data-palette='tuxedo'][data-theme='light'] {
   --bg: #F3F1EE;
   --surface: #FFFFFF;
@@ -185,11 +254,11 @@
   --active-text: #742D35;
 
   --info-card-bg: #E8E3E3;
---info-card-border: rgba(155, 48, 56, 0.20);
---info-card-text: #672F35;
+  --info-card-border: rgba(155, 48, 56, 0.20);
+  --info-card-text: #672F35;
 }
 
-/* ---------- tux (dark) ---------- */
+/* ---------- tokens: dark ---------- */
 [data-palette='tuxedo'][data-theme='dark'] {
   --bg: #111112;
   --surface: #1D1D20;
@@ -241,7 +310,68 @@
   --active-text: #F2D9DB;
 }
 
-/* ---------- pastel goth (light) ---------- */
+/* ---------- cards: simple single-line ---------- */
+
+[data-palette='tuxedo'][data-theme='light'] .card,
+[data-palette='tuxedo'][data-theme='light'] .stat-card,
+[data-palette='tuxedo'][data-theme='light'] .pet-card,
+[data-palette='tuxedo'][data-theme='light'] .plant-card,
+[data-palette='tuxedo'][data-theme='light'] .wizard-box,
+[data-palette='tuxedo'][data-theme='light'] .list-item,
+[data-palette='tuxedo'][data-theme='dark'] .card,
+[data-palette='tuxedo'][data-theme='dark'] .stat-card,
+[data-palette='tuxedo'][data-theme='dark'] .pet-card,
+[data-palette='tuxedo'][data-theme='dark'] .plant-card,
+[data-palette='tuxedo'][data-theme='dark'] .wizard-box,
+[data-palette='tuxedo'][data-theme='dark'] .list-item {
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius-lg) !important;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+/* ---------- checkmarks: circle ---------- */
+
+[data-palette='tuxedo'] .theme-check--full {
+  -webkit-mask-image: url('/circle-full.svg');
+  mask-image: url('/circle-full.svg');
+}
+
+[data-palette='tuxedo'] .theme-check--empty {
+  -webkit-mask-image: url('/circle-empty.svg');
+  mask-image: url('/circle-empty.svg');
+}
+
+/* ---------- stitch divider: bowtie mark ---------- */
+
+[data-palette='tuxedo'] .stitch-divider .mark {
+  width: 20px;
+  height: 12px;
+  background-color: var(--pink-dark);
+  -webkit-mask-image: url('/bowtie-mark.svg');
+  mask-image: url('/bowtie-mark.svg');
+  -webkit-mask-size: contain;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+}
+
+[data-palette='tuxedo'] .stitch-divider .mark::before,
+[data-palette='tuxedo'] .stitch-divider .mark::after {
+  content: none !important;
+}
+
+
+/* ================================================================
+   ================================================================
+   PALETTE: PASTEL GOTH (PINK)
+   data-palette="pink"
+   ================================================================
+   ================================================================ */
+
+/* ---------- tokens: light ---------- */
 [data-palette='pink'][data-theme='light'] {
   --bg: #FDF3F5;
   --surface: #FFFFFF;
@@ -289,14 +419,14 @@
   --accent-text: #FFFFFF;
   --accent-text-muted: rgba(255, 255, 255, 0.78);
   --active-bg: #F0D9EA;
---active-text: #4A2E44;
+  --active-text: #4A2E44;
 
---info-card-bg: #F0D9EA;
---info-card-border: rgba(74, 46, 68, 0.20);
---info-card-text: #3F2839;
+  --info-card-bg: #F0D9EA;
+  --info-card-border: rgba(74, 46, 68, 0.20);
+  --info-card-text: #3F2839;
 }
 
-/* ---------- pastel goth (dark) ---------- */
+/* ---------- tokens: dark ---------- */
 [data-palette='pink'][data-theme='dark'] {
   --bg: #170F13;
   --surface: #241820;
@@ -344,15 +474,156 @@
   --accent-text: #FFF7FB;
   --accent-text-muted: rgba(255, 247, 251, 0.76);
   --active-bg: #3A2A3D;
---active-text: #E3A8C7;
+  --active-text: #E3A8C7;
 
---info-card-bg: #2E1F29;
---info-card-border: rgba(227, 168, 199, 0.20);
---info-card-text: #ECC9DC;
-
+  --info-card-bg: #2E1F29;
+  --info-card-border: rgba(227, 168, 199, 0.20);
+  --info-card-text: #ECC9DC;
 }
 
-/* ---------- blurple (light) ---------- */
+/* ---------- cards: ornate lace border ---------- */
+
+[data-palette='pink'][data-theme='light'] .card,
+[data-palette='pink'][data-theme='light'] .stat-card,
+[data-palette='pink'][data-theme='light'] .pet-card,
+[data-palette='pink'][data-theme='light'] .plant-card,
+[data-palette='pink'][data-theme='light'] .wizard-box,
+[data-palette='pink'][data-theme='light'] .list-item {
+
+  background: var(--surface);
+  border: 10px solid transparent !important;
+  border-image-source: url('/pastel-goth-lace.svg') !important;
+  border-image-slice: 22 !important;
+  border-image-width: 10px !important;
+  border-image-outset: 0 !important;
+  border-image-repeat: round !important;
+  border-radius: 0 !important;
+  box-shadow: 0 5px 16px rgba(60, 38, 62, 0.16);
+  overflow: visible;
+}
+
+[data-palette='pink'][data-theme='dark'] .card,
+[data-palette='pink'][data-theme='dark'] .stat-card,
+[data-palette='pink'][data-theme='dark'] .pet-card,
+[data-palette='pink'][data-theme='dark'] .plant-card,
+[data-palette='pink'][data-theme='dark'] .wizard-box,
+[data-palette='pink'][data-theme='dark'] .list-item {
+
+  background: var(--surface);
+  border: 10px solid transparent !important;
+  border-image-source: url('/pastel-goth-lace-dark.svg') !important;
+  border-image-slice: 22 !important;
+  border-image-width: 10px !important;
+  border-image-outset: 0 !important;
+  border-image-repeat: round !important;
+  border-radius: 0 !important;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.38);
+  overflow: visible;
+}
+
+/* remove old card decoration */
+[data-palette='pink'] .card::before,
+[data-palette='pink'] .card::after,
+[data-palette='pink'] .stat-card::before,
+[data-palette='pink'] .stat-card::after,
+[data-palette='pink'] .pet-card::before,
+[data-palette='pink'] .pet-card::after,
+[data-palette='pink'] .plant-card::before,
+[data-palette='pink'] .plant-card::after,
+[data-palette='pink'] .wizard-box::before,
+[data-palette='pink'] .wizard-box::after,
+[data-palette='pink'] .list-item::before,
+[data-palette='pink'] .list-item::after {
+  content: none !important;
+}
+
+[data-palette='pink'] .card-body {
+  background: transparent;
+  border: none;
+}
+
+/* ---------- buttons: keyboard-key style ---------- */
+
+[data-palette='pink'][data-theme='light'] .btn,
+[data-palette='pink'][data-theme='light'] button.btn {
+  background: #FFFFFF !important;
+  color: #4A2E44 !important;
+  border: 1px solid #D9A0C2 !important;
+  border-bottom: 3px solid #B77FA2 !important;
+  border-radius: 7px !important;
+  box-shadow:
+    0 2px 0 #B77FA2,
+    0 3px 6px rgba(74, 46, 68, 0.10) !important;
+}
+
+[data-palette='pink'][data-theme='dark'] .btn,
+[data-palette='pink'][data-theme='dark'] button.btn {
+  background: #3B2831 !important;
+  color: #F0C8E0 !important;
+  border: 1px solid #8A6B82 !important;
+  border-bottom: 3px solid #684E60 !important;
+  border-radius: 7px !important;
+  box-shadow:
+    0 2px 0 #684E60,
+    0 3px 7px rgba(0, 0, 0, 0.30) !important;
+}
+
+/* pressed key */
+[data-palette='pink'][data-theme='light'] .btn:active,
+[data-palette='pink'][data-theme='dark'] .btn:active {
+  transform: translateY(2px);
+  border-bottom-width: 1px !important;
+  box-shadow: 0 1px 0 currentColor !important;
+}
+
+/* ---------- checkmarks: heart ---------- */
+
+[data-palette='pink'] .theme-check--full {
+  -webkit-mask-image: url('/heart-full.svg');
+  mask-image: url('/heart-full.svg');
+}
+
+[data-palette='pink'] .theme-check--empty {
+  -webkit-mask-image: url('/heart-empty.svg');
+  mask-image: url('/heart-empty.svg');
+}
+
+/* ---------- stitch divider: bat mark ---------- */
+
+[data-palette='pink'] .stitch-divider .mark {
+  width: 20px;
+  height: 14px;
+  background-color: var(--pink-dark);
+  -webkit-mask-image: url('/bat-mark.svg');
+  mask-image: url('/bat-mark.svg');
+  -webkit-mask-size: contain;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+  animation: bat-flutter 2.4s ease-in-out infinite;
+}
+
+[data-palette='pink'] .stitch-divider .mark::before,
+[data-palette='pink'] .stitch-divider .mark::after {
+  content: none !important;
+}
+
+@keyframes bat-flutter {
+  0%, 100% { transform: scaleY(1); }
+  50%      { transform: scaleY(0.8); }
+}
+
+
+/* ================================================================
+   ================================================================
+   PALETTE: BLURPLE
+   data-palette="blurple"
+   ================================================================
+   ================================================================ */
+
+/* ---------- tokens: light ---------- */
 [data-palette='blurple'][data-theme='light'] {
   --bg: #F3F5FF;
   --surface: #FFFFFF;
@@ -404,11 +675,11 @@
   --active-text: #4E5FA8;
 
   --info-card-bg: #E1E5F8;
---info-card-border: rgba(104, 120, 200, 0.20);
---info-card-text: #4E5FA8;
+  --info-card-border: rgba(104, 120, 200, 0.20);
+  --info-card-text: #4E5FA8;
 }
 
-/* ---------- blurple (dark) ---------- */
+/* ---------- tokens: dark ---------- */
 [data-palette='blurple'][data-theme='dark'] {
   --bg: #191C2B;
   --surface: #252A40;
@@ -460,75 +731,172 @@
   --active-text: #DDE2FA;
 
   --info-card-bg: #303858;
---info-card-border: rgba(157, 169, 230, 0.20);
---info-card-text: #DDE2FA;
+  --info-card-border: rgba(157, 169, 230, 0.20);
+  --info-card-text: #DDE2FA;
 }
 
-/* ============================================================
-   TEDDY — SOFT SEWN / FABRIC CARDS
-   ============================================================ */
+/* ---------- cards: dreamy twinkle border ---------- */
 
-[data-theme='light'] .card,
-[data-theme='light'] .stat-card,
-[data-theme='light'] .pet-card,
-[data-theme='light'] .plant-card,
-[data-theme='light'] .wizard-box,
-[data-theme='light'] .list-item {
+[data-palette='blurple'][data-theme='light'] .card,
+[data-palette='blurple'][data-theme='light'] .stat-card,
+[data-palette='blurple'][data-theme='light'] .pet-card,
+[data-palette='blurple'][data-theme='light'] .plant-card,
+[data-palette='blurple'][data-theme='light'] .wizard-box,
+[data-palette='blurple'][data-theme='light'] .list-item {
+  position: relative;
+  background-color: var(--surface);
+  border: 2px solid #8B78B8 !important;
+  border-radius: 14px !important;
+  box-shadow: 0 5px 16px rgba(74, 46, 68, 0.14);
+  overflow: hidden;
+}
 
-  background: var(--surface);
+[data-palette='blurple'][data-theme='dark'] .card,
+[data-palette='blurple'][data-theme='dark'] .stat-card,
+[data-palette='blurple'][data-theme='dark'] .pet-card,
+[data-palette='blurple'][data-theme='dark'] .plant-card,
+[data-palette='blurple'][data-theme='dark'] .wizard-box,
+[data-palette='blurple'][data-theme='dark'] .list-item {
+  position: relative;
+  background-color: var(--surface);
+  border: 2px solid #B8A5D5 !important;
+  border-radius: 14px !important;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.32);
+  overflow: hidden;
+}
 
-  border: 10px solid transparent !important;
+/* remove old cloud decoration */
+[data-palette='blurple'] .card::before,
+[data-palette='blurple'] .stat-card::before,
+[data-palette='blurple'] .pet-card::before,
+[data-palette='blurple'] .plant-card::before,
+[data-palette='blurple'] .wizard-box::before,
+[data-palette='blurple'] .list-item::before {
+  content: none !important;
+}
 
-  border-image: url('/teddy-stitch.svg') 20 / 10px / 0 round !important;
+[data-palette='blurple'] .card-body {
+  background: transparent;
+  border: none;
+}
 
-  border-radius: 0 !important;
+/* ---------- twinkling fairy lights (hangs above .page-body) ---------- */
 
-  box-shadow:
-    0 5px 15px rgba(91, 63, 38, 0.12);
+[data-palette='blurple'] .page-body {
+  position: relative;
+}
 
-  overflow: visible;
+/* the strand */
+[data-palette='blurple'] .page-body::before {
+  content: "";
+  position: absolute;
+  top: -9px;
+  left: 3%;
+  right: 3%;
+  height: 18px;
+
+  background:
+    radial-gradient(circle at 4% 50%,  #B99BEF 0 4px, transparent 5px),
+    radial-gradient(circle at 16% 50%, #86CDE0 0 4px, transparent 5px),
+    radial-gradient(circle at 28% 50%, #D9A7E8 0 4px, transparent 5px),
+    radial-gradient(circle at 40% 50%, #9BA9F0 0 4px, transparent 5px),
+    radial-gradient(circle at 52% 50%, #E7C878 0 4px, transparent 5px),
+    radial-gradient(circle at 64% 50%, #A98DE5 0 4px, transparent 5px),
+    radial-gradient(circle at 76% 50%, #82CEDC 0 4px, transparent 5px),
+    radial-gradient(circle at 88% 50%, #D99BCF 0 4px, transparent 5px),
+    radial-gradient(circle at 100% 50%, #B99BEF 0 4px, transparent 5px);
+
+  pointer-events: none;
+  z-index: 5;
+
+  filter:
+    drop-shadow(0 0 4px rgba(174, 153, 208, .65))
+    drop-shadow(0 0 9px rgba(126, 159, 209, .35));
+
+  animation: blurple-lights 2.8s ease-in-out infinite alternate;
+}
+
+/* tiny hanging wire */
+[data-palette='blurple'] .page-body::after {
+  content: "";
+  position: absolute;
+  top: -4px;
+  left: 3%;
+  right: 3%;
+  height: 7px;
+  border-top: 1px solid var(--border);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 4;
+}
+
+@keyframes blurple-lights {
+  0% {
+    opacity: .72;
+    filter:
+      drop-shadow(0 0 3px rgba(174, 153, 208, .45))
+      drop-shadow(0 0 7px rgba(126, 159, 209, .25));
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: .78;
+    filter:
+      drop-shadow(0 0 6px rgba(174, 153, 208, .8))
+      drop-shadow(0 0 13px rgba(126, 159, 209, .45));
+  }
+}
+
+/* ---------- checkmarks: star ---------- */
+
+[data-palette='blurple'] .theme-check--full {
+  -webkit-mask-image: url('/star-full.svg');
+  mask-image: url('/star-full.svg');
+}
+
+[data-palette='blurple'] .theme-check--empty {
+  -webkit-mask-image: url('/star-empty.svg');
+  mask-image: url('/star-empty.svg');
+}
+
+/* ---------- stitch divider: twinkling star mark ---------- */
+
+[data-palette='blurple'] .stitch-divider .mark {
+  width: 16px;
+  height: 16px;
+  background-color: var(--pink-dark);
+  -webkit-mask-image: url('/star-mark.svg');
+  mask-image: url('/star-mark.svg');
+  -webkit-mask-size: contain;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+  animation: star-twinkle 2.2s ease-in-out infinite;
+}
+
+[data-palette='blurple'] .stitch-divider .mark::before,
+[data-palette='blurple'] .stitch-divider .mark::after {
+  content: none !important;
+}
+
+@keyframes star-twinkle {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50%      { transform: scale(0.8); opacity: 0.6; }
 }
 
 
-[data-theme='dark'] .card,
-[data-theme='dark'] .stat-card,
-[data-theme='dark'] .pet-card,
-[data-theme='dark'] .plant-card,
-[data-theme='dark'] .wizard-box,
-[data-theme='dark'] .list-item {
-
-  background: var(--surface);
-
-  border: 10px solid transparent !important;
-
-  border-image: url('/teddy-stitch-dark.svg') 20 / 10px / 0 round !important;
-
-  border-radius: 0 !important;
-
-  box-shadow:
-    0 6px 18px rgba(0, 0, 0, 0.28);
-
-  overflow: visible;
-}
-
-/* keep the radius tokens outside — they don't change by theme */
-:root {
-  --radius-sm: 10px;
-  --radius-md: 16px;
-  --radius-lg: 20px;
-}
-
-
-/* ============================================================
-   LUCKY STARS
+/* ================================================================
+   ================================================================
+   PALETTE: LUCKY STARS
+   data-palette="lucky-stars"
    Retro magical cereal / marshmallow theme
-   ============================================================ */
+   ================================================================
+   ================================================================ */
 
-
-/* ============================================================
-   LIGHT PALETTE
-   ============================================================ */
-
+/* ---------- tokens: light ---------- */
 [data-palette='lucky-stars'][data-theme='light'] {
   --bg: #FFF9E8;
   --surface: #FFFFFF;
@@ -583,11 +951,7 @@
   --info-card-text: #66501C;
 }
 
-
-/* ============================================================
-   DARK PALETTE
-   ============================================================ */
-
+/* ---------- tokens: dark ---------- */
 [data-palette='lucky-stars'][data-theme='dark'] {
   --bg: #29213A;
   --surface: #392B4A;
@@ -642,11 +1006,8 @@
   --info-card-text: #FFF0D0;
 }
 
-
-/* ============================================================
-   LUCKY STARS — CARDS
-   IMPORTANT: explicitly cancels Teddy's stitched border
-   ============================================================ */
+/* ---------- cards ---------- */
+/* IMPORTANT: explicitly cancels the teddy-bear stitched border */
 
 [data-palette='lucky-stars'] .card,
 [data-palette='lucky-stars'] .stat-card,
@@ -674,8 +1035,7 @@
   overflow: hidden;
 }
 
-
-/* Kill Teddy's inner stitched decoration */
+/* kill teddy's inner stitched decoration */
 
 [data-palette='lucky-stars'] .card::before,
 [data-palette='lucky-stars'] .card::after,
@@ -692,25 +1052,16 @@
   content: none !important;
 }
 
-
-/* ============================================================
-   LUCKY STARS — BUTTONS
-   ============================================================ */
+/* ---------- buttons ---------- */
 
 [data-palette='lucky-stars'] .btn,
 [data-palette='lucky-stars'] .btn-primary,
 [data-palette='lucky-stars'] .btn-secondary,
 [data-palette='lucky-stars'] .btn-danger {
-
   border-radius: 9px !important;
   font-weight: 700;
-
-  box-shadow:
-    0 3px 0 rgba(73,56,79,.16);
+  box-shadow: 0 3px 0 rgba(73,56,79,.16);
 }
-
-
-/* Primary */
 
 [data-palette='lucky-stars'] .btn-primary {
   background: var(--primary) !important;
@@ -718,17 +1069,11 @@
   border: 2px solid #D5A92E !important;
 }
 
-
-/* Secondary */
-
 [data-palette='lucky-stars'] .btn-secondary {
   background: var(--surface) !important;
   color: var(--green-dark) !important;
   border: 2px solid var(--secondary) !important;
 }
-
-
-/* Danger */
 
 [data-palette='lucky-stars'] .btn-danger {
   background: var(--danger-bg) !important;
@@ -736,13 +1081,9 @@
   border: 2px solid var(--danger) !important;
 }
 
-
-/* ============================================================
-   LUCKY STARS — CHECKBOXES
-   ============================================================ */
+/* ---------- checkboxes ---------- */
 
 [data-palette='lucky-stars'] input[type='checkbox'] {
-
   appearance: none !important;
   -webkit-appearance: none !important;
 
@@ -757,8 +1098,7 @@
   border: 2px solid var(--border) !important;
   border-radius: 6px !important;
 
-  box-shadow:
-    0 2px 0 rgba(73,56,79,.18) !important;
+  box-shadow: 0 2px 0 rgba(73,56,79,.18) !important;
 
   display: grid !important;
   place-content: center;
@@ -766,67 +1106,39 @@
   cursor: pointer;
 }
 
-
-/* Checked */
-
 [data-palette='lucky-stars'] input[type='checkbox']:checked {
-
   background: var(--secondary) !important;
-
   border-color: #4F9C45 !important;
-
-  box-shadow:
-    0 2px 0 #41873A !important;
+  box-shadow: 0 2px 0 #41873A !important;
 }
 
-
-/* Checkmark */
-
-[data-palette='lucky-stars']
-input[type='checkbox']:checked::before {
-
+[data-palette='lucky-stars'] input[type='checkbox']:checked::before {
   content: "";
-
   width: 9px;
   height: 5px;
-
   border-left: 2px solid white;
   border-bottom: 2px solid white;
-
   transform: rotate(-45deg) translate(1px,-1px);
 }
 
-
-/* ============================================================
-   LUCKY STARS — THEME CHECK ICONS
-   Prevents Teddy bear SVGs from appearing
-   ============================================================ */
+/* ---------- checkmarks: star icons (prevents teddy bear SVGs) ---------- */
 
 [data-palette='lucky-stars'] .theme-check--full {
-
   background-color: var(--primary) !important;
-
   -webkit-mask-image: url('/star-full.svg') !important;
   mask-image: url('/star-full.svg') !important;
 }
 
-
 [data-palette='lucky-stars'] .theme-check--empty {
-
   background-color: var(--border) !important;
-
   -webkit-mask-image: url('/star-empty.svg') !important;
   mask-image: url('/star-empty.svg') !important;
 }
 
-
-/* ============================================================
-   LUCKY STARS — KEYBOARD KEYS
-   ============================================================ */
+/* ---------- keyboard keys ---------- */
 
 [data-palette='lucky-stars'] kbd,
 [data-palette='lucky-stars'] .keyboard-key {
-
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -848,35 +1160,25 @@ input[type='checkbox']:checked::before {
   font-size: .8rem;
   font-weight: 700;
 
-  box-shadow:
-    0 2px 0 var(--gold-dark) !important;
+  box-shadow: 0 2px 0 var(--gold-dark) !important;
 }
-
-
-/* Dark keyboard keys */
 
 [data-palette='lucky-stars'][data-theme='dark'] kbd,
 [data-palette='lucky-stars'][data-theme='dark'] .keyboard-key {
-
   background: #49365A !important;
   color: #FFF3D1 !important;
 
   border-color: #80637A !important;
   border-bottom-color: #65506A !important;
 
-  box-shadow:
-    0 2px 0 #65506A !important;
+  box-shadow: 0 2px 0 #65506A !important;
 }
 
-
-/* ============================================================
-   LUCKY STARS — INPUTS
-   ============================================================ */
+/* ---------- inputs ---------- */
 
 [data-palette='lucky-stars'] input,
 [data-palette='lucky-stars'] textarea,
 [data-palette='lucky-stars'] select {
-
   background: var(--surface) !important;
   color: var(--text) !important;
 
@@ -884,101 +1186,65 @@ input[type='checkbox']:checked::before {
   border-radius: 9px !important;
 }
 
-
 [data-palette='lucky-stars'] input:focus,
 [data-palette='lucky-stars'] textarea:focus,
 [data-palette='lucky-stars'] select:focus {
-
   border-color: var(--accent) !important;
-
-  box-shadow:
-    0 0 0 3px var(--blush) !important;
+  box-shadow: 0 0 0 3px var(--blush) !important;
 }
 
-
-/* ============================================================
-   LUCKY STARS — BADGES
-   ============================================================ */
+/* ---------- badges ---------- */
 
 [data-palette='lucky-stars'] .badge {
   border: 2px solid var(--border) !important;
   border-radius: 999px !important;
 }
 
-
-/* ============================================================
-   LUCKY STARS — DIVIDERS
-   ============================================================ */
+/* ---------- dividers: star mark ---------- */
 
 [data-palette='lucky-stars'] .stitch-divider .line {
   border-top-color: var(--border);
 }
 
-
-/* Star instead of Teddy/bat/bowtie decoration */
-
 [data-palette='lucky-stars'] .stitch-divider .mark {
-
   width: 18px;
   height: 18px;
-
   background-color: var(--primary);
-
   -webkit-mask-image: url('/star-mark.svg');
   mask-image: url('/star-mark.svg');
-
   -webkit-mask-size: contain;
   mask-size: contain;
-
   -webkit-mask-repeat: no-repeat;
   mask-repeat: no-repeat;
-
   -webkit-mask-position: center;
   mask-position: center;
-
   animation: lucky-star-twinkle 2s ease-in-out infinite;
 }
-
 
 [data-palette='lucky-stars'] .stitch-divider .mark::before,
 [data-palette='lucky-stars'] .stitch-divider .mark::after {
   content: none !important;
 }
 
-
 @keyframes lucky-star-twinkle {
-  0%, 100% {
-    transform: scale(1);
-  }
-
-  50% {
-    transform: scale(.82) rotate(8deg);
-  }
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(.82) rotate(8deg); }
 }
 
-
-/* ============================================================
-   LUCKY STARS — LINKS
-   ============================================================ */
+/* ---------- links ---------- */
 
 [data-palette='lucky-stars'] a {
   color: var(--accent);
 }
 
-
-/* ============================================================
-   LUCKY STARS — SELECTION
-   ============================================================ */
+/* ---------- selection ---------- */
 
 [data-palette='lucky-stars'] ::selection {
   background: var(--primary);
   color: #49384F;
 }
 
-
-/* ============================================================
-   LUCKY STARS — SCROLLBAR
-   ============================================================ */
+/* ---------- scrollbar ---------- */
 
 [data-palette='lucky-stars'] {
   scrollbar-color: var(--primary) transparent;
@@ -994,8 +1260,17 @@ input[type='checkbox']:checked::before {
 }
 
 
+/* ================================================================
+   ================================================================
+   GENERIC LAYOUT & COMPONENTS
+   Palette-agnostic — styled entirely via CSS custom properties
+   set by whichever [data-palette] block above is active.
+   ================================================================
+   ================================================================ */
 
-/* ================= BASE RESET ================= */
+/* ---------------------------------------------------------------
+   BASE RESET
+   --------------------------------------------------------------- */
 
 *, *::before, *::after {
   box-sizing: border-box;
@@ -1019,10 +1294,13 @@ a {
   text-decoration: none;
 }
 
-/* ================= APP LAYOUT ================= */
-/* No fixed sidebar — the app is one natural document flow that scrolls
-   as a page. TopNav is a slim header that scrolls away with the content;
-   its menu is an overlay sheet that only exists while open. */
+/* ---------------------------------------------------------------
+   APP LAYOUT
+   No fixed sidebar — the app is one natural document flow that
+   scrolls as a page. TopNav is a slim header that scrolls away
+   with the content; its menu is an overlay sheet that only
+   exists while open.
+   --------------------------------------------------------------- */
 
 .app-shell {
   display: flex;
@@ -1036,9 +1314,11 @@ a {
   min-width: 0;
 }
 
-/* ================= SLIM TOPBAR ================= */
-/* Just the wordmark + theme toggle now — navigation lives in the
-   bottom tab bar, so there's nothing left to trigger up here. */
+/* ---------------------------------------------------------------
+   SLIM TOPBAR
+   Just the wordmark + theme toggle — navigation lives in the
+   bottom tab bar, so there's nothing left to trigger up here.
+   --------------------------------------------------------------- */
 
 .topbar {
   display: flex;
@@ -1081,7 +1361,9 @@ a {
   color: var(--ink);
 }
 
-/* ================= BOTTOM NAV ================= */
+/* ---------------------------------------------------------------
+   BOTTOM NAV
+   --------------------------------------------------------------- */
 
 .bottombar-wrap {
   position: fixed;
@@ -1139,7 +1421,7 @@ a {
   stroke-width: 2.1;
 }
 
-/* ---- expandable row, slides open directly above the primary bar ---- */
+/* expandable row, slides open directly above the primary bar */
 
 .bottombar-expand {
   position: relative;
@@ -1152,7 +1434,6 @@ a {
   animation: navSlideUp 0.18s ease;
 }
 
-
 @keyframes navFadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
@@ -1163,7 +1444,9 @@ a {
   to { transform: translateY(0); opacity: 1; }
 }
 
-/* ================= PAGE STRUCTURE ================= */
+/* ---------------------------------------------------------------
+   PAGE STRUCTURE
+   --------------------------------------------------------------- */
 
 .page-header {
   display: flex;
@@ -1202,7 +1485,6 @@ a {
   margin-bottom: 12px;
 }
 
-
 .page-loading {
   padding: 48px 20px;
   text-align: center;
@@ -1211,7 +1493,9 @@ a {
   color: var(--ink-muted);
 }
 
-/* ================= CARD SYSTEM ================= */
+/* ---------------------------------------------------------------
+   CARD SYSTEM (base — palette blocks above override via specificity)
+   --------------------------------------------------------------- */
 
 .card,
 .stat-card,
@@ -1273,7 +1557,9 @@ a {
   transition: 0.2s ease;
 }
 
-/* ================= BADGES ================= */
+/* ---------------------------------------------------------------
+   BADGES
+   --------------------------------------------------------------- */
 
 .badge {
   display: inline-block;
@@ -1312,7 +1598,9 @@ a {
   }
 }
 
-/* ================= INPUTS ================= */
+/* ---------------------------------------------------------------
+   INPUTS
+   --------------------------------------------------------------- */
 
 input, textarea, select {
   padding: 10px;
@@ -1330,7 +1618,9 @@ input:focus {
   box-shadow: 0 0 0 3px rgba(239, 203, 126, 0.5);
 }
 
-/* ================= BUTTONS ================= */
+/* ---------------------------------------------------------------
+   BUTTONS
+   --------------------------------------------------------------- */
 
 .btn {
   border: none;
@@ -1393,7 +1683,9 @@ input:focus {
   padding: 5px 9px;
 }
 
-/* ================= TYPOGRAPHY ================= */
+/* ---------------------------------------------------------------
+   TYPOGRAPHY
+   --------------------------------------------------------------- */
 
 h1, h2, h3 {
   font-family: 'Fraunces', serif;
@@ -1411,7 +1703,9 @@ p {
   letter-spacing: -0.1px;
 }
 
-/* ================= MOBILE ================= */
+/* ---------------------------------------------------------------
+   MOBILE
+   --------------------------------------------------------------- */
 
 @media (max-width: 768px) {
   .topbar {
@@ -1434,7 +1728,12 @@ p {
   }
 }
 
-/* ================= DASHBOARD — COZY DETAILS ================= */
+/* ---------------------------------------------------------------
+   DASHBOARD — COZY DETAILS
+   Palette-agnostic decorative bits (dotted background, divider
+   scaffolding, lanterns, empty states). Palette-specific divider
+   marks and checkmark icons live in the palette sections above.
+   --------------------------------------------------------------- */
 
 body {
   background-color: var(--bg);
@@ -1482,6 +1781,9 @@ body {
   margin-top: 2px;
 }
 
+/* stitch-divider base scaffolding — the ".mark" itself is themed
+   per-palette (see palette sections above) */
+
 .stitch-divider {
   display: flex;
   align-items: center;
@@ -1501,98 +1803,8 @@ body {
   flex-shrink: 0;
 }
 
-.stitch-divider .mark::before,
-.stitch-divider .mark::after {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 0;
-  width: 100%;
-  height: 2px;
-  background: var(--pink-dark);
-  border-radius: 1px;
-}
-
-.stitch-divider .mark::before { transform: translateY(-50%) rotate(45deg); }
-.stitch-divider .mark::after  { transform: translateY(-50%) rotate(-45deg); }
-
-/* ---------- pastel goth: bat stitch mark ---------- */
-
-[data-palette='pink'] .stitch-divider .mark {
-  width: 20px;
-  height: 14px;
-  background-color: var(--pink-dark);
-  -webkit-mask-image: url('/bat-mark.svg');
-  mask-image: url('/bat-mark.svg');
-  -webkit-mask-size: contain;
-  mask-size: contain;
-  -webkit-mask-repeat: no-repeat;
-  mask-repeat: no-repeat;
-  -webkit-mask-position: center;
-  mask-position: center;
-  animation: bat-flutter 2.4s ease-in-out infinite;
-}
-
-[data-palette='pink'] .stitch-divider .mark::before,
-[data-palette='pink'] .stitch-divider .mark::after {
-  content: none !important;
-}
-
-@keyframes bat-flutter {
-  0%, 100% { transform: scaleY(1); }
-  50%      { transform: scaleY(0.8); }
-}
-
-/* ---------- tuxedo: bowtie stitch mark ---------- */
-
-[data-palette='tuxedo'] .stitch-divider .mark {
-  width: 20px;
-  height: 12px;
-  background-color: var(--pink-dark);
-  -webkit-mask-image: url('/bowtie-mark.svg');
-  mask-image: url('/bowtie-mark.svg');
-  -webkit-mask-size: contain;
-  mask-size: contain;
-  -webkit-mask-repeat: no-repeat;
-  mask-repeat: no-repeat;
-  -webkit-mask-position: center;
-  mask-position: center;
-}
-
-[data-palette='tuxedo'] .stitch-divider .mark::before,
-[data-palette='tuxedo'] .stitch-divider .mark::after {
-  content: none !important;
-}
-
-/* ---------- blurple: twinkling star stitch mark ---------- */
-
-[data-palette='blurple'] .stitch-divider .mark {
-  width: 16px;
-  height: 16px;
-  background-color: var(--pink-dark);
-  -webkit-mask-image: url('/star-mark.svg');
-  mask-image: url('/star-mark.svg');
-  -webkit-mask-size: contain;
-  mask-size: contain;
-  -webkit-mask-repeat: no-repeat;
-  mask-repeat: no-repeat;
-  -webkit-mask-position: center;
-  mask-position: center;
-  animation: star-twinkle 2.2s ease-in-out infinite;
-}
-
-[data-palette='blurple'] .stitch-divider .mark::before,
-[data-palette='blurple'] .stitch-divider .mark::after {
-  content: none !important;
-}
-
-@keyframes star-twinkle {
-  0%, 100% { transform: scale(1); opacity: 1; }
-  50%      { transform: scale(0.8); opacity: 0.6; }
-}
-
-
-/* ================= THEME-AWARE CHECKMARKS ================= */
+/* theme-check base scaffolding — the icon itself is themed
+   per-palette (see palette sections above) */
 
 .theme-check {
   display: inline-block;
@@ -1603,57 +1815,6 @@ body {
   mask-repeat: no-repeat;
   -webkit-mask-position: center;
   mask-position: center;
-}
-
-/* ---------- teddy bear (default) ---------- */
-
-.theme-check--full {
-  background-color: var(--pink-dark);
-  -webkit-mask-image: url('/teddybear-full.svg');
-  mask-image: url('/teddybear-full.svg');
-}
-
-.theme-check--empty {
-  background-color: var(--border);
-  -webkit-mask-image: url('/teddybear-empty.svg');
-  mask-image: url('/teddybear-empty.svg');
-}
-
-/* ---------- pastel goth: heart ---------- */
-
-[data-palette='pink'] .theme-check--full {
-  -webkit-mask-image: url('/heart-full.svg');
-  mask-image: url('/heart-full.svg');
-}
-
-[data-palette='pink'] .theme-check--empty {
-  -webkit-mask-image: url('/heart-empty.svg');
-  mask-image: url('/heart-empty.svg');
-}
-
-
-/* ---------- blurple: star ---------- */
-
-[data-palette='blurple'] .theme-check--full {
-  -webkit-mask-image: url('/star-full.svg');
-  mask-image: url('/star-full.svg');
-}
-
-[data-palette='blurple'] .theme-check--empty {
-  -webkit-mask-image: url('/star-empty.svg');
-  mask-image: url('/star-empty.svg');
-}
-
-/* ---------- tuxedo: circle ---------- */
-
-[data-palette='tuxedo'] .theme-check--full {
-  -webkit-mask-image: url('/circle-full.svg');
-  mask-image: url('/circle-full.svg');
-}
-
-[data-palette='tuxedo'] .theme-check--empty {
-  -webkit-mask-image: url('/circle-empty.svg');
-  mask-image: url('/circle-empty.svg');
 }
 
 .lantern-img {
@@ -1697,344 +1858,4 @@ body {
   gap: 10px;
   font-size: 0.82rem;
   color: var(--ink-muted);
-}
-
-
- /* ============================================================
-    PINK / PASTEL GOTH — ORNATE LACE CARDS
-    ============================================================ */
-
- /* ---------- LIGHT ---------- */
-
- [data-palette='pink'][data-theme='light'] .card,
- [data-palette='pink'][data-theme='light'] .stat-card,
- [data-palette='pink'][data-theme='light'] .pet-card,
- [data-palette='pink'][data-theme='light'] .plant-card,
- [data-palette='pink'][data-theme='light'] .wizard-box,
- [data-palette='pink'][data-theme='light'] .list-item {
-
-   background: var(--surface);
-
-   border: 10px solid transparent !important;
-
-   border-image-source: url('/pastel-goth-lace.svg') !important;
-   border-image-slice: 22 !important;
-   border-image-width: 10px !important;
-   border-image-outset: 0 !important;
-   border-image-repeat: round !important;
-
-   border-radius: 0 !important;
-
-   box-shadow:
-     0 5px 16px rgba(60, 38, 62, 0.16);
-
-   overflow: visible;
- }
-
-
- /* ---------- DARK ---------- */
-
- [data-palette='pink'][data-theme='dark'] .card,
- [data-palette='pink'][data-theme='dark'] .stat-card,
- [data-palette='pink'][data-theme='dark'] .pet-card,
- [data-palette='pink'][data-theme='dark'] .plant-card,
- [data-palette='pink'][data-theme='dark'] .wizard-box,
- [data-palette='pink'][data-theme='dark'] .list-item {
-
-   background: var(--surface);
-
-   border: 10px solid transparent !important;
-
-   border-image-source: url('/pastel-goth-lace-dark.svg') !important;
-   border-image-slice: 22 !important;
-   border-image-width: 10px !important;
-   border-image-outset: 0 !important;
-   border-image-repeat: round !important;
-
-   border-radius: 0 !important;
-
-   box-shadow:
-     0 6px 20px rgba(0, 0, 0, 0.38);
-
-   overflow: visible;
- }
-
-
- /* ---------- REMOVE OLD CARD DECORATION ---------- */
-
- [data-palette='pink'] .card::before,
- [data-palette='pink'] .card::after,
- [data-palette='pink'] .stat-card::before,
- [data-palette='pink'] .stat-card::after,
- [data-palette='pink'] .pet-card::before,
- [data-palette='pink'] .pet-card::after,
- [data-palette='pink'] .plant-card::before,
- [data-palette='pink'] .plant-card::after,
- [data-palette='pink'] .wizard-box::before,
- [data-palette='pink'] .wizard-box::after,
- [data-palette='pink'] .list-item::before,
- [data-palette='pink'] .list-item::after {
-
-   content: none !important;
- }
-
-
- /* ---------- CARD BODY ---------- */
-
- [data-palette='pink'] .card-body {
-   background: transparent;
-   border: none;
- }
-
-/* ============================================================
-   PINK THEME — KEYBOARD BUTTONS
-   ============================================================ */
-
-[data-palette='pink'][data-theme='light'] .btn,
-[data-palette='pink'][data-theme='light'] button.btn {
-  background: #FFFFFF !important;
-  color: #4A2E44 !important;
-  border: 1px solid #D9A0C2 !important;
-  border-bottom: 3px solid #B77FA2 !important;
-  border-radius: 7px !important;
-
-  box-shadow:
-    0 2px 0 #B77FA2,
-    0 3px 6px rgba(74, 46, 68, 0.10) !important;
-}
-
-[data-palette='pink'][data-theme='dark'] .btn,
-[data-palette='pink'][data-theme='dark'] button.btn {
-  background: #3B2831 !important;
-  color: #F0C8E0 !important;
-  border: 1px solid #8A6B82 !important;
-  border-bottom: 3px solid #684E60 !important;
-  border-radius: 7px !important;
-
-  box-shadow:
-    0 2px 0 #684E60,
-    0 3px 7px rgba(0, 0, 0, 0.30) !important;
-}
-
-/* pressed key */
-[data-palette='pink'][data-theme='light'] .btn:active,
-[data-palette='pink'][data-theme='dark'] .btn:active {
-  transform: translateY(2px);
-  border-bottom-width: 1px !important;
-  box-shadow: 0 1px 0 currentColor !important;
-}
-/* ============================================================
-   BLURPLE — DREAMY TWINKLE CARDS
-   ============================================================ */
-
-/* ---------- LIGHT ---------- */
-
-[data-palette='blurple'][data-theme='light'] .card,
-[data-palette='blurple'][data-theme='light'] .stat-card,
-[data-palette='blurple'][data-theme='light'] .pet-card,
-[data-palette='blurple'][data-theme='light'] .plant-card,
-[data-palette='blurple'][data-theme='light'] .wizard-box,
-[data-palette='blurple'][data-theme='light'] .list-item {
-
-  position: relative;
-
-  background-color: var(--surface);
-
-  border: 2px solid #8B78B8 !important;
-
-  border-radius: 14px !important;
-
-  box-shadow:
-    0 5px 16px rgba(74, 46, 68, 0.14);
-
-  overflow: hidden;
-}
-
-
-/* ---------- DARK ---------- */
-
-[data-palette='blurple'][data-theme='dark'] .card,
-[data-palette='blurple'][data-theme='dark'] .stat-card,
-[data-palette='blurple'][data-theme='dark'] .pet-card,
-[data-palette='blurple'][data-theme='dark'] .plant-card,
-[data-palette='blurple'][data-theme='dark'] .wizard-box,
-[data-palette='blurple'][data-theme='dark'] .list-item {
-
-  position: relative;
-
-  background-color: var(--surface);
-
-  border: 2px solid #B8A5D5 !important;
-
-  border-radius: 14px !important;
-
-  box-shadow:
-    0 6px 20px rgba(0, 0, 0, 0.32);
-
-  overflow: hidden;
-}
-
-
-/* ============================================================
-   BLURPLE — TWINKLING FAIRY LIGHTS
-   ============================================================ */
-
-[data-palette='blurple'] .page-body {
-  position: relative;
-}
-
-
-/* The strand */
-
-[data-palette='blurple'] .page-body::before {
-  content: "";
-
-  position: absolute;
-  top: -9px;
-  left: 3%;
-  right: 3%;
-
-  height: 18px;
-
-  background:
-    radial-gradient(
-      circle at 4% 50%,
-      #B99BEF 0 4px,
-      transparent 5px
-    ),
-    radial-gradient(
-      circle at 16% 50%,
-      #86CDE0 0 4px,
-      transparent 5px
-    ),
-    radial-gradient(
-      circle at 28% 50%,
-      #D9A7E8 0 4px,
-      transparent 5px
-    ),
-    radial-gradient(
-      circle at 40% 50%,
-      #9BA9F0 0 4px,
-      transparent 5px
-    ),
-    radial-gradient(
-      circle at 52% 50%,
-      #E7C878 0 4px,
-      transparent 5px
-    ),
-    radial-gradient(
-      circle at 64% 50%,
-      #A98DE5 0 4px,
-      transparent 5px
-    ),
-    radial-gradient(
-      circle at 76% 50%,
-      #82CEDC 0 4px,
-      transparent 5px
-    ),
-    radial-gradient(
-      circle at 88% 50%,
-      #D99BCF 0 4px,
-      transparent 5px
-    ),
-    radial-gradient(
-      circle at 100% 50%,
-      #B99BEF 0 4px,
-      transparent 5px
-    );
-
-  pointer-events: none;
-
-  z-index: 5;
-
-  filter:
-    drop-shadow(0 0 4px rgba(174, 153, 208, .65))
-    drop-shadow(0 0 9px rgba(126, 159, 209, .35));
-
-  animation: blurple-lights 2.8s ease-in-out infinite alternate;
-}
-
-
-/* Tiny hanging wire */
-
-[data-palette='blurple'] .page-body::after {
-  content: "";
-
-  position: absolute;
-  top: -4px;
-  left: 3%;
-  right: 3%;
-
-  height: 7px;
-
-  border-top: 1px solid var(--border);
-
-  border-radius: 50%;
-
-  pointer-events: none;
-
-  z-index: 4;
-}
-
-
-@keyframes blurple-lights {
-  0% {
-    opacity: .72;
-    filter:
-      drop-shadow(0 0 3px rgba(174, 153, 208, .45))
-      drop-shadow(0 0 7px rgba(126, 159, 209, .25));
-  }
-
-  50% {
-    opacity: 1;
-  }
-
-  100% {
-    opacity: .78;
-    filter:
-      drop-shadow(0 0 6px rgba(174, 153, 208, .8))
-      drop-shadow(0 0 13px rgba(126, 159, 209, .45));
-  }
-}
-
-
-/* ---------- REMOVE OLD CLOUD DECORATION ---------- */
-
-[data-palette='blurple'] .card::before,
-[data-palette='blurple'] .stat-card::before,
-[data-palette='blurple'] .pet-card::before,
-[data-palette='blurple'] .plant-card::before,
-[data-palette='blurple'] .wizard-box::before,
-[data-palette='blurple'] .list-item::before {
-
-  content: none !important;
-}
-
-
-/* ---------- CARD BODY ---------- */
-
-[data-palette='blurple'] .card-body {
-
-  background: transparent;
-  border: none;
-}
-
-/* ---------- TUXEDO — SIMPLE SINGLE-LINE CARDS ---------- */
-
-[data-palette='tuxedo'][data-theme='light'] .card,
-[data-palette='tuxedo'][data-theme='light'] .stat-card,
-[data-palette='tuxedo'][data-theme='light'] .pet-card,
-[data-palette='tuxedo'][data-theme='light'] .plant-card,
-[data-palette='tuxedo'][data-theme='light'] .wizard-box,
-[data-palette='tuxedo'][data-theme='light'] .list-item,
-[data-palette='tuxedo'][data-theme='dark'] .card,
-[data-palette='tuxedo'][data-theme='dark'] .stat-card,
-[data-palette='tuxedo'][data-theme='dark'] .pet-card,
-[data-palette='tuxedo'][data-theme='dark'] .plant-card,
-[data-palette='tuxedo'][data-theme='dark'] .wizard-box,
-[data-palette='tuxedo'][data-theme='dark'] .list-item {
-  border: 1px solid var(--border) !important;
-  border-radius: var(--radius-lg) !important;
-  box-shadow: var(--shadow);
-  overflow: hidden;
 }
