@@ -466,50 +466,47 @@
 
 /* ============================================================
    LUCKY STARS
-   Retro magical cereal-box inspired theme
+   Retro magical cereal / marshmallow theme
    ============================================================ */
 
-/* ---------- LUCKY STARS (light) ---------- */
+
+/* ============================================================
+   LIGHT MODE
+   ============================================================ */
 
 [data-palette='lucky-stars'][data-theme='light'] {
   --bg: #FFF9E8;
   --surface: #FFFFFF;
-  --surface-2: #FFF1C7;
+  --surface-2: #FFF2C9;
 
   --text: #49384F;
   --text-muted: #806D78;
 
-  --primary: #F4C542;
-  --secondary: #73C95B;
-  --accent: #E978A5;
-  --mint: #6FC7D8;
+  --primary: #F4C542;       /* golden star */
+  --secondary: #6BC45A;     /* lucky green */
+  --accent: #E978A5;        /* berry pink */
+  --mint: #69C7D8;          /* blue marshmallow */
 
-  --border: #E5C978;
+  --border: #DDBB5A;
+  --shadow: rgba(73, 56, 79, 0.12);
 
-  --success: #69B85A;
+  --success: #68B957;
   --warning: #F2A83B;
   --danger: #E87575;
-
-  --shadow: rgba(73, 56, 79, 0.12);
 
   --card-bg: #FFFFFF;
   --input-bg: #FFFDF6;
 
-  --header-bg: #FFF4CE;
-  --header-text: #49384F;
-
-  --nav-bg: #FFFFFF;
-  --nav-text: #66536A;
-  --nav-active: #E978A5;
-
-  --accent-soft: #FBE0EB;
-  --primary-soft: #FFF0B8;
+  --accent-soft: #F9DFEA;
+  --primary-soft: #FFF0B5;
   --secondary-soft: #DDF1D5;
-  --mint-soft: #D9F1F5;
+  --mint-soft: #D8F1F5;
 }
 
 
-/* ---------- LUCKY STARS (dark) ---------- */
+/* ============================================================
+   DARK MODE
+   ============================================================ */
 
 [data-palette='lucky-stars'][data-theme='dark'] {
   --bg: #29213A;
@@ -524,23 +521,15 @@
   --accent: #F083B0;
   --mint: #72D0DD;
 
-  --border: #715A76;
+  --border: #80637A;
+  --shadow: rgba(0, 0, 0, 0.30);
 
   --success: #82D66A;
   --warning: #F5B84B;
   --danger: #ED8585;
 
-  --shadow: rgba(0, 0, 0, 0.28);
-
   --card-bg: #392B4A;
   --input-bg: #32263F;
-
-  --header-bg: #342743;
-  --header-text: #FFF3D1;
-
-  --nav-bg: #32263F;
-  --nav-text: #C9B8C9;
-  --nav-active: #F083B0;
 
   --accent-soft: #523447;
   --primary-soft: #514526;
@@ -550,72 +539,158 @@
 
 
 /* ============================================================
-   LUCKY STARS — SHARED DETAILS
+   LUCKY STARS — BORDERS
    ============================================================ */
 
-[data-palette='lucky-stars'] {
-  --theme-radius: 12px;
-}
+/* Cards / panels */
 
-
-/* ---------- Cards ---------- */
-
-[data-palette='lucky-stars'] .card {
-  border-radius: var(--theme-radius);
-  border-color: var(--border);
+[data-palette='lucky-stars'] .card,
+[data-palette='lucky-stars'] .panel,
+[data-palette='lucky-stars'] .section-card {
+  border: 2px solid var(--border) !important;
+  border-radius: 14px;
   box-shadow:
-    0 2px 0 rgba(73, 56, 79, 0.05),
-    0 5px 14px var(--shadow);
+    0 3px 0 rgba(73, 56, 79, 0.08),
+    0 6px 14px var(--shadow);
 }
 
 
-/* ---------- Buttons ---------- */
+/* Generic bordered elements */
 
-[data-palette='lucky-stars'] .btn {
-  border-radius: 9px;
-  font-weight: 700;
+[data-palette='lucky-stars'] .border,
+[data-palette='lucky-stars'] .bordered {
+  border-color: var(--border) !important;
 }
 
 
-/* Primary button */
-
-[data-palette='lucky-stars'] .btn-primary {
-  background: var(--primary);
-  color: #49384F;
-  border-color: #D5A92E;
-  box-shadow: 0 2px 0 #D5A92E;
-}
-
-[data-palette='lucky-stars'] .btn-primary:hover {
-  filter: brightness(1.04);
-  transform: translateY(-1px);
-}
-
-
-/* ---------- Inputs ---------- */
+/* Inputs */
 
 [data-palette='lucky-stars'] input,
 [data-palette='lucky-stars'] textarea,
 [data-palette='lucky-stars'] select {
-  border-color: var(--border);
-  background: var(--input-bg);
+  border: 2px solid var(--border) !important;
   border-radius: 9px;
+  background: var(--input-bg);
+  color: var(--text);
 }
 
 [data-palette='lucky-stars'] input:focus,
 [data-palette='lucky-stars'] textarea:focus,
 [data-palette='lucky-stars'] select:focus {
-  border-color: var(--accent);
+  border-color: var(--accent) !important;
   box-shadow: 0 0 0 3px var(--accent-soft);
 }
 
 
 /* ============================================================
-   LUCKY STARS — KEYBOARD-STYLE BUTTONS
+   LUCKY STARS — CHECKBOXES
    ============================================================ */
 
-[data-palette='lucky-stars'] .keyboard-key,
-[data-palette='lucky-stars'] kbd {
+/* Native checkbox */
+
+[data-palette='lucky-stars'] input[type='checkbox'] {
+  appearance: none;
+  -webkit-appearance: none;
+
+  width: 20px;
+  height: 20px;
+
+  margin: 0;
+
+  background: #FFFFFF;
+  border: 2px solid #DDBB5A !important;
+  border-radius: 6px;
+
+  display: inline-grid;
+  place-content: center;
+
+  cursor: pointer;
+
+  box-shadow:
+    0 2px 0 #C5A33F;
+
+  flex-shrink: 0;
+}
+
+
+/* Dark checkbox */
+
+[data-palette='lucky-stars'][data-theme='dark']
+input[type='checkbox'] {
+  background: #49365A;
+  border-color: #80637A !important;
+
+  box-shadow:
+    0 2px 0 #65506A;
+}
+
+
+/* Checked */
+
+[data-palette='lucky-stars']
+input[type='checkbox']:checked {
+  background: var(--secondary);
+  border-color: #55A947 !important;
+
+  box-shadow:
+    0 2px 0 #4C963F;
+}
+
+
+/* Checkmark */
+
+[data-palette='lucky-stars']
+input[type='checkbox']:checked::before {
+  content: '';
+
+  width: 9px;
+  height: 5px;
+
+  border-left: 2px solid #FFFFFF;
+  border-bottom: 2px solid #FFFFFF;
+
+  transform: rotate(-45deg) translate(1px, -1px);
+}
+
+
+/* Hover */
+
+[data-palette='lucky-stars']
+input[type='checkbox']:hover {
+  border-color: var(--accent) !important;
+}
+
+
+/* ============================================================
+   LUCKY STARS — BUTTONS
+   ============================================================ */
+
+[data-palette='lucky-stars'] .btn {
+  border: 2px solid var(--border) !important;
+  border-radius: 9px;
+  font-weight: 700;
+}
+
+
+/* Primary */
+
+[data-palette='lucky-stars'] .btn-primary {
+  background: var(--primary) !important;
+  color: #49384F !important;
+
+  border-color: #D5A92E !important;
+
+  box-shadow:
+    0 3px 0 #C5A33F;
+}
+
+
+/* ============================================================
+   LUCKY STARS — KEYBOARD KEYS
+   ============================================================ */
+
+[data-palette='lucky-stars'] kbd,
+[data-palette='lucky-stars'] .keyboard-key {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -635,75 +710,55 @@
 }
 
 
-/* Light keyboard keys */
+/* Light */
 
-[data-palette='lucky-stars'][data-theme='light'] .keyboard-key,
-[data-palette='lucky-stars'][data-theme='light'] kbd {
+[data-palette='lucky-stars'][data-theme='light'] kbd,
+[data-palette='lucky-stars'][data-theme='light'] .keyboard-key {
   background: #FFFFFF;
   color: #49384F;
 
-  border: 1px solid #E0C46B;
-  border-bottom: 3px solid #C5A33F;
+  border: 2px solid #DDBB5A !important;
+  border-bottom: 4px solid #C5A33F !important;
 
   box-shadow:
-    0 2px 0 #C5A33F,
-    0 3px 6px rgba(73, 56, 79, 0.10);
+    0 2px 0 #C5A33F;
 }
 
 
-/* Dark keyboard keys */
+/* Dark */
 
-[data-palette='lucky-stars'][data-theme='dark'] .keyboard-key,
-[data-palette='lucky-stars'][data-theme='dark'] kbd {
+[data-palette='lucky-stars'][data-theme='dark'] kbd,
+[data-palette='lucky-stars'][data-theme='dark'] .keyboard-key {
   background: #49365A;
   color: #FFF3D1;
 
-  border: 1px solid #806681;
-  border-bottom: 3px solid #65506A;
+  border: 2px solid #80637A !important;
+  border-bottom: 4px solid #65506A !important;
 
   box-shadow:
-    0 2px 0 #65506A,
-    0 3px 7px rgba(0, 0, 0, 0.30);
-}
-
-
-/* Keyboard press */
-
-[data-palette='lucky-stars'] .keyboard-key:active {
-  transform: translateY(2px);
-  border-bottom-width: 1px;
+    0 2px 0 #65506A;
 }
 
 
 /* ============================================================
-   LUCKY STARS — DECORATIVE COLOR CLASSES
+   LUCKY STARS — CHECKBOX / TOGGLE LABELS
    ============================================================ */
 
-[data-palette='lucky-stars'] .lucky-yellow {
-  color: var(--primary);
+[data-palette='lucky-stars'] label {
+  color: var(--text);
 }
 
-[data-palette='lucky-stars'] .lucky-green {
-  color: var(--secondary);
-}
 
-[data-palette='lucky-stars'] .lucky-pink {
+/* ============================================================
+   LUCKY STARS — LINKS
+   ============================================================ */
+
+[data-palette='lucky-stars'] a {
   color: var(--accent);
 }
 
-[data-palette='lucky-stars'] .lucky-blue {
-  color: var(--mint);
-}
-
-
-/* ============================================================
-   LUCKY STARS — BADGES / PILLS
-   ============================================================ */
-
-[data-palette='lucky-stars'] .badge,
-[data-palette='lucky-stars'] .pill {
-  border-radius: 999px;
-  font-weight: 700;
+[data-palette='lucky-stars'] a:hover {
+  color: var(--secondary);
 }
 
 
@@ -733,7 +788,6 @@
   background: var(--primary);
   border-radius: 999px;
 }
-
 /* ============================================================
    TEDDY — SOFT SEWN / FABRIC CARDS
    ============================================================ */
