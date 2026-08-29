@@ -1471,40 +1471,43 @@ body {
    border: none;
  }
 
-[data-palette='pink'][data-theme='light'] btn.keyboard-key {
-  min-width: 2rem;
-  height: 2rem;
-  padding: 0 0.5rem;
+/* ============================================================
+   PINK THEME — KEYBOARD BUTTONS
+   ============================================================ */
 
-  background: #FFFFFF;
-  color: #4A2E44;
-
-  border: 1px solid #D9A0C2;
-  border-bottom: 3px solid #B77FA2;
-  border-radius: 7px;
+[data-palette='pink'][data-theme='light'] .btn,
+[data-palette='pink'][data-theme='light'] button.btn {
+  background: #FFFFFF !important;
+  color: #4A2E44 !important;
+  border: 1px solid #D9A0C2 !important;
+  border-bottom: 3px solid #B77FA2 !important;
+  border-radius: 7px !important;
 
   box-shadow:
     0 2px 0 #B77FA2,
-    0 3px 6px rgba(74, 46, 68, 0.10);
-
-  font-weight: 600;
-  line-height: 1;
+    0 3px 6px rgba(74, 46, 68, 0.10) !important;
 }
 
-[data-palette='pink'][data-theme='light'] btn.keyboard-key:hover {
-  transform: translateY(-1px);
+[data-palette='pink'][data-theme='dark'] .btn,
+[data-palette='pink'][data-theme='dark'] button.btn {
+  background: #3B2831 !important;
+  color: #F0C8E0 !important;
+  border: 1px solid #8A6B82 !important;
+  border-bottom: 3px solid #684E60 !important;
+  border-radius: 7px !important;
+
   box-shadow:
-    0 3px 0 #B77FA2,
-    0 4px 7px rgba(74, 46, 68, 0.12);
+    0 2px 0 #684E60,
+    0 3px 7px rgba(0, 0, 0, 0.30) !important;
 }
 
-[data-palette='pink'][data-theme='light'] btn.keyboard-key:active {
+/* pressed key */
+[data-palette='pink'][data-theme='light'] .btn:active,
+[data-palette='pink'][data-theme='dark'] .btn:active {
   transform: translateY(2px);
-  border-bottom-width: 1px;
-  box-shadow:
-    0 1px 0 #B77FA2;
+  border-bottom-width: 1px !important;
+  box-shadow: 0 1px 0 currentColor !important;
 }
-
 /* ============================================================
    BLURPLE — DREAMY TWINKLE CARDS
    ============================================================ */
