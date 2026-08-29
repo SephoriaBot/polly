@@ -1482,21 +1482,18 @@ BLURPLE - CLOUDY CARDS
 
   position: absolute;
 
-  width: 24px;
-  height: 24px;
+  width: 22px;
+  height: 22px;
 
-  top: -9px;
-  right: -9px;
+  top: -10px;
+  right: -10px;
 
-  background:
-    url('/sunny-corner.svg')
-    center / contain
-    no-repeat;
+  background: url('/sunny-corner.svg') center / contain no-repeat;
+
+  transform: rotate(28deg);
 
   pointer-events: none;
-
   z-index: 5;
-
 }
 
 
