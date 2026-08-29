@@ -4,7 +4,7 @@ type Theme = 'light' | 'dark';
 export type Palette =
   | 'teddy-bear'
   | 'blurple'
-  | 'sunny-skies'
+  | 'lucky-stars'
   | 'pink'
   | 'tuxedo' ;
 
@@ -16,7 +16,7 @@ export interface PaletteOption {
 export const PALETTES: PaletteOption[] = [
   { id: 'teddy-bear', label: 'Teddy Bear'},
   { id: 'blurple', label: 'Blurple'},
-  { id: 'sunny-skies', label: 'Sunny Skies'},
+  { id: 'lucky-stars', label: 'Lucky Stars'},
   { id: 'pink', label: 'Pastel Goth'},
   { id: 'tuxedo', label: 'Tuxedo'},
 ];
@@ -37,7 +37,7 @@ function isPalette(value: string | null): value is Palette {
  return (
   value === 'teddy-bear' ||
   value === 'blurple' ||
-  value === 'sunny-skies' ||
+  value === 'lucky-stars' ||
   value === 'pink' ||
   value === 'tuxedo'
 );
