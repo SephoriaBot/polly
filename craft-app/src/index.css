@@ -1393,7 +1393,7 @@ body {
 }
 
 /* ============================================================
-   BLURPLE — SOFT CLOUD CARDS
+   BLURPLE — CLOUD EDGE CARDS
    ============================================================ */
 
 [data-palette='blurple'] .card,
@@ -1405,9 +1405,8 @@ body {
 
   position: relative;
 
-  border-radius: 18px !important;
-
-  border: 1px solid rgba(118, 96, 168, 0.22) !important;
+  border: none !important;
+  border-radius: 16px !important;
 
   overflow: visible;
 
@@ -1415,7 +1414,40 @@ body {
 
 
 /* ------------------------------------------------------------
-   CLOUD FRAME
+   TOP CLOUD EDGE
+   ------------------------------------------------------------ */
+
+[data-palette='blurple'] .card::before,
+[data-palette='blurple'] .stat-card::before,
+[data-palette='blurple'] .pet-card::before,
+[data-palette='blurple'] .plant-card::before,
+[data-palette='blurple'] .wizard-box::before,
+[data-palette='blurple'] .list-item::before {
+
+  content: "";
+
+  position: absolute;
+
+  top: -8px;
+  left: 6px;
+  right: 6px;
+
+  height: 18px;
+
+  background-image: url('/blurple-cloud.svg');
+  background-repeat: repeat-x;
+  background-size: 48px 18px;
+  background-position: left center;
+
+  pointer-events: none;
+
+  z-index: 5;
+
+}
+
+
+/* ------------------------------------------------------------
+   BOTTOM CLOUD EDGE
    ------------------------------------------------------------ */
 
 [data-palette='blurple'] .card::after,
@@ -1429,13 +1461,18 @@ body {
 
   position: absolute;
 
-  inset: -7px;
+  bottom: -8px;
+  left: 6px;
+  right: 6px;
+
+  height: 18px;
 
   background-image: url('/blurple-cloud.svg');
+  background-repeat: repeat-x;
+  background-size: 48px 18px;
+  background-position: left center;
 
-  background-repeat: no-repeat;
-
-  background-size: 100% 100%;
+  transform: rotate(180deg);
 
   pointer-events: none;
 
@@ -1445,51 +1482,24 @@ body {
 
 
 /* ------------------------------------------------------------
-   DARK MODE
+   LEFT + RIGHT EDGES
    ------------------------------------------------------------ */
 
-[data-palette='blurple'][data-theme='dark'] .card,
-[data-palette='blurple'][data-theme='dark'] .stat-card,
-[data-palette='blurple'][data-theme='dark'] .pet-card,
-[data-palette='blurple'][data-theme='dark'] .plant-card,
-[data-palette='blurple'][data-theme='dark'] .wizard-box,
-[data-palette='blurple'][data-theme='dark'] .list-item {
+[data-palette='blurple'] .card,
+[data-palette='blurple'] .stat-card,
+[data-palette='blurple'] .pet-card,
+[data-palette='blurple'] .plant-card,
+[data-palette='blurple'] .wizard-box,
+[data-palette='blurple'] .list-item {
 
-  border-color: rgba(205, 188, 229, 0.24) !important;
-
-}
-
-
-[data-palette='blurple'][data-theme='dark'] .card::after,
-[data-palette='blurple'][data-theme='dark'] .stat-card::after,
-[data-palette='blurple'][data-theme='dark'] .pet-card::after,
-[data-palette='blurple'][data-theme='dark'] .plant-card::after,
-[data-palette='blurple'][data-theme='dark'] .wizard-box::after,
-[data-palette='blurple'][data-theme='dark'] .list-item::after {
-
-  background-image: url('/blurple-cloud-dark.svg');
+  box-shadow:
+    0 5px 16px rgba(74, 46, 68, 0.10);
 
 }
 
 
 /* ------------------------------------------------------------
-   REMOVE OLD CARD DECORATION
-   ------------------------------------------------------------ */
-
-[data-palette='blurple'] .card::before,
-[data-palette='blurple'] .stat-card::before,
-[data-palette='blurple'] .pet-card::before,
-[data-palette='blurple'] .plant-card::before,
-[data-palette='blurple'] .wizard-box::before,
-[data-palette='blurple'] .list-item::before {
-
-  content: none !important;
-
-}
-
-
-/* ------------------------------------------------------------
-   CARD CONTENT
+   CARD BODY
    ------------------------------------------------------------ */
 
 [data-palette='blurple'] .card-body {

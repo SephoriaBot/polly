@@ -1,95 +1,22 @@
 <svg xmlns="http://www.w3.org/2000/svg"
-     width="100"
-     height="100"
-     viewBox="0 0 100 100"
+     width="48"
+     height="18"
+     viewBox="0 0 48 18"
      fill="none">
 
-  <!-- TOP CLOUD PUFFS -->
   <path
     d="
-      M8 10
-      C8 4 13 1 18 1
-      C23 1 28 4 28 10
-
-      C28 4 33 1 38 1
-      C43 1 48 4 48 10
-
-      C48 4 53 1 58 1
-      C63 1 68 4 68 10
-
-      C68 4 73 1 78 1
-      C83 1 88 4 88 10
+      M0 14
+      C3 14 3 4 8 4
+      C13 4 13 14 18 14
+      C23 14 23 4 28 4
+      C33 4 33 14 38 14
+      C43 14 43 4 48 4
     "
     stroke="#7660A8"
-    stroke-width="5"
+    stroke-width="4"
     stroke-linecap="round"
-    fill="none"
-  />
-
-  <!-- LEFT CLOUD PUFFS -->
-  <path
-    d="
-      M10 8
-      C4 8 1 13 1 18
-      C1 23 4 28 10 28
-
-      C4 28 1 33 1 38
-      C1 43 4 48 10 48
-
-      C4 48 1 53 1 58
-      C1 63 4 68 10 68
-
-      C4 68 1 73 1 78
-      C1 83 4 88 10 88
-    "
-    stroke="#7660A8"
-    stroke-width="5"
-    stroke-linecap="round"
-    fill="none"
-  />
-
-  <!-- BOTTOM CLOUD PUFFS -->
-  <path
-    d="
-      M8 90
-      C8 96 13 99 18 99
-      C23 99 28 96 28 90
-
-      C28 96 33 99 38 99
-      C43 99 48 96 48 90
-
-      C48 96 53 99 58 99
-      C63 99 68 96 68 90
-
-      C68 96 73 99 78 99
-      C83 99 88 96 88 90
-    "
-    stroke="#7660A8"
-    stroke-width="5"
-    stroke-linecap="round"
-    fill="none"
-  />
-
-  <!-- RIGHT CLOUD PUFFS -->
-  <path
-    d="
-      M90 8
-      C96 8 99 13 99 18
-      C99 23 96 28 90 28
-
-      C96 28 99 33 99 38
-      C99 43 96 48 90 48
-
-      C96 48 99 53 99 58
-      C99 63 96 68 90 68
-
-      C96 68 99 73 99 78
-      C99 83 96 88 90 88
-    "
-    stroke="#7660A8"
-    stroke-width="5"
-    stroke-linecap="round"
-    fill="none"
+    stroke-linejoin="round"
   />
 
 </svg>
