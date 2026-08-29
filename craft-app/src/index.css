@@ -1343,51 +1343,87 @@ body {
 
 
 /* ============================================================
-   PASTEL GOTH — FRILLY LACE CARDS
+   PASTEL GOTH — ORNATE VICTORIAN CARDS
    ============================================================ */
 
-[data-palette='pink'][data-theme='light'] .card,
-[data-palette='pink'][data-theme='light'] .stat-card,
-[data-palette='pink'][data-theme='light'] .pet-card,
-[data-palette='pink'][data-theme='light'] .plant-card,
-[data-palette='pink'][data-theme='light'] .wizard-box,
-[data-palette='pink'][data-theme='light'] .list-item {
-  position: relative;
+/* ---------- LIGHT ---------- */
+
+[data-palette='pastel-goth'][data-theme='light'] .card,
+[data-palette='pastel-goth'][data-theme='light'] .stat-card,
+[data-palette='pastel-goth'][data-theme='light'] .pet-card,
+[data-palette='pastel-goth'][data-theme='light'] .plant-card,
+[data-palette='pastel-goth'][data-theme='light'] .wizard-box,
+[data-palette='pastel-goth'][data-theme='light'] .list-item {
+
   background: var(--surface);
-  /* Lace border */
-  border: 16px solid transparent !important;
-  border-image: url('/pastel-goth-lace.svg') 20 / 16px / 0 round !important;
+
+  border: 10px solid transparent !important;
+
+  border-image-source: url('/pastel-goth-lace.svg') !important;
+  border-image-slice: 22 !important;
+  border-image-width: 10px !important;
+  border-image-outset: 0 !important;
+  border-image-repeat: round !important;
+
   border-radius: 0 !important;
-  box-shadow: 0 6px 18px rgba(74, 46, 68, 0.16);
+
+  box-shadow:
+    0 5px 16px rgba(60, 38, 62, 0.16);
+
   overflow: visible;
 }
 
-[data-palette='pink'][data-theme='dark'] .card,
-[data-palette='pink'][data-theme='dark'] .stat-card,
-[data-palette='pink'][data-theme='dark'] .pet-card,
-[data-palette='pink'][data-theme='dark'] .plant-card,
-[data-palette='pink'][data-theme='dark'] .wizard-box,
-[data-palette='pink'][data-theme='dark'] .list-item {
-  position: relative;
+
+/* ---------- DARK ---------- */
+
+[data-palette='pastel-goth'][data-theme='dark'] .card,
+[data-palette='pastel-goth'][data-theme='dark'] .stat-card,
+[data-palette='pastel-goth'][data-theme='dark'] .pet-card,
+[data-palette='pastel-goth'][data-theme='dark'] .plant-card,
+[data-palette='pastel-goth'][data-theme='dark'] .wizard-box,
+[data-palette='pastel-goth'][data-theme='dark'] .list-item {
+
   background: var(--surface);
-  /* Lace border (dark variant SVG, lighter strokes) */
-  border: 16px solid transparent !important;
-  border-image: url('/pastel-goth-lace-dark.svg') 20 / 16px / 0 round !important;
+
+  border: 10px solid transparent !important;
+
+  border-image-source: url('/pastel-goth-lace-dark.svg') !important;
+  border-image-slice: 22 !important;
+  border-image-width: 10px !important;
+  border-image-outset: 0 !important;
+  border-image-repeat: round !important;
+
   border-radius: 0 !important;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+
+  box-shadow:
+    0 6px 20px rgba(0, 0, 0, 0.38);
+
   overflow: visible;
 }
 
-[data-palette='pink'] .card::before,
-[data-palette='pink'] .stat-card::before,
-[data-palette='pink'] .pet-card::before,
-[data-palette='pink'] .plant-card::before,
-[data-palette='pink'] .wizard-box::before,
-[data-palette='pink'] .list-item::before {
+
+/* ---------- REMOVE OLD DECORATION ---------- */
+
+[data-palette='pastel-goth'] .card::before,
+[data-palette='pastel-goth'] .card::after,
+[data-palette='pastel-goth'] .stat-card::before,
+[data-palette='pastel-goth'] .stat-card::after,
+[data-palette='pastel-goth'] .pet-card::before,
+[data-palette='pastel-goth'] .pet-card::after,
+[data-palette='pastel-goth'] .plant-card::before,
+[data-palette='pastel-goth'] .plant-card::after,
+[data-palette='pastel-goth'] .wizard-box::before,
+[data-palette='pastel-goth'] .wizard-box::after,
+[data-palette='pastel-goth'] .list-item::before,
+[data-palette='pastel-goth'] .list-item::after {
+
   content: none !important;
 }
 
-[data-palette='pink'] .card-body {
+
+/* ---------- CARD BODY ---------- */
+
+[data-palette='pastel-goth'] .card-body {
   background: transparent;
   border: none;
 }
@@ -1490,7 +1526,7 @@ BLURPLE - CLOUDY CARDS
 
   background: url('/sunny-corner.svg') center / contain no-repeat;
 
-  transform: rotate(28deg);
+  transform: rotate(-28deg);
 
   pointer-events: none;
   z-index: 5;

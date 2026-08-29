@@ -1,126 +1,146 @@
 <svg xmlns="http://www.w3.org/2000/svg"
-     width="60"
-     height="60"
-     viewBox="0 0 60 60"
+     width="100"
+     height="100"
+     viewBox="0 0 100 100"
      fill="none">
 
   <!-- =====================================================
-       9-SLICE LACE BORDER — pastel goth (light)
-       Plum outline (plum, matches accent token) with dusty pink petal (dusty pink token)
-       and picot beads at each scallop tip
+       PASTEL GOTH — ORNATE VICTORIAN CARD BORDER
+
+       Designed as a 9-slice border.
+       Soft gothic plum + lavender accent.
+       Center remains transparent.
        ===================================================== -->
 
-  <!-- PLUM OUTLINE -->
-  <g stroke="#4A2E44"
-     stroke-width="6"
-     stroke-linecap="round"
-     fill="none">
+  <!-- MAIN BORDER -->
+  <rect
+    x="7"
+    y="7"
+    width="86"
+    height="86"
+    rx="7"
+    stroke="#6D506F"
+    stroke-width="3"
+  />
 
-    <!-- TOP -->
-    <path d="
-      M20 6
-      C22 2 26 2 28 6
-      C30 10 34 10 36 6
-      C38 2 42 2 44 6
-      C46 10 50 10 52 6
-    " />
+  <!-- INNER HAIRLINE -->
+  <rect
+    x="11"
+    y="11"
+    width="78"
+    height="78"
+    rx="4"
+    stroke="#B99AC0"
+    stroke-width="1.5"
+    stroke-dasharray="2 4"
+  />
 
-    <!-- BOTTOM -->
-    <path d="
-      M20 54
-      C22 58 26 58 28 54
-      C30 50 34 50 36 54
-      C38 58 42 58 44 54
-      C46 50 50 50 52 54
-    " />
+  <!-- =====================================================
+       TOP LEFT ORNAMENT
+       ===================================================== -->
 
-    <!-- LEFT -->
-    <path d="
-      M6 20
-      C2 22 2 26 6 28
-      C10 30 10 34 6 36
-      C2 38 2 42 6 44
-      C10 46 10 50 6 52
-    " />
+  <path
+    d="
+      M28 7
+      C22 7 18 8 15 11
+      C12 14 10 18 10 24
 
-    <!-- RIGHT -->
-    <path d="
-      M54 20
-      C58 22 58 26 54 28
-      C50 30 50 34 54 36
-      C58 38 58 42 54 44
-      C50 46 50 50 54 52
-    " />
+      M17 17
+      C20 14 24 13 28 13
 
-    <!-- CORNERS -->
-    <path d="M20 3 H14 C7.9 3 3 7.9 3 14 V20" />
-    <path d="M40 3 H46 C52.1 3 57 7.9 57 14 V20" />
-    <path d="M3 40 V46 C3 52.1 7.9 57 14 57 H20" />
-    <path d="M57 40 V46 C57 52.1 52.1 57 46 57 H40" />
+      M14 22
+      C17 19 20 18 23 18
+    "
+    stroke="#6D506F"
+    stroke-width="2.5"
+    stroke-linecap="round"
+  />
 
-  </g>
+  <!-- tiny diamond -->
+  <path
+    d="M15 13 L18 16 L15 19 L12 16 Z"
+    fill="#B99AC0"
+  />
 
 
-  <!-- DUSTY PINK PETAL -->
-  <g stroke="#D9A0C2"
-     stroke-width="4"
-     stroke-linecap="round"
-     fill="none">
+  <!-- =====================================================
+       TOP RIGHT ORNAMENT
+       ===================================================== -->
 
-    <!-- TOP -->
-    <path d="
-      M20 6
-      C22 2 26 2 28 6
-      C30 10 34 10 36 6
-      C38 2 42 2 44 6
-      C46 10 50 10 52 6
-    " />
+  <path
+    d="
+      M72 7
+      C78 7 82 8 85 11
+      C88 14 90 18 90 24
 
-    <!-- BOTTOM -->
-    <path d="
-      M20 54
-      C22 58 26 58 28 54
-      C30 50 34 50 36 54
-      C38 58 42 58 44 54
-      C46 50 50 50 52 54
-    " />
+      M83 17
+      C80 14 76 13 72 13
 
-    <!-- LEFT -->
-    <path d="
-      M6 20
-      C2 22 2 26 6 28
-      C10 30 10 34 6 36
-      C2 38 2 42 6 44
-      C10 46 10 50 6 52
-    " />
+      M86 22
+      C83 19 80 18 77 18
+    "
+    stroke="#6D506F"
+    stroke-width="2.5"
+    stroke-linecap="round"
+  />
 
-    <!-- RIGHT -->
-    <path d="
-      M54 20
-      C58 22 58 26 54 28
-      C50 30 50 34 54 36
-      C58 38 58 42 54 44
-      C50 46 50 50 54 52
-    " />
+  <path
+    d="M85 13 L88 16 L85 19 L82 16 Z"
+    fill="#B99AC0"
+  />
 
-    <!-- CORNERS -->
-    <path d="M20 3 H14 C7.9 3 3 7.9 3 14 V20" />
-    <path d="M40 3 H46 C52.1 3 57 7.9 57 14 V20" />
-    <path d="M3 40 V46 C3 52.1 7.9 57 14 57 H20" />
-    <path d="M57 40 V46 C57 52.1 52.1 57 46 57 H40" />
 
-  </g>
+  <!-- =====================================================
+       BOTTOM LEFT ORNAMENT
+       ===================================================== -->
 
-  <!-- PICOT BEADS at scallop tips -->
-  <g fill="#4A2E44">
-    <circle cx="28" cy="4" r="1.6" />
-    <circle cx="44" cy="4" r="1.6" />
-    <circle cx="28" cy="56" r="1.6" />
-    <circle cx="44" cy="56" r="1.6" />
-    <circle cx="4" cy="28" r="1.6" />
-    <circle cx="4" cy="44" r="1.6" />
-    <circle cx="56" cy="28" r="1.6" />
-    <circle cx="56" cy="44" r="1.6" />
-  </g>
+  <path
+    d="
+      M10 76
+      C10 82 12 86 15 89
+      C18 92 22 93 28 93
+
+      M17 83
+      C20 86 24 87 28 87
+
+      M14 78
+      C17 81 20 82 23 82
+    "
+    stroke="#6D506F"
+    stroke-width="2.5"
+    stroke-linecap="round"
+  />
+
+  <path
+    d="M15 81 L18 84 L15 87 L12 84 Z"
+    fill="#B99AC0"
+  />
+
+
+  <!-- =====================================================
+       BOTTOM RIGHT ORNAMENT
+       ===================================================== -->
+
+  <path
+    d="
+      M90 76
+      C90 82 88 86 85 89
+      C82 92 78 93 72 93
+
+      M83 83
+      C80 86 76 87 72 87
+
+      M86 78
+      C83 81 80 82 77 82
+    "
+    stroke="#6D506F"
+    stroke-width="2.5"
+    stroke-linecap="round"
+  />
+
+  <path
+    d="M85 81 L88 84 L85 87 L82 84 Z"
+    fill="#B99AC0"
+  />
 
 </svg>
