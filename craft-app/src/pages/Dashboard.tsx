@@ -12,6 +12,8 @@ import { useTheme } from '../context/ThemeContext';
 import EmptyState from '../components/EmptyState';
 import { Polly } from '../lib';
 import { usePollyMeeting } from '../hooks/usePollyMeeting';
+import { getPollyMessage } from '../lib/pollyMessages';
+
 
 interface Focus {
   id: string;
@@ -56,6 +58,10 @@ export default function Dashboard({ onNavigate }: { onNavigate?: (page: string, 
   const now = new Date();
   const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
   const todayName = DAY_NAMES[new Date().getDay()];
+  
+  const neutralMessage = useMemo(() => getPollyMessage('neutral'), []);
+  const yawningMessage = useMemo(() => getPollyMessage('yawning'), []);
+
 
   useEffect(() => {
     loadAll();
@@ -139,7 +145,14 @@ export default function Dashboard({ onNavigate }: { onNavigate?: (page: string, 
             </section>
 
 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', margin: '12px 0 4px' }}>
-  <Polly mood="yawning" size="small" />
+ // low-energy yawning Polly
+<Polly mood="yawning" size="small" />
+{yawningMessage && (
+  <div style={{ fontSize: '0.72rem', color: 'var(--ink-muted)', marginTop: 4, textAlign: 'center' }}>
+    {yawningMessage}
+  </div>
+)}
+
 </div>
 
           {/* ── RADAR ── */}
@@ -167,7 +180,14 @@ export default function Dashboard({ onNavigate }: { onNavigate?: (page: string, 
                   </div>
                 </>
               ) : (
-                <Polly mood="neutral" size="small" />
+                // normal-mode neutral Polly
+<Polly mood="neutral" size="small" />
+{neutralMessage && (
+  <div style={{ fontSize: '0.72rem', color: 'var(--ink-muted)', marginTop: 4, textAlign: 'center' }}>
+    {neutralMessage}
+  </div>
+)}
+
               )}
             </div>
 
