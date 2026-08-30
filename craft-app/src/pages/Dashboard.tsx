@@ -122,6 +122,11 @@ export default function Dashboard({ onNavigate }: { onNavigate?: (page: string, 
           </div>
           {/* WEATHER BADGE MINI WIDGET */}
           <WeatherBadge />
+
+         {/* ── MOON + ZODIAC ── */}
+            <MoonWidget compact />
+
+        {/* ── LOW ENERGY MODE ── */}
           <EnergyModeSwitch />
         </div>
       </div>
@@ -132,6 +137,8 @@ export default function Dashboard({ onNavigate }: { onNavigate?: (page: string, 
             <section>
               <LowEnergyChecklist onNavigate={onNavigate} />
             </section>
+
+          {/* ── RADAR ── */}
             <section style={{ marginTop: 4 }}>
               <div style={{ fontSize: '0.68rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--ink-muted)', marginBottom: 8 }}>
                 Also on your radar
@@ -141,8 +148,7 @@ export default function Dashboard({ onNavigate }: { onNavigate?: (page: string, 
           </>
         ) : (
           <>
-            {/* ── MOON + ZODIAC ── */}
-            <MoonWidget compact />
+           
 
             {/* ── POLLY GREETING ── */}
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', margin: '12px 0 4px' }}>
