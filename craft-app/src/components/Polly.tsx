@@ -14,17 +14,17 @@ export type PollyMood =
   | 'love';
 
 const POLLY_IMAGES: Record<PollyMood, string> = {
-  neutral: '/assets/pollyhamster/polly_0.PNG',
-  confused: '/assets/pollyhamster/polly_1.JPG',
-  disappointed: '/assets/pollyhamster/polly_2.JPG',
-  searching: '/assets/pollyhamster/polly_3.JPG',
-  mad: '/assets/pollyhamster/polly_4.JPG',
-  cheering: '/assets/pollyhamster/polly_5.JPG',
-  yawning: '/assets/pollyhamster/polly_6.JPG',
-  happy: '/assets/pollyhamster/polly_7.JPG',
-  sad: '/assets/pollyhamster/polly_8.JPG',
-  surprised: '/assets/pollyhamster/polly_9.JPG',
-  love: '/assets/pollyhamster/polly_10.JPG',
+  neutral: '/assets/pollyhamster/polly_0.png',
+  confused: '/assets/pollyhamster/polly_1.png',
+  disappointed: '/assets/pollyhamster/polly_2.png',
+  searching: '/assets/pollyhamster/polly_3.png',
+  mad: '/assets/pollyhamster/polly_4.png',
+  cheering: '/assets/pollyhamster/polly_5.png',
+  yawning: '/assets/pollyhamster/polly_6.png',
+  happy: '/assets/pollyhamster/polly_7.png',
+  sad: '/assets/pollyhamster/polly_8.png',
+  surprised: '/assets/pollyhamster/polly_9.png',
+  love: '/assets/pollyhamster/polly_10.png',
 };
 
 interface PollyProps {
