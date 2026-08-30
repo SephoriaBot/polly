@@ -1889,3 +1889,33 @@ body {
   font-size: 0.82rem;
   color: var(--ink-muted);
 }
+
+/* POLLY GREETING CARDS */
+
+.polly-greeting {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 10px 0 12px;
+}
+
+.polly-greeting-message {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 12px;
+  background: var(--white);
+  border: 1.5px solid var(--border);
+  border-radius: 14px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.polly-greeting-message strong {
+  font-size: 0.72rem;
+  color: var(--ink);
+}
+
+.polly-greeting-message span {
+  font-size: 0.68rem;
+  color: var(--ink-muted);
+}

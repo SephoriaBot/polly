@@ -12,6 +12,7 @@ import { useTheme } from '../context/ThemeContext';
 import EmptyState from '../components/EmptyState';
 import StitchDivider from '../components/StitchDivider';
 import CheckMark from '../components/CheckMark';
+import Polly from '../components/Polly';
 
 interface Focus {
   id: string;
@@ -43,10 +44,21 @@ export default function Dashboard({ onNavigate }: { onNavigate?: (page: string, 
   const [newFocus, setNewFocus] = useState('');
   const [newFocusMins, setNewFocusMins] = useState('');
   const [addingFocus, setAddingFocus] = useState(false);
+  const [isNewUser, setIsNewUser] = useState(false);
 
   const now = new Date();
   const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
   const todayName = DAY_NAMES[new Date().getDay()];
+
+  useEffect(() => {
+  const hasVisited = localStorage.getItem('polly_has_visited');
+
+  if (!hasVisited) {
+    setIsNewUser(true);
+    localStorage.setItem('polly_has_visited', 'true');
+  }
+}, []);
+
 
   useEffect(() => {
     loadAll();
@@ -112,9 +124,29 @@ async function loadAll() {
     <div className="dash-subdate">
       {todayName}, {new Date().toLocaleDateString(undefined, { month: 'long', day: 'numeric' })}
     </div>
+
     {/* WEATHER BADGE MINI WIDGET */}
     <WeatherBadge />
     <EnergyModeSwitch />
+
+    {/* POLLY GREETING */}
+
+    <div className="polly-greeting">
+  <Polly mood={isNewUser ? 'happy' : 'neutral'} size="small" />
+
+  <div className="polly-greeting-message">
+    <strong>
+      {isNewUser ? "Hi! I'm Polly." : "Welcome back!"}
+    </strong>
+
+    <span>
+      {isNewUser
+        ? "Let's get started!"
+        : "Let's see what today has in store."}
+    </span>
+  </div>
+</div>
+
   </div>
 </div>
 
