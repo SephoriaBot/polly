@@ -1,2 +1,2 @@
-export { default as Polly } from './Polly';
-export type { PollyMood } from './Polly';
+export { default as Polly } from '../components/Polly';
+export type { PollyMood } from '../components/Polly';
