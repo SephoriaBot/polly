@@ -142,7 +142,7 @@ export default function Dashboard({ onNavigate }: { onNavigate?: (page: string, 
         ) : (
           <>
             {/* ── MOON + ZODIAC ── */}
-            <MoonWidget />
+            <MoonWidget compact />
 
             {/* ── POLLY GREETING ── */}
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', margin: '12px 0 4px' }}>
@@ -157,7 +157,7 @@ export default function Dashboard({ onNavigate }: { onNavigate?: (page: string, 
                   </div>
                 </>
               ) : (
-                <Polly mood="neutral" size="large" />
+                <Polly mood="neutral" size="small" />
               )}
             </div>
 
