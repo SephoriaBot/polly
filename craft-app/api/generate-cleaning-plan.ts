@@ -6,7 +6,7 @@ const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions'
 
 // Keep this model configurable so you can change it in Vercel
 // without changing the code.
-const GROQ_MODEL = process.env.GROQ_MODEL || 'llama-3.3-70b-versatile'
+const GROQ_MODEL = process.env.GROQ_MODEL || 'openai/gpt-oss-120b'
 
 export default async function handler(
   req: VercelRequest,
