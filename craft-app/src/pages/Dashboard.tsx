@@ -114,23 +114,6 @@ export default function Dashboard({ onNavigate }: { onNavigate?: (page: string, 
     <div>
       <div className="page-header dash-greeting">
         <div>
-          {hasMetPolly === false ? (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
-              <Polly mood="love" size="medium" />
-              <div>
-                <div style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--pink-dark)' }}>
-                  Hi, I'm Polly!
-                </div>
-                <div style={{ fontSize: '0.75rem', color: 'var(--ink-muted)', marginTop: 2 }}>
-                  Welcome to your new space.
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
-              <Polly mood="neutral" size="tiny" animate={false} />
-            </div>
-          )}
           <div className="title-row">
             <h1>{getGreeting()}</h1>
           </div>
@@ -149,9 +132,6 @@ export default function Dashboard({ onNavigate }: { onNavigate?: (page: string, 
             <section>
               <LowEnergyChecklist onNavigate={onNavigate} />
             </section>
-            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-              <Icon name="pagedivider" size={85} />
-            </div>
             <section style={{ marginTop: 4 }}>
               <div style={{ fontSize: '0.68rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--ink-muted)', marginBottom: 8 }}>
                 Also on your radar
@@ -162,9 +142,24 @@ export default function Dashboard({ onNavigate }: { onNavigate?: (page: string, 
         ) : (
           <>
             {/* ── MOON + ZODIAC ── */}
-            <section>
-              <MoonWidget />
-            </section>
+            <MoonWidget />
+
+            {/* ── POLLY GREETING ── */}
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', margin: '12px 0 4px' }}>
+              {hasMetPolly === false ? (
+                <>
+                  <Polly mood="love" size="large" />
+                  <div style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--pink-dark)', marginTop: 6 }}>
+                    Hi, I'm Polly!
+                  </div>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--ink-muted)', marginTop: 2 }}>
+                    Welcome to your new space.
+                  </div>
+                </>
+              ) : (
+                <Polly mood="neutral" size="large" />
+              )}
+            </div>
 
             {/* ── TODAY'S FOCUS ── */}
             <section>
@@ -295,10 +290,6 @@ export default function Dashboard({ onNavigate }: { onNavigate?: (page: string, 
                 </div>
               )}
             </section>
-
-            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-              <Icon name="pagedivider" size={85} />
-            </div>
 
             {/* ── TODAY SNAPSHOT ── pulls live from chores, appointments, and money */}
             <section style={{ marginTop: 4 }}>
