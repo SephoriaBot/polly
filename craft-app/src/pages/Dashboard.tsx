@@ -138,6 +138,10 @@ export default function Dashboard({ onNavigate }: { onNavigate?: (page: string, 
               <LowEnergyChecklist onNavigate={onNavigate} />
             </section>
 
+<div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', margin: '12px 0 4px' }}>
+  <Polly mood="yawning" size="small" />
+</div>
+
           {/* ── RADAR ── */}
             <section style={{ marginTop: 4 }}>
               <div style={{ fontSize: '0.68rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--ink-muted)', marginBottom: 8 }}>
