@@ -14,6 +14,7 @@ import EmptyState from '../EmptyState';
 import checklistImg from '../../assets/illustrations/checklist.png';
 import { type Chore as ChoreBase, statusFor } from '../../lib/chores';
 import { useHamsterGrowth } from '../../hamsters/HamsterGrowthContext';
+import ChoreCleaningPlan from './ChoreCleaningPlan';
 
 interface Chore extends ChoreBase {
   icon: IconName;
@@ -31,6 +32,7 @@ export default function Chores() {
   const [estimatedMinutes, setEstimatedMinutes] = useState('10');
   const [icon, setIcon] = useState<IconName>('cleaning-spray');
   const [adding, setAdding] = useState(false);
+  const [openChoreId, setOpenChoreId] = useState<string | null>(null);
 
   useEffect(() => { load(); }, []);
 
@@ -71,7 +73,12 @@ export default function Chores() {
 
   async function removeChore(id: string) {
     setChores(prev => prev.filter(c => c.id !== id));
+    if (openChoreId === id) setOpenChoreId(null);
     await supabase.from('chores').delete().eq('id', id);
+  }
+
+  function toggleOpen(id: string) {
+    setOpenChoreId(prev => (prev === id ? null : id));
   }
 
   const now = new Date();
@@ -92,42 +99,48 @@ export default function Chores() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16 }}>
             {sorted.map(chore => {
               const status = statusFor(chore, now);
+              const isOpen = openChoreId === chore.id;
               return (
-                <div
-                  key={chore.id}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: 10,
-                    padding: '10px 12px', borderRadius: 16,
-                    background: 'var(--white)', border: '1.5px solid var(--border)',
-                  }}
-                >
-                  <div style={{
-                    width: 30, height: 30, borderRadius: 'var(--radius-sm)', flexShrink: 0,
-                    background: status.tone === 'due' ? 'var(--blush)' : 'var(--cream)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  }}>
-                    <Icon name={chore.icon} size={15} style={{ color: 'var(--pink-dark)' }} />
-                  </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--ink)' }}>{chore.name}</div>
-                    <div style={{ fontSize: '0.72rem', marginTop: 2, fontWeight: status.tone === 'due' ? 700 : 500, color: status.tone === 'due' ? 'var(--pink-dark)' : 'var(--ink-muted)' }}>
-                      {status.label} · every {chore.interval_days}d · ~{chore.estimated_minutes}min
+                <div key={chore.id}>
+                  <div
+                    onClick={() => toggleOpen(chore.id)}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 10,
+                      padding: '10px 12px',
+                      borderRadius: isOpen ? '16px 16px 0 0' : 16,
+                      background: 'var(--white)', border: '1.5px solid var(--border)',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    <div style={{
+                      width: 30, height: 30, borderRadius: 'var(--radius-sm)', flexShrink: 0,
+                      background: status.tone === 'due' ? 'var(--blush)' : 'var(--cream)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    }}>
+                      <Icon name={chore.icon} size={15} style={{ color: 'var(--pink-dark)' }} />
                     </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--ink)' }}>{chore.name}</div>
+                      <div style={{ fontSize: '0.72rem', marginTop: 2, fontWeight: status.tone === 'due' ? 700 : 500, color: status.tone === 'due' ? 'var(--pink-dark)' : 'var(--ink-muted)' }}>
+                        {status.label} · every {chore.interval_days}d · ~{chore.estimated_minutes}min
+                      </div>
+                    </div>
+                    <button
+                      className="btn btn-primary btn-sm"
+                      style={{ fontSize: '0.68rem', padding: '5px 9px', flexShrink: 0 }}
+                      onClick={(e) => { e.stopPropagation(); markDone(chore); }}
+                    >
+                      Mark done
+                    </button>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); removeChore(chore.id); }}
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-muted)', padding: 0, opacity: 0.4, flexShrink: 0 }}
+                      aria-label="Remove chore"
+                    >
+                      <Icon name="icon-clear" size={18} />
+                    </button>
                   </div>
-                  <button
-                    className="btn btn-primary btn-sm"
-                    style={{ fontSize: '0.68rem', padding: '5px 9px', flexShrink: 0 }}
-                    onClick={() => markDone(chore)}
-                  >
-                    Mark done
-                  </button>
-                  <button
-                    onClick={() => removeChore(chore.id)}
-                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-muted)', padding: 0, opacity: 0.4, flexShrink: 0 }}
-                    aria-label="Remove chore"
-                  >
-                    <Icon name="icon-clear" size={18} />
-                  </button>
+                  <ChoreCleaningPlan choreId={chore.id} choreName={chore.name} isOpen={isOpen} />
                 </div>
               );
             })}
