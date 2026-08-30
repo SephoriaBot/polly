@@ -1,7 +1,7 @@
 // craft-app/api/generate-cleaning-plan.ts
 const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions'
 const GROQ_MODEL =
-  process.env.GROQ_MODEL || 'llama-3.3-70b-versatile'
+  process.env.GROQ_MODEL || 'openai/gpt-oss-120b'
 export default async function handler(req: any, res: any) {
   if (req.method !== 'POST') {
     return res.status(405).json({
