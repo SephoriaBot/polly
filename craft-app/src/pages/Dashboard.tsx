@@ -120,11 +120,11 @@ export default function Dashboard({ onNavigate }: { onNavigate?: (page: string, 
           <div className="dash-subdate">
             {todayName}, {new Date().toLocaleDateString(undefined, { month: 'long', day: 'numeric' })}
           </div>
-          {/* WEATHER BADGE MINI WIDGET */}
-          <WeatherBadge />
-
-         {/* ── MOON + ZODIAC ── */}
-            <MoonWidget compact />
+          {/* WEATHER BADGE & MOON MINI WIDGET */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+  <WeatherBadge />
+  <MoonWidget compact />
+</div>
 
         {/* ── LOW ENERGY MODE ── */}
           <EnergyModeSwitch />
