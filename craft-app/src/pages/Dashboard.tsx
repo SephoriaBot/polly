@@ -145,7 +145,6 @@ export default function Dashboard({ onNavigate }: { onNavigate?: (page: string, 
             </section>
 
 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', margin: '12px 0 4px' }}>
- // low-energy yawning Polly
 <Polly mood="yawning" size="small" />
 {yawningMessage && (
   <div style={{ fontSize: '0.72rem', color: 'var(--ink-muted)', marginTop: 4, textAlign: 'center' }}>
