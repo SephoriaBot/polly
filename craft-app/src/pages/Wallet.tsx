@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase';
 import Icon from '../components/Icon';
 import PageTabs, { type PageTab } from '../components/PageTabs';
 import { useTheme } from '../context/ThemeContext';
-import celebrationImg from '../assets/illustrations/celebration.png';
+import { Polly } from '../lib';
 import emptyWallet from '../assets/icons/empty-wallet.png';
 import EmptyState from '../components/EmptyState';
 import StitchDivider from '../components/StitchDivider';
@@ -1378,7 +1378,7 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
         ))}
         <style>{`@keyframes fall { to { transform: translateY(100vh) rotate(720deg); opacity: 0; } }`}</style>
         <div style={{ position: "absolute", top: "35%", left: "50%", transform: "translateX(-50%)", textAlign: "center", background: "var(--white)", border: "2px solid var(--border)", borderRadius: 32, padding: "24px 32px", minWidth: 220 }}>
-          <img src={celebrationImg} alt="" style={{ width: 120 }} />
+                    <Polly mood="cheering" size="large" animate={false} />
           <div style={{ fontSize: 20, fontWeight: 800, color: "var(--green-dark)", marginTop: 8 }}>{celebration.title}</div>
           <div style={{ fontSize: 16, color: "var(--pink-dark)", marginTop: 4 }}>{celebration.subtitle}</div>
           <div style={{ fontSize: 13, color: "var(--ink-muted)", marginTop: 8 }}>Keep going — you are crushing it!</div>
