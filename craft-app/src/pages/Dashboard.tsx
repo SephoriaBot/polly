@@ -48,7 +48,6 @@ function StitchDivider() {
 export default function Dashboard({ onNavigate }: { onNavigate?: (page: string, tab?: string) => void }) {
   const { theme } = useTheme();
   const { mode } = useEnergy();
-  const { hasMetPolly } = usePollyMeeting();
   const [focuses, setFocuses] = useState<Focus[]>([]);
   const [newFocus, setNewFocus] = useState('');
   const [newFocusMins, setNewFocusMins] = useState('');
