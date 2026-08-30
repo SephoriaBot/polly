@@ -8,9 +8,9 @@ export default async function handler(req: any, res: any) {
       error: 'Method not allowed',
     })
   }
-  const apiKey = process.env.GROQ_API_KEY
+  const apiKey = process.env.VITE_GROQ_API_KEY
   if (!apiKey) {
-    console.error('GROQ_API_KEY is not configured')
+    console.error('VITE_GROQ_API_KEY is not configured')
     return res.status(500).json({
       error: 'AI cleaning plans are not configured',
     })
