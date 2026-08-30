@@ -39,7 +39,7 @@ export const SEASONAL_HAMSTERS: SeasonalHamster[] = (
     const n = i + 1;
     return {
       id: `hamster_${season}_${n}`,
-      image: `/assets/hamsters/hamster_${season}_${n}.png`,
+      image: `/assets/hamsters/hamster_${season}_${n}.JPG`,
       season,
     };
   })
