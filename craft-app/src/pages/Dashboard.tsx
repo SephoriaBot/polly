@@ -186,10 +186,7 @@ export default function Dashboard({ onNavigate }: { onNavigate?: (page: string, 
   <div style={{ fontSize: '0.72rem', color: 'var(--ink-muted)', marginTop: 4, textAlign: 'center' }}>
     {neutralMessage}
   </div>
-)}
-
-              )}
-            </div>
+)} )
 
             {/* ── TODAY'S FOCUS ── */}
             <section>
