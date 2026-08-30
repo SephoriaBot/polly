@@ -1,17 +1,4 @@
-import React from 'react';
 import './Polly.css';
-
-import pollyNeutral from '../../assets/pollyhamster/polly_0.PNG';
-import pollyConfused from '../../assets/pollyhamster/polly_1.JPG';
-import pollyDisappointed from '../../assets/pollyhamster/polly_2.JPG';
-import pollySearching from '../../assets/pollyhamster/polly_3.JPG';
-import pollyMad from '../../assets/pollyhamster/polly_4.JPG';
-import pollyCheering from '../../assets/pollyhamster/polly_5.JPG';
-import pollyYawning from '../../assets/pollyhamster/polly_6.JPG';
-import pollyHappy from '../../assets/pollyhamster/polly_7.JPG';
-import pollySad from '../../assets/pollyhamster/polly_8.JPG';
-import pollySurprised from '../../assets/pollyhamster/polly_9.JPG';
-import pollyLove from '../../assets/pollyhamster/polly_10.JPG';
 
 export type PollyMood =
   | 'neutral'
@@ -27,17 +14,17 @@ export type PollyMood =
   | 'love';
 
 const POLLY_IMAGES: Record<PollyMood, string> = {
-  neutral: pollyNeutral,
-  confused: pollyConfused,
-  disappointed: pollyDisappointed,
-  searching: pollySearching,
-  mad: pollyMad,
-  cheering: pollyCheering,
-  yawning: pollyYawning,
-  happy: pollyHappy,
-  sad: pollySad,
-  surprised: pollySurprised,
-  love: pollyLove,
+  neutral: '/assets/pollyhamster/polly_0.PNG',
+  confused: '/assets/pollyhamster/polly_1.JPG',
+  disappointed: '/assets/pollyhamster/polly_2.JPG',
+  searching: '/assets/pollyhamster/polly_3.JPG',
+  mad: '/assets/pollyhamster/polly_4.JPG',
+  cheering: '/assets/pollyhamster/polly_5.JPG',
+  yawning: '/assets/pollyhamster/polly_6.JPG',
+  happy: '/assets/pollyhamster/polly_7.JPG',
+  sad: '/assets/pollyhamster/polly_8.JPG',
+  surprised: '/assets/pollyhamster/polly_9.JPG',
+  love: '/assets/pollyhamster/polly_10.JPG',
 };
 
 interface PollyProps {
