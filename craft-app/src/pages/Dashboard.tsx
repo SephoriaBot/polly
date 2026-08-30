@@ -11,7 +11,6 @@ import Icon, { type IconName } from '../components/Icon';
 import { useTheme } from '../context/ThemeContext';
 import EmptyState from '../components/EmptyState';
 import { Polly } from '../lib';
-import { usePollyMeeting } from '../hooks/usePollyMeeting';
 import { getPollyMessage } from '../lib/pollyMessages';
 
 
@@ -168,25 +167,11 @@ export default function Dashboard({ onNavigate }: { onNavigate?: (page: string, 
 
             {/* ── POLLY GREETING ── */}
 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', margin: '12px 0 4px' }}>
-  {hasMetPolly === false ? (
-    <>
-      <Polly mood="love" size="large" />
-      <div style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--pink-dark)', marginTop: 6 }}>
-        Hi, I'm Polly!
-      </div>
-      <div style={{ fontSize: '0.75rem', color: 'var(--ink-muted)', marginTop: 2 }}>
-        Welcome to your new space.
-      </div>
-    </>
-  ) : (
-    <>
-      <Polly mood="neutral" size="small" />
-      {neutralMessage && (
-        <div style={{ fontSize: '0.72rem', color: 'var(--ink-muted)', marginTop: 4, textAlign: 'center' }}>
-          {neutralMessage}
-        </div>
-      )}
-    </>
+  <Polly mood="neutral" size="small" />
+  {neutralMessage && (
+    <div style={{ fontSize: '0.72rem', color: 'var(--ink-muted)', marginTop: 4, textAlign: 'center' }}>
+      {neutralMessage}
+    </div>
   )}
 </div>
 
