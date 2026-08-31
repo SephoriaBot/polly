@@ -1,0 +1,38 @@
+/* ================================
+   POLLY RANDOM POP-IN
+   Sits above BottomNav (z-index 30),
+   below the page tour modal and toasts.
+   ================================ */
+
+.polly-popin {
+  position: fixed;
+  right: 16px;
+  bottom: calc(72px + env(safe-area-inset-bottom));
+  z-index: 40;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+
+  animation: polly-popin-in 0.35s ease-out;
+}
+
+@keyframes polly-popin-in {
+  0% {
+    transform: translateY(16px) scale(0.9);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .polly-popin {
+    animation: none;
+  }
+}
