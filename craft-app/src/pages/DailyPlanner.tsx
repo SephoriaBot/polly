@@ -387,16 +387,17 @@ export default function DailyPlanner({ initialTab }: { initialTab?: 'tasks' | 'a
             <h2><Icon name="title-planner" size={22} />Planner</h2>
            
           </div>
+          {activeTab === 'tasks' && (
+            <p style={{ color: allDone ? 'var(--pink-dark)' : 'var(--ink-muted)' }}>
+            {allDone ? 'All done! Good job.' : `${doneCount} of ${tasks.length} done today`}
+          </p>
+          )}
         </div>
       </div>
 
       <PageTabs tabs={PLANNER_TABS} active={activeTab} onChange={setActiveTab} />
 
       <div className="page-body">
-
-        <p style={{ color: allDone ? 'var(--pink-dark)' : 'var(--ink-muted)' }}>
-            {allDone ? 'All done! Good job.' : `${doneCount} of ${tasks.length} done today`}
-          </p>
 
         <div style={{ display: 'flex', gap: 8 }}>
           {activeTab === 'tasks' && tasks.length > 0 && (
