@@ -12,8 +12,8 @@ import { getPollyPopIn } from '../lib/pollyMessages';
  * so it never settles into a predictable pattern per page or per session.
  */
 const APPEAR_CHANCE = 0.35;
-const MIN_DELAY = 4000;
-const MAX_DELAY = 14000;
+const MIN_DELAY = 1000;
+const MAX_DELAY = 3000;
 const VISIBLE_DURATION = 6000;
 
 export function usePollyPopIn(page: string) {
