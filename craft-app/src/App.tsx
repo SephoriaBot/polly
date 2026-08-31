@@ -25,6 +25,7 @@ import { useAuth } from './context/AuthContext';
 import Login from './pages/Login';
 
 import PollyPageTour from './components/PollyPageTour';
+import PollyPopIn from './components/PollyPopIn';
 
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const Grocery = lazy(() => import('./pages/Grocery'));
@@ -406,6 +407,7 @@ export default function App() {
 
                   <main className="main">
                     <PollyPageTour page={page} />
+                    <PollyPopIn page={page} />
                     <Suspense
                       fallback={
                         <div className="page-loading">
