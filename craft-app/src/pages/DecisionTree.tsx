@@ -711,7 +711,7 @@ const DecisionPage: FC = () => {
   return (
     <div style={styles.page}>
       <div className="title-row" style={{ marginBottom: 12 }}>
-        <h2 style={styles.pageTitle}>Decisions</h2>
+        <h2 style={styles.pageTitle}><Icon name="title-decisions" size={22} />Decisions</h2>
         
       </div>
 

@@ -384,7 +384,7 @@ export default function DailyPlanner({ initialTab }: { initialTab?: 'tasks' | 'a
       <div className="page-header">
         <div>
           <div className="title-row">
-            <h2>Planner</h2>
+            <h2><Icon name="title-planner" size={22} />Planner</h2>
            
           </div>
         </div>

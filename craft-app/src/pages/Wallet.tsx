@@ -1388,14 +1388,14 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
   };
 
     const VIEW_TITLES: Record<typeof view, { text: string; icon?: IconName }> = {
-    home: { text: "Wallet" },
+    home: { text: "Wallet", icon: "title-wallet" },
     calendar: { text: "Money Calendar", icon: "calendar" },
     bills: { text: "Bills", icon: "house" },
     debts: { text: "Debts", icon: "calculator-hearts" },
   };
 
   const WALLET_TABS: PageTab<typeof view>[] = [
-    { key: "home", label: "Overview", icon: "money-bag" },
+    { key: "home", label: "Overview", icon: "title-wallet" },
     { key: "calendar", label: "Money Calendar", icon: "calendar" },
     { key: "bills", label: "Bills", icon: "house" },
     { key: "debts", label: "Debts", icon: "calculator-hearts" },

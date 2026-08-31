@@ -133,7 +133,7 @@ export default function TrackerPage({ initialTab }: { initialTab?: TabType } = {
     <div>
       <div className="page-header">
         <div className="title-row">
-          <h1>Tracker</h1>
+          <h2><Icon name="title-tracker" size={22} />Tracker</h2>
           
         </div>
       </div>

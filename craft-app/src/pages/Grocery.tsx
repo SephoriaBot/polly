@@ -1119,7 +1119,7 @@ export default function Grocery({ initialTab }: { initialTab?: 'list' | 'recipes
     <div>
       <div className="page-header">
         <div className="title-row">
-          <h2>Grocery List <Icon name="basket" size={22} /></h2>
+          <h2><Icon name="title-grocery" size={22} />Grocery</h2>
           
         </div>
 
