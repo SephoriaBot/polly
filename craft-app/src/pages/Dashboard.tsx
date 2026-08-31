@@ -12,7 +12,7 @@ import { useTheme } from '../context/ThemeContext';
 import EmptyState from '../components/EmptyState';
 import { Polly } from '../lib';
 import { getPollyMessage } from '../lib/pollyMessages';
-
+import PollyBubble from '../components/PollyBubble';
 
 interface Focus {
   id: string;
@@ -143,12 +143,9 @@ export default function Dashboard({ onNavigate }: { onNavigate?: (page: string, 
             </section>
 
 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', margin: '12px 0 4px' }}>
-<Polly mood="yawning" size="small" />
-{yawningMessage && (
-  <div style={{ fontSize: '0.72rem', color: 'var(--ink-muted)', marginTop: 4, textAlign: 'center' }}>
-    {yawningMessage}
-  </div>
-)}
+  <Polly mood="yawning" size="small" />
+  {yawningMessage && <PollyBubble message={yawningMessage} size="small" />}
+</div>
 
 </div>
 
@@ -167,11 +164,7 @@ export default function Dashboard({ onNavigate }: { onNavigate?: (page: string, 
             {/* ── POLLY GREETING ── */}
 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', margin: '12px 0 4px' }}>
   <Polly mood="neutral" size="small" />
-  {neutralMessage && (
-    <div style={{ fontSize: '0.72rem', color: 'var(--ink-muted)', marginTop: 4, textAlign: 'center' }}>
-      {neutralMessage}
-    </div>
-  )}
+  {neutralMessage && <PollyBubble message={neutralMessage} size="small" />}
 </div>
 
 
