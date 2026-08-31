@@ -8,7 +8,7 @@
   position: relative;
   display: inline-block;
   max-width: 220px;
-  margin-top: 12px;
+  margin-bottom: 12px;
   padding: 8px 12px;
   background: var(--color-surface);
   border: 1.5px solid var(--color-accent-strong);
@@ -21,25 +21,25 @@
   animation: polly-bubble-pop 0.2s ease-out;
 }
 
-/* ---------- tail, pointing up at Polly ---------- */
+/* ---------- tail, pointing down at Polly ---------- */
 
 .polly-bubble::after {
   content: '';
   position: absolute;
-  top: -8px;
+  bottom: -8px;
   left: 50%;
   transform: translateX(-50%);
   width: 0;
   height: 0;
   border-left: 8px solid transparent;
   border-right: 8px solid transparent;
-  border-bottom: 8px solid var(--color-accent-strong);
+  border-top: 8px solid var(--color-accent-strong);
 }
 
 .polly-bubble::before {
   content: '';
   position: absolute;
-  top: -6px;
+  bottom: -6px;
   left: 50%;
   transform: translateX(-50%);
   z-index: 1;
@@ -47,7 +47,7 @@
   height: 0;
   border-left: 6px solid transparent;
   border-right: 6px solid transparent;
-  border-bottom: 6px solid var(--color-surface);
+  border-top: 6px solid var(--color-surface);
 }
 
 /* ---------- sizes ---------- */

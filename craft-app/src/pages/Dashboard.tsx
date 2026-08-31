@@ -143,8 +143,8 @@ export default function Dashboard({ onNavigate }: { onNavigate?: (page: string, 
             </section>
 
 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', margin: '12px 0 4px' }}>
-  <Polly mood="yawning" size="small" />
   {yawningMessage && <PollyBubble message={yawningMessage} size="small" />}
+  <Polly mood="yawning" size="small" />
 </div>
 
           {/* ── RADAR ── */}
@@ -161,8 +161,8 @@ export default function Dashboard({ onNavigate }: { onNavigate?: (page: string, 
 
             {/* ── POLLY GREETING ── */}
 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', margin: '12px 0 4px' }}>
-  <Polly mood="neutral" size="small" />
   {neutralMessage && <PollyBubble message={neutralMessage} size="small" />}
+  <Polly mood="neutral" size="small" />
 </div>
 
 
