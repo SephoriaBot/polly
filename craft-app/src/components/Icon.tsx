@@ -22,7 +22,8 @@ export type IconName =
   | 'icon-trash2' | 'icon-wallet' | 'icon_housepet' | 'heartempty' | 'heartfull'
   | 'flowerfull' | 'icon-clear' | 'full_sun' | 'empty_sun' | 'full_moon' | 'empty_moon'
   | 'icon-recur' | 'shopping-cart' | 'pagedivider' | 'empty-wallet' | 'empty-dashboard'
-  | 'empty-grocery' | 'empty-habitat' | 'empty-planner' | 'empty-trackers'| '_extra-unnamed-heart';
+  | 'empty-grocery' | 'empty-habitat' | 'empty-planner' | 'empty-trackers'| '_extra-unnamed-heart'
+  | 'title-wallet' | 'title-planner' | 'title-grocery' | 'title-decisions' | 'title-tracker';
 
 
 interface IconProps {
