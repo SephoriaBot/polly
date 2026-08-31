@@ -39,12 +39,53 @@ const POLLY_POPIN_MESSAGES: string[] = [
   "*waves*",
 ];
 
+const POLLY_POPIN_MESSAGES_BY_PAGE: Partial<Record<string, string[]>> = {
+  grocery: [
+    "Ooh, snack run?",
+    "Don't forget the good stuff.",
+    "Smart cart, smart choices.",
+    "What's for dinner?",
+  ],
+  dailyplanner: [
+    "One thing at a time.",
+    "Look at you, staying on top of it.",
+    "Small steps count too.",
+    "Need me to break that down further?",
+  ],
+  wallet: [
+    "Just peeking at the numbers.",
+    "No judgment here.",
+    "Every little bit adds up.",
+    "Budgets are just plans with math.",
+  ],
+  trackers: [
+    "The data doesn't lie.",
+    "Look at that progress!",
+    "Patterns are neat, huh?",
+    "Nerding out with you.",
+  ],
+  decisions: [
+    "Tough call?",
+    "Trust your gut.",
+    "I believe in you.",
+    "Weighing your options, I see.",
+  ],
+  habitat: [
+    "The hamsters say hi.",
+    "Someone's been busy decorating.",
+    "Squeak squeak!",
+    "Don't forget your daily visit.",
+  ],
+};
+
 const POLLY_POPIN_MOODS: PollyMood[] = ['neutral', 'cheering'];
 
-export function getPollyPopIn(): { mood: PollyMood; message: string } {
+export function getPollyPopIn(page?: string): { mood: PollyMood; message: string } {
+  const pagePool = page ? POLLY_POPIN_MESSAGES_BY_PAGE[page] : undefined;
+  const pool = pagePool && pagePool.length > 0 ? pagePool : POLLY_POPIN_MESSAGES;
+
   const mood =
     POLLY_POPIN_MOODS[Math.floor(Math.random() * POLLY_POPIN_MOODS.length)];
-  const message =
-    POLLY_POPIN_MESSAGES[Math.floor(Math.random() * POLLY_POPIN_MESSAGES.length)];
+  const message = pool[Math.floor(Math.random() * pool.length)];
   return { mood, message };
 }
