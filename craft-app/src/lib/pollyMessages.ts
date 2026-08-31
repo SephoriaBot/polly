@@ -21,3 +21,30 @@ export function getPollyMessage(mood: PollyMood): string | null {
   if (!pool || pool.length === 0) return null;
   return pool[Math.floor(Math.random() * pool.length)];
 }
+
+/* =========================================================
+   RANDOM POP-INS
+   Short, low-stakes lines for when Polly randomly shows up
+   on whatever page you're already on.
+   ========================================================= */
+
+const POLLY_POPIN_MESSAGES: string[] = [
+  "Just checking in!",
+  "Boop.",
+  "Still here if you need me.",
+  "Hi again!",
+  "Sneaking by...",
+  "You're doing great.",
+  "Carry on, just visiting.",
+  "*waves*",
+];
+
+const POLLY_POPIN_MOODS: PollyMood[] = ['neutral', 'cheering'];
+
+export function getPollyPopIn(): { mood: PollyMood; message: string } {
+  const mood =
+    POLLY_POPIN_MOODS[Math.floor(Math.random() * POLLY_POPIN_MOODS.length)];
+  const message =
+    POLLY_POPIN_MESSAGES[Math.floor(Math.random() * POLLY_POPIN_MESSAGES.length)];
+  return { mood, message };
+}
