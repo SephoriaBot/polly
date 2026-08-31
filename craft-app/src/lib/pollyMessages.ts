@@ -41,7 +41,7 @@ const POLLY_POPIN_MESSAGES: string[] = [
 
 const POLLY_POPIN_MESSAGES_BY_PAGE: Partial<Record<string, string[]>> = {
   grocery: [
-    "Ooh, snack run?",
+    "Get me one, too!",
     "Don't forget the good stuff.",
     "Smart cart, smart choices.",
     "What's for dinner?",
@@ -50,11 +50,11 @@ const POLLY_POPIN_MESSAGES_BY_PAGE: Partial<Record<string, string[]>> = {
     "One thing at a time.",
     "Look at you, staying on top of it.",
     "Small steps count too.",
-    "Need me to break that down further?",
+    "Don't forget anything!",
   ],
   wallet: [
     "Just peeking at the numbers.",
-    "No judgment here.",
+    "Looking good!",
     "Every little bit adds up.",
     "Budgets are just plans with math.",
   ],
@@ -62,7 +62,7 @@ const POLLY_POPIN_MESSAGES_BY_PAGE: Partial<Record<string, string[]>> = {
     "The data doesn't lie.",
     "Look at that progress!",
     "Patterns are neat, huh?",
-    "Nerding out with you.",
+    "I didn't notice that before!",
   ],
   decisions: [
     "Tough call?",
