@@ -16,6 +16,10 @@ const MIN_DELAY = 1000;
 const MAX_DELAY = 3000;
 const VISIBLE_DURATION = 6000;
 
+// Polly already has a permanent spot on these pages, so the
+// random pop-in would be redundant here.
+const EXCLUDED_PAGES = new Set(['dashboard']);
+
 export function usePollyPopIn(page: string) {
   const [visible, setVisible] = useState(false);
   const [mood, setMood] = useState<PollyMood>('neutral');
@@ -28,12 +32,13 @@ export function usePollyPopIn(page: string) {
     timers.current.forEach(clearTimeout);
     timers.current = [];
 
+    if (EXCLUDED_PAGES.has(page)) return;
     if (Math.random() > APPEAR_CHANCE) return;
 
     const delay = MIN_DELAY + Math.random() * (MAX_DELAY - MIN_DELAY);
 
     const showTimer = window.setTimeout(() => {
-      const { mood: rolledMood, message: rolledMessage } = getPollyPopIn();
+      const { mood: rolledMood, message: rolledMessage } = getPollyPopIn(page);
       setMood(rolledMood);
       setMessage(rolledMessage);
       setVisible(true);
