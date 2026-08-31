@@ -147,8 +147,6 @@ export default function Dashboard({ onNavigate }: { onNavigate?: (page: string, 
   {yawningMessage && <PollyBubble message={yawningMessage} size="small" />}
 </div>
 
-</div>
-
           {/* ── RADAR ── */}
             <section style={{ marginTop: 4 }}>
               <div style={{ fontSize: '0.68rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--ink-muted)', marginBottom: 8 }}>
