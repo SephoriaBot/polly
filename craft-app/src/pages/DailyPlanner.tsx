@@ -399,13 +399,14 @@ export default function DailyPlanner({ initialTab }: { initialTab?: 'tasks' | 'a
             <button className="btn btn-ghost" onClick={resetAll}>
               <Icon name="icon-recur" size={14} /> Reset
             </button>
-
-             <p style={{ color: allDone ? 'var(--pink-dark)' : 'var(--ink-muted)' }}>
-            {allDone ? 'All done! Good job.' : `${doneCount} of ${tasks.length} done today`}
-            </p>
-
           )}
         </div>
+
+            {activeTab === 'tasks' && (
+            <p style={{ color: allDone ? 'var(--pink-dark)' : 'var(--ink-muted)' }}>
+            {allDone ? 'All done! Good job.' : `${doneCount} of ${tasks.length} done today`}
+          </p>
+          )}
 
         {activeTab === 'tasks' && tasks.length > 0 && (
           <div style={{ marginBottom: 4, maxWidth: 560 }}>
