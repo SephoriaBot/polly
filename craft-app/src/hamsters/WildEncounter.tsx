@@ -18,6 +18,7 @@ import Icon from "../components/Icon";
 import { HAMSTERS, imageForForm } from "./hamsters";
 import type { EvolutionStage } from "./hamsters";
 import { useHamsterGrowth } from "./HamsterGrowthContext";
+import { BATTLE_REWARDS } from "./battle";
 import {
   canBattle,
   deriveBattleStats,
@@ -56,7 +57,8 @@ function HpBar({ current, max, color }: { current: number; max: number; color: s
 }
 
 export default function WildEncounter() {
-  const { wildEncounter, clearWildEncounter } = useHamsterGrowth();
+  const { wildEncounter, clearWildEncounter, awardBattleWin } = useHamsterGrowth();
+  const [reward, setReward] = useState<{ statPoints: number; shopPoints: number } | null>(null);
   const [loading, setLoading] = useState(true);
   const [fighters, setFighters] = useState<FighterEntry[]>([]);
   const [selectedId, setSelectedId] = useState<number | null>(null);
@@ -89,7 +91,6 @@ export default function WildEncounter() {
     const { data } = await supabase
       .from("hamster_collection")
       .select("id, hamster_id, name, stage, teen_form_id, final_form_id, abilities, trained_hp, trained_attack, trained_defense, trained_speed")
-      .neq("stage", "baby")
       .order("hatched_at", { ascending: false });
 
     const entries: FighterEntry[] = (data || []).map((r) => {
@@ -242,6 +243,11 @@ export default function WildEncounter() {
     if (phase === "result" && winner) {
       logBattle(false);
       if (isAutoSpawned) clearWildEncounter();
+      if (winner === "player" && selected && wild) {
+        awardBattleWin(selected.id, wild.stage).then((res) => {
+          if (res.ok) setReward({ statPoints: res.statPoints, shopPoints: res.shopPoints });
+        });
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase]);
@@ -275,6 +281,7 @@ export default function WildEncounter() {
     setOpponentHp(0);
     setBusy(false);
     opponentActingRef.current = false;
+    setReward(null);
   };
 
   if (loading) {
@@ -298,7 +305,7 @@ export default function WildEncounter() {
         </div>
 
         {fighters.length === 0 ? (
-        <EmptyState image={emptyHabitat} message="No hamsters are old enough to battle yet!" />
+        <EmptyState image={emptyHabitat} message="No hamsters hatched yet — hit the threshold to get your first one." />
 ) : (
           <>
             {(phase === "pick" || phase === "scouting" || phase === "found") && (
@@ -402,6 +409,9 @@ export default function WildEncounter() {
                     <div style={{ fontSize: 11, color: "var(--ink-muted)", marginTop: 2, textAlign: "center" }}>
                       Knows: {wild.abilities.map(abilityShortName).join(", ")}
                     </div>
+                    <div style={{ fontSize: 10, color: "var(--ink-muted)", marginTop: 6, textAlign: "center" }}>
+                      Win for +{BATTLE_REWARDS[wild.stage].statPoints} TP / +{BATTLE_REWARDS[wild.stage].shopPoints} shop points
+                    </div>
                     <button className="btn-primary" onClick={startFight} style={{ width: "100%", marginTop: 12 }}>
                       <Icon name="lightning" size={14} /> Fight!
                     </button>
@@ -496,6 +506,11 @@ export default function WildEncounter() {
                         <div style={{ fontSize: 14, fontWeight: 800, color: "var(--pink-dark)" }}>
                           <Icon name="trophy" size={16} /> Victory!
                         </div>
+                        {reward && (
+                          <div style={{ fontSize: 11, color: "var(--ink-muted)", marginTop: 4 }}>
+                            +{reward.statPoints} TP for {selected?.name || "your hamster"} • +{reward.shopPoints} shop points
+                          </div>
+                        )}
                         {!tamed ? (
                           <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
                             <button className="btn-primary" onClick={tame} style={{ flex: 1 }}>
