@@ -73,10 +73,32 @@ const BASE_STATS: Record<EvolutionStage, BattleStats> = {
   final: { hp: 95, attack: 16, defense: 12, speed: 11 },
 };
 
-// Babies have no abilities to fight with yet — they can hatch and grow,
-// but only teen/final hamsters (yours or wild) can actually battle.
-export function canBattle(stage: EvolutionStage): boolean {
-  return stage !== "baby";
+// Every stage can battle now, babies included — battling is how a baby
+// earns the stat points it needs to evolve in the first place, so gating
+// it behind "not a baby" would make evolution impossible to bootstrap.
+// Kept as a function (rather than inlining `true` at call sites) so a
+// future stage-based restriction has one place to change.
+export function canBattle(_stage: EvolutionStage): boolean {
+  return true;
+}
+
+// Stat points and shop currency awarded for winning a wild encounter,
+// scaled by how tough the opponent was. This is now the ONLY source of
+// training points (stat points) and habitat shop currency — daily
+// accomplishments only feed the egg. Losses pay out nothing.
+export const BATTLE_REWARDS: Record<"teen" | "final", { statPoints: number; shopPoints: number }> = {
+  teen: { statPoints: 3, shopPoints: 4 },
+  final: { statPoints: 6, shopPoints: 8 },
+};
+
+// A hamster is ready to evolve once every trained stat is maxed out for
+// its current stage — i.e. it's fought and trained enough to hit the
+// ceiling battle.ts already enforces via STAT_CAPS. Final-stage hamsters
+// have nowhere further to go.
+export function isMaxedOut(stage: EvolutionStage, trained: TrainedStats): boolean {
+  if (stage === "final") return false;
+  const cap = STAT_CAPS[stage];
+  return trained.hp >= cap.hp && trained.attack >= cap.attack && trained.defense >= cap.defense && trained.speed >= cap.speed;
 }
 
 // trained defaults to EMPTY_TRAINED_STATS so every existing call site that
