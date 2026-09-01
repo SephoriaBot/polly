@@ -13,6 +13,8 @@ import EmptyState from '../components/EmptyState';
 import { Polly } from '../lib';
 import { getPollyMessage } from '../lib/pollyMessages';
 import PollyBubble from '../components/PollyBubble';
+import CheckMark from '../components/CheckMark';
+
 
 interface Focus {
   id: string;
