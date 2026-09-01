@@ -2356,7 +2356,18 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                 </div>
                 <div style={{ overflowX: "auto" }}>
                   <table className="table">
-                    <thead>
+  <colgroup>
+    <col style={{ width: 40 }} />
+    <col style={{ width: 28 }} />
+    <col style={{ width: 130 }} />
+    <col style={{ width: 80 }} />
+    <col style={{ width: 90 }} />
+    <col style={{ width: 60 }} />
+    <col style={{ width: 80 }} />
+    <col style={{ width: 40 }} />
+  </colgroup>
+  <thead>
+
                       <tr>
                         {["","#","Name","Balance","Progress","APR%","Min/Mo",""].map(h => (
                           <th key={h} style={{ fontSize: 10, color: "var(--ink-muted)", textTransform: "uppercase", padding: "8px", textAlign: "left", borderBottom: "1.5px solid var(--border)", fontWeight: 700 }}>{h}</th>
