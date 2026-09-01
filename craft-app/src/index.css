@@ -1640,36 +1640,29 @@ input:focus {
    BUTTONS
    --------------------------------------------------------------- */
 
-.btn {
-  border: none;
-  border-radius: 999px;
-  padding: 10px 14px;
-  font-weight: 600;
-  cursor: pointer;
-  background: var(--primary);
-  color: var(--btn-ink);
-  box-shadow: 0 8px 18px rgba(0,0,0,0.08);
-  transition: 0.15s ease;
-  font-family: 'Nunito Sans', sans-serif;
-}
-
-.btn:hover {
-  transform: translateY(-2px);
-}
-
+.btn,
 .btn-primary {
-  border: none;
-  border-radius: 999px;
+  background: var(--surface);
+  color: var(--primary);
+  border: 1px solid var(--primary);
+  border-bottom: 3px solid color-mix(in srgb, var(--primary), black 25%);
+  border-radius: 7px;
   padding: 10px 14px;
   font-weight: 600;
   cursor: pointer;
-  background: var(--primary);
-  color: var(--btn-ink);
-  box-shadow: 0 8px 18px rgba(0,0,0,0.08);
-  transition: 0.15s ease;
+  box-shadow:
+    0 2px 0 color-mix(in srgb, var(--primary), black 25%),
+    0 3px 6px rgba(0, 0, 0, 0.10);
+  transition: 0.12s ease;
   font-family: 'Nunito Sans', sans-serif;
 }
-.btn-primary:hover { transform: translateY(-2px); }
+
+.btn:active,
+.btn-primary:active {
+  transform: translateY(2px);
+  border-bottom-width: 1px;
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--primary), black 25%);
+}
 
 .btn-secondary {
   border: 1px solid var(--sage-dark);
