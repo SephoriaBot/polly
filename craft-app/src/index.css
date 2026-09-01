@@ -914,66 +914,63 @@
    ================================================================
    ================================================================ */
 
-/* ---------- tokens: light ---------- */
 [data-palette='lucky-stars'][data-theme='light'] {
-  --bg: #FFF9EA;
+  --bg: #FFF9E8;
   --surface: #FFFFFF;
-  --text: #514451;
+  --text: #49384F;
 
-  /* Core Lucky Charms colors — softened */
-  --primary: #EFCF72;
-  --secondary: #82B96F;
-  --accent: #D98EAD;
-  --mint: #82C4CF;
+  /* Lucky Charms colors — pastel versions */
+  --primary: #F6D875;
+  --secondary: #8BCF7A;
+  --accent: #F19CBD;
+  --mint: #8DD8E4;
 
-  --border: #D9C58A;
-  --shadow: 0 8px 24px rgba(81, 68, 81, 0.10);
+  --border: #DFC77A;
+  --shadow: 0 8px 24px rgba(73, 56, 79, 0.10);
 
-  --ink: #514451;
-  --ink-soft: #7E707B;
-  --ink-muted: #A3979F;
-  --btn-ink: #514451;
+  --ink: #49384F;
+  --ink-soft: #806D78;
+  --ink-muted: #A18F99;
+  --btn-ink: #49384F;
 
   --white: #FFFFFF;
-  --cream: #FFF9EA;
+  --cream: #FFF9E8;
 
-  --blush: #F5E3EA;
+  --blush: #FBE3EC;
 
-  /* Green */
-  --green-dark: #67995B;
-  --sage: #9BC68C;
-  --sage-dark: #67995B;
-  --sage-light: #E4F0DF;
+  /* Green — same Lucky Charms green, pastel */
+  --green-dark: #68A95D;
+  --sage: #9BDB8D;
+  --sage-dark: #68A95D;
+  --sage-light: #E2F4DC;
 
-  /* Pink */
-  --pink: #D98EAD;
-  --pink-dark: #B87391;
-  --pink-light: #F5E3EA;
-  --pink-light-solid: #F5E3EA;
+  /* Pink — same Lucky Charms pink, pastel */
+  --pink: #F19CBD;
+  --pink-dark: #D6789B;
+  --pink-light: #FBE3EC;
+  --pink-light-solid: #FBE3EC;
 
-  /* Blue */
-  --sky: #82C4CF;
+  /* Blue — same Lucky Charms blue, pastel */
+  --sky: #8DD8E4;
 
-  /* Gold */
-  --gold: #EFCF72;
-  --gold-dark: #B89B4B;
-  --gold-light: #FFF2C9;
-  --gold-light-solid: #FFF2C9;
+  /* Gold — same Lucky Charms yellow, pastel */
+  --gold: #F6D875;
+  --gold-dark: #C9A943;
+  --gold-light: #FFF2C4;
+  --gold-light-solid: #FFF2C4;
 
-  /* Danger */
-  --danger: #CC7D7D;
-  --danger-bg: #F7E5E5;
+  --danger: #D97C7C;
+  --danger-bg: #F8E3E3;
 
   --accent-text: #FFFFFF;
   --accent-text-muted: rgba(255,255,255,.78);
 
-  /* Active / informational states */
-  --active-bg: #FFF2C9;
-  --active-text: #78652D;
+  --active-bg: #FFF2C4;
+  --active-text: #80651D;
 
-  --info-card-bg: #FFF2C9;
-  --info-card-border: #D9BD68;
-  --info-card-text: #66552A;
+  --info-card-bg: #FFF2C4;
+  --info-card-border: #E2C35E;
+  --info-card-text: #66521E;
 }
 
 /* ---------- tokens: dark ---------- */
