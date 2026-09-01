@@ -210,7 +210,6 @@ export function useHamsterGrowthState() {
     const { data: pending } = await supabase
       .from("wild_encounter_pending")
       .select("hamster_id, stage, form_id, personality, abilities")
-      .eq("id", 1)
       .maybeSingle();
 
     if (pending?.hamster_id) {
@@ -241,15 +240,17 @@ export function useHamsterGrowthState() {
     const playerMaxStage: EvolutionStage = stages.includes("final") ? "final" : stages.includes("teen") ? "teen" : "baby";
 
     const wild = rollWildHamster(playerMaxStage);
-    const { error } = await supabase.from("wild_encounter_pending").upsert({
-      id: 1,
-      hamster_id: wild.hamsterId,
-      stage: wild.stage,
-      form_id: wild.formId,
-      personality: wild.personality,
-      abilities: wild.abilities,
-      spawned_at: new Date().toISOString(),
-    });
+    const { error } = await supabase.from("wild_encounter_pending").upsert(
+      {
+        hamster_id: wild.hamsterId,
+        stage: wild.stage,
+        form_id: wild.formId,
+        personality: wild.personality,
+        abilities: wild.abilities,
+        spawned_at: new Date().toISOString(),
+      },
+      { onConflict: "user_id" }
+    );
     if (reportError("Save wild encounter", error)) return;
     setWildEncounter(wild);
   }, [wildEncounter, reportError]);
@@ -309,7 +310,7 @@ export function useHamsterGrowthState() {
 
       const { error: growthSaveError } = await supabase
         .from("hamster_growth")
-        .upsert({ id: 1, points: newPoints, threshold });
+        .upsert({ points: newPoints, threshold }, { onConflict: "user_id" });
 
       // This is THE write that caused the original bug: if points/threshold
       // don't persist, the next load re-reads the old (lower) points value,
@@ -350,9 +351,11 @@ export function useHamsterGrowthState() {
         return { ok: false as const, statPoints: 0, shopPoints: 0, reason: tpError.message || "Save failed" };
       }
 
-      const { data: decorRow } = await supabase.from("habitat_points").select("points").eq("id", 1).maybeSingle();
+      const { data: decorRow } = await supabase.from("habitat_points").select("points").maybeSingle();
       const newDecorPoints = (Number(decorRow?.points) || 0) + reward.shopPoints;
-      const { error: decorError } = await supabase.from("habitat_points").upsert({ id: 1, points: newDecorPoints });
+      const { error: decorError } = await supabase
+        .from("habitat_points")
+        .upsert({ points: newDecorPoints }, { onConflict: "user_id" });
       if (!reportError("Award battle shop points", decorError)) {
         setDecorPoints(newDecorPoints);
       }
@@ -437,7 +440,6 @@ export function useHamsterGrowthState() {
       .select(
         "last_bill_check, last_log_check, last_tracker_check, focus_all_done_awarded, debt_snapshot, tasks_all_done_awarded, last_chore_check, grocery_snapshot"
       )
-      .eq("id", 1)
       .maybeSingle();
 
     // If this row has never been created, every check silently no-ops
@@ -447,7 +449,6 @@ export function useHamsterGrowthState() {
     // of only starting to count from whenever the row happens to exist.
     if (!lastCheck) {
       const seed = {
-        id: 1,
         last_bill_check: "2000-01-01T00:00:00.000Z",
         last_log_check: "2000-01-01T00:00:00.000Z",
         last_tracker_check: "2000-01-01T00:00:00.000Z",
@@ -457,7 +458,9 @@ export function useHamsterGrowthState() {
         last_chore_check: "2000-01-01T00:00:00.000Z",
         grocery_snapshot: {},
       };
-      const { error: seedError } = await supabase.from("hamster_last_check").upsert(seed);
+      const { error: seedError } = await supabase
+        .from("hamster_last_check")
+        .upsert(seed, { onConflict: "user_id" });
       if (reportError("Seed hamster_last_check", seedError)) return;
       lastCheck = seed;
     }
@@ -684,17 +687,19 @@ export function useHamsterGrowthState() {
 
     const { error: finalSaveError } = await supabase
       .from("hamster_last_check")
-      .upsert({
-        id: 1,
-        last_bill_check: now,
-        last_log_check: now,
-        last_tracker_check: now,
-        focus_all_done_awarded: focusAllDoneAwarded,
-        debt_snapshot: newSnapshot,
-        tasks_all_done_awarded: tasksAllDoneAwarded,
-        last_chore_check: now,
-        grocery_snapshot: newGrocery,
-      });
+      .upsert(
+        {
+          last_bill_check: now,
+          last_log_check: now,
+          last_tracker_check: now,
+          focus_all_done_awarded: focusAllDoneAwarded,
+          debt_snapshot: newSnapshot,
+          tasks_all_done_awarded: tasksAllDoneAwarded,
+          last_chore_check: now,
+          grocery_snapshot: newGrocery,
+        },
+        { onConflict: "user_id" }
+      );
 
     // The other write that caused the original bug: if the awarded flags
     // and debt snapshot don't persist here, every "all done" state looks
@@ -741,20 +746,22 @@ export function useHamsterGrowthState() {
   useEffect(() => {
     (async () => {
       setLoading(true);
-      const { data: growthRow } = await supabase.from("hamster_growth").select("points, threshold").eq("id", 1).maybeSingle();
+      const { data: growthRow } = await supabase.from("hamster_growth").select("points, threshold").maybeSingle();
       if (growthRow) {
         setPoints(Number(growthRow.points) || 0);
         setThreshold(Number(growthRow.threshold) || 100);
       } else {
-        const { error } = await supabase.from("hamster_growth").upsert({ id: 1, points: 0, threshold: 100 });
+        const { error } = await supabase
+          .from("hamster_growth")
+          .upsert({ points: 0, threshold: 100 }, { onConflict: "user_id" });
         reportError("Initialize hamster_growth", error);
       }
 
-      const { data: decorRow } = await supabase.from("habitat_points").select("points").eq("id", 1).maybeSingle();
+      const { data: decorRow } = await supabase.from("habitat_points").select("points").maybeSingle();
       if (decorRow) {
         setDecorPoints(Number(decorRow.points) || 0);
       } else {
-        const { error } = await supabase.from("habitat_points").upsert({ id: 1, points: 0 });
+        const { error } = await supabase.from("habitat_points").upsert({ points: 0 }, { onConflict: "user_id" });
         reportError("Initialize habitat_points", error);
       }
 
@@ -764,7 +771,6 @@ export function useHamsterGrowthState() {
       const { data: pending } = await supabase
         .from("wild_encounter_pending")
         .select("hamster_id, stage, form_id, personality, abilities")
-        .eq("id", 1)
         .maybeSingle();
       if (pending?.hamster_id) {
         setWildEncounter({
@@ -825,15 +831,17 @@ export function useHamsterGrowthState() {
   // Call once a wild encounter has been fought (win, loss, or tamed) so a
   // new one can spawn later instead of the same one sitting there forever.
   const clearWildEncounter = useCallback(async () => {
-    const { error } = await supabase.from("wild_encounter_pending").upsert({
-      id: 1,
-      hamster_id: null,
-      stage: null,
-      form_id: null,
-      personality: null,
-      abilities: null,
-      spawned_at: null,
-    });
+    const { error } = await supabase.from("wild_encounter_pending").upsert(
+      {
+        hamster_id: null,
+        stage: null,
+        form_id: null,
+        personality: null,
+        abilities: null,
+        spawned_at: null,
+      },
+      { onConflict: "user_id" }
+    );
     if (reportError("Clear wild encounter", error)) return;
     setWildEncounter(null);
   }, [reportError]);
@@ -907,7 +915,6 @@ export function useHamsterGrowthState() {
       const { data: row } = await supabase
         .from("hamster_growth")
         .select("points, threshold")
-        .eq("id", 1)
         .maybeSingle();
 
       const current = Number(row?.points) || 0;
@@ -918,7 +925,7 @@ export function useHamsterGrowthState() {
       const newPoints = current - amount;
       const { error } = await supabase
         .from("hamster_growth")
-        .upsert({ id: 1, points: newPoints, threshold: Number(row?.threshold) || threshold });
+        .upsert({ points: newPoints, threshold: Number(row?.threshold) || threshold }, { onConflict: "user_id" });
 
       if (reportError("Spend points", error)) {
         return { ok: false, reason: error.message || "Save failed" };
@@ -940,7 +947,6 @@ export function useHamsterGrowthState() {
       const { data: row } = await supabase
         .from("habitat_points")
         .select("points")
-        .eq("id", 1)
         .maybeSingle();
 
       const current = Number(row?.points) || 0;
@@ -951,7 +957,7 @@ export function useHamsterGrowthState() {
       const newDecorPoints = current - amount;
       const { error } = await supabase
         .from("habitat_points")
-        .upsert({ id: 1, points: newDecorPoints });
+        .upsert({ points: newDecorPoints }, { onConflict: "user_id" });
 
       if (reportError("Spend decor points", error)) {
         return { ok: false, reason: error.message || "Save failed" };
