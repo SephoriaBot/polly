@@ -2398,7 +2398,7 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                                 ? <span className="badge badge-pink">Target</span>
                                 : <span style={{ color: "var(--ink-muted)", fontWeight: 700 }}>{i + 1}</span>}
                             </td>
-                            <td style={{ padding: "9px 8px" }}><EditableCell value={d.name} onChange={v => updateDebt(d.id, "name", v)} type="text" /></td>
+                            <td style={{ padding: "9px 8px", minWidth: 130 }}><EditableCell value={d.name} onChange={v => updateDebt(d.id, "name", v)} type="text" /></td>
                             <td style={{ padding: "9px 8px" }}><EditableCell value={d.balance} onChange={v => updateDebt(d.id, "balance", parseFloat(v) || 0)} /></td>
                             <td style={{ padding: "9px 8px", minWidth: 90 }}>
                               <div style={{ height: 6, background: "var(--border)", borderRadius: 99, overflow: "hidden" }}>
