@@ -227,7 +227,7 @@ export default function HamsterStatTraining({ entryId, stage, name, trainingPoin
       )}
       {trainingPoints <= 0 && !message && (
         <div style={{ fontSize: 10, color: "var(--ink-muted)", marginTop: 2 }}>
-          Earn more TP from the same actions that grow your hamsters.
+          Win battles to earn TP for this hamster.
         </div>
       )}
     </div>
