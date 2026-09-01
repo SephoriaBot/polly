@@ -4,18 +4,23 @@
 // it loads and figures out what's new since the last check, then adds
 // growth points for it. Hatches a random hamster when the threshold hits.
 //
-// Evolution: every hamster in the collection that hasn't reached its final
-// form grows toward its next stage (baby -> teen -> final) using the exact
-// same point sources and the exact same threshold as the nest hatch. Old
-// traits/abilities are never removed — evolving only rolls a random
-// teen/final form (1 of 20, independent of the starter and of each other)
-// and appends 1-2 new combat abilities on top.
+// Daily accomplishments (bills, chores, tasks, etc.) now ONLY move the egg
+// toward hatching — see addPoints below. They no longer touch evolution,
+// stat training, or the habitat shop currency; those all come exclusively
+// from winning battles (see awardBattleWin and WildEncounter.tsx).
 //
-// Stat training: every point-earning event also awards 1 training point to
-// EVERY hamster in the collection (unlike evolution points, this includes
-// final-stage hamsters — training is the progression loop that keeps going
-// after evolution caps out). Points are spent permanently via allocateStat,
-// clamped to the stage's cap (see STAT_CAPS in battle.ts).
+// Evolution: no longer point/threshold-based. A hamster is eligible to
+// evolve (baby -> teen -> final) once every one of its trained stats is
+// maxed for its current stage (see isMaxedOut in battle.ts) — i.e. it has
+// to actually win enough fights and spend the stat points on training
+// before it can evolve. evolveHamster() below performs the evolution once
+// eligible. Old traits/abilities are never removed — evolving only rolls a
+// random teen/final form (1 of 20, independent of the starter and of each
+// other) and appends 1-2 new combat abilities on top.
+//
+// Stat training ("TP"): earned only by winning battles, credited to the
+// specific hamster that fought (see awardBattleWin). Spent permanently via
+// allocateStat, clamped to the stage's cap (see STAT_CAPS in battle.ts).
 
 import { useEffect, useState, useCallback, useRef } from "react";
 import { supabase } from "../lib/supabase"; // match your actual client path
@@ -24,7 +29,7 @@ import { rollRandomHamster, rollTeenForm, rollFinalForm } from "./hamsters";
 import type { Hamster, EvolutionStage } from "./hamsters";
 import { rollPersonality, rollAbilities, TEEN_ABILITIES, FINAL_ABILITIES } from "./personalities";
 import type { Personality } from "./personalities";
-import { rollWildHamster, capFor } from "./battle";
+import { rollWildHamster, capFor, isMaxedOut, BATTLE_REWARDS } from "./battle";
 import type { WildHamster, TrainedStats } from "./battle";
 
 // NOTE: this hook does real Supabase reads/writes and hatches/evolves
@@ -113,6 +118,7 @@ export const SOURCE_LABELS: Record<string, { text: string; icon: IconName }> = {
   chore_completed: { text: "Chore done", icon: "house" },
   life_event_item_completed: { text: "Life event step", icon: "clipboard-check" },
   grocery_list_completed: { text: "Grocery list finished", icon: "notebook-pen" },
+  battle_win: { text: "Battle won", icon: "trophy" },
 };
 
 export function useHamsterGrowthState() {
@@ -194,96 +200,11 @@ export function useHamsterGrowthState() {
     );
   }, []);
 
-  // Grows every not-yet-final hamster by the same amount that was just
-  // earned, at the same threshold as the nest. Evolves any that cross it.
-  const growCollection = useCallback(
-    async (amount: number) => {
-      const { data } = await supabase
-        .from("hamster_collection")
-        .select("id, hamster_id, stage, evolution_points, teen_form_id, final_form_id, abilities")
-        .neq("stage", "final");
-
-      let anyEvolved = false;
-
-      for (const row of data || []) {
-        let pts = (Number(row.evolution_points) || 0) + amount;
-        let stage: EvolutionStage = (row.stage as EvolutionStage) || "baby";
-        let teenFormId: string | null = row.teen_form_id;
-        let finalFormId: string | null = row.final_form_id;
-        let abilities: string[] = row.abilities || [];
-        let evolvedThisRow = false;
-        let lastNewAbilities: string[] = [];
-
-        while (pts >= threshold && stage !== "final") {
-          pts -= threshold;
-          if (stage === "baby") {
-            stage = "teen";
-            teenFormId = rollTeenForm().id;
-            lastNewAbilities = rollAbilities(TEEN_ABILITIES, 2, abilities);
-          } else {
-            stage = "final";
-            finalFormId = rollFinalForm().id;
-            lastNewAbilities = rollAbilities(FINAL_ABILITIES, 2, abilities);
-          }
-          abilities = [...abilities, ...lastNewAbilities];
-          evolvedThisRow = true;
-        }
-
-        const { error } = await supabase
-          .from("hamster_collection")
-          .update({
-            stage,
-            evolution_points: pts,
-            teen_form_id: teenFormId,
-            final_form_id: finalFormId,
-            abilities,
-          })
-          .eq("id", row.id);
-
-        // If this write fails, the row's evolution_points stays at its old
-        // value in the DB even though we're about to tell the UI it
-        // evolved. Bail on THIS row only — don't set justEvolved for a
-        // change that didn't actually persist — but keep processing the
-        // rest of the collection.
-        if (reportError(`Evolve hamster #${row.id}`, error)) continue;
-
-        if (evolvedThisRow) {
-          anyEvolved = true;
-          setJustEvolved({
-            entryId: row.id,
-            hamsterId: row.hamster_id,
-            stage,
-            formId: stage === "teen" ? teenFormId! : finalFormId!,
-            newAbilities: lastNewAbilities,
-          });
-        }
-      }
-
-      return anyEvolved;
-    },
-    [threshold, reportError]
-  );
-
-  // Awards training points to EVERY hamster in the collection, including
-  // final-stage ones — unlike evolution points, training doesn't stop once
-  // a hamster is fully evolved, it just means there's less room left under
-  // the stage's cap. Points sit unspent until allocateStat is called.
-  const growTrainingPoints = useCallback(
-    async (amount: number) => {
-      const { data } = await supabase.from("hamster_collection").select("id, training_points");
-      for (const row of data || []) {
-        const tp = (Number(row.training_points) || 0) + amount;
-        const { error } = await supabase.from("hamster_collection").update({ training_points: tp }).eq("id", row.id);
-        reportError(`Training points for hamster #${row.id}`, error);
-      }
-    },
-    [reportError]
-  );
-
   // Rolls a chance to spawn a wild hamster whenever an accomplishment is
-  // earned — same trigger points as nest/evolution growth, so it feels like
-  // part of the same loop instead of a separate grind. Only spawns if you
-  // have at least one teen/final hamster to fight with, and never stacks a
+  // earned — battling is still tied to the same daily-activity trigger, it
+  // just no longer hands out evolution/training/shop points directly.
+  // Spawns as long as you have at least one hatched hamster to fight with
+  // (babies included — see canBattle in battle.ts), and never stacks a
   // second encounter on top of one that's still sitting unresolved.
   const checkWildEncounterSpawn = useCallback(async () => {
     const { data: pending } = await supabase
@@ -310,17 +231,14 @@ export function useHamsterGrowthState() {
       return;
     }
 
-    const { data: fighters } = await supabase
-      .from("hamster_collection")
-      .select("stage")
-      .neq("stage", "baby")
-      .limit(1);
+    const { data: fighters } = await supabase.from("hamster_collection").select("stage").limit(1);
     if (!fighters || fighters.length === 0) return;
 
     if (Math.random() >= WILD_ENCOUNTER_CHANCE) return;
 
-    const { data: allNonBaby } = await supabase.from("hamster_collection").select("stage").neq("stage", "baby");
-    const playerMaxStage: EvolutionStage = (allNonBaby || []).some((r) => r.stage === "final") ? "final" : "teen";
+    const { data: allHamsters } = await supabase.from("hamster_collection").select("stage");
+    const stages = (allHamsters || []).map((r) => r.stage as EvolutionStage);
+    const playerMaxStage: EvolutionStage = stages.includes("final") ? "final" : stages.includes("teen") ? "teen" : "baby";
 
     const wild = rollWildHamster(playerMaxStage);
     const { error } = await supabase.from("wild_encounter_pending").upsert({
@@ -337,9 +255,10 @@ export function useHamsterGrowthState() {
   }, [wildEncounter, reportError]);
 
   // Adds points, hatching as many times as needed if a jump crosses the
-  // threshold more than once, and persists everything. Also grows every
-  // existing hamster toward its next evolution at the same rate, and awards
-  // training points to the whole collection.
+  // threshold more than once, and persists everything. This is now the
+  // ONLY thing daily accomplishments do — no more evolution growth,
+  // training points, or decor currency from here. Those all come from
+  // winning battles (see awardBattleWin below).
   const addPoints = useCallback(
     async (amount: number, source: string, currentPoints: number) => {
       let newPoints = currentPoints + amount;
@@ -382,8 +301,10 @@ export function useHamsterGrowthState() {
         hatched = true;
       }
 
-      const evolved = await growCollection(amount);
-      await growTrainingPoints(amount);
+      // Still rolls a chance at a wild encounter on every accomplishment —
+      // that trigger is about pacing/frequency, not about paying out
+      // points, so it stays here even though the points it used to grant
+      // don't exist anymore.
       await checkWildEncounterSpawn();
 
       const { error: growthSaveError } = await supabase
@@ -397,25 +318,115 @@ export function useHamsterGrowthState() {
       // as if newPoints is safely saved.
       reportError("Save points/threshold", growthSaveError);
 
-      // Credit the separate decor pool by the same amount. Read-then-write
-      // like the growth save above — good enough for this app's traffic,
-      // consistent with how every other balance here is persisted. Kept
-      // independent of the hatch loop above on purpose: unlocking a shelf
-      // item should never be able to affect whether a hamster hatches.
-      const { data: decorRow } = await supabase.from("habitat_points").select("points").eq("id", 1).maybeSingle();
-      const newDecorPoints = (Number(decorRow?.points) || 0) + amount;
-      const { error: decorSaveError } = await supabase
-        .from("habitat_points")
-        .upsert({ id: 1, points: newDecorPoints });
-      if (!reportError("Save decor points", decorSaveError)) {
-        setDecorPoints(newDecorPoints);
-      }
-
-      if (hatched || evolved) await refreshCollection();
+      if (hatched) await refreshCollection();
       await refreshRecentPoints();
       return newPoints;
     },
-    [threshold, growCollection, growTrainingPoints, refreshCollection, refreshRecentPoints, checkWildEncounterSpawn, reportError]
+    [threshold, refreshCollection, refreshRecentPoints, checkWildEncounterSpawn, reportError]
+  );
+
+  // Credits stat points (training_points) to the specific hamster that won
+  // a battle, plus habitat shop currency to the shared decor pool — the
+  // only two places evolution/shop progress can come from now. Losses
+  // never call this. Rewards scale with how tough the opponent was (see
+  // BATTLE_REWARDS in battle.ts).
+  const awardBattleWin = useCallback(
+    async (entryId: number, opponentStage: "teen" | "final") => {
+      const reward = BATTLE_REWARDS[opponentStage];
+
+      const { data: row } = await supabase
+        .from("hamster_collection")
+        .select("training_points")
+        .eq("id", entryId)
+        .maybeSingle();
+      if (!row) return { ok: false as const, statPoints: 0, shopPoints: 0, reason: "Hamster not found" };
+
+      const newTP = (Number(row.training_points) || 0) + reward.statPoints;
+      const { error: tpError } = await supabase
+        .from("hamster_collection")
+        .update({ training_points: newTP })
+        .eq("id", entryId);
+      if (reportError("Award battle stat points", tpError)) {
+        return { ok: false as const, statPoints: 0, shopPoints: 0, reason: tpError.message || "Save failed" };
+      }
+
+      const { data: decorRow } = await supabase.from("habitat_points").select("points").eq("id", 1).maybeSingle();
+      const newDecorPoints = (Number(decorRow?.points) || 0) + reward.shopPoints;
+      const { error: decorError } = await supabase.from("habitat_points").upsert({ id: 1, points: newDecorPoints });
+      if (!reportError("Award battle shop points", decorError)) {
+        setDecorPoints(newDecorPoints);
+      }
+
+      await supabase.from("hamster_points_log").insert({ source: "battle_win", amount: reward.statPoints });
+
+      await refreshCollection();
+      await refreshRecentPoints();
+      return { ok: true as const, statPoints: reward.statPoints, shopPoints: reward.shopPoints };
+    },
+    [refreshCollection, refreshRecentPoints, reportError]
+  );
+
+  // Evolves a hamster (baby -> teen -> final) once every trained stat is
+  // maxed for its current stage. Re-reads fresh from Supabase rather than
+  // trusting local state so a stale `collection` entry can't slip an
+  // ineligible hamster through. Old abilities are kept; evolving rolls a
+  // random new form and appends 1-2 new combat abilities, same as before.
+  const evolveHamster = useCallback(
+    async (entryId: number) => {
+      const { data: row } = await supabase
+        .from("hamster_collection")
+        .select("id, hamster_id, stage, teen_form_id, final_form_id, abilities, trained_hp, trained_attack, trained_defense, trained_speed")
+        .eq("id", entryId)
+        .maybeSingle();
+      if (!row) return { ok: false, reason: "Hamster not found" };
+
+      const stage = (row.stage as EvolutionStage) || "baby";
+      if (stage === "final") return { ok: false, reason: "Already at final form" };
+
+      const trained: TrainedStats = {
+        hp: Number(row.trained_hp) || 0,
+        attack: Number(row.trained_attack) || 0,
+        defense: Number(row.trained_defense) || 0,
+        speed: Number(row.trained_speed) || 0,
+      };
+      if (!isMaxedOut(stage, trained)) {
+        return { ok: false, reason: "Stats aren't maxed out yet — win more battles and train" };
+      }
+
+      let newStage: EvolutionStage;
+      let teenFormId: string | null = row.teen_form_id;
+      let finalFormId: string | null = row.final_form_id;
+      let newAbilities: string[];
+      const existingAbilities: string[] = row.abilities || [];
+
+      if (stage === "baby") {
+        newStage = "teen";
+        teenFormId = rollTeenForm().id;
+        newAbilities = rollAbilities(TEEN_ABILITIES, 2, existingAbilities);
+      } else {
+        newStage = "final";
+        finalFormId = rollFinalForm().id;
+        newAbilities = rollAbilities(FINAL_ABILITIES, 2, existingAbilities);
+      }
+      const abilities = [...existingAbilities, ...newAbilities];
+
+      const { error } = await supabase
+        .from("hamster_collection")
+        .update({ stage: newStage, teen_form_id: teenFormId, final_form_id: finalFormId, abilities })
+        .eq("id", entryId);
+      if (error) return { ok: false, reason: error.message || "Save failed" };
+
+      setJustEvolved({
+        entryId,
+        hamsterId: row.hamster_id,
+        stage: newStage,
+        formId: newStage === "teen" ? teenFormId! : finalFormId!,
+        newAbilities,
+      });
+      await refreshCollection();
+      return { ok: true };
+    },
+    [refreshCollection]
   );
 
   // The core check — call this whenever the app loads. It looks at what's
@@ -973,6 +984,8 @@ export function useHamsterGrowthState() {
     renameHamster,
     allocateStat,
     spendPoints,
+    awardBattleWin,
+    evolveHamster,
     growthError,
     clearGrowthError,
   };
