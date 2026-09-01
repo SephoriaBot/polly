@@ -5,6 +5,8 @@ import Icon, { type IconName } from "../components/Icon";
 import HamsterStatTraining from "./HamsterStatTraining";
 import EmptyState from '../components/EmptyState';
 import emptyHabitat from '../assets/icons/empty-habitat.png';
+import { STAT_CAPS, isMaxedOut } from "./battle";
+import type { TrainedStats } from "./battle";
 
 function imageFor(hamsterId: string) {
   return ALL_HAMSTERS.find((h) => h.id === hamsterId)?.image;
@@ -16,33 +18,70 @@ const STAGE_LABEL: Record<string, { text: string; icon: IconName }> = {
   final: { text: "Final Form", icon: "medal-wings" },
 };
 
-// Same visual language as the nest's egg-crack meter — a simple filling
-// bar, since evolution grows at the exact same rate as hatching.
-function EvolutionMeter({ pts, threshold }: { pts: number; threshold: number }) {
-  const pct = Math.min(100, Math.round((pts / threshold) * 100));
+// Evolution is no longer point/threshold-based — it's unlocked by maxing
+// every trained stat for the current stage (see isMaxedOut in battle.ts).
+// This shows how many of the 4 stats are maxed, and surfaces the Evolve
+// button once all 4 are — so the meter reads as "battle & train more" until
+// it's actually ready, rather than a generic progress bar.
+function EvolutionReadiness({
+  stage,
+  trained,
+  onEvolve,
+  evolving,
+}: {
+  stage: "baby" | "teen";
+  trained: TrainedStats;
+  onEvolve: () => void;
+  evolving: boolean;
+}) {
+  const cap = STAT_CAPS[stage];
+  const statKeys: Array<keyof TrainedStats> = ["hp", "attack", "defense", "speed"];
+  const maxedCount = statKeys.filter((k) => trained[k] >= cap[k]).length;
+  const ready = isMaxedOut(stage, trained);
+
   return (
     <div style={{ marginTop: 6 }}>
       <div style={{ height: 8, background: "var(--border)", borderRadius: 99, overflow: "hidden" }}>
         <div
           style={{
             height: "100%",
-            width: `${pct}%`,
-            background: "var(--pink-dark)",
+            width: `${(maxedCount / 4) * 100}%`,
+            background: ready ? "var(--accent)" : "var(--pink-dark)",
             borderRadius: 99,
             transition: "width 0.4s ease",
           }}
         />
       </div>
       <div style={{ fontSize: 10, color: "var(--ink-muted)", marginTop: 3, textAlign: "center" }}>
-        {pts.toFixed(0)} / {threshold} to next evolution
+        {ready ? "Ready to evolve!" : `${maxedCount}/4 stats maxed — win battles to earn TP`}
       </div>
+      {ready && (
+        <button
+          className="btn-primary"
+          onClick={onEvolve}
+          disabled={evolving}
+          style={{ width: "100%", marginTop: 8, opacity: evolving ? 0.6 : 1 }}
+        >
+          <Icon name="sparkles-cluster" size={14} /> {evolving ? "Evolving..." : "Evolve!"}
+        </button>
+      )}
     </div>
   );
 }
 
 export default function HamsterHabitat() {
-  const { loading, collection, threshold, justEvolved, clearJustEvolved } = useHamsterGrowth();
+  const { loading, collection, justEvolved, clearJustEvolved, evolveHamster } = useHamsterGrowth();
   const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [evolving, setEvolving] = useState(false);
+  const [evolveMessage, setEvolveMessage] = useState<string | null>(null);
+
+  const handleEvolve = async (entryId: number) => {
+    setEvolving(true);
+    setEvolveMessage(null);
+    const result = await evolveHamster(entryId);
+    if (!result.ok && result.reason) setEvolveMessage(result.reason);
+    setEvolving(false);
+  };
 
   useEffect(() => {
     if (justEvolved) {
@@ -111,7 +150,10 @@ gridTemplateColumns: "repeat(auto-fill, minmax(min(80px, 100%), 1fr))",
                 return (
                   <button
                     key={entry.id}
-                    onClick={() => setSelectedId(isSelected ? null : entry.id)}
+                    onClick={() => {
+                      setSelectedId(isSelected ? null : entry.id);
+                      setEvolveMessage(null);
+                    }}
                     style={{
                       display: "flex", flexDirection: "column", alignItems: "center",
                       background: isSelected ? "var(--blush)" : "transparent",
@@ -182,7 +224,21 @@ gridTemplateColumns: "repeat(auto-fill, minmax(min(80px, 100%), 1fr))",
                   </div>
                 )}
 
-                {selected.stage !== "final" && <EvolutionMeter pts={selected.evolutionPoints} threshold={threshold} />}
+                {selected.stage !== "final" && (
+                  <>
+                    <EvolutionReadiness
+                      stage={selected.stage}
+                      trained={selected.trainedStats}
+                      onEvolve={() => handleEvolve(selected.id)}
+                      evolving={evolving}
+                    />
+                    {evolveMessage && (
+                      <div style={{ fontSize: 10, color: "var(--ink-muted)", marginTop: 4, textAlign: "center" }}>
+                        {evolveMessage}
+                      </div>
+                    )}
+                  </>
+                )}
 
                 <HamsterStatTraining
                   entryId={selected.id}
