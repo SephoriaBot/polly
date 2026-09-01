@@ -916,57 +916,64 @@
 
 /* ---------- tokens: light ---------- */
 [data-palette='lucky-stars'][data-theme='light'] {
-  --bg: #FFF9E8;
+  --bg: #FFF9EA;
   --surface: #FFFFFF;
-  --text: #49384F;
+  --text: #514451;
 
-  --primary: #F4C542;
-  --secondary: #69B957;
-  --accent: #E978A5;
-  --mint: #69C7D8;
+  /* Core Lucky Charms colors — softened */
+  --primary: #EFCF72;
+  --secondary: #82B96F;
+  --accent: #D98EAD;
+  --mint: #82C4CF;
 
-  --border: #DDBB5A;
-  --shadow: 0 8px 24px rgba(73, 56, 79, 0.12);
+  --border: #D9C58A;
+  --shadow: 0 8px 24px rgba(81, 68, 81, 0.10);
 
-  --ink: #49384F;
-  --ink-soft: #806D78;
-  --ink-muted: #A18F99;
-  --btn-ink: #49384F;
+  --ink: #514451;
+  --ink-soft: #7E707B;
+  --ink-muted: #A3979F;
+  --btn-ink: #514451;
 
   --white: #FFFFFF;
-  --cream: #FFF9E8;
+  --cream: #FFF9EA;
 
-  --blush: #F9DFEA;
+  --blush: #F5E3EA;
 
-  --green-dark: #4F9C45;
-  --sage: #8ACF76;
-  --sage-dark: #4F9C45;
-  --sage-light: #DDF1D5;
+  /* Green */
+  --green-dark: #67995B;
+  --sage: #9BC68C;
+  --sage-dark: #67995B;
+  --sage-light: #E4F0DF;
 
-  --pink: #E978A5;
-  --pink-dark: #C45783;
-  --pink-light: #F9DFEA;
-  --pink-light-solid: #F9DFEA;
+  /* Pink */
+  --pink: #D98EAD;
+  --pink-dark: #B87391;
+  --pink-light: #F5E3EA;
+  --pink-light-solid: #F5E3EA;
 
-  --sky: #69C7D8;
+  /* Blue */
+  --sky: #82C4CF;
 
-  --gold: #F4C542;
-  --gold-dark: #C49A24;
-  --gold-light: #FFF0B5;
-  --gold-light-solid: #FFF0B5;
+  /* Gold */
+  --gold: #EFCF72;
+  --gold-dark: #B89B4B;
+  --gold-light: #FFF2C9;
+  --gold-light-solid: #FFF2C9;
 
-  --danger: #D96F6F;
-  --danger-bg: #F8E2E2;
+  /* Danger */
+  --danger: #CC7D7D;
+  --danger-bg: #F7E5E5;
 
   --accent-text: #FFFFFF;
   --accent-text-muted: rgba(255,255,255,.78);
 
-  --active-bg: #FFF0B5;
-  --active-text: #80611A;
+  /* Active / informational states */
+  --active-bg: #FFF2C9;
+  --active-text: #78652D;
 
-  --info-card-bg: #FFF0B5;
-  --info-card-border: #E3BD4F;
-  --info-card-text: #66501C;
+  --info-card-bg: #FFF2C9;
+  --info-card-border: #D9BD68;
+  --info-card-text: #66552A;
 }
 
 /* ---------- tokens: dark ---------- */
