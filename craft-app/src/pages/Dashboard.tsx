@@ -242,10 +242,6 @@ export default function Dashboard({ onNavigate }: { onNavigate?: (page: string, 
                           alignItems: 'center', justifyContent: 'center',
                         }}
                       >
-                        {f.completed
-                          ? <Icon name={theme === 'light' ? 'full_sun' : 'full_moon'} size={22} style={{ color: 'var(--pink-dark)' }} />
-                          : <Icon name={theme === 'light' ? 'empty_sun' : 'empty_moon'} size={22} style={{ color: 'var(--border)' }} />
-                        }
                       </button>
                       <div style={{ flex: 1 }}>
                         <div style={{
