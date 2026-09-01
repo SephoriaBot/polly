@@ -15,8 +15,8 @@ export default function PollyPopIn({ page }: { page: string }) {
       role="button"
       aria-label="Dismiss Polly"
     >
-      <PollyBubble message={message} size="small" />
-      <Polly mood={mood} size="small" />
+      <PollyBubble message={message} size="medium" />
+      <Polly mood={mood} size="medium" />
     </div>
   );
 }
