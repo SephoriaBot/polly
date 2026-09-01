@@ -286,7 +286,7 @@ export default function HabitatScene() {
     async function loadTheme() {
       try {
         const [themeRes, unlockedRes] = await Promise.all([
-          supabase.from('habitat_theme').select('decor_keys').eq('id', 1).maybeSingle(),
+          supabase.from('habitat_theme').select('decor_keys').maybeSingle(),
           supabase.from('habitat_unlocked_items').select('item_key'),
         ]);
 
@@ -313,11 +313,13 @@ export default function HabitatScene() {
   }, []);
 
   async function saveTheme(nextDecor: string[]) {
-    await supabase.from('habitat_theme').upsert({
-      id: 1,
-      background_key: 'shelf_empty',
-      decor_keys: nextDecor,
-    });
+    await supabase.from('habitat_theme').upsert(
+      {
+        background_key: 'shelf_empty',
+        decor_keys: nextDecor,
+      },
+      { onConflict: 'user_id' }
+    );
   }
 
   function toggleDecor(key: string) {
