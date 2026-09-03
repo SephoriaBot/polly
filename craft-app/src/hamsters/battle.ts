@@ -18,7 +18,7 @@
 
 import { HAMSTERS, TEEN_FORMS, FINAL_FORMS, rollTeenForm, rollFinalForm } from "./hamsters";
 import type { EvolutionStage } from "./hamsters";
-import { rollPersonality, rollAbilities, TEEN_ABILITIES, FINAL_ABILITIES } from "./personalities";
+import { rollPersonality, rollAbilities, BABY_ABILITIES, TEEN_ABILITIES, FINAL_ABILITIES } from "./personalities";
 import type { Personality } from "./personalities";
 
 export interface BattleStats {
@@ -87,7 +87,7 @@ export function canBattle(_stage: EvolutionStage): boolean {
 // training points (stat points) and habitat shop currency — daily
 // accomplishments only feed the egg. Losses pay out nothing.
 export const BATTLE_REWARDS: Record<EvolutionStage, { statPoints: number; shopPoints: number }> = {
-  baby: { statPoints: 1, shopPoints: 2 },
+  baby: { statPoints: 2, shopPoints: 2 },
   teen: { statPoints: 3, shopPoints: 4 },
   final: { statPoints: 6, shopPoints: 8 },
 };
@@ -161,19 +161,20 @@ export function rollWildHamster(stage: EvolutionStage): WildHamster {
         ? rollTeenForm()
         : { id: "baby", image: base.image };
 
-  const abilityPool =
+    const abilityPool =
     stage === "final"
       ? FINAL_ABILITIES
-      : TEEN_ABILITIES;
+      : stage === "teen"
+        ? TEEN_ABILITIES
+        : BABY_ABILITIES;
 
   const abilityCount = stage === "final"
     ? (Math.random() < 0.5 ? 3 : 2)
-    : 2;
+    : stage === "teen"
+      ? 2
+      : 1;
 
-  const abilities =
-    stage === "baby"
-      ? []
-      : rollAbilities(abilityPool, abilityCount);
+  const abilities = rollAbilities(abilityPool, abilityCount);
 
   const personality = rollPersonality();
 

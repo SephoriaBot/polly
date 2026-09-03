@@ -99,6 +99,15 @@ export const FINAL_ABILITIES: string[] = [
   "Nest of Small Hungers — a hundred tiny mouths answer from beneath the bedding",
 ];
 
+export const BABY_ABILITIES = [
+  "Nibble — a curious, exploratory bite",
+  "Wobble Charge — an unsteady but earnest rush",
+  "Squeak Startle — a surprised little shriek",
+  "Tiny Tumble — an accidental but effective roll",
+  "Little Slap - a charged but very little slap",
+  "Cry - an effective and disorienting move",
+];
+
 
 export function rollAbilities(pool: string[], count: number, exclude: string[] = []): string[] {
   const available = pool.filter((a) => !exclude.includes(a));

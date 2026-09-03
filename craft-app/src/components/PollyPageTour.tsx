@@ -1,12 +1,32 @@
+import { useEffect, useState } from 'react';
 import { Polly } from '../lib';
 import { usePollyPageTour } from '../hooks/usePollyPageTour';
 import { POLLY_TOUR_CONTENT } from '../lib/pollyTour';
 
 export default function PollyPageTour({ page }: { page: string }) {
-  const content = POLLY_TOUR_CONTENT[page];
+  const steps = POLLY_TOUR_CONTENT[page];
   const { showTour, dismissTour } = usePollyPageTour(page);
+  const [stepIndex, setStepIndex] = useState(0);
 
-  if (!content || !showTour) return null;
+  // Reset back to the first step whenever the page changes (or the tour
+  // re-shows), so switching pages never leaves you stranded mid-way
+  // through a previous page's steps.
+  useEffect(() => {
+    setStepIndex(0);
+  }, [page]);
+
+  if (!steps || steps.length === 0 || !showTour) return null;
+
+  const content = steps[stepIndex];
+  const isLastStep = stepIndex === steps.length - 1;
+
+  const handleNext = () => {
+    if (isLastStep) {
+      dismissTour();
+    } else {
+      setStepIndex(i => i + 1);
+    }
+  };
 
   return (
     <div
@@ -33,8 +53,8 @@ export default function PollyPageTour({ page }: { page: string }) {
           <div style={{ fontSize: '0.85rem', color: 'var(--ink-muted)', marginTop: 4, lineHeight: 1.4 }}>
             {content.body}
           </div>
-          <button onClick={dismissTour} className="btn btn-primary btn-sm" style={{ marginTop: 12 }}>
-            Got it!
+          <button onClick={handleNext} className="btn btn-primary btn-sm" style={{ marginTop: 12 }}>
+            {isLastStep ? 'Got it!' : 'Next'}
           </button>
         </div>
       </div>
