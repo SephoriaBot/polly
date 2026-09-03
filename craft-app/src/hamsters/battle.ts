@@ -86,7 +86,8 @@ export function canBattle(_stage: EvolutionStage): boolean {
 // scaled by how tough the opponent was. This is now the ONLY source of
 // training points (stat points) and habitat shop currency — daily
 // accomplishments only feed the egg. Losses pay out nothing.
-export const BATTLE_REWARDS: Record<"teen" | "final", { statPoints: number; shopPoints: number }> = {
+export const BATTLE_REWARDS: Record<EvolutionStage, { statPoints: number; shopPoints: number }> = {
+  baby: { statPoints: 1, shopPoints: 2 },
   teen: { statPoints: 3, shopPoints: 4 },
   final: { statPoints: 6, shopPoints: 8 },
 };
