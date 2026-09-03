@@ -139,7 +139,7 @@ export function abilityShortName(ability: string): string {
 
 export interface WildHamster {
   hamsterId: string; // base portrait id, for flavor only
-  stage: "teen" | "final";
+  stage: EvolutionStage;
   formId: string;
   image: string;
   personality: Personality;
@@ -150,15 +150,30 @@ export interface WildHamster {
 // Odds shift toward "final" as the player's own furthest-evolved hamster
 // climbs, so wild encounters get a little tougher over time without a
 // separate leveling system to maintain.
-export function rollWildHamster(playerMaxStage: EvolutionStage = "baby"): WildHamster {
-  const finalChance = playerMaxStage === "final" ? 0.45 : playerMaxStage === "teen" ? 0.3 : 0.15;
-  const stage: "teen" | "final" = Math.random() < finalChance ? "final" : "teen";
-
+export function rollWildHamster(stage: EvolutionStage): WildHamster {
   const base = HAMSTERS[Math.floor(Math.random() * HAMSTERS.length)];
-  const form = stage === "final" ? rollFinalForm() : rollTeenForm();
-  const abilityPool = stage === "final" ? FINAL_ABILITIES : TEEN_ABILITIES;
-  const abilityCount = stage === "final" ? (Math.random() < 0.5 ? 3 : 2) : 2;
-  const abilities = rollAbilities(abilityPool, abilityCount);
+
+  const form =
+    stage === "final"
+      ? rollFinalForm()
+      : stage === "teen"
+        ? rollTeenForm()
+        : { id: "baby", image: base.image };
+
+  const abilityPool =
+    stage === "final"
+      ? FINAL_ABILITIES
+      : TEEN_ABILITIES;
+
+  const abilityCount = stage === "final"
+    ? (Math.random() < 0.5 ? 3 : 2)
+    : 2;
+
+  const abilities =
+    stage === "baby"
+      ? []
+      : rollAbilities(abilityPool, abilityCount);
+
   const personality = rollPersonality();
 
   return {
