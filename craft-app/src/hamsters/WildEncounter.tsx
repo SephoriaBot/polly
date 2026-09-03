@@ -128,47 +128,40 @@ export default function WildEncounter() {
     [selected]
   );
 
-    const goScout = () => {
-    if (!selected) return;
+const goScout = () => {
+  if (!selected) return;
 
-    setTamed(false);
+  setTamed(false);
+  setPhase("scouting");
 
-    // The wild encounter must always match the evolution stage
-    // of the hamster the player chose to fight with.
-    if (isAutoSpawned) {
-      setWild(rollWildHamster(selected.stage));
-      setPhase("found");
-      return;
-    }
-
-    setPhase("scouting");
-
-    setTimeout(() => {
-      setWild(rollWildHamster(selected.stage));
-      setPhase("found");
-    }, 900);
-  };
+  setTimeout(() => {
+    // Wild hamster is always exactly the same evolution stage
+    // as the hamster selected for battle.
+    setWild(rollWildHamster(selected.stage));
+    setIsAutoSpawned(false);
+    setPhase("found");
+  }, 900);
+};
 
   const startFight = () => {
-    if (!selected || !playerStats || !wild) return;
+  if (!selected || !playerStats || !wild) return;
 
-    // Hard safety check: a fight can never start between
-    // different evolution stages.
-    if (selected.stage !== wild.stage) {
-      setWild(rollWildHamster(selected.stage));
-      return;
-    }
+  // Absolute stage restriction.
+  // A fight cannot begin unless both hamsters are the same evolution stage.
+  if (selected.stage !== wild.stage) return;
 
-    setPlayerHp(playerStats.hp);
-    setOpponentHp(wild.stats.hp);
-    setLog([]);
-    setWinner(null);
-    setPhase("battling");
-    const order: Array<"player" | "opponent"> = rollsFirst(playerStats, wild.stats)
-      ? ["player", "opponent"]
-      : ["opponent", "player"];
-    setRoundQueue(order);
-  };
+  setPlayerHp(playerStats.hp);
+  setOpponentHp(wild.stats.hp);
+  setLog([]);
+  setWinner(null);
+  setPhase("battling");
+
+  const order: Array<"player" | "opponent"> = rollsFirst(playerStats, wild.stats)
+    ? ["player", "opponent"]
+    : ["opponent", "player"];
+
+  setRoundQueue(order);
+};
 
   // Auto-resolves the opponent's move whenever it's next in the queue.
   useEffect(() => {
