@@ -27,7 +27,7 @@ import { supabase } from "../lib/supabase"; // match your actual client path
 import type { IconName } from "../components/Icon";
 import { rollRandomHamster, rollTeenForm, rollFinalForm } from "./hamsters";
 import type { Hamster, EvolutionStage } from "./hamsters";
-import { rollPersonality, rollAbilities, TEEN_ABILITIES, FINAL_ABILITIES } from "./personalities";
+import { rollPersonality, rollAbilities, BABY_ABILITIES, TEEN_ABILITIES, FINAL_ABILITIES } from "./personalities";
 import type { Personality } from "./personalities";
 import { rollWildHamster, capFor, isMaxedOut, BATTLE_REWARDS } from "./battle";
 import type { WildHamster, TrainedStats } from "./battle";
@@ -271,6 +271,7 @@ export function useHamsterGrowthState() {
       while (newPoints >= threshold) {
         const h = rollRandomHamster();
         const personality = rollPersonality();
+        const abilities = rollAbilities(BABY_ABILITIES, 1);
         const pointsBeforeHatch = newPoints;
         newPoints -= threshold;
         const { error: hatchError } = await supabase
@@ -281,7 +282,7 @@ export function useHamsterGrowthState() {
             personality,
             stage: "baby",
             evolution_points: 0,
-            abilities: [],
+            abilities,
             hatched_at: new Date().toISOString(),
             training_points: 0,
             trained_hp: 0,
