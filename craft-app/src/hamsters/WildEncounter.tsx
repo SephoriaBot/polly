@@ -123,33 +123,42 @@ export default function WildEncounter() {
 
   const selected = useMemo(() => fighters.find((f) => f.id === selectedId) || null, [fighters, selectedId]);
 
-  const playerMaxStage: EvolutionStage = useMemo(() => {
-    if (fighters.some((f) => f.stage === "final")) return "final";
-    if (fighters.some((f) => f.stage === "teen")) return "teen";
-    return "baby";
-  }, [fighters]);
-
   const playerStats = useMemo(
     () => (selected ? deriveBattleStats(selected.stage, selected.abilities, selected.trainedStats) : null),
     [selected]
   );
 
-  const goScout = () => {
+    const goScout = () => {
+    if (!selected) return;
+
     setTamed(false);
-    if (isAutoSpawned && wild) {
-      // Already rolled — just move to the reveal, no need to fake a delay.
+
+    // The wild encounter must always match the evolution stage
+    // of the hamster the player chose to fight with.
+    if (isAutoSpawned) {
+      setWild(rollWildHamster(selected.stage));
       setPhase("found");
       return;
     }
+
     setPhase("scouting");
+
     setTimeout(() => {
-      setWild(rollWildHamster(playerMaxStage));
+      setWild(rollWildHamster(selected.stage));
       setPhase("found");
     }, 900);
   };
 
   const startFight = () => {
     if (!selected || !playerStats || !wild) return;
+
+    // Hard safety check: a fight can never start between
+    // different evolution stages.
+    if (selected.stage !== wild.stage) {
+      setWild(rollWildHamster(selected.stage));
+      return;
+    }
+
     setPlayerHp(playerStats.hp);
     setOpponentHp(wild.stats.hp);
     setLog([]);
