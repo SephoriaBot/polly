@@ -164,10 +164,10 @@ function costFor(key: string): number {
 // floor board is cropped out of frame, so its items are anchored near
 // the bottom edge instead.
 const SHELF_BOTTOM: Record<ShelfNum, number> = {
-  1: 81,
-  2: 52,
-  3: 25,
-  4: 0.5,
+  1: 76,
+  2: 51,
+  3: 27,
+  4: 4,
 };
 
 // 4 slots, evenly spaced at 20% intervals (20%–80%) — wider gaps than the
