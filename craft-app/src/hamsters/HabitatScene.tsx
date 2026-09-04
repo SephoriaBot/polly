@@ -162,17 +162,16 @@ function costFor(key: string): number {
 // cabinet frame, 4 compartments edge-to-edge). Shelves 1–3 anchor to the
 // visible plank highlight line below each compartment; shelf 4's own
 // floor board is cropped out of frame, so its items are anchored near
-// the bottom edge instead.
 const SHELF_BOTTOM: Record<ShelfNum, number> = {
-  1: 76,
-  2: 51,
-  3: 27,
-  4: 4,
+  1: 81,
+  2: 52,
+  3: 25,
+  4: 0.5,
 };
 
 // 4 slots, evenly spaced at 20% intervals (20%–80%) — wider gaps than the
 // old 5-slot/15% spacing, which is what was crowding oversized items.
-const SLOT_LEFT = ['20%', '40%', '60%', '80%'];
+const SLOT_LEFT = ['22%', '41%', '59%', '78%'];
 
 // Small deterministic "hand-placed" tilt per item, based on its key, so
 // items don't all sit perfectly flat like stamped stickers.
