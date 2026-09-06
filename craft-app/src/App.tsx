@@ -27,7 +27,7 @@ import Login from './pages/Login';
 import PollyPageTour from './components/PollyPageTour';
 import PollyPopIn from './components/PollyPopIn';
 
-import PageTitleLogo from "../components/PageTitleLogo";
+import PageTitleLogo from "./components/PageTitleLogo";
 
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const Grocery = lazy(() => import('./pages/Grocery'));
