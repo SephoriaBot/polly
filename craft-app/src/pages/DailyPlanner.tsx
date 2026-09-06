@@ -247,10 +247,19 @@ setNewTaskSlot('anytime');
   }
 
 
-  async function deleteTask(id: string) {
-    await supabase.from('daily_tasks').delete().eq('id', id);
-    setTasks(prev => prev.filter(t => t.id !== id));
+ async function deleteTask(id: string) {
+  const task = tasks.find(t => t.id === id);
+
+  // Recurring tasks regenerate from their template — delete the template
+  // too, or it'll just spawn a new instance next time loadAll runs.
+  if (task?.template_id) {
+    await supabase.from('daily_task_templates').delete().eq('id', task.template_id);
+    setTemplates(prev => prev.filter(t => t.id !== task.template_id));
   }
+
+  await supabase.from('daily_tasks').delete().eq('id', id);
+  setTasks(prev => prev.filter(t => t.id !== id));
+}
 
   async function deleteUpcomingTask(id: string) {
     await supabase.from('daily_tasks').delete().eq('id', id);
