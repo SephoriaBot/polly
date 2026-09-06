@@ -1407,7 +1407,7 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
       {showConfetti && <Confetti />}
 
       <div className="page-header">
-        <PageTitleLogo name="wallet" height={28} />
+        <h1><PageTitleLogo name="wallet" height={28} /></h1>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <h2>{VIEW_TITLES[view].icon && <Icon name={VIEW_TITLES[view].icon!} size={20} />} {VIEW_TITLES[view].text}</h2>
           
