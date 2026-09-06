@@ -490,7 +490,7 @@ setNewTaskSlot('anytime');
                           textTransform: 'uppercase', color: 'var(--ink-muted)',
                           marginBottom: 8,
                         }}>
-                          <span>{slot.emoji}</span>
+                          <img src={slot.icon} alt="" style={{ width: 26, height: 26, objectFit: 'contain', flexShrink: 0 }} />
                           <span>{slot.label}</span>
                           <span style={{ fontWeight: 600, opacity: 0.6, textTransform: 'none', letterSpacing: 0 }}>
                             {slotTasks.filter(t => t.done).length}/{slotTasks.length}
@@ -614,8 +614,10 @@ setNewTaskSlot('anytime');
             type="button"
             onClick={() => setNewTaskSlot(slot.key)}
             className={newTaskSlot === slot.key ? 'btn btn-primary btn-sm' : 'btn btn-ghost btn-sm'}
+            style={{ display: 'flex', alignItems: 'center', gap: 5 }}
           >
-            {slot.emoji} {slot.label}
+            <img src={slot.icon} alt="" style={{ width: 16, height: 16, objectFit: 'contain' }} />
+{slot.label}
           </button>
         ))}
       </div>
