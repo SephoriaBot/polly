@@ -1120,9 +1120,10 @@ export default function Grocery({ initialTab }: { initialTab?: 'list' | 'recipes
     <div>
       <div className="page-header">
         <div className="title-row">
+<div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
           <h2><Icon name="title-grocery" size={22} />
           <PageTitleLogo name="groceries" height={28} /></h2>
-          
+          </div>
         </div>
 
         <PageTabs tabs={GROCERY_TABS} active={activeTab} onChange={setActiveTab} />
