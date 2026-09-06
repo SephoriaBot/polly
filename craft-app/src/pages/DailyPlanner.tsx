@@ -426,7 +426,7 @@ setNewTaskSlot('anytime');
         <div style={{ display: 'flex', gap: 8 }}>
           {activeTab === 'tasks' && tasks.length > 0 && (
             <button className="btn btn-ghost" onClick={resetAll}>
-              <Icon name="icon-recur" size={24} /> Reset
+              <Icon name="icon-recur" size={20} /> Reset
             </button>
           )}
         </div>

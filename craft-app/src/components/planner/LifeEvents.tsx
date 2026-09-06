@@ -171,7 +171,7 @@ export default function LifeEvents() {
 
         {!picking ? (
           <button className="btn btn-primary" onClick={() => setPicking(true)} style={{ width: '100%', justifyContent: 'center' }}>
-            <Icon name="icon-plus" size={24} /> Start a life event
+            <Icon name="icon-plus" size={20} /> Start a life event
           </button>
         ) : (
           <TemplatePicker onPick={startEvent} onCancel={() => setPicking(false)} />

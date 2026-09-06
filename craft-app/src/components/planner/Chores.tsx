@@ -199,7 +199,7 @@ export default function Chores() {
                 }}
                 aria-label={i}
               >
-                <Icon name={i} size={13} style={{ color: 'var(--pink-dark)' }} />
+                <Icon name={i} size={22} style={{ color: 'var(--pink-dark)' }} />
               </button>
             ))}
           </div>
