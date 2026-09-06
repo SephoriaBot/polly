@@ -23,6 +23,7 @@ interface DailyTask {
   task_date: string; // YYYY-MM-DD — the day this instance belongs to
   template_id: string | null; // set if this instance was generated from a recurring template
   priority: boolean; // starred — what No Energy Mode reduces the day down to
+  time_of_day: TimeSlot; // which section it shows under
 }
 
 interface DailyTaskTemplate {
@@ -32,10 +33,30 @@ interface DailyTaskTemplate {
   active: boolean;
   created_at: string;
   priority: boolean; // mirrors the starred state so regenerated instances inherit it
+  time_of_day: TimeSlot; // mirrors onto regenerated instances, same idea as priority
 }
 
 
 const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+type TimeSlot = 'morning' | 'afternoon' | 'evening' | 'anytime';
+
+const TIME_SLOTS: { key: TimeSlot; label: string; emoji: string }[] = [
+  { key: 'morning', label: 'Morning', emoji: '☀️' },
+  { key: 'afternoon', label: 'Afternoon', emoji: '🌤️' },
+  { key: 'evening', label: 'Evening', emoji: '🌙' },
+  { key: 'anytime', label: 'Anytime', emoji: '✨' },
+];
+
+function groupBySlot(list: DailyTask[]) {
+  const groups: Record<TimeSlot, DailyTask[]> = {
+    morning: [], afternoon: [], evening: [], anytime: [],
+  };
+  for (const t of list) {
+    groups[(t.time_of_day ?? 'anytime') as TimeSlot].push(t);
+  }
+  return groups;
+}
 
 interface Appointment {
   id: string;
@@ -104,6 +125,7 @@ export default function DailyPlanner({ initialTab }: { initialTab?: 'tasks' | 'a
   const [showAllDoneCelebration, setShowAllDoneCelebration] = useState(false);
   const [repeatMode, setRepeatMode] = useState(false); // false = one-off (date picker), true = recurring (day chips)
   const [newTaskDays, setNewTaskDays] = useState<number[]>([]);
+  const [newTaskSlot, setNewTaskSlot] = useState<TimeSlot>('anytime');
   const [savingTemplate, setSavingTemplate] = useState(false);
   const [showAttended, setShowAttended] = useState(false); // collapsed by default so attended appts don't stack up
   const [activeTab, setActiveTab] = useState<'tasks' | 'appointments' | 'chores' | 'events' | 'goals' | 'notes'>(initialTab ?? 'tasks');
@@ -141,10 +163,10 @@ export default function DailyPlanner({ initialTab }: { initialTab?: 'tasks' | 'a
     );
 
         if (dueTemplates.length > 0) {
-      const { data: inserted } = await supabase
-        .from('daily_tasks')
-        .insert(dueTemplates.map(t => ({ label: t.label, done: false, task_date: today, template_id: t.id, priority: t.priority })))
-        .select();
+  const { data: inserted } = await supabase
+    .from('daily_tasks')
+    .insert(dueTemplates.map(t => ({ label: t.label, done: false, task_date: today, template_id: t.id, priority: t.priority, time_of_day: t.time_of_day })))
+    .select();
       setTasks([...todaysTasks, ...(inserted ?? [])]);
     } else {
       setTasks(todaysTasks);
@@ -161,10 +183,10 @@ export default function DailyPlanner({ initialTab }: { initialTab?: 'tasks' | 'a
     if (!label) return;
     const targetDate = newTaskDate || todayISO();
     const { data } = await supabase
-      .from('daily_tasks')
-      .insert({ label, done: false, task_date: targetDate, template_id: null })
-      .select()
-      .single();
+  .from('daily_tasks')
+  .insert({ label, done: false, task_date: targetDate, template_id: null, time_of_day: newTaskSlot })
+  .select()
+  .single();
     // Only add to today's visible list if it was actually scheduled for
     // today — anything scheduled for a future date shows up in the
     // "Scheduled" list instead, and moves into the main checklist on its day.
@@ -176,8 +198,9 @@ export default function DailyPlanner({ initialTab }: { initialTab?: 'tasks' | 'a
       }
     }
     setNewTask('');
-    setNewTaskDate(todayISO());
-  }
+setNewTaskDate(todayISO());
+setNewTaskSlot('anytime');
+}
 
   async function toggleTask(task: DailyTask, e: React.MouseEvent) {
     const newDone = !task.done;
@@ -257,28 +280,29 @@ export default function DailyPlanner({ initialTab }: { initialTab?: 'tasks' | 'a
     setSavingTemplate(true);
     try {
       const { data, error } = await supabase
-        .from('daily_task_templates')
-        .insert({ label, days_of_week: [...newTaskDays].sort((a, b) => a - b), active: true })
-        .select()
-        .single();
+  .from('daily_task_templates')
+  .insert({ label, days_of_week: [...newTaskDays].sort((a, b) => a - b), active: true, time_of_day: newTaskSlot })
+  .select()
+  .single();
       if (error) throw error;
       setTemplates(prev => [...prev, data]);
 
       // If today matches the new template's days, generate today's instance
       // immediately instead of waiting for the next page load.
             if (data.days_of_week.includes(new Date().getDay())) {
-        const { data: inserted } = await supabase
-          .from('daily_tasks')
-          .insert({ label: data.label, done: false, task_date: todayISO(), template_id: data.id, priority: data.priority })
-          .select()
-          .single();
+       const { data: inserted } = await supabase
+  .from('daily_tasks')
+  .insert({ label: data.label, done: false, task_date: todayISO(), template_id: data.id, priority: data.priority, time_of_day: data.time_of_day })
+  .select()
+  .single();
         if (inserted) setTasks(prev => [...prev, inserted]);
       }
 
 
       setNewTask('');
-      setNewTaskDays([]);
-      setRepeatMode(false);
+setNewTaskDays([]);
+setRepeatMode(false);
+setNewTaskSlot('anytime');
     } catch (e) {
       console.error('failed to add recurring task', e);
     } finally {
@@ -345,6 +369,7 @@ export default function DailyPlanner({ initialTab }: { initialTab?: 'tasks' | 'a
   // Incomplete tasks first, completed tasks sink to the bottom.
   // Array.prototype.sort is stable, so order within each group is preserved.
   const sortedTasks = [...tasks].sort((a, b) => Number(a.done) - Number(b.done) || Number(b.priority) - Number(a.priority));
+  const groupedTasks = groupBySlot(sortedTasks);
 
   return (
     <div>
@@ -447,76 +472,97 @@ export default function DailyPlanner({ initialTab }: { initialTab?: 'tasks' | 'a
         <EmptyState image={emptyPlanner} message="No tasks yet. Add a new or recurring one below to get started." />
     
               ) : (
-                                <p className="daily-tasks-subtitle">Tap a task to mark it done</p>,
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 16 }}>
-                  {sortedTasks.map(task => (
-                    <div
-                      key={task.id}
-                      style={{
-                        display: 'flex', alignItems: 'center', gap: 12,
-                        padding: '16px 18px', borderRadius: 'var(--radius-md)',
-                        background: task.done ? 'var(--blush)' : 'var(--white)',
-                        border: `1.5px solid ${task.done ? 'var(--pink-light)' : 'var(--border)'}`,
-                        opacity: task.done ? 0.55 : 1,
-                      }}
-                    >
-                      <button
-                        onClick={e => toggleTask(task, e)}
-                        aria-label={task.done ? 'Mark not done' : 'Mark done'}
-                        style={{
-                          width: 24, height: 24, flexShrink: 0,
-                          border: 'none', background: 'none', padding: 0,
-                          cursor: 'pointer', display: 'flex',
-                          alignItems: 'center', justifyContent: 'center',
-                        }}
-                      >
-                        <CheckMark completed={task.done} size={22} />
-                      </button>
-
-                      <span style={{
-                        flex: 1, fontSize: '0.92rem', fontWeight: 600,
-                        letterSpacing: '0.01em', lineHeight: 1.4,
-                        color: task.done ? 'var(--ink-muted)' : 'var(--ink)',
-                        textDecoration: task.done ? 'line-through' : 'none',
-                        display: 'flex', alignItems: 'center', gap: 6,
-                      }}>
-                        {task.label}
-                        {task.template_id && (
-                          <button
-                            type="button"
-                            onClick={(e) => { e.stopPropagation(); stopRecurring(task.template_id!); }}
-                            title="Repeats — tap to stop"
-                            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', color: 'var(--ink-muted)', opacity: 0.6, flexShrink: 0 }}
-                          >
-                            <Icon name="icon-recur" size={11} />
-                          </button>
-                        )}
-                      </span>
-
-                      <button
-                        onClick={() => togglePriority(task)}
-                        aria-label={task.priority ? 'Unstar priority' : 'Mark as priority'}
-                        title={task.priority ? 'Priority — shows in No Energy Mode' : 'Mark as priority for No Energy Mode'}
-                        style={{
-                          background: 'none', border: 'none', cursor: 'pointer', padding: 0,
-                          display: 'flex', alignItems: 'center', flexShrink: 0,
-                          fontSize: '1.05rem', lineHeight: 1,
-                          color: task.priority ? 'var(--gold)' : 'var(--border)',
-                        }}
-                      >
-                        {task.priority ? '★' : '☆'}
-                      </button>
-
-                      <button
-                        onClick={() => deleteTask(task.id)}
-                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-muted)', padding: 0, display: 'flex', alignItems: 'center', opacity: 0.4 }}
-                      >
-                        <Icon name="icon-clear" size={18} />
-                      </button>
-                    </div>
-                  ))}
+                                              <>
+                <p className="daily-tasks-subtitle">Tap a task to mark it done</p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 18, marginBottom: 16 }}>
+                  {TIME_SLOTS.map(slot => {
+                    const slotTasks = groupedTasks[slot.key];
+                    if (slotTasks.length === 0) return null;
+                    return (
+                      <div key={slot.key}>
+                        <div style={{
+                          display: 'flex', alignItems: 'center', gap: 6,
+                          fontSize: 11, fontWeight: 800, letterSpacing: '0.06em',
+                          textTransform: 'uppercase', color: 'var(--ink-muted)',
+                          marginBottom: 8,
+                        }}>
+                          <span>{slot.emoji}</span>
+                          <span>{slot.label}</span>
+                          <span style={{ fontWeight: 600, opacity: 0.6, textTransform: 'none', letterSpacing: 0 }}>
+                            {slotTasks.filter(t => t.done).length}/{slotTasks.length}
+                          </span>
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                          {slotTasks.map(task => (
+                            <div
+                              key={task.id}
+                              style={{
+                                display: 'flex', alignItems: 'center', gap: 12,
+                                padding: '16px 18px', borderRadius: 'var(--radius-md)',
+                                background: task.done ? 'var(--blush)' : 'var(--white)',
+                                border: `1.5px solid ${task.done ? 'var(--pink-light)' : 'var(--border)'}`,
+                                opacity: task.done ? 0.55 : 1,
+                              }}
+                            >
+                              <button
+                                onClick={e => toggleTask(task, e)}
+                                aria-label={task.done ? 'Mark not done' : 'Mark done'}
+                                style={{
+                                  width: 24, height: 24, flexShrink: 0,
+                                  border: 'none', background: 'none', padding: 0,
+                                  cursor: 'pointer', display: 'flex',
+                                  alignItems: 'center', justifyContent: 'center',
+                                }}
+                              >
+                                <CheckMark completed={task.done} size={22} />
+                              </button>
+                              <span style={{
+                                flex: 1, fontSize: '0.92rem', fontWeight: 600,
+                                letterSpacing: '0.01em', lineHeight: 1.4,
+                                color: task.done ? 'var(--ink-muted)' : 'var(--ink)',
+                                textDecoration: task.done ? 'line-through' : 'none',
+                                display: 'flex', alignItems: 'center', gap: 6,
+                              }}>
+                                {task.label}
+                                {task.template_id && (
+                                  <button
+                                    type="button"
+                                    onClick={(e) => { e.stopPropagation(); stopRecurring(task.template_id!); }}
+                                    title="Repeats — tap to stop"
+                                    style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', color: 'var(--ink-muted)', opacity: 0.6, flexShrink: 0 }}
+                                  >
+                                    <Icon name="icon-recur" size={11} />
+                                  </button>
+                                )}
+                              </span>
+                              <button
+                                onClick={() => togglePriority(task)}
+                                aria-label={task.priority ? 'Unstar priority' : 'Mark as priority'}
+                                title={task.priority ? 'Priority — shows in No Energy Mode' : 'Mark as priority for No Energy Mode'}
+                                style={{
+                                  background: 'none', border: 'none', cursor: 'pointer', padding: 0,
+                                  display: 'flex', alignItems: 'center', flexShrink: 0,
+                                  fontSize: '1.05rem', lineHeight: 1,
+                                  color: task.priority ? 'var(--gold)' : 'var(--border)',
+                                }}
+                              >
+                                {task.priority ? '★' : '☆'}
+                              </button>
+                              <button
+                                onClick={() => deleteTask(task.id)}
+                                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-muted)', padding: 0, display: 'flex', alignItems: 'center', opacity: 0.4 }}
+                              >
+                                <Icon name="icon-clear" size={18} />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
-              )}
+              </>
+            )}
 
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                 <input
@@ -555,9 +601,22 @@ export default function DailyPlanner({ initialTab }: { initialTab?: 'tasks' | 'a
                 >
                   <Icon name="icon-plus" size={14} />
                 </button>
-              </div>
+                    </div>
 
-              {repeatMode && (
+      <div style={{ display: 'flex', gap: 6, marginTop: 8 }}>
+        {TIME_SLOTS.map(slot => (
+          <button
+            key={slot.key}
+            type="button"
+            onClick={() => setNewTaskSlot(slot.key)}
+            className={newTaskSlot === slot.key ? 'btn btn-primary btn-sm' : 'btn btn-ghost btn-sm'}
+          >
+            {slot.emoji} {slot.label}
+          </button>
+        ))}
+      </div>
+
+      {repeatMode && (
                 <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 8 }}>
                   {DAY_LABELS.map((label, day) => (
                     <button

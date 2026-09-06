@@ -171,7 +171,7 @@ const SHELF_BOTTOM: Record<ShelfNum, number> = {
 
 // 4 slots, evenly spaced at 20% intervals (20%–80%) — wider gaps than the
 // old 5-slot/15% spacing, which is what was crowding oversized items.
-const SLOT_LEFT = ['24%', '43%', '57%', '76%'];
+const SLOT_LEFT = ['25%', '44%', '56%', '75%'];
 
 // Small deterministic "hand-placed" tilt per item, based on its key, so
 // items don't all sit perfectly flat like stamped stickers.
