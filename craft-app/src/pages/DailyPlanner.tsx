@@ -9,6 +9,10 @@ import { useAppointmentNoteMap } from '../hooks/useAppointmentNoteMap';
 import EmptyState from '../components/EmptyState';
 import checklistImg from '../assets/illustrations/checklist.png';
 import celebrationImg from '../assets/illustrations/celebration.png';
+import hamsterAmImg from '../assets/illustrations/hamster-am.png';
+import hamsterAfternoonImg from '../assets/illustrations/hamster-afternoon.png';
+import hamsterPmImg from '../assets/illustrations/hamster-pm.png';
+import hamsterAnytimeImg from '../assets/illustrations/hamster-anytime.png';
 import emptyPlanner from '../assets/icons/empty-planner.png';
 import Icon, { type IconName } from '../components/Icon';
 import PageTabs, { type PageTab } from '../components/PageTabs';
@@ -41,11 +45,11 @@ const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 type TimeSlot = 'morning' | 'afternoon' | 'evening' | 'anytime';
 
-const TIME_SLOTS: { key: TimeSlot; label: string; emoji: string }[] = [
-  { key: 'morning', label: 'Morning', emoji: '☀️' },
-  { key: 'afternoon', label: 'Afternoon', emoji: '🌤️' },
-  { key: 'evening', label: 'Evening', emoji: '🌙' },
-  { key: 'anytime', label: 'Anytime', emoji: '✨' },
+const TIME_SLOTS: { key: TimeSlot; label: string; icon: string }[] = [
+  { key: 'morning', label: 'Morning', icon: hamsterAmImg },
+  { key: 'afternoon', label: 'Afternoon', icon: hamsterAfternoonImg },
+  { key: 'evening', label: 'Evening', icon: hamsterPmImg },
+  { key: 'anytime', label: 'Anytime', icon: hamsterAnytimeImg },
 ];
 
 function groupBySlot(list: DailyTask[]) {
