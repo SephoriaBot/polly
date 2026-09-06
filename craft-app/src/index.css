@@ -1706,6 +1706,8 @@ h1, h2, h3 {
   font-family: 'Fraunces', serif;
   font-weight: 550;
   letter-spacing: -0.25px;
+  display: flex;
+  align-items: center;
 }
 
 h1 {
