@@ -1180,7 +1180,7 @@ export default function Grocery({ initialTab }: { initialTab?: 'list' | 'recipes
                               cursor: 'pointer', display: 'flex', alignItems: 'center',
                             }}
                           >
-                            <Icon name="icon-trash2" size={12} />
+                            <Icon name="icon-trash2" size={24} />
                           </button>
                         )}
                       </div>
@@ -1213,7 +1213,7 @@ export default function Grocery({ initialTab }: { initialTab?: 'list' | 'recipes
             {have.length > 0 && (
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                 <button className="btn btn-ghost" onClick={clearChecked}>
-                  <Icon name="icon-trash2" size={20} /> Clear Checked
+                  <Icon name="icon-trash2" size={24} /> Clear Checked
                 </button>
               </div>
             )}
@@ -1254,7 +1254,7 @@ export default function Grocery({ initialTab }: { initialTab?: 'list' | 'recipes
                               </button>
                               <button onClick={() => removeItem(item.id)}
                                 style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-muted)', opacity: 0.4, display: 'flex', flexShrink: 0 }}>
-                                <Icon name="icon-trash2" size={13} />
+                                <Icon name="icon-trash2" size={24} />
                               </button>
                             </div>
 
@@ -1270,7 +1270,7 @@ export default function Grocery({ initialTab }: { initialTab?: 'list' | 'recipes
                                         <span style={{ flex: 1, color: 'var(--pink-dark)', fontWeight: 600 }}>${p.price.toFixed(2)}</span>
                                         <span style={{ flex: 1, color: isStale(p.updated_at) ? 'var(--gold-dark)' : 'var(--ink-muted)', fontSize: '0.66rem' }}>{p.updated_at}</span>
                                         <button onClick={() => deletePrice(p.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-muted)', opacity: 0.5 }}>
-                                          <Icon name="icon-clear" size={17} />
+                                          <Icon name="icon-clear" size={24} />
                                         </button>
                                       </div>
                                     ))}
@@ -1295,7 +1295,7 @@ export default function Grocery({ initialTab }: { initialTab?: 'list' | 'recipes
                                     style={{ flex: 1, fontSize: '0.78rem', padding: '6px 8px' }}
                                   />
                                   <button className="btn btn-primary" style={{ padding: '6px 10px' }} onClick={() => addPrice(item.name)}>
-                                    <Icon name="icon-plus" size={13} />
+                                    <Icon name="icon-plus" size={24} />
                                   </button>
                                 </div>
                               </div>
@@ -1315,7 +1315,7 @@ export default function Grocery({ initialTab }: { initialTab?: 'list' | 'recipes
                       onKeyDown={e => e.key === 'Enter' && addItem()}
                       style={{ flex: 1, minWidth: 0 }} />
                     <button className="btn btn-primary" style={{ padding: '8px 12px' }} onClick={addItem}>
-                      <Icon name="icon-plus" size={20} />
+                      <Icon name="icon-plus" size={24} />
                     </button>
                   </div>
                 </div>
@@ -1339,7 +1339,7 @@ export default function Grocery({ initialTab }: { initialTab?: 'list' | 'recipes
                           <span style={{ fontSize: '0.72rem', color: 'var(--ink-muted)', whiteSpace: 'nowrap' }}>{item.qty}</span>
                           <button onClick={() => removeItem(item.id)}
                             style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-muted)', opacity: 0.4, display: 'flex', flexShrink: 0 }}>
-                            <Icon name="icon-trash2" size={13} />
+                            <Icon name="icon-trash2" size={24} />
                           </button>
                         </div>
                       ))
@@ -1361,7 +1361,7 @@ export default function Grocery({ initialTab }: { initialTab?: 'list' | 'recipes
                     ? <><Icon name={BASICS_PRESETS[basicsPreset].icon} size={18} /> {BASICS_PRESETS[basicsPreset].label}</>
                     : 'Build a Basics List'}
                 </h3>
-                <button className="close-btn" onClick={() => setShowBasicsModal(false)}><Icon name="icon-clear" size={20} /></button>
+                <button className="close-btn" onClick={() => setShowBasicsModal(false)}><Icon name="icon-clear" size={24} /></button>
               </div>
               <div className="modal-body">
                 {!basicsPreset ? (
@@ -1464,16 +1464,16 @@ export default function Grocery({ initialTab }: { initialTab?: 'list' | 'recipes
 
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
               <button className="btn btn-primary" onClick={buildSmartCart} disabled={loadingCart}>
-                <Icon name="shopping-cart" size={20} /> {loadingCart ? 'Building…' : 'Build Smart Cart'}
+                <Icon name="shopping-cart" size={24} /> {loadingCart ? 'Building…' : 'Build Smart Cart'}
               </button>
               <button className="btn btn-secondary" onClick={refreshSmartCart} disabled={loadingCart}>
-                <Icon name="icon-recur" size={20} /> Refresh
+                <Icon name="icon-recur" size={24} /> Refresh
               </button>
               <button className="btn btn-ghost" onClick={clearSmartCart} disabled={loadingCart}>
-                <Icon name="icon-clear" size={20} /> Clear
+                <Icon name="icon-clear" size={24} /> Clear
               </button>
               <button className="btn btn-primary" onClick={openDoorDashList} disabled={!needs.length}>
-                <Icon name="icon-externallink" size={20} /> Copy List &amp; Open DoorDash
+                <Icon name="icon-externallink" size={24} /> Copy List &amp; Open DoorDash
               </button>
             </div>
 
@@ -1493,7 +1493,7 @@ export default function Grocery({ initialTab }: { initialTab?: 'list' | 'recipes
                 Build Smart Cart for {location}
               </button>
               <button className="btn btn-ghost" onClick={() => setShowStoreSettings(s => !s)}>
-                <Icon name="icon-slidershorizontal" size={14} /> Stores ({Object.keys(allowedStores).length})
+                <Icon name="icon-slidershorizontal" size={24} /> Stores ({Object.keys(allowedStores).length})
               </button>
               <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.74rem', color: 'var(--ink-muted)', cursor: 'pointer' }}>
                 <input type="checkbox" checked={deepSearch} onChange={toggleDeepSearch} />
@@ -1520,7 +1520,7 @@ export default function Grocery({ initialTab }: { initialTab?: 'list' | 'recipes
                         <div style={{ fontSize: 10, color: 'var(--ink-muted)' }}>matches: {aliases.join(', ')}</div>
                       </div>
                       <button className="btn btn-ghost" onClick={() => removeAllowedStore(name)}>
-                        <Icon name="icon-trash2" size={14} />
+                        <Icon name="icon-trash2" size={24} />
                       </button>
                     </div>
                   ))}
@@ -1783,7 +1783,7 @@ export default function Grocery({ initialTab }: { initialTab?: 'list' | 'recipes
                         baseline ${w.baseline_price.toFixed(2)} · now ${w.current_price.toFixed(2)}
                       </span>
                       <button onClick={() => deleteWatch(w.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-muted)', opacity: 0.5, display: 'flex', flexShrink: 0 }}>
-                        <Icon name="icon-trash2" size={12} />
+                        <Icon name="icon-trash2" size={24} />
                       </button>
                     </div>
                   ))}

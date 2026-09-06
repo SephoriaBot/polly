@@ -426,7 +426,7 @@ setNewTaskSlot('anytime');
         <div style={{ display: 'flex', gap: 8 }}>
           {activeTab === 'tasks' && tasks.length > 0 && (
             <button className="btn btn-ghost" onClick={resetAll}>
-              <Icon name="icon-recur" size={14} /> Reset
+              <Icon name="icon-recur" size={24} /> Reset
             </button>
           )}
         </div>
@@ -535,7 +535,7 @@ setNewTaskSlot('anytime');
                                     title="Repeats — tap to stop"
                                     style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', color: 'var(--ink-muted)', opacity: 0.6, flexShrink: 0 }}
                                   >
-                                    <Icon name="icon-recur" size={11} />
+                                    <Icon name="icon-recur" size={24} />
                                   </button>
                                 )}
                               </span>
@@ -556,7 +556,7 @@ setNewTaskSlot('anytime');
                                 onClick={() => deleteTask(task.id)}
                                 style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-muted)', padding: 0, display: 'flex', alignItems: 'center', opacity: 0.4 }}
                               >
-                                <Icon name="icon-clear" size={18} />
+                                <Icon name="icon-clear" size={24} />
                               </button>
                             </div>
                           ))}
@@ -603,7 +603,7 @@ setNewTaskSlot('anytime');
                   onClick={addTask}
                   disabled={savingTemplate || !newTask.trim() || (repeatMode && newTaskDays.length === 0)}
                 >
-                  <Icon name="icon-plus" size={14} />
+                  <Icon name="icon-plus" size={24} />
                 </button>
                     </div>
 
@@ -656,7 +656,7 @@ setNewTaskSlot('anytime');
                           onClick={() => deleteUpcomingTask(task.id)}
                           style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-muted)', padding: 0, display: 'flex', alignItems: 'center', opacity: 0.4 }}
                         >
-                          <Icon name="icon-clear" size={17} />
+                          <Icon name="icon-clear" size={24} />
                         </button>
                       </div>
                     ))}
@@ -719,7 +719,7 @@ setNewTaskSlot('anytime');
                               flexShrink: 0,
                             }}
                           >
-                            <Icon name="icon-notebook" size={13} style={{ color: 'var(--pink-dark)' }} />
+                            <Icon name="icon-notebook" size={24} style={{ color: 'var(--pink-dark)' }} />
                           </button>
                         )}
                         <button
@@ -727,14 +727,14 @@ setNewTaskSlot('anytime');
                           title="Mark attended (+10 hamster points)"
                           style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-muted)', padding: 0, display: 'flex', alignItems: 'center', opacity: 0.6 }}
                         >
-                          <Icon name="clipboard-check" size={13} />
+                          <Icon name="clipboard-check" size={24} />
                         </button>
                         <button
                           onClick={() => deleteAppointment(appt.id)}
                           title="Cancel"
                           style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-muted)', padding: 0, display: 'flex', alignItems: 'center', opacity: 0.4 }}
                         >
-                          <Icon name="icon-clear" size={18} />
+                          <Icon name="icon-clear" size={24} />
                         </button>
                       </div>
                     );
@@ -782,7 +782,7 @@ setNewTaskSlot('anytime');
                             title="Remove"
                             style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-muted)', padding: 0, display: 'flex', alignItems: 'center', opacity: 0.4, flexShrink: 0 }}
                           >
-                            <Icon name="icon-clear" size={17} />
+                            <Icon name="icon-clear" size={24} />
                           </button>
                         </div>
                       ))}
@@ -813,7 +813,7 @@ setNewTaskSlot('anytime');
                     style={{ padding: '10px 14px' }}
                     onClick={addAppointment}
                   >
-                    <Icon name="icon-plus" size={14} />
+                    <Icon name="icon-plus" size={24} />
                   </button>
                 </div>
               </div>

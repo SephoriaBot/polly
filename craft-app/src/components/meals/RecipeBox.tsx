@@ -515,7 +515,7 @@ function DiscoverTab({ onOpenRecipe, onSaved }: { onOpenRecipe: (id: number) => 
                       ? <><Icon name="flowerfull" size={12} /> Saved!</>
                       : savingId === m.id
                         ? <><Icon name="icon-loader2" size={12} style={{ animation: 'recipeBoxSpin 0.7s linear infinite' }} /> Saving...</>
-                        : <><Icon name="icon-plus" size={12} /> Save to Recipe Box</>}
+                        : <><Icon name="icon-plus" size={24} /> Save to Recipe Box</>}
                   </button>
                 </div>
               </div>
@@ -580,7 +580,7 @@ function SavedTab({
                 onClick={() => onDelete(m.id)}
                 title="Delete meal"
               >
-                <Icon name="icon-trash2" size={12} />
+                <Icon name="icon-trash2" size={24} />
               </button>
             </div>
             <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
@@ -608,7 +608,7 @@ function SavedTab({
                   ? <><Icon name="flowerfull" size={12} /> Added!</>
                   : addingId === m.id
                     ? <><Icon name="icon-loader2" size={12} style={{ animation: 'recipeBoxSpin 0.7s linear infinite' }} /> Adding...</>
-                    : <><Icon name="icon-plus" size={12} /> Add to List</>}
+                    : <><Icon name="icon-plus" size={24} /> Add to List</>}
               </button>
             </div>
             <button

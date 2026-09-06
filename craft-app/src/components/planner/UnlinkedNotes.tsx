@@ -172,7 +172,7 @@ export default function UnlinkedNotes({
                       aria-label="Delete"
                       type="button"
                     >
-                      <Icon name="icon-clear" size={20} />
+                      <Icon name="icon-clear" size={24} />
                     </button>
                   </div>
                 ))}
@@ -193,7 +193,7 @@ export default function UnlinkedNotes({
                         aria-label="Mark not covered"
                         type="button"
                       >
-                        <Icon name="clipboard-check" size={18} className={notesStyles.coveredIcon} />
+                        <Icon name="clipboard-check" size={24} className={notesStyles.coveredIcon} />
                       </button>
                       <span className={`${notesStyles.itemText} ${notesStyles.strikethrough}`}>
                         {item.content}
@@ -204,7 +204,7 @@ export default function UnlinkedNotes({
                         aria-label="Delete"
                         type="button"
                       >
-                        <Icon name="icon-clear" size={20} />
+                        <Icon name="icon-clear" size={24} />
                       </button>
                     </div>
                     <div className={notesStyles.resolutionRow}>
@@ -260,7 +260,7 @@ export default function UnlinkedNotes({
                       aria-label="Delete"
                       type="button"
                     >
-                      <Icon name="icon-clear" size={20} />
+                      <Icon name="icon-clear" size={24} />
                     </button>
                   </div>
                 ))}

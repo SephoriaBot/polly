@@ -1572,7 +1572,7 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                       <div>
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
                           <div style={{ fontSize: 13, fontWeight: 700, color: "var(--ink)" }}>{activeList.name}</div>
-                          <button className="btn btn-ghost btn-sm" onClick={() => deleteList(activeList.id)}><Icon name="icon-trash2" size={13} /></button>
+                          <button className="btn btn-ghost btn-sm" onClick={() => deleteList(activeList.id)}><Icon name="icon-trash2" size={24} /></button>
                         </div>
 
                         <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 10 }}>
@@ -1593,7 +1593,7 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                               <div style={{ flex: 1, fontSize: 13, color: item.done ? "var(--ink-muted)" : "var(--ink)", textDecoration: item.done ? "line-through" : "none" }}>
                                 {item.label}
                               </div>
-                              <button className="btn btn-ghost btn-sm" onClick={() => deleteListItem(item.id)}><Icon name="icon-trash2" size={12} /></button>
+                              <button className="btn btn-ghost btn-sm" onClick={() => deleteListItem(item.id)}><Icon name="icon-trash2" size={24} /></button>
                             </div>
                           ))}
                           {activeListItems.length === 0 && (
@@ -2284,7 +2284,7 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                             : <span className="badge badge-pink">{b.days}d away</span>}
                             </td>
                         <td style={{ padding: "9px 8px", textAlign: "center" }}>
-                          <button className="btn btn-ghost btn-sm" onClick={() => removeBill(b.id)}><Icon name="icon-trash2" size={13} /></button>
+                          <button className="btn btn-ghost btn-sm" onClick={() => removeBill(b.id)}><Icon name="icon-trash2" size={24} /></button>
                         </td>
                       </tr>
                       );
@@ -2420,7 +2420,7 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                             <td style={{ padding: "9px 8px" }}><EditableCell value={d.apr} onChange={v => updateDebt(d.id, "apr", parseFloat(v) || 0)} /></td>
                             <td style={{ padding: "9px 8px" }}><EditableCell value={d.min_payment} onChange={v => updateDebt(d.id, "min_payment", parseFloat(v) || 0)} /></td>
                             <td style={{ padding: "9px 8px" }}>
-                              <button className="btn btn-ghost btn-sm" onClick={() => removeDebt(d.id)}><Icon name="icon-trash2" size={13} /></button>
+                              <button className="btn btn-ghost btn-sm" onClick={() => removeDebt(d.id)}><Icon name="icon-trash2" size={24} /></button>
                             </td>
                           </tr>
                         );
@@ -2461,7 +2461,7 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                           <td style={{ padding: "9px 8px", color: "var(--green-dark)", fontWeight: 800 }}>$0.00</td>
                           <td style={{ padding: "9px 8px" }}><span className="badge badge-green">PAID OFF</span></td>
                           <td style={{ padding: "9px 8px", textAlign: "center" }}>
-                            <button className="btn btn-ghost btn-sm" onClick={() => removeDebt(d.id)}><Icon name="icon-trash2" size={13} /></button>
+                            <button className="btn btn-ghost btn-sm" onClick={() => removeDebt(d.id)}><Icon name="icon-trash2" size={24} /></button>
                           </td>
                         </tr>
                       ))}
@@ -2500,7 +2500,7 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                             <td style={{ padding: "9px 8px" }}><EditableCell value={d.apr} onChange={v => updateDebt(d.id, "apr", parseFloat(v) || 0)} /></td>
                             <td style={{ padding: "9px 8px", color: "var(--ink-muted)", fontSize: 11 }}>Not targeted until active debts clear</td>
                             <td style={{ padding: "9px 8px", textAlign: "center" }}>
-                              <button className="btn btn-ghost btn-sm" onClick={() => removeDebt(d.id)}><Icon name="icon-trash2" size={13} /></button>
+                              <button className="btn btn-ghost btn-sm" onClick={() => removeDebt(d.id)}><Icon name="icon-trash2" size={24} /></button>
                             </td>
                           </tr>
                         ))}

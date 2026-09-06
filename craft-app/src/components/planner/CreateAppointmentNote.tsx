@@ -144,7 +144,7 @@ export default function CreateAppointmentNote({ onCreate, onCancel }: CreateAppo
               className={styles.typeChipAdd}
               onClick={() => setShowCustomInput((s) => !s)}
             >
-              <Icon name="icon-plus" size={13} /> other
+              <Icon name="icon-plus" size={24} /> other
             </button>
           </div>
 

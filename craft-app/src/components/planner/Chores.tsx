@@ -137,7 +137,7 @@ export default function Chores() {
                       style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-muted)', padding: 0, opacity: 0.4, flexShrink: 0 }}
                       aria-label="Remove chore"
                     >
-                      <Icon name="icon-clear" size={18} />
+                      <Icon name="icon-clear" size={24} />
                     </button>
                   </div>
                   <ChoreCleaningPlan choreId={chore.id} choreName={chore.name} isOpen={isOpen} />
@@ -162,7 +162,7 @@ export default function Chores() {
               onClick={addChore}
               disabled={adding || !name.trim()}
             >
-              <Icon name="icon-plus" size={14} />
+              <Icon name="icon-plus" size={24} />
             </button>
           </div>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>

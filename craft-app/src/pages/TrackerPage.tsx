@@ -193,10 +193,10 @@ export default function TrackerPage({ initialTab }: { initialTab?: TabType } = {
           className={activeType === 'overlap' ? 'btn-primary' : 'btn-secondary'}
           onClick={() => setActiveType('overlap')}
         >
-          <Icon name="calculator" size={16} /> Overlap
+          <Icon name="calculator" size={24} /> Overlap
         </button>
         <button className="btn-secondary" onClick={() => setShowAddTracker((s) => !s)}>
-          <Icon name="icon-plus" size={16} /> Add Tracker
+          <Icon name="icon-plus" size={24} /> Add Tracker
         </button>
       </div>
 
@@ -227,7 +227,7 @@ export default function TrackerPage({ initialTab }: { initialTab?: TabType } = {
       {activeCustomTracker && (
         <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8 }}>
           <button className="btn-secondary" onClick={() => handleRemoveTracker(activeCustomTracker)}>
-            <Icon name="icon-trash2" size={14} /> Remove "{activeCustomTracker.label}"
+            <Icon name="icon-trash2" size={24} /> Remove "{activeCustomTracker.label}"
           </button>
         </div>
       )}

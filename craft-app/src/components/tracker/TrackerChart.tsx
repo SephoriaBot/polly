@@ -119,7 +119,7 @@ export default function TrackerChart({ type, startDate, endDate, refreshKey, lab
                 </span>
               ) : (
                 <button className="btn-secondary" onClick={() => setDeletingDate(log.log_date)}>
-                  <Icon name="icon-trash2" size={16} />
+                  <Icon name="icon-trash2" size={24} />
                 </button>
               )}
             </div>

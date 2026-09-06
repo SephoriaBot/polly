@@ -68,7 +68,7 @@ export default function AppointmentNotes({
       {carryOverItems.length > 0 && (
         <section className={`${styles.section} ${styles.carryOverSection}`}>
           <div className={styles.sectionHeader}>
-            <Icon name="icon-recur" size={14} />
+            <Icon name="icon-recur" size={24} />
             <span>Still open from last time</span>
           </div>
           {carryOverItems.map((item) => (
@@ -108,7 +108,7 @@ export default function AppointmentNotes({
               aria-label="Delete"
               type="button"
             >
-              <Icon name="icon-clear" size={20} />
+              <Icon name="icon-clear" size={24} />
             </button>
           </div>
         ))}
@@ -122,7 +122,7 @@ export default function AppointmentNotes({
             placeholder="Add something to bring up…"
           />
           <button className={styles.addButton} onClick={handleAddBringUp} aria-label="Add" type="button">
-            <Icon name="icon-plus" size={18} />
+            <Icon name="icon-plus" size={24} />
           </button>
         </div>
       </section>
@@ -142,7 +142,7 @@ export default function AppointmentNotes({
                   aria-label="Mark not covered"
                   type="button"
                 >
-                  <Icon name="clipboard-check" size={20} className={styles.coveredIcon} />
+                  <Icon name="clipboard-check" size={24} className={styles.coveredIcon} />
                 </button>
                 <span className={`${styles.itemText} ${styles.strikethrough}`}>{item.content}</span>
                 <button
@@ -151,7 +151,7 @@ export default function AppointmentNotes({
                   aria-label="Delete"
                   type="button"
                 >
-                  <Icon name="icon-clear" size={20} />
+                  <Icon name="icon-clear" size={24} />
                 </button>
               </div>
 
@@ -208,7 +208,7 @@ export default function AppointmentNotes({
               aria-label="Delete"
               type="button"
             >
-              <Icon name="icon-clear" size={20} />
+              <Icon name="icon-clear" size={24} />
             </button>
           </div>
         ))}
@@ -222,7 +222,7 @@ export default function AppointmentNotes({
             placeholder="Add homework…"
           />
           <button className={styles.addButton} onClick={handleAddHomework} aria-label="Add homework" type="button">
-            <Icon name="icon-plus" size={18} />
+            <Icon name="icon-plus" size={24} />
           </button>
         </div>
       </section>

@@ -88,17 +88,17 @@ export default function AppointmentNotesPanel({
       <div className={styles.actionRow}>
         {inSubView ? (
           <button type="button" className={styles.backTopButton} onClick={goBack}>
-            <Icon name="icon-arrowleft" size={14} /> Back
+            <Icon name="icon-arrowleft" size={24} /> Back
           </button>
         ) : (
           <>
             <button type="button" className={styles.newButton} onClick={() => setCreating(true)}>
-              <Icon name="icon-plus" size={14} /> New note
+              <Icon name="icon-plus" size={24} /> New note
             </button>
 
             {!unlinked.loading && unlinked.items.length > 0 && (
               <button type="button" className={styles.unlinkedButton} onClick={openUnlinked}>
-                <Icon name="icon-archive" size={14} /> Unlinked notes ({unlinked.items.length})
+                <Icon name="icon-archive" size={24} /> Unlinked notes ({unlinked.items.length})
               </button>
             )}
           </>

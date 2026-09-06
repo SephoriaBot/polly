@@ -95,7 +95,7 @@ export default function HamsterNest() {
             }}
           >
             <Icon name="icon-recur"
-              size={13}
+              size={24}
               color="var(--pink-dark)"
               style={refreshing ? { animation: "hamsterRefreshSpin 0.8s linear infinite" } : undefined}
             />

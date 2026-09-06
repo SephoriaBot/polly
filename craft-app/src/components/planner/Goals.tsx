@@ -394,7 +394,7 @@ export default function Goals() {
 
         {!creating ? (
           <button className="btn btn-primary" onClick={() => setCreating(true)} style={{ width: '100%', justifyContent: 'center' }}>
-            <Icon name="icon-plus" size={14} /> Set a goal
+            <Icon name="icon-plus" size={24} /> Set a goal
           </button>
         ) : (
           <GoalCreator onCreate={createGoal} onCancel={() => setCreating(false)} />
