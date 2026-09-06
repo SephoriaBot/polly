@@ -12,7 +12,7 @@ const icons = {
 
 type IconName = keyof typeof icons;
 
-export function PageTitleLogo({ name, height = 32 }: { name: IconName; height?: number }) {
+export default function PageTitleLogo({ name, height = 32 }: { name: IconName; height?: number }) {
   const [theme, setTheme] = useState<"light" | "dark">(
     (document.documentElement.getAttribute("data-theme") as "light" | "dark") || "light"
   );
