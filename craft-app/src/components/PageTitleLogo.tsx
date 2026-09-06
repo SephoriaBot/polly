@@ -30,7 +30,7 @@ export default function PageTitleLogo({ name, height = 32 }: { name: IconName; h
     <img
       src={icons[name][theme]}
       alt={name}
-      style={{ height, width: "auto", display: "block" }}
+      style={{ height, width: "auto", display: "flex" }}
     />
   );
 }
