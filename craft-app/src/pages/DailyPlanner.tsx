@@ -18,6 +18,7 @@ import Icon, { type IconName } from '../components/Icon';
 import PageTabs, { type PageTab } from '../components/PageTabs';
 import { useTheme } from '../context/ThemeContext';
 import CheckMark from '../components/CheckMark';
+import PageTitleLogo from "../components/PageTitleLogo";
 
 interface DailyTask {
   id: string;
@@ -422,7 +423,10 @@ setNewTaskSlot('anytime');
       <div className="page-header">
         <div>
           <div className="title-row">
-            <h2><Icon name="title-planner" size={22} />Planner</h2>
+            <h2>
+              <Icon name="title-planner" size={22} />
+            <PageTitleLogo name="planner" height={28} />
+            </h2>
            
           </div>
         </div>

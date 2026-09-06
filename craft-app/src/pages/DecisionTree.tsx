@@ -5,7 +5,7 @@ import Icon from '../components/Icon';
 import EmptyState from '../components/EmptyState';
 import emptyDecision from '../assets/icons/empty-decisions.png';
 import QuickDecide from '../components/decisions/QuickDecide';
-
+import PageTitleLogo from "../components/PageTitleLogo";
 
 
 type NodeType = 'root' | 'choice' | 'outcome';
@@ -711,7 +711,8 @@ const DecisionPage: FC = () => {
   return (
     <div style={styles.page}>
       <div className="title-row" style={{ marginBottom: 12 }}>
-        <h2 style={styles.pageTitle}><Icon name="title-decisions" size={22} />Decisions</h2>
+        <h2 style={styles.pageTitle}><Icon name="title-decisions" size={22} />
+        <PageTitleLogo name="decisions" height={28} /></h2>
         
       </div>
 

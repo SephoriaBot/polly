@@ -12,6 +12,7 @@ import type { TrackerType, PeriodValue, CustomTrackerDef } from '../types/tracke
 import { getTrackerLogsInRange, listCustomTrackers, addCustomTracker, removeCustomTracker } from '../lib/trackerApi';
 import { getMoonPhase, MOON_ICON_BY_PHASE, type MoonPhase } from '../lib/almanac';
 import StitchDivider from '../components/StitchDivider';
+import PageTitleLogo from "../components/PageTitleLogo";
 
 function todayISO() {
   return new Date().toISOString().slice(0, 10);
@@ -133,7 +134,8 @@ export default function TrackerPage({ initialTab }: { initialTab?: TabType } = {
     <div>
       <div className="page-header">
         <div className="title-row">
-          <h2><Icon name="title-tracker" size={22} />Tracker</h2>
+          <h2><Icon name="title-tracker" size={22} />
+          <PageTitleLogo name="tracker" height={28} /></h2>
           
         </div>
       </div>

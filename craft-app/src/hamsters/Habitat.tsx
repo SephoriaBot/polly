@@ -4,6 +4,7 @@ import HamsterHabitat from "../hamsters/HamsterHabitat";
 import WildEncounter from "../hamsters/WildEncounter";
 import HabitatScene from "../hamsters/HabitatScene";
 import PageTabs, { type PageTab } from "../components/PageTabs";
+import PageTitleLogo from "../components/PageTitleLogo";
 
 // HamsterGrowthProvider now wraps the whole app in App.tsx (so the growth
 // check runs on every load and WildEncounterAlert can pop up from any
@@ -25,7 +26,7 @@ export default function Habitat({ initialTab }: { initialTab?: HabitatTab }) {
     <div>
       <div className="page-header">
         <div className="title-row">
-          <h1>Habitat</h1>
+          <h1><PageTitleLogo name="habitat" height={28} /></h1>
          
         </div>
       </div>

@@ -9,6 +9,7 @@ import emptyWallet from '../assets/icons/empty-wallet.png';
 import EmptyState from '../components/EmptyState';
 import StitchDivider from '../components/StitchDivider';
 import CheckMark from '../components/CheckMark';
+import PageTitleLogo from "../components/PageTitleLogo";
 
 interface Debt {
   id: number;
@@ -1388,7 +1389,7 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
   };
 
     const VIEW_TITLES: Record<typeof view, { text: string; icon?: IconName }> = {
-    home: { text: "Wallet", icon: "title-wallet" },
+    home: { text: "Overview", icon: "title-wallet" },
     calendar: { text: "Money Calendar", icon: "calendar" },
     bills: { text: "Bills", icon: "house" },
     debts: { text: "Debts", icon: "calculator-hearts" },
@@ -1406,6 +1407,7 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
       {showConfetti && <Confetti />}
 
       <div className="page-header">
+        <PageTitleLogo name="wallet" height={28} />
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <h2>{VIEW_TITLES[view].icon && <Icon name={VIEW_TITLES[view].icon!} size={20} />} {VIEW_TITLES[view].text}</h2>
           

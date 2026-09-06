@@ -12,6 +12,7 @@ import PageTabs, { type PageTab } from '../components/PageTabs';
 import { useHamsterGrowth } from '../hamsters/HamsterGrowthContext';
 import StitchDivider from '../components/StitchDivider';
 import CheckMark from '../components/CheckMark';
+import PageTitleLogo from "../components/PageTitleLogo";
 
 interface GroceryList { id: string; name: string; created_at: string }
 
@@ -1119,7 +1120,8 @@ export default function Grocery({ initialTab }: { initialTab?: 'list' | 'recipes
     <div>
       <div className="page-header">
         <div className="title-row">
-          <h2><Icon name="title-grocery" size={22} />Grocery</h2>
+          <h2><Icon name="title-grocery" size={22} />
+          <PageTitleLogo name="groceries" height={28} /></h2>
           
         </div>
 
