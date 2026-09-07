@@ -1408,12 +1408,14 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
 
       <div className="page-header">
         <h1><PageTitleLogo name="wallet" height={28} /></h1>
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+         {savedMsg && <span className="badge badge-green">Saved!</span>}
+      </div>
+
+   <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <h2>{VIEW_TITLES[view].icon && <Icon name={VIEW_TITLES[view].icon!} size={20} />} {VIEW_TITLES[view].text}</h2>
           
         </div>
-        {savedMsg && <span className="badge badge-green">Saved!</span>}
-      </div>
+    
 
       <PageTabs
         tabs={WALLET_TABS}
