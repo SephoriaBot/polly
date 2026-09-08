@@ -336,7 +336,7 @@ export default function Goals() {
                                     opacity: isBreakingDown ? 0.5 : 1,
                                   }}
                                 >
-                                  <Icon name="icon-listchecks" size={14} />
+                                  <Icon name="icon-chevrondown" size={20} />
                                 </button>
                               )}
                             </div>
