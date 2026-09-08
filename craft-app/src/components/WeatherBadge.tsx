@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import sunnyImg from '../assets/illustrations/sunny.png';
-import clearNightImg from '../assets/illustrations/clear_night.png';
+import sunnyImg from '../assets/illustrations/hamster-am.png';
+import clearNightImg from '../assets/illustrations/hamster-pm.png';
 import rainyImg from '../assets/illustrations/rainy.png';
 import stormyImg from '../assets/illustrations/stormy.png';
 import coldSnowyScarfImg from '../assets/illustrations/cold_snowy_scarf.png';
