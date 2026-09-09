@@ -1,24 +1,28 @@
 // battle.ts
-// Wild hamster encounters + turn-based battle resolution. Fully self-
-// contained — reuses the existing rolling functions from hamsters.ts and
-// personalities.ts, and adds no new dependencies or tables to those files.
+// Wild creature encounters + turn-based battle resolution, now
+// species-aware. Growth math, stat caps, and battle resolution are
+// identical across hamster/noodle/dragon — only which abilities get
+// rolled differs, via abilityPoolFor(species, stage) from personalities.ts.
 //
 // Stat philosophy: abilities already exist as flavor-text strings with no
 // numeric attributes attached, and adding a whole new "ability stats" table
-// would mean hand-tuning 30 entries. Instead each ability's stat bonus is
-// derived deterministically from a hash of its own text — same ability
-// always contributes the same attack/defense/speed bump, no extra schema
-// needed, and the bonus can't be seen/gamed since it's just a hash.
+// would mean hand-tuning every entry across three species. Instead each
+// ability's stat bonus is derived deterministically from a hash of its own
+// text — same ability always contributes the same attack/defense/speed
+// bump, no extra schema needed, and the bonus can't be seen/gamed since
+// it's just a hash. This applies unchanged regardless of species.
 //
-// Stat training: on top of ability-derived stats, each hamster can have
+// Stat training: on top of ability-derived stats, each creature can have
 // permanent trained bonuses spent from training points earned the same way
 // as evolution points. Caps rise with evolution stage (see STAT_CAPS) so a
-// maxed-out baby can't out-stat a final-stage hamster by hoarding points —
-// it just means less room to spend until it evolves.
+// maxed-out baby can't out-stat a final-stage creature by hoarding points —
+// it just means less room to spend until it evolves. Caps are shared
+// across species; nothing here favors one species' stat ceiling over
+// another's.
 
-import { HAMSTERS, TEEN_FORMS, FINAL_FORMS, rollTeenForm, rollFinalForm } from "./hamsters";
-import type { EvolutionStage } from "./hamsters";
-import { rollPersonality, rollAbilities, BABY_ABILITIES, TEEN_ABILITIES, FINAL_ABILITIES } from "./personalities";
+import { HAMSTERS, ROSTER_BY_SPECIES, TEEN_FORMS_BY_SPECIES, FINAL_FORMS_BY_SPECIES, rollTeenForm, rollFinalForm } from "./creatures";
+import type { EvolutionStage, Species } from "./creatures";
+import { rollPersonality, rollAbilities, abilityPoolFor } from "./personalities";
 import type { Personality } from "./personalities";
 
 export interface BattleStats {
@@ -39,6 +43,7 @@ export const EMPTY_TRAINED_STATS: TrainedStats = { hp: 0, attack: 0, defense: 0,
 
 // Caps per evolution stage. HP gets a bigger cap than the other three since
 // base HP is already much larger (25/55/95) than base attack/defense/speed.
+// Shared across every species.
 export const STAT_CAPS: Record<EvolutionStage, TrainedStats> = {
   baby: { hp: 20, attack: 10, defense: 10, speed: 10 },
   teen: { hp: 50, attack: 25, defense: 25, speed: 25 },
@@ -67,6 +72,9 @@ function abilityBonus(ability: string): { atk: number; def: number; spd: number 
   };
 }
 
+// Shared base stats per stage — species differ in flavor/abilities, not in
+// raw stat curve, per your call that they all use the same growth/stat
+// logic.
 const BASE_STATS: Record<EvolutionStage, BattleStats> = {
   baby: { hp: 25, attack: 3, defense: 3, speed: 3 },
   teen: { hp: 55, attack: 9, defense: 7, speed: 7 },
@@ -76,26 +84,20 @@ const BASE_STATS: Record<EvolutionStage, BattleStats> = {
 // Every stage can battle now, babies included — battling is how a baby
 // earns the stat points it needs to evolve in the first place, so gating
 // it behind "not a baby" would make evolution impossible to bootstrap.
-// Kept as a function (rather than inlining `true` at call sites) so a
-// future stage-based restriction has one place to change.
 export function canBattle(_stage: EvolutionStage): boolean {
   return true;
 }
 
 // Stat points and shop currency awarded for winning a wild encounter,
-// scaled by how tough the opponent was. This is now the ONLY source of
-// training points (stat points) and habitat shop currency — daily
-// accomplishments only feed the egg. Losses pay out nothing.
+// scaled by how tough the opponent was. Shared across species.
 export const BATTLE_REWARDS: Record<EvolutionStage, { statPoints: number; shopPoints: number }> = {
   baby: { statPoints: 2, shopPoints: 2 },
   teen: { statPoints: 3, shopPoints: 4 },
   final: { statPoints: 6, shopPoints: 8 },
 };
 
-// A hamster is ready to evolve once every trained stat is maxed out for
-// its current stage — i.e. it's fought and trained enough to hit the
-// ceiling battle.ts already enforces via STAT_CAPS. Final-stage hamsters
-// have nowhere further to go.
+// A creature is ready to evolve once every trained stat is maxed out for
+// its current stage. Final-stage creatures have nowhere further to go.
 export function isMaxedOut(stage: EvolutionStage, trained: TrainedStats): boolean {
   if (stage === "final") return false;
   const cap = STAT_CAPS[stage];
@@ -103,9 +105,10 @@ export function isMaxedOut(stage: EvolutionStage, trained: TrainedStats): boolea
 }
 
 // trained defaults to EMPTY_TRAINED_STATS so every existing call site that
-// doesn't pass trained stats (wild hamsters, anything untrained) still
+// doesn't pass trained stats (wild creatures, anything untrained) still
 // works exactly as before. Trained bonuses are clamped to the stage's cap
 // here too, as a defensive backstop on top of the cap check at spend-time.
+// Species doesn't affect the math — only which abilities get passed in.
 export function deriveBattleStats(
   stage: EvolutionStage,
   abilities: string[],
@@ -136,10 +139,11 @@ export function abilityShortName(ability: string): string {
   return ability.split("—")[0].trim();
 }
 
-// --- Wild hamster encounters ----------------------------------------------
+// --- Wild creature encounters ----------------------------------------------
 
-export interface WildHamster {
-  hamsterId: string; // base portrait id, for flavor only
+export interface WildCreature {
+  creatureId: string; // base portrait id, for flavor only
+  species: Species;
   stage: EvolutionStage;
   formId: string;
   image: string;
@@ -148,25 +152,27 @@ export interface WildHamster {
   stats: BattleStats;
 }
 
-// Odds shift toward "final" as the player's own furthest-evolved hamster
+// Backward-compatible alias for old imports.
+export type WildHamster = WildCreature;
+
+// Odds shift toward "final" as the player's own furthest-evolved creature
 // climbs, so wild encounters get a little tougher over time without a
-// separate leveling system to maintain.
-export function rollWildHamster(stage: EvolutionStage): WildHamster {
-  const base = HAMSTERS[Math.floor(Math.random() * HAMSTERS.length)];
+// separate leveling system to maintain. Species defaults to a uniform
+// random pick across all three when not specified, so wild encounters draw
+// from the whole roster rather than always being hamsters.
+export function rollWildCreature(stage: EvolutionStage, species?: Species): WildCreature {
+  const chosenSpecies: Species = species ?? (["hamster", "noodle", "dragon"] as Species[])[Math.floor(Math.random() * 3)];
+  const roster = ROSTER_BY_SPECIES[chosenSpecies];
+  const base = roster[Math.floor(Math.random() * roster.length)];
 
   const form =
     stage === "final"
-      ? rollFinalForm()
+      ? rollFinalForm(chosenSpecies)
       : stage === "teen"
-        ? rollTeenForm()
-        : { id: "baby", image: base.image };
+        ? rollTeenForm(chosenSpecies)
+        : { id: "baby", species: chosenSpecies, image: base.image };
 
-    const abilityPool =
-    stage === "final"
-      ? FINAL_ABILITIES
-      : stage === "teen"
-        ? TEEN_ABILITIES
-        : BABY_ABILITIES;
+  const abilityPool = abilityPoolFor(chosenSpecies, stage);
 
   const abilityCount = stage === "final"
     ? (Math.random() < 0.5 ? 3 : 2)
@@ -179,7 +185,8 @@ export function rollWildHamster(stage: EvolutionStage): WildHamster {
   const personality = rollPersonality();
 
   return {
-    hamsterId: base.id,
+    creatureId: base.id,
+    species: chosenSpecies,
     stage,
     formId: form.id,
     image: form.image,
@@ -189,18 +196,30 @@ export function rollWildHamster(stage: EvolutionStage): WildHamster {
   };
 }
 
+// Backward-compatible alias — always rolls a hamster, matching the old
+// hamster-only behavior for any call site that hasn't been updated yet.
+export function rollWildHamster(stage: EvolutionStage): WildCreature {
+  return rollWildCreature(stage, "hamster");
+}
+
 // A wild encounter persisted to wild_encounter_pending only stores the raw
-// fields (id, stage, form, personality, abilities) — image and stats are
-// derived, not stored, so they're recomputed here when loading it back in.
-export function hydrateWildHamster(w: WildHamster): WildHamster {
-  const forms = w.stage === "final" ? FINAL_FORMS : TEEN_FORMS;
+// fields (id, species, stage, form, personality, abilities) — image and
+// stats are derived, not stored, so they're recomputed here when loading
+// it back in. species defaults to "hamster" for rows written before the
+// species column existed.
+export function hydrateWildCreature(w: WildCreature): WildCreature {
+  const species = w.species || "hamster";
+  const forms = w.stage === "final" ? FINAL_FORMS_BY_SPECIES[species] : TEEN_FORMS_BY_SPECIES[species];
   const form = forms.find((f) => f.id === w.formId);
   return {
     ...w,
+    species,
     image: form?.image || w.image,
     stats: deriveBattleStats(w.stage, w.abilities),
   };
 }
+
+export const hydrateWildHamster = hydrateWildCreature;
 
 // --- Battle resolution ------------------------------------------------------
 
@@ -270,23 +289,17 @@ export function resolveBattle(
 // --- Interactive move-by-move combat ----------------------------------------
 //
 // resolveBattle() above simulates a whole fight in one shot with randomly
-// picked moves on both sides — there's no player decision in it, so a loss
-// only ever comes from raw stat/RNG bad luck, not from choosing badly. The
-// functions below let the UI ask the player which ability to use each turn,
-// and make that choice actually matter: every ability has its own hidden
-// power/accuracy trade-off (big hits are less likely to land), so "always
-// pick the flashiest move" is a real way to lose.
+// picked moves on both sides. The functions below let the UI ask the
+// player which ability to use each turn, and make that choice actually
+// matter: every ability has its own hidden power/accuracy trade-off (big
+// hits are less likely to land), so "always pick the flashiest move" is a
+// real way to lose. Identical across species.
 
 export interface MoveStats {
   power: number; // damage multiplier applied to attack stat
   accuracy: number; // 0-100, chance the move connects at all
 }
 
-// Deterministic per-ability, same trick as abilityBonus (hash of the text)
-// but salted differently so a move's power/accuracy can't be reverse-
-// guessed from its stat bonus. Every ability trades something: the
-// highest-power moves land in the 65-75% accuracy range, the safest moves
-// cap out around 1.0x power, so there's no single "always correct" pick.
 export function moveStats(ability: string): MoveStats {
   const h = hashString("move::" + ability);
   const power = Math.round((0.7 + ((h % 9) / 10)) * 100) / 100; // 0.70 - 1.50
@@ -294,9 +307,6 @@ export function moveStats(ability: string): MoveStats {
   return { power, accuracy };
 }
 
-// Loose flavor label so the fighter screen can hint at a move's risk
-// profile without printing raw numbers (keeps it a gut-feel choice, not a
-// spreadsheet).
 export function moveFlavor(ability: string): string {
   const { power, accuracy } = moveStats(ability);
   if (power >= 1.25) return accuracy >= 80 ? "Strong" : "Strong, risky";
@@ -313,10 +323,6 @@ export interface AttackOutcome {
   hpAfter: number;
 }
 
-// Resolves one single attack (one ability, one side) against the
-// defender's current HP. Call this once per move instead of simulating the
-// whole fight — the caller decides whose turn it is and which ability they
-// used.
 export function resolveAttack(
   side: "player" | "opponent",
   ability: string,
@@ -338,9 +344,6 @@ export function resolveAttack(
   return { side, move, hit: true, damage, hpAfter };
 }
 
-// Simple opponent "AI": mostly picks whichever of its abilities has the
-// best expected value (power * accuracy), but goes off-script sometimes so
-// it's not perfectly readable turn to turn.
 export function pickOpponentMove(abilities: string[]): string {
   if (abilities.length === 0) return "Nibble";
   if (Math.random() < 0.25) {
@@ -359,9 +362,6 @@ export function pickOpponentMove(abilities: string[]): string {
   return best;
 }
 
-// Speed decides who acts first each round, same formula as resolveBattle's
-// one-shot version, just callable per-round instead of once for the whole
-// fight.
 export function rollsFirst(sideStats: BattleStats, otherStats: BattleStats): boolean {
   return sideStats.speed + Math.random() * 2 >= otherStats.speed + Math.random() * 2;
 }
