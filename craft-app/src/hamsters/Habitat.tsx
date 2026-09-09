@@ -41,7 +41,7 @@ export default function Habitat({ initialTab }: { initialTab?: HabitatTab }) {
 
       {activeTab === 'nest' && (
         <section>
-          <div className="section-label">Hamster Nest</div>
+          <div className="section-label">Creature Nest</div>
           <HamsterNest />
         </section>
       )}
