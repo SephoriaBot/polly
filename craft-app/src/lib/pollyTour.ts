@@ -47,7 +47,7 @@ export const POLLY_TOUR_CONTENT: Record<string, PollyTourStep[]> = {
   habitat: [
     {
     title: "Habitat",
-    body: "This is my home! Decorate my shelf with items you collect on your journey and make yourself comfortable. As you complete your tasks, you will hatch more hamsters to fill this space with. Be careful though, there are wild hamsters!",
+    body: "This is my home! Decorate my shelf with items you collect on your journey and make yourself comfortable. As you complete your tasks, you will hatch more creatures — hamsters, noodles, and dragons — to fill this space with. Be careful though, there are wild ones out there too!",
   },
 ],
 };

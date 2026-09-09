@@ -112,11 +112,11 @@ export default function HamsterNest() {
       ? hamsterHatchRibbon
       : justHatched.image
   }
-  alt={hatchStage === "hamster" ? "a new hamster hatched" : "the egg is hatching"}      style={{ width: 96, height: 96, objectFit: "contain", animation: "hatchPop 0.7s ease" }}
+  alt={hatchStage === "hamster" ? "a new creature hatched" : "the egg is hatching"}      style={{ width: 96, height: 96, objectFit: "contain", animation: "hatchPop 0.7s ease" }}
     />
     <div style={{ fontSize: 14, fontWeight: 800, color: "var(--pink-dark)", marginTop: 6 }}>
       {hatchStage === "hamster"
-  ? <>A new hamster hatched! <Icon name="sparkles-cluster" size={16} /></>
+  ? <>A new creature hatched! <Icon name="sparkles-cluster" size={16} /></>
   : "Something's happening..."}
     </div>
   </div>

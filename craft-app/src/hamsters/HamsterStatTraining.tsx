@@ -8,7 +8,7 @@ import { useState } from "react";
 import Icon from "../components/Icon";
 import { STAT_CAPS } from "./battle";
 import type { TrainedStats } from "./battle";
-import type { EvolutionStage } from "./hamsters";
+import type { EvolutionStage } from "./creatures";
 import { useHamsterGrowth } from "./HamsterGrowthContext";
 
 interface HamsterStatTrainingProps {
@@ -170,7 +170,7 @@ export default function HamsterStatTraining({ entryId, stage, name, trainingPoin
               color: name ? "var(--ink)" : "var(--ink-muted)",
             }}
           >
-            {name || "Name this hamster"} <Icon name="notepad-pencil" size={13} />
+            {name || "Name this creature"} <Icon name="notepad-pencil" size={13} />
           </button>
         )}
       </div>
@@ -227,7 +227,7 @@ export default function HamsterStatTraining({ entryId, stage, name, trainingPoin
       )}
       {trainingPoints <= 0 && !message && (
         <div style={{ fontSize: 10, color: "var(--ink-muted)", marginTop: 2 }}>
-          Win battles to earn TP for this hamster.
+          Win battles to earn TP for this creature.
         </div>
       )}
     </div>

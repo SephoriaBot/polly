@@ -1,12 +1,15 @@
 // WildEncounter.tsx
-// Phase 1 of hamster combat: fight procedurally-rolled wild hamsters using
-// your own teen/final hamsters. Fully self-contained — does its own
-// Supabase reads/writes, doesn't touch useHamsterGrowth.ts or any other
-// hamster file. Requires the hamster_battle_log table (see migration).
+// Phase 1 of creature combat: fight procedurally-rolled wild creatures
+// (hamster, noodle, or dragon — species rolls independently of your own
+// fighter's species) using your own teen/final creatures. Fully
+// self-contained — does its own Supabase reads/writes, doesn't touch
+// useHamsterGrowth.ts or any other file. Requires the hamster_battle_log
+// table (see migration) — table name kept as-is, now with an
+// opponent_species column alongside the original fields.
 //
 // Combat is move-by-move: each round, whichever side is faster acts first
 // (opponent's move auto-resolves), then the player picks one of their
-// hamster's abilities. Every ability has a hidden power/accuracy trade-off
+// creature's abilities. Every ability has a hidden power/accuracy trade-off
 // (see moveStats in battle.ts) — always throwing the flashiest move is a
 // real way to lose, since the biggest hits are also the least likely to
 // land. There is no auto-resolve-the-whole-fight path anymore; the outcome
@@ -15,29 +18,30 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { supabase } from "../lib/supabase"; // match your actual client path
 import Icon from "../components/Icon";
-import { HAMSTERS, imageForForm } from "./hamsters";
-import type { EvolutionStage } from "./hamsters";
+import { allBabiesFor, imageForForm, SPECIES_LABELS } from "./creatures";
+import type { EvolutionStage, Species } from "./creatures";
 import { useHamsterGrowth } from "./HamsterGrowthContext";
 import { BATTLE_REWARDS } from "./battle";
 import {
   canBattle,
   deriveBattleStats,
-  rollWildHamster,
-  hydrateWildHamster,
+  rollWildCreature,
+  hydrateWildCreature,
   abilityShortName,
   moveFlavor,
   resolveAttack,
   pickOpponentMove,
   rollsFirst,
 } from "./battle";
-import type { WildHamster, AttackOutcome, TrainedStats } from "./battle";
+import type { WildCreature, AttackOutcome, TrainedStats } from "./battle";
 import EmptyState from '../components/EmptyState';
 import emptyHabitat from '../assets/icons/empty-habitat.png';
 
 
 interface FighterEntry {
   id: number;
-  hamsterId: string;
+  creatureId: string;
+  species: Species;
   name: string | null;
   stage: EvolutionStage;
   abilities: string[];
@@ -63,7 +67,7 @@ export default function WildEncounter() {
   const [fighters, setFighters] = useState<FighterEntry[]>([]);
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [phase, setPhase] = useState<Phase>("pick");
-  const [wild, setWild] = useState<WildHamster | null>(null);
+  const [wild, setWild] = useState<WildCreature | null>(null);
   const [isAutoSpawned, setIsAutoSpawned] = useState(false);
   const [winner, setWinner] = useState<"player" | "opponent" | null>(null);
   const [tamed, setTamed] = useState(false);
@@ -76,12 +80,12 @@ export default function WildEncounter() {
   const [busy, setBusy] = useState(false); // true while an auto/animated move is resolving
   const opponentActingRef = useRef(false);
 
-  // A wild hamster spawned automatically from an accomplishment (see
+  // A wild creature spawned automatically from an accomplishment (see
   // useHamsterGrowth.ts) shows up here immediately instead of requiring the
   // manual "go find one" button.
   useEffect(() => {
     if (wildEncounter && phase === "pick" && !wild) {
-      setWild(hydrateWildHamster(wildEncounter));
+      setWild(hydrateWildCreature(wildEncounter));
       setIsAutoSpawned(true);
     }
   }, [wildEncounter, phase, wild]);
@@ -90,16 +94,18 @@ export default function WildEncounter() {
     setLoading(true);
     const { data } = await supabase
       .from("hamster_collection")
-      .select("id, hamster_id, name, stage, teen_form_id, final_form_id, abilities, trained_hp, trained_attack, trained_defense, trained_speed")
+      .select("id, hamster_id, species, name, stage, teen_form_id, final_form_id, abilities, trained_hp, trained_attack, trained_defense, trained_speed")
       .order("hatched_at", { ascending: false });
 
     const entries: FighterEntry[] = (data || []).map((r) => {
-      const base = HAMSTERS.find((h) => h.id === r.hamster_id);
+      const species = (r.species as Species) || "hamster";
+      const base = allBabiesFor(species).find((h) => h.id === r.hamster_id);
       const baseImage = base?.image || "";
-      const image = imageForForm(r.stage as EvolutionStage, r.teen_form_id, r.final_form_id, baseImage);
+      const image = imageForForm(species, r.stage as EvolutionStage, r.teen_form_id, r.final_form_id, baseImage);
       return {
         id: r.id,
-        hamsterId: r.hamster_id,
+        creatureId: r.hamster_id,
+        species,
         name: r.name ?? null,
         stage: r.stage as EvolutionStage,
         abilities: r.abilities || [],
@@ -135,9 +141,10 @@ const goScout = () => {
   setPhase("scouting");
 
   setTimeout(() => {
-    // Wild hamster is always exactly the same evolution stage
-    // as the hamster selected for battle.
-    setWild(rollWildHamster(selected.stage));
+    // Wild creature is always exactly the same evolution stage as the
+    // creature selected for battle, but its species rolls independently —
+    // any of the three can show up regardless of who you're fighting with.
+    setWild(rollWildCreature(selected.stage));
     setIsAutoSpawned(false);
     setPhase("found");
   }, 900);
@@ -147,7 +154,7 @@ const goScout = () => {
   if (!selected || !playerStats || !wild) return;
 
   // Absolute stage restriction.
-  // A fight cannot begin unless both hamsters are the same evolution stage.
+  // A fight cannot begin unless both creatures are the same evolution stage.
   if (selected.stage !== wild.stage) return;
 
   setPlayerHp(playerStats.hp);
@@ -228,7 +235,8 @@ const goScout = () => {
       if (!selected || !wild || !winner) return;
       await supabase.from("hamster_battle_log").insert({
         player_hamster_entry_id: selected.id,
-        opponent_hamster_id: wild.hamsterId,
+        opponent_hamster_id: wild.creatureId,
+        opponent_species: wild.species,
         opponent_stage: wild.stage,
         opponent_form_id: wild.formId,
         opponent_personality: wild.personality,
@@ -257,7 +265,8 @@ const goScout = () => {
   const tame = async () => {
     if (!wild) return;
     await supabase.from("hamster_collection").insert({
-      hamster_id: wild.hamsterId,
+      hamster_id: wild.creatureId,
+      species: wild.species,
       source: "wild_tame",
       personality: wild.personality,
       stage: wild.stage,
@@ -307,7 +316,7 @@ const goScout = () => {
         </div>
 
         {fighters.length === 0 ? (
-        <EmptyState image={emptyHabitat} message="No hamsters hatched yet — hit the threshold to get your first one." />
+        <EmptyState image={emptyHabitat} message="No creatures hatched yet — hit the threshold to get your first one." />
 ) : (
           <>
             {(phase === "pick" || phase === "scouting" || phase === "found") && (
@@ -327,7 +336,7 @@ const goScout = () => {
                         cursor: phase === "pick" ? "pointer" : "default",
                       }}
                     >
-                      <img src={f.image} alt={f.hamsterId} style={{ width: 48, height: 48, objectFit: "contain" }} />
+                      <img src={f.image} alt={f.creatureId} style={{ width: 48, height: 48, objectFit: "contain" }} />
                     </button>
                   ))}
                 </div>
@@ -349,7 +358,7 @@ const goScout = () => {
                 }}
               >
                 <Icon name="hamster-wild" size={18} />
-                A wild hamster appeared while you were busy!
+                A wild {wild ? SPECIES_LABELS[wild.species].toLowerCase() : "creature"} appeared while you were busy!
               </div>
             )}
 
@@ -361,7 +370,7 @@ const goScout = () => {
                 style={{ width: "100%", opacity: selected ? 1 : 0.5 }}
               >
                 <Icon name="lightning" size={14} />{" "}
-                {isAutoSpawned ? "Face it!" : "Go find a wild hamster"}
+                {isAutoSpawned ? "Face it!" : "Go find a wild creature"}
               </button>
             )}
 
@@ -375,8 +384,8 @@ const goScout = () => {
               <div style={{ marginTop: 8 }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
                   <div style={{ flex: 1, textAlign: "center" }}>
-                    <img src={selected.image} alt="your hamster" style={{ width: 64, height: 64, objectFit: "contain" }} />
-                    <div style={{ fontSize: 11, fontWeight: 700, color: "var(--pink-dark)" }}>{selected.name || "Your hamster"}</div>
+                    <img src={selected.image} alt="your creature" style={{ width: 64, height: 64, objectFit: "contain" }} />
+                    <div style={{ fontSize: 11, fontWeight: 700, color: "var(--pink-dark)" }}>{selected.name || `Your ${SPECIES_LABELS[selected.species].toLowerCase()}`}</div>
                     <HpBar
                       current={phase === "found" ? playerStats.hp : playerHp}
                       max={playerStats.hp}
@@ -388,9 +397,9 @@ const goScout = () => {
                   </div>
                   <div style={{ fontSize: 16, fontWeight: 800, color: "var(--ink-muted)" }}>vs</div>
                   <div style={{ flex: 1, textAlign: "center" }}>
-                    <img src={wild.image} alt="wild hamster" style={{ width: 64, height: 64, objectFit: "contain" }} />
+                    <img src={wild.image} alt="wild creature" style={{ width: 64, height: 64, objectFit: "contain" }} />
                     <div style={{ fontSize: 11, fontWeight: 700, color: "var(--pink-dark)" }}>
-                      Wild {wild.stage} hamster
+                      Wild {wild.stage} {SPECIES_LABELS[wild.species].toLowerCase()}
                     </div>
                     <HpBar
                       current={phase === "found" ? wild.stats.hp : opponentHp}
@@ -426,12 +435,12 @@ const goScout = () => {
                       <div style={{ fontSize: 12, textAlign: "center", marginTop: 12, minHeight: 18 }}>
                         {lastEntry.hit ? (
                           <span style={{ color: "var(--ink)" }}>
-                            {lastEntry.side === "player" ? "Yours" : "Wild hamster"} used{" "}
+                            {lastEntry.side === "player" ? "Yours" : "Wild creature"} used{" "}
                             <strong>{lastEntry.move}</strong> — {lastEntry.damage} dmg
                           </span>
                         ) : (
                           <span style={{ color: "var(--ink-muted)" }}>
-                            {lastEntry.side === "player" ? "Yours" : "Wild hamster"} used{" "}
+                            {lastEntry.side === "player" ? "Yours" : "Wild creature"} used{" "}
                             <strong>{lastEntry.move}</strong> — missed!
                           </span>
                         )}
@@ -453,7 +462,7 @@ const goScout = () => {
                       >
                         {log.slice(0, -1).map((t, i) => (
                           <div key={i}>
-                            {t.side === "player" ? "Yours" : "Wild hamster"} used {t.move}
+                            {t.side === "player" ? "Yours" : "Wild creature"} used {t.move}
                             {t.hit ? ` — ${t.damage} dmg` : " — missed"}
                           </div>
                         ))}
@@ -510,7 +519,7 @@ const goScout = () => {
                         </div>
                         {reward && (
                           <div style={{ fontSize: 11, color: "var(--ink-muted)", marginTop: 4 }}>
-                            +{reward.statPoints} TP for {selected?.name || "your hamster"} • +{reward.shopPoints} shop points
+                            +{reward.statPoints} TP for {selected?.name || "your creature"} • +{reward.shopPoints} shop points
                           </div>
                         )}
                         {!tamed ? (

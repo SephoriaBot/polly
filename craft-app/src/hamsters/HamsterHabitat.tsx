@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useHamsterGrowth } from "./HamsterGrowthContext";
-import { ALL_HAMSTERS, imageForForm } from "./hamsters";
+import { allBabiesFor, imageForForm, SPECIES_LABELS } from "./creatures";
+import type { Species } from "./creatures";
 import Icon, { type IconName } from "../components/Icon";
 import HamsterStatTraining from "./HamsterStatTraining";
 import EmptyState from '../components/EmptyState';
@@ -8,8 +9,8 @@ import emptyHabitat from '../assets/icons/empty-habitat.png';
 import { STAT_CAPS, isMaxedOut } from "./battle";
 import type { TrainedStats } from "./battle";
 
-function imageFor(hamsterId: string) {
-  return ALL_HAMSTERS.find((h) => h.id === hamsterId)?.image;
+function imageFor(species: Species, hamsterId: string) {
+  return allBabiesFor(species).find((h) => h.id === hamsterId)?.image;
 }
 
 const STAGE_LABEL: Record<string, { text: string; icon: IconName }> = {
@@ -115,7 +116,7 @@ export default function HamsterHabitat() {
             }}
           >
             <img
-              src={imageForForm(justEvolved.stage, evolvedEntry.teenFormId, evolvedEntry.finalFormId, imageFor(evolvedEntry.hamsterId) || "")}
+              src={imageForForm(evolvedEntry.species, justEvolved.stage, evolvedEntry.teenFormId, evolvedEntry.finalFormId, imageFor(evolvedEntry.species, evolvedEntry.hamsterId) || "")}
               alt="evolved"
               style={{ width: 88, height: 88, objectFit: "contain", animation: "hatchPop 0.7s ease" }}
             />
@@ -133,7 +134,7 @@ export default function HamsterHabitat() {
         )}
 
         {collection.length === 0 ? (
-        <EmptyState image={emptyHabitat} message="No hamsters in the habitat yet." />
+        <EmptyState image={emptyHabitat} message="No creatures in the habitat yet." />
         ) : (
           <>
             <div
@@ -145,7 +146,7 @@ gridTemplateColumns: "repeat(auto-fill, minmax(min(80px, 100%), 1fr))",
               }}
             >
               {collection.map((entry) => {
-                const img = imageForForm(entry.stage, entry.teenFormId, entry.finalFormId, imageFor(entry.hamsterId) || "");
+                const img = imageForForm(entry.species, entry.stage, entry.teenFormId, entry.finalFormId, imageFor(entry.species, entry.hamsterId) || "");
                 const isSelected = entry.id === selectedId;
                 return (
                   <button
@@ -186,16 +187,16 @@ gridTemplateColumns: "repeat(auto-fill, minmax(min(80px, 100%), 1fr))",
                 }}
               >
                 <div style={{ display: "flex", gap: 10, alignItems: "center", marginBottom: 8 }}>
-                  {imageForForm(selected.stage, selected.teenFormId, selected.finalFormId, imageFor(selected.hamsterId) || "") && (
+                  {imageForForm(selected.species, selected.stage, selected.teenFormId, selected.finalFormId, imageFor(selected.species, selected.hamsterId) || "") && (
                     <img
-                      src={imageForForm(selected.stage, selected.teenFormId, selected.finalFormId, imageFor(selected.hamsterId) || "")}
+                      src={imageForForm(selected.species, selected.stage, selected.teenFormId, selected.finalFormId, imageFor(selected.species, selected.hamsterId) || "")}
                       alt=""
                       style={{ width: 44, height: 44, objectFit: "contain" }}
                     />
                   )}
                   <div>
                     <div style={{ fontSize: 12, fontWeight: 700, color: "var(--pink-dark)" }}>
-                      <Icon name={STAGE_LABEL[selected.stage].icon} size={14} /> {STAGE_LABEL[selected.stage].text}
+                      <Icon name={STAGE_LABEL[selected.stage].icon} size={14} /> {STAGE_LABEL[selected.stage].text} · {SPECIES_LABELS[selected.species]}
                     </div>
                     <div style={{ fontSize: 11, color: "var(--ink-muted)" }}>
                       hatched {new Date(selected.hatchedAt).toLocaleDateString()}

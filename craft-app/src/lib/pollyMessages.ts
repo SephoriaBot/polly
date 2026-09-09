@@ -71,7 +71,7 @@ const POLLY_POPIN_MESSAGES_BY_PAGE: Partial<Record<string, string[]>> = {
     "Weighing your options, I see.",
   ],
   habitat: [
-    "The hamsters say hi.",
+    "The habitat critters say hi.",
     "Someone's been busy decorating.",
     "Squeak squeak!",
     "Don't forget your daily visit.",

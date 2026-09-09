@@ -25,12 +25,12 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { supabase } from "../lib/supabase"; // match your actual client path
 import type { IconName } from "../components/Icon";
-import { rollRandomHamster, rollTeenForm, rollFinalForm } from "./hamsters";
-import type { Hamster, EvolutionStage } from "./hamsters";
-import { rollPersonality, rollAbilities, BABY_ABILITIES, TEEN_ABILITIES, FINAL_ABILITIES } from "./personalities";
+import { rollRandomSpecies, rollRandomCreature, rollTeenForm, rollFinalForm } from "./creatures";
+import type { Creature, Species, EvolutionStage } from "./creatures";
+import { rollPersonality, rollAbilities, abilityPoolFor } from "./personalities";
 import type { Personality } from "./personalities";
-import { rollWildHamster, capFor, isMaxedOut, BATTLE_REWARDS } from "./battle";
-import type { WildHamster, TrainedStats } from "./battle";
+import { rollWildCreature, capFor, isMaxedOut, BATTLE_REWARDS } from "./battle";
+import type { WildCreature, TrainedStats } from "./battle";
 
 // NOTE: this hook does real Supabase reads/writes and hatches/evolves
 // hamsters as a side effect. It must only ever be instantiated ONCE in the
@@ -71,6 +71,7 @@ const TRAINED_STAT_COLUMNS: Record<keyof TrainedStats, string> = {
 interface HamsterCollectionEntry {
   id: number;
   hamsterId: string;
+  species: Species;
   name: string | null;
   hatchedAt: string;
   source: string | null;
@@ -87,6 +88,7 @@ interface HamsterCollectionEntry {
 export interface JustEvolved {
   entryId: number;
   hamsterId: string;
+  species: Species;
   stage: EvolutionStage; // the stage it evolved INTO
   formId: string;
   newAbilities: string[];
@@ -134,9 +136,9 @@ export function useHamsterGrowthState() {
   const [recentPoints, setRecentPoints] = useState<PointsLogEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [justHatched, setJustHatched] = useState<Hamster | null>(null);
+  const [justHatched, setJustHatched] = useState<Creature | null>(null);
   const [justEvolved, setJustEvolved] = useState<JustEvolved | null>(null);
-  const [wildEncounter, setWildEncounter] = useState<WildHamster | null>(null);
+  const [wildEncounter, setWildEncounter] = useState<WildCreature | null>(null);
 
   // Surfaced Supabase errors from the writes that guard against double
   // counting (credit flags, awarded flags, points/threshold persistence,
@@ -173,13 +175,14 @@ export function useHamsterGrowthState() {
     const { data } = await supabase
       .from("hamster_collection")
       .select(
-        "id, hamster_id, name, hatched_at, source, personality, stage, evolution_points, teen_form_id, final_form_id, abilities, training_points, trained_hp, trained_attack, trained_defense, trained_speed"
+        "id, hamster_id, species, name, hatched_at, source, personality, stage, evolution_points, teen_form_id, final_form_id, abilities, training_points, trained_hp, trained_attack, trained_defense, trained_speed"
       )
       .order("hatched_at", { ascending: false });
     setCollection(
       (data || []).map((r) => ({
         id: r.id,
         hamsterId: r.hamster_id,
+        species: (r.species as Species) || "hamster",
         name: r.name ?? null,
         hatchedAt: r.hatched_at,
         source: r.source,
@@ -209,7 +212,7 @@ export function useHamsterGrowthState() {
   const checkWildEncounterSpawn = useCallback(async () => {
     const { data: pending } = await supabase
       .from("wild_encounter_pending")
-      .select("hamster_id, stage, form_id, personality, abilities")
+      .select("hamster_id, species, stage, form_id, personality, abilities")
       .maybeSingle();
 
     if (pending?.hamster_id) {
@@ -218,14 +221,15 @@ export function useHamsterGrowthState() {
       // session left off) and stop, don't roll another.
       if (!wildEncounter) {
         setWildEncounter({
-          hamsterId: pending.hamster_id,
+          creatureId: pending.hamster_id,
+          species: (pending.species as Species) || "hamster",
           stage: pending.stage,
           formId: pending.form_id,
           image: "",
           personality: pending.personality,
           abilities: pending.abilities || [],
           stats: { hp: 0, attack: 0, defense: 0, speed: 0 }, // recomputed by battle.ts on use
-        } as WildHamster);
+        } as WildCreature);
       }
       return;
     }
@@ -239,10 +243,13 @@ export function useHamsterGrowthState() {
     const stages = (allHamsters || []).map((r) => r.stage as EvolutionStage);
     const playerMaxStage: EvolutionStage = stages.includes("final") ? "final" : stages.includes("teen") ? "teen" : "baby";
 
-    const wild = rollWildHamster(playerMaxStage);
+    // Species rolls independently of the player's own creatures — any of
+    // the three can wander in regardless of what you've hatched so far.
+    const wild = rollWildCreature(playerMaxStage);
     const { error } = await supabase.from("wild_encounter_pending").upsert(
       {
-        hamster_id: wild.hamsterId,
+        hamster_id: wild.creatureId,
+        species: wild.species,
         stage: wild.stage,
         form_id: wild.formId,
         personality: wild.personality,
@@ -269,15 +276,17 @@ export function useHamsterGrowthState() {
       reportError("Log points", logError);
 
       while (newPoints >= threshold) {
-        const h = rollRandomHamster();
+        const species = rollRandomSpecies();
+        const h = rollRandomCreature(species);
         const personality = rollPersonality();
-        const abilities = rollAbilities(BABY_ABILITIES, 1);
+        const abilities = rollAbilities(abilityPoolFor(species, "baby"), 1);
         const pointsBeforeHatch = newPoints;
         newPoints -= threshold;
         const { error: hatchError } = await supabase
           .from("hamster_collection")
           .insert({
             hamster_id: h.id,
+            species,
             source,
             personality,
             stage: "baby",
@@ -341,7 +350,7 @@ export function useHamsterGrowthState() {
         .select("training_points")
         .eq("id", entryId)
         .maybeSingle();
-      if (!row) return { ok: false as const, statPoints: 0, shopPoints: 0, reason: "Hamster not found" };
+      if (!row) return { ok: false as const, statPoints: 0, shopPoints: 0, reason: "Creature not found" };
 
       const newTP = (Number(row.training_points) || 0) + reward.statPoints;
       const { error: tpError } = await supabase
@@ -379,11 +388,12 @@ export function useHamsterGrowthState() {
     async (entryId: number) => {
       const { data: row } = await supabase
         .from("hamster_collection")
-        .select("id, hamster_id, stage, teen_form_id, final_form_id, abilities, trained_hp, trained_attack, trained_defense, trained_speed")
+        .select("id, hamster_id, species, stage, teen_form_id, final_form_id, abilities, trained_hp, trained_attack, trained_defense, trained_speed")
         .eq("id", entryId)
         .maybeSingle();
-      if (!row) return { ok: false, reason: "Hamster not found" };
+      if (!row) return { ok: false, reason: "Creature not found" };
 
+      const species = (row.species as Species) || "hamster";
       const stage = (row.stage as EvolutionStage) || "baby";
       if (stage === "final") return { ok: false, reason: "Already at final form" };
 
@@ -405,12 +415,12 @@ export function useHamsterGrowthState() {
 
       if (stage === "baby") {
         newStage = "teen";
-        teenFormId = rollTeenForm().id;
-        newAbilities = rollAbilities(TEEN_ABILITIES, 2, existingAbilities);
+        teenFormId = rollTeenForm(species).id;
+        newAbilities = rollAbilities(abilityPoolFor(species, "teen"), 2, existingAbilities);
       } else {
         newStage = "final";
-        finalFormId = rollFinalForm().id;
-        newAbilities = rollAbilities(FINAL_ABILITIES, 2, existingAbilities);
+        finalFormId = rollFinalForm(species).id;
+        newAbilities = rollAbilities(abilityPoolFor(species, "final"), 2, existingAbilities);
       }
       const abilities = [...existingAbilities, ...newAbilities];
 
@@ -423,6 +433,7 @@ export function useHamsterGrowthState() {
       setJustEvolved({
         entryId,
         hamsterId: row.hamster_id,
+        species,
         stage: newStage,
         formId: newStage === "teen" ? teenFormId! : finalFormId!,
         newAbilities,
@@ -771,18 +782,19 @@ export function useHamsterGrowthState() {
 
       const { data: pending } = await supabase
         .from("wild_encounter_pending")
-        .select("hamster_id, stage, form_id, personality, abilities")
+        .select("hamster_id, species, stage, form_id, personality, abilities")
         .maybeSingle();
       if (pending?.hamster_id) {
         setWildEncounter({
-          hamsterId: pending.hamster_id,
+          creatureId: pending.hamster_id,
+          species: (pending.species as Species) || "hamster",
           stage: pending.stage,
           formId: pending.form_id,
           image: "",
           personality: pending.personality,
           abilities: pending.abilities || [],
           stats: { hp: 0, attack: 0, defense: 0, speed: 0 },
-        } as WildHamster);
+        } as WildCreature);
       }
 
       setLoading(false);
@@ -877,7 +889,7 @@ export function useHamsterGrowthState() {
         .eq("id", entryId)
         .maybeSingle();
 
-      if (!row) return { ok: false, reason: "Hamster not found" };
+      if (!row) return { ok: false, reason: "Creature not found" };
 
       const stage = (row.stage as EvolutionStage) || "baby";
       const unspent = Number(row.training_points) || 0;

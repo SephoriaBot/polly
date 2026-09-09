@@ -29,7 +29,7 @@ export default function WildEncounterAlert({ currentPage, onNavigate }: Props) {
   // so dismissing today's hamster doesn't silently swallow tomorrow's.
   useEffect(() => {
     setDismissed(false);
-  }, [wildEncounter?.hamsterId, wildEncounter?.formId]);
+  }, [wildEncounter?.creatureId, wildEncounter?.formId]);
 
   // Small delay + transition so it slides in instead of popping in place.
   useEffect(() => {
@@ -69,7 +69,7 @@ export default function WildEncounterAlert({ currentPage, onNavigate }: Props) {
       <Icon name="hamster-wild" size={30} />
       <div style={{ flex: 1 }}>
         <div style={{ fontSize: 12, fontWeight: 800, color: "var(--pink-dark)" }}>
-          A wild hamster appeared!
+          A wild creature appeared!
         </div>
         <div style={{ fontSize: 10, color: "var(--ink-muted)" }}>Tap to go fight it</div>
       </div>
