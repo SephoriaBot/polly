@@ -728,19 +728,25 @@ setNewTaskSlot('anytime');
                             style={{
                               background: 'var(--blush)',
                               border: '1.5px solid var(--border)', borderRadius: 'var(--radius-sm)', cursor: 'pointer',
-                              width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                              flexShrink: 0,
+                              padding: '6px 10px', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                              flexShrink: 0, fontSize: '0.74rem', fontWeight: 600, color: 'var(--pink-dark)',
+                              whiteSpace: 'nowrap',
                             }}
                           >
-                            <Icon name="icon-notebook" size={24} style={{ color: 'var(--pink-dark)' }} />
+                            Notes
                           </button>
                         )}
                         <button
                           onClick={() => markAttended(appt.id)}
                           title="Mark attended (+10 hamster points)"
-                          style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-muted)', padding: 0, display: 'flex', alignItems: 'center', opacity: 0.6 }}
+                          style={{
+                            background: 'none', border: '1.5px solid var(--border)', borderRadius: 'var(--radius-sm)',
+                            cursor: 'pointer', color: 'var(--ink-muted)', padding: '6px 10px',
+                            display: 'flex', alignItems: 'center', fontSize: '0.74rem', fontWeight: 600,
+                            whiteSpace: 'nowrap',
+                          }}
                         >
-                          <Icon name="clipboard-check" size={24} />
+                          Attended
                         </button>
                         <button
                           onClick={() => deleteAppointment(appt.id)}
