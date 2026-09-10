@@ -1736,17 +1736,23 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                 )}
 
                 {(() => {
-  // Future months need a manual-hours card for the Sunday–Saturday
-  // week that closes immediately before the month's first Wednesday.
-  // This is the week whose remaining payout is released on that
-  // first Wednesday.
+  // Whenever the calendar's visible window doesn't reach back to the
+  // Sunday–Saturday week that most recently closed, we need a manual-hours
+  // card for that week — it's the week whose remaining payout releases on
+  // the next Wednesday. This used to only happen for future/past months
+  // (which always start on the 1st), but since the current month's
+  // calendar now starts at "today" instead of the 1st, this same gap can
+  // open up mid-month too — e.g. viewing today (a Mon/Tue) after last
+  // week's closing Saturday but before this week's release Wednesday.
 
-  if (isCalendarCurrentMonth) return null;
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const rangeStart = isCalendarCurrentMonth
+    ? today
+    : new Date(selectedYear, selectedMonth - 1, 1);
 
-  const firstOfMonth = new Date(selectedYear, selectedMonth - 1, 1);
-
-  // Find the first Wednesday of the selected month.
-  const firstWednesday = new Date(firstOfMonth);
+  // Find the first Wednesday at or after the visible range's start.
+  const firstWednesday = new Date(rangeStart);
   while (firstWednesday.getDay() !== 3) {
     firstWednesday.setDate(firstWednesday.getDate() + 1);
   }
@@ -1758,6 +1764,11 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
   // Sunday starting that closed week.
   const periodStartSunday = new Date(closingSaturday);
   periodStartSunday.setDate(periodStartSunday.getDate() - 6);
+
+  // Only show the card if that week actually closed before the calendar's
+  // visible window — otherwise the Saturday is already in `allDays` and
+  // gets picked up automatically, so a manual entry would double-count it.
+  if (closingSaturday >= rangeStart) return null;
 
   const periodStartKey = dateKey(periodStartSunday);
   const fmt = (d: Date) =>
