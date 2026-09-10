@@ -877,31 +877,48 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
     periodWithdrawnGross = priorGross * eligiblePercent(priorGross, budget.net_to_gross_ratio, budget.flat_deductions_prev, priorHours, earlyPayPreset);
   }
 
-  const firstSaturdayIdx = allDays.findIndex(d => d.getDay() === 6);
+  // A week's leftover payout only needs to come from the manual
+  // closedWeekHours card when that week's *Sunday* isn't in the visible
+  // range — i.e. the loop can't see enough of the week to total it itself.
+  // (Checking "does a Saturday appear before the first Wednesday in the
+  // array" instead of this breaks for any month/view starting on a
+  // Thu/Fri/Sat, since the closing Saturday can still land inside the
+  // visible window even though the week's Sunday doesn't — e.g. a month
+  // that starts on a Thursday, where day 3 of the view is a Saturday but
+  // the week began the prior Sunday, outside the view.)
   const firstWednesdayIdx = allDays.findIndex(d => d.getDay() === 3);
-  if (firstWednesdayIdx !== -1 && (firstSaturdayIdx === -1 || firstWednesdayIdx < firstSaturdayIdx)) {
+  let closedWeekEndKey: string | null = null;
+  if (firstWednesdayIdx !== -1) {
     const firstWednesday = allDays[firstWednesdayIdx];
     const closingSaturday = new Date(firstWednesday);
     closingSaturday.setDate(closingSaturday.getDate() - 4);
     const periodStartSunday = new Date(closingSaturday);
     periodStartSunday.setDate(periodStartSunday.getDate() - 6);
-    const periodStartKey = dateKey(periodStartSunday);
 
-    if (closedWeekHours.weekStart === periodStartKey) {
-      const closedReg = parseFloat(closedWeekHours.reg) || 0;
-      const closedOt = parseFloat(closedWeekHours.ot) || 0;
-      const closedEarnedGross = closedReg * grossHourlyWage + closedOt * grossOtWage;
-      const closedHours = closedReg + closedOt;
-      const closedWithdrawnGross = closedEarnedGross * eligiblePercent(closedEarnedGross, budget.net_to_gross_ratio, budget.flat_deductions_prev, closedHours, earlyPayPreset);
-      const closedTaxableGross = Math.max(0, closedEarnedGross - budget.flat_deductions_prev);
-      const closedNetOwed = closedTaxableGross * (1 - taxRate / 100);
-      pendingPayout = Math.max(0, closedNetOwed - closedWithdrawnGross);
+    if (periodStartSunday < allDays[0]) {
+      const periodStartKey = dateKey(periodStartSunday);
+
+      if (closedWeekHours.weekStart === periodStartKey) {
+        const closedReg = parseFloat(closedWeekHours.reg) || 0;
+        const closedOt = parseFloat(closedWeekHours.ot) || 0;
+        const closedEarnedGross = closedReg * grossHourlyWage + closedOt * grossOtWage;
+        const closedHours = closedReg + closedOt;
+        const closedWithdrawnGross = closedEarnedGross * eligiblePercent(closedEarnedGross, budget.net_to_gross_ratio, budget.flat_deductions_prev, closedHours, earlyPayPreset);
+        const closedTaxableGross = Math.max(0, closedEarnedGross - budget.flat_deductions_prev);
+        const closedNetOwed = closedTaxableGross * (1 - taxRate / 100);
+        pendingPayout = Math.max(0, closedNetOwed - closedWithdrawnGross);
+        // Any part of this same week that IS visible (e.g. Oct 1–3 when the
+        // week started Sept 27) is already folded into that manual total —
+        // mark it so the loop below skips re-accumulating those days.
+        closedWeekEndKey = dateKey(closingSaturday);
+      }
     }
   }
 
   const rows = allDays.map(d => {
     const key = dateKey(d);
     const dow = d.getDay();
+    const alreadyCoveredByClosedWeekCard = closedWeekEndKey !== null && key <= closedWeekEndKey;
 
     if (dow === 0) {
       periodEarnedGross = 0;
@@ -923,16 +940,18 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
         ? regHoursToday * grossHourlyWage + otHoursToday * grossOtWage
         : 0;
 
-    periodEarnedGross += fullEarnedToday;
-    periodHoursSoFar += hoursToday;
+    if (!alreadyCoveredByClosedWeekCard) {
+      periodEarnedGross += fullEarnedToday;
+      periodHoursSoFar += hoursToday;
+    }
 
     const eligiblePct = eligiblePercent(periodEarnedGross, budget.net_to_gross_ratio, budget.flat_deductions_prev, periodHoursSoFar, earlyPayPreset);
     const maxWithdrawableGrossSoFar = periodEarnedGross * eligiblePct;
     const withdrawnBeforeToday = periodWithdrawnGross;
-    const availableToday = Math.max(0, maxWithdrawableGrossSoFar - periodWithdrawnGross);
+    const availableToday = alreadyCoveredByClosedWeekCard ? 0 : Math.max(0, maxWithdrawableGrossSoFar - periodWithdrawnGross);
     periodWithdrawnGross += availableToday;
 
-        if (dow === 6) {
+        if (dow === 6 && !alreadyCoveredByClosedWeekCard) {
       const taxableGross = Math.max(0, periodEarnedGross - budget.flat_deductions_prev);
       const netOwedForPeriod = taxableGross * (1 - taxRate / 100);
       pendingPayout += Math.max(0, netOwedForPeriod - periodWithdrawnGross);
@@ -1765,10 +1784,13 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
   const periodStartSunday = new Date(closingSaturday);
   periodStartSunday.setDate(periodStartSunday.getDate() - 6);
 
-  // Only show the card if that week actually closed before the calendar's
-  // visible window — otherwise the Saturday is already in `allDays` and
-  // gets picked up automatically, so a manual entry would double-count it.
-  if (closingSaturday >= rangeStart) return null;
+  // Only current-month view has a fallback for a still-open week (the
+  // "hours already worked this week" card + the day-by-day loop). For any
+  // other case where this week's Sunday isn't visible — including a
+  // genuinely fully-closed week, or a future month like October whose
+  // first pay-period starts in the prior month — show this card.
+  const weekIsStillOpen = isCalendarCurrentMonth && closingSaturday >= rangeStart;
+  if (periodStartSunday >= rangeStart || weekIsStillOpen) return null;
 
   const periodStartKey = dateKey(periodStartSunday);
   const fmt = (d: Date) =>
