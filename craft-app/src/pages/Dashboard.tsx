@@ -244,8 +244,9 @@ export default function Dashboard({ onNavigate }: { onNavigate?: (page: string, 
                           alignItems: 'center', justifyContent: 'center',
                         }}
                       >
+                        <CheckMark completed={f.completed} size={22} />
                       </button>
-<CheckMark completed={f.completed} size={22} />
+
                       <div style={{ flex: 1 }}>
                         <div style={{
                           fontSize: '0.88rem', fontWeight: 600,
