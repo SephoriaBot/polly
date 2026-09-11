@@ -14,6 +14,8 @@ import BrainDump from './components/BrainDump';
 
 import { ThemeProvider } from './context/ThemeContext';
 import { EnergyProvider } from './context/EnergyContext';
+import { PollyCompanionProvider, usePollyCompanion } from './context/PollyCompanionContext';
+import PollyCompanionPicker from './components/PollyCompanionPicker';
 
 import ShapeDefs from './components/ShapeDefs';
 
@@ -225,6 +227,20 @@ function PollyRecoveryScreen({ error }: { error: Error | null }) {
 }
 
 /* =========================================================
+   COMPANION GATE
+   Shows the "pick your companion" screen once, before the
+   rest of the authenticated app is allowed to render.
+   ========================================================= */
+
+function CompanionGate({ children }: { children: ReactNode }) {
+  const { loaded, needsChoice } = usePollyCompanion();
+
+  if (!loaded) return <div className="page-loading">Loading…</div>;
+  if (needsChoice) return <PollyCompanionPicker />;
+  return <>{children}</>;
+}
+
+/* =========================================================
    APP
    ========================================================= */
 
@@ -248,9 +264,11 @@ export default function App() {
           <div className="page-loading">Loading…</div>
         ) : !session ? (
           <Login />
-        ) : (
-          <EnergyProvider>
-            <ShapeDefs />
+          ) : (
+          <PollyCompanionProvider>
+            <CompanionGate>
+              <EnergyProvider>
+                <ShapeDefs />
 
             <ToastProvider>
               <HamsterGrowthProvider>
@@ -492,7 +510,9 @@ export default function App() {
                 </div>
               </HamsterGrowthProvider>
             </ToastProvider>
-          </EnergyProvider>
+              </EnergyProvider>
+            </CompanionGate>
+          </PollyCompanionProvider>
         )}
       </ThemeProvider>
     </AppErrorBoundary>

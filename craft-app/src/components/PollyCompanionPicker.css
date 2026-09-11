@@ -1,0 +1,98 @@
+/* ================================
+   POLLY COMPANION PICKER
+   ================================ */
+
+.companion-picker-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: var(--bg);
+}
+
+.companion-picker-card {
+  width: 100%;
+  max-width: 420px;
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  padding: 28px 22px;
+  text-align: center;
+}
+
+.companion-picker-title {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: var(--pink-dark);
+  margin: 0 0 6px;
+}
+
+.companion-picker-subtitle {
+  font-size: 0.9rem;
+  color: var(--ink-muted);
+  margin: 0 0 22px;
+  line-height: 1.4;
+}
+
+.companion-picker-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.companion-picker-option {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: var(--radius-md);
+  border: 1.5px solid var(--border);
+  background: var(--cream);
+  cursor: pointer;
+  text-align: left;
+  transition: transform 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.companion-picker-option:hover,
+.companion-picker-option:focus-visible {
+  border-color: var(--pink);
+  background: var(--pink-light);
+  transform: translateY(-2px);
+}
+
+.companion-picker-option:active {
+  transform: translateY(0);
+}
+
+.companion-picker-image {
+  width: 64px;
+  height: 64px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.companion-picker-label {
+  display: block;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.companion-picker-blurb {
+  display: block;
+  font-size: 0.78rem;
+  color: var(--ink-muted);
+  margin-top: 2px;
+  line-height: 1.3;
+}
+
+.companion-picker-text {
+  display: flex;
+  flex-direction: column;
+}
