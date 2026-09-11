@@ -7,42 +7,37 @@
 import type { Species, EvolutionStage } from "./creatures";
 
 export const GOOD_TRAITS: string[] = [
-  "Hoards seeds like buried treasure",
-  "Naps in whatever sunbeam it can find",
-  "Stuffs cheeks first, asks questions later",
-  "Fiercely loyal to its favorite blanket corner",
+  "Loves a great nap",
+  "Really appreciates a good listener",
+  "Fiercely loyal to its favorite blanket",
   "Greets you by standing straight up",
-  "Excellent tunnel architect",
-  "Never met a cardboard box it didn't love",
-  "Surprisingly good listener",
+  "Very sentimental",
+  "Doesn't talk much but smiles often",
+  "Thoughtful and considerate",
   "Hums while it eats",
-  "Collects the softest bedding scraps",
+  "Favorite activity is a good snuggle",
   "Always shares (eventually, reluctantly)",
   "Very brave about very small things",
-  "Keeps its nest immaculately tidy",
+  "Very neat and tidy",
   "Loves a good grooming session",
-  "Curious about literally everything",
-  "Snuggles up when it's cold",
-  "Makes tiny happy popcorn jumps",
-  "Devoted wheel-runner at 2am",
+  "Curious about everything",
+  "Puts everyone and everything before itself",
+  "Loves all foods and eats 6 meals a day",
 ];
 
 export const QUIRKY_TRAITS: string[] = [
   "Steals snacks the second you look away",
-  "Refuses to use the wheel out of principle",
   "Dramatic about the tiniest inconveniences",
-  "Hides food in places even it forgets",
+  "Hides everything in places it can return to later",
   "Judges your life choices silently",
-  "Wakes up on the wrong side of the nest, always",
-  "Suspicious of new bedding for at least a week",
-  "Hoards way more than it could ever eat",
+  "Wakes up on the wrong side of the bed, always",
+  "Suspicious of new things for at least a week",
   "Gives you the cold shoulder for no reason",
-  "Insists on redecorating the nest nightly",
+  "Will start a fight and then pretend it didn't",
   "Chronically overdramatic about baths",
-  "Petty about sharing the good hiding spot",
+  "Petty in general",
   "Naps through anything important",
   "Bites first, cuddles later",
-  "Extremely stubborn about nap schedule",
 ];
 
 export interface Personality {
@@ -71,12 +66,10 @@ export function rollPersonality(): Personality {
 // --- Hamster (original) -------------------------------------------------
 
 export const HAMSTER_BABY_ABILITIES = [
-  "Nibble — a curious, exploratory bite",
+  "Nibble — a curious, slightly sharp bite",
   "Wobble Charge — an unsteady but earnest rush",
-  "Squeak Startle — a surprised little shriek",
-  "Tiny Tumble — an accidental but effective roll",
+  "Squeak Cry — a surprised little shriek",
   "Little Slap - a charged but very little slap",
-  "Cry - an effective and disorienting move",
 ];
 
 export const HAMSTER_TEEN_ABILITIES: string[] = [
@@ -118,11 +111,9 @@ export const HAMSTER_FINAL_ABILITIES: string[] = [
 // --- Noodle (cat-like) — agility/stealth themed -------------------------
 
 export const NOODLE_BABY_ABILITIES: string[] = [
-  "Paw Bat — an experimental, wobbly swat",
+  "Paw Bat — a wobbly swat",
   "Pounce Practice — leaps a little too early and misses the landing",
   "Mew Startle — a tiny, surprised cry",
-  "Yarn Tangle — trips over its own tail mid-attack",
-  "Nose Boop — a soft but oddly disorienting bump",
   "Zoomies — a burst of directionless speed",
 ];
 
@@ -166,9 +157,7 @@ export const DRAGON_BABY_ABILITIES: string[] = [
   "Spark Puff — a tiny cough of smoke, more sizzle than flame",
   "Wing Flap — an uncoordinated hop-glide that barely clears the ground",
   "Tail Thump — an enthusiastic but clumsy swipe",
-  "Ember Hiccup — an accidental little burst of heat",
   "Roar Practice — a squeak trying very hard to be a roar",
-  "Scale Wobble — trips over its own front claws mid-charge",
 ];
 
 export const DRAGON_TEEN_ABILITIES: string[] = [

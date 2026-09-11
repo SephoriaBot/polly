@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useHamsterGrowth } from "./HamsterGrowthContext";
-import { allBabiesFor, imageForForm, SPECIES_LABELS } from "./creatures";
-import type { Species } from "./creatures";
+import { allBabiesFor, imageForForm, SPECIES_LABELS, SPECIES } from "./creatures";
+import type { Species, EvolutionStage } from "./creatures";
 import Icon, { type IconName } from "../components/Icon";
 import HamsterStatTraining from "./HamsterStatTraining";
 import EmptyState from '../components/EmptyState';
@@ -18,6 +18,43 @@ const STAGE_LABEL: Record<string, { text: string; icon: IconName }> = {
   teen: { text: "Teen", icon: "potted-plant" },
   final: { text: "Final Form", icon: "medal-wings" },
 };
+
+// Highest-effort stage first, so a group opens with its most-evolved
+// creatures rather than a wall of babies.
+const STAGE_ORDER: Record<EvolutionStage, number> = { final: 0, teen: 1, baby: 2 };
+
+type StageFilter = "all" | EvolutionStage;
+type SpeciesFilter = "all" | Species;
+
+function FilterPill({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      style={{
+        padding: "4px 10px",
+        borderRadius: 99,
+        fontSize: 11,
+        fontWeight: 700,
+        border: active ? "1.5px solid var(--pink-dark)" : "1.5px solid var(--border)",
+        background: active ? "var(--blush)" : "transparent",
+        color: active ? "var(--pink-dark)" : "var(--ink-muted)",
+        cursor: "pointer",
+        whiteSpace: "nowrap",
+      }}
+    >
+      {children}
+    </button>
+  );
+}
 
 // Evolution is no longer point/threshold-based — it's unlocked by maxing
 // every trained stat for the current stage (see isMaxedOut in battle.ts).
@@ -75,6 +112,26 @@ export default function HamsterHabitat() {
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [evolving, setEvolving] = useState(false);
   const [evolveMessage, setEvolveMessage] = useState<string | null>(null);
+  const [speciesFilter, setSpeciesFilter] = useState<SpeciesFilter>("all");
+  const [stageFilter, setStageFilter] = useState<StageFilter>("all");
+
+  // Grouped by species (in a fixed order) and sorted final -> teen -> baby
+  // within each group, so the grid reads as organized sections instead of
+  // one long unsorted wall of creatures. Filters just narrow which
+  // groups/entries show up; the grouping itself always applies.
+  const groups = useMemo(() => {
+    const filtered = collection.filter(
+      (e) =>
+        (speciesFilter === "all" || e.species === speciesFilter) &&
+        (stageFilter === "all" || e.stage === stageFilter)
+    );
+    return SPECIES.map((sp) => ({
+      species: sp,
+      entries: filtered
+        .filter((e) => e.species === sp)
+        .sort((a, b) => STAGE_ORDER[a.stage] - STAGE_ORDER[b.stage] || +new Date(b.hatchedAt) - +new Date(a.hatchedAt)),
+    })).filter((g) => g.entries.length > 0);
+  }, [collection, speciesFilter, stageFilter]);
 
   const handleEvolve = async (entryId: number) => {
     setEvolving(true);
@@ -137,46 +194,79 @@ export default function HamsterHabitat() {
         <EmptyState image={emptyHabitat} message="No creatures in the habitat yet." />
         ) : (
           <>
-            <div
-              style={{
-                display: "grid",
-gridTemplateColumns: "repeat(auto-fill, minmax(min(80px, 100%), 1fr))",
-
-                gap: 8,
-              }}
-            >
-              {collection.map((entry) => {
-                const img = imageForForm(entry.species, entry.stage, entry.teenFormId, entry.finalFormId, imageFor(entry.species, entry.hamsterId) || "");
-                const isSelected = entry.id === selectedId;
-                return (
-                  <button
-                    key={entry.id}
-                    onClick={() => {
-                      setSelectedId(isSelected ? null : entry.id);
-                      setEvolveMessage(null);
-                    }}
-                    style={{
-                      display: "flex", flexDirection: "column", alignItems: "center",
-                      background: isSelected ? "var(--blush)" : "transparent",
-                      border: isSelected ? "1.5px solid var(--pink-light)" : "1.5px solid transparent",
-                      borderRadius: 12, padding: 4, cursor: "pointer", position: "relative",
-                    }}
-                  >
-                    {img && <img src={img} alt={entry.name || entry.hamsterId} style={{ width: 72, height: 72, objectFit: "contain" }} />}
-                    {entry.stage !== "baby" && (
-                      <span style={{ position: "absolute", top: 0, right: 0, fontSize: 10 }}>
-                        <Icon name={entry.stage === "final" ? "medal-wings" : "potted-plant"} size={12} />
-                      </span>
-                    )}
-                    {entry.name && (
-                      <span style={{ fontSize: 9, color: "var(--ink-muted)", marginTop: 2, maxWidth: 52, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                        {entry.name}
-                      </span>
-                    )}
-                  </button>
-                );
-              })}
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 12 }}>
+              <FilterPill active={speciesFilter === "all"} onClick={() => setSpeciesFilter("all")}>All species</FilterPill>
+              {SPECIES.map((sp) => (
+                <FilterPill key={sp} active={speciesFilter === sp} onClick={() => setSpeciesFilter(sp)}>
+                  {SPECIES_LABELS[sp]}
+                </FilterPill>
+              ))}
+              <span style={{ width: 1, alignSelf: "stretch", background: "var(--border)", margin: "0 2px" }} />
+              <FilterPill active={stageFilter === "all"} onClick={() => setStageFilter("all")}>All stages</FilterPill>
+              {(["final", "teen", "baby"] as EvolutionStage[]).map((st) => (
+                <FilterPill key={st} active={stageFilter === st} onClick={() => setStageFilter(st)}>
+                  {STAGE_LABEL[st].text}
+                </FilterPill>
+              ))}
             </div>
+
+            {groups.length === 0 ? (
+              <div style={{ fontSize: 12, color: "var(--ink-muted)", textAlign: "center", padding: "16px 0" }}>
+                Nothing matches those filters yet.
+              </div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                {groups.map((group) => (
+                  <div key={group.species}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
+                      <span style={{ fontSize: 11, fontWeight: 800, color: "var(--ink-muted)", textTransform: "uppercase", letterSpacing: 0.4 }}>
+                        {SPECIES_LABELS[group.species]}s
+                      </span>
+                      <span className="badge badge-pink" style={{ fontSize: 10 }}>{group.entries.length}</span>
+                    </div>
+                    <div
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns: "repeat(auto-fill, minmax(min(80px, 100%), 1fr))",
+                        gap: 8,
+                      }}
+                    >
+                      {group.entries.map((entry) => {
+                        const img = imageForForm(entry.species, entry.stage, entry.teenFormId, entry.finalFormId, imageFor(entry.species, entry.hamsterId) || "");
+                        const isSelected = entry.id === selectedId;
+                        return (
+                          <button
+                            key={entry.id}
+                            onClick={() => {
+                              setSelectedId(isSelected ? null : entry.id);
+                              setEvolveMessage(null);
+                            }}
+                            style={{
+                              display: "flex", flexDirection: "column", alignItems: "center",
+                              background: isSelected ? "var(--blush)" : "transparent",
+                              border: isSelected ? "1.5px solid var(--pink-light)" : "1.5px solid transparent",
+                              borderRadius: 12, padding: 4, cursor: "pointer", position: "relative",
+                            }}
+                          >
+                            {img && <img src={img} alt={entry.name || entry.hamsterId} style={{ width: 72, height: 72, objectFit: "contain" }} />}
+                            {entry.stage !== "baby" && (
+                              <span style={{ position: "absolute", top: 0, right: 0, fontSize: 10 }}>
+                                <Icon name={entry.stage === "final" ? "medal-wings" : "potted-plant"} size={12} />
+                              </span>
+                            )}
+                            {entry.name && (
+                              <span style={{ fontSize: 9, color: "var(--ink-muted)", marginTop: 2, maxWidth: 52, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                                {entry.name}
+                              </span>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
 
             {selected && (
               <div

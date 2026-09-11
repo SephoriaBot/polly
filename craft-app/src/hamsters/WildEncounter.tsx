@@ -21,7 +21,7 @@ import Icon from "../components/Icon";
 import { allBabiesFor, imageForForm, SPECIES_LABELS } from "./creatures";
 import type { EvolutionStage, Species } from "./creatures";
 import { useHamsterGrowth } from "./HamsterGrowthContext";
-import { BATTLE_REWARDS } from "./battle";
+import { BATTLE_REWARDS, TAME_CHANCE, attemptTame } from "./battle";
 import {
   canBattle,
   deriveBattleStats,
@@ -70,7 +70,8 @@ export default function WildEncounter() {
   const [wild, setWild] = useState<WildCreature | null>(null);
   const [isAutoSpawned, setIsAutoSpawned] = useState(false);
   const [winner, setWinner] = useState<"player" | "opponent" | null>(null);
-  const [tamed, setTamed] = useState(false);
+  // null = no attempt yet, true = tamed successfully, false = it slipped away
+  const [tameOutcome, setTameOutcome] = useState<boolean | null>(null);
 
   // Live battle state
   const [playerHp, setPlayerHp] = useState(0);
@@ -137,7 +138,7 @@ export default function WildEncounter() {
 const goScout = () => {
   if (!selected) return;
 
-  setTamed(false);
+  setTameOutcome(null);
   setPhase("scouting");
 
   setTimeout(() => {
@@ -264,20 +265,25 @@ const goScout = () => {
 
   const tame = async () => {
     if (!wild) return;
-    await supabase.from("hamster_collection").insert({
-      hamster_id: wild.creatureId,
-      species: wild.species,
-      source: "wild_tame",
-      personality: wild.personality,
-      stage: wild.stage,
-      evolution_points: 0,
-      teen_form_id: wild.stage === "teen" ? wild.formId : null,
-      final_form_id: wild.stage === "final" ? wild.formId : null,
-      abilities: wild.abilities,
-    });
-    setTamed(true);
-    await logBattle(true);
-    await loadFighters();
+    const success = attemptTame(wild.stage);
+
+    if (success) {
+      await supabase.from("hamster_collection").insert({
+        hamster_id: wild.creatureId,
+        species: wild.species,
+        source: "wild_tame",
+        personality: wild.personality,
+        stage: wild.stage,
+        evolution_points: 0,
+        teen_form_id: wild.stage === "teen" ? wild.formId : null,
+        final_form_id: wild.stage === "final" ? wild.formId : null,
+        abilities: wild.abilities,
+      });
+      await loadFighters();
+    }
+
+    setTameOutcome(success);
+    await logBattle(success);
   };
 
   const reset = () => {
@@ -285,7 +291,7 @@ const goScout = () => {
     setWild(null);
     setIsAutoSpawned(false);
     setWinner(null);
-    setTamed(false);
+    setTameOutcome(null);
     setLog([]);
     setRoundQueue([]);
     setPlayerHp(0);
@@ -522,19 +528,33 @@ const goScout = () => {
                             +{reward.statPoints} TP for {selected?.name || "your creature"} • +{reward.shopPoints} shop points
                           </div>
                         )}
-                        {!tamed ? (
-                          <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
-                            <button className="btn-primary" onClick={tame} style={{ flex: 1 }}>
-                              <Icon name="sparkles-cluster" size={14} /> Tame it
-                            </button>
-                            <button onClick={reset} style={{ flex: 1 }}>
-                              Let it go
-                            </button>
-                          </div>
-                        ) : (
+                        {tameOutcome === null ? (
+                          <>
+                            <div style={{ fontSize: 11, color: "var(--ink-muted)", marginTop: 6 }}>
+                              {Math.round(TAME_CHANCE[wild.stage] * 100)}% chance to tame it
+                            </div>
+                            <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+                              <button className="btn-primary" onClick={tame} style={{ flex: 1 }}>
+                                <Icon name="sparkles-cluster" size={14} /> Tame it
+                              </button>
+                              <button onClick={reset} style={{ flex: 1 }}>
+                                Let it go
+                              </button>
+                            </div>
+                          </>
+                        ) : tameOutcome === true ? (
                           <>
                             <div style={{ fontSize: 12, color: "var(--ink-muted)", marginTop: 6 }}>
                               Added to your collection!
+                            </div>
+                            <button className="btn-primary" onClick={reset} style={{ width: "100%", marginTop: 10 }}>
+                              Find another
+                            </button>
+                          </>
+                        ) : (
+                          <>
+                            <div style={{ fontSize: 12, color: "#B85C5C", marginTop: 6 }}>
+                              It slipped free and scurried off!
                             </div>
                             <button className="btn-primary" onClick={reset} style={{ width: "100%", marginTop: 10 }}>
                               Find another
