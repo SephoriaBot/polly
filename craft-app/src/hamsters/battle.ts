@@ -190,9 +190,7 @@ export function rollWildCreature(stage: EvolutionStage, species?: Species): Wild
 
   const abilityCount = stage === "final"
     ? (Math.random() < 0.5 ? 3 : 2)
-    : stage === "teen"
-      ? 2
-      : 1;
+    : 2; // teen and baby both get 2 moves to choose from — no stage is ever down to just one option
 
   const abilities = rollAbilities(abilityPool, abilityCount);
 

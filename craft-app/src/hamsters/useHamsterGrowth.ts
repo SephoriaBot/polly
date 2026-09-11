@@ -279,7 +279,7 @@ export function useHamsterGrowthState() {
         const species = rollRandomSpecies();
         const h = rollRandomCreature(species);
         const personality = rollPersonality();
-        const abilities = rollAbilities(abilityPoolFor(species, "baby"), 1);
+        const abilities = rollAbilities(abilityPoolFor(species, "baby"), 2);
         const pointsBeforeHatch = newPoints;
         newPoints -= threshold;
         const { error: hatchError } = await supabase
