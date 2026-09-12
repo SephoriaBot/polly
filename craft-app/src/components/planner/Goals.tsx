@@ -332,11 +332,12 @@ export default function Goals() {
                                   aria-label="Break this step into sub-steps"
                                   style={{
                                     background: 'none', border: 'none', cursor: isBreakingDown ? 'default' : 'pointer',
-                                    color: 'var(--pink-dark)', flexShrink: 0, display: 'flex',
+                                    color: 'var(--pink-dark)', flexShrink: 0, display: 'flex', alignItems: 'center', gap: 4,
+                                    fontSize: '0.68rem', fontWeight: 600,
                                     opacity: isBreakingDown ? 0.5 : 1,
                                   }}
                                 >
-                                  <Icon name="icon-chevrondown" size={20} />
+                                  <Icon name="icon-chevrondown" size={16} /> Break into steps
                                 </button>
                               )}
                             </div>

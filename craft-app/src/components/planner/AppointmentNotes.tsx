@@ -99,7 +99,7 @@ export default function AppointmentNotes({
               aria-label="Mark covered"
               type="button"
             >
-              <Icon name="icon-circle" size={18} />
+              <Icon name="icon-circle" size={18} /> Covered
             </button>
             <span className={styles.itemText}>{item.content}</span>
             <button
@@ -142,7 +142,7 @@ export default function AppointmentNotes({
                   aria-label="Mark not covered"
                   type="button"
                 >
-                  <Icon name="clipboard-check" size={24} className={styles.coveredIcon} />
+                  <Icon name="clipboard-check" size={18} className={styles.coveredIcon} /> Covered
                 </button>
                 <span className={`${styles.itemText} ${styles.strikethrough}`}>{item.content}</span>
                 <button
@@ -192,9 +192,9 @@ export default function AppointmentNotes({
               type="button"
             >
               {item.status === 'done' ? (
-                <Icon name="clipboard-check" size={20} className={styles.coveredIcon} />
+                <><Icon name="clipboard-check" size={18} className={styles.coveredIcon} /> Done</>
               ) : (
-                <Icon name="icon-circle" size={18} />
+                <><Icon name="icon-circle" size={18} /> Mark done</>
               )}
             </button>
             <span
