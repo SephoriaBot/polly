@@ -164,13 +164,18 @@ export default function HamsterStatTraining({ entryId, stage, name, trainingPoin
               setNameDraft(name || "");
               setEditingName(true);
             }}
+            aria-label={name ? "Edit creature name" : "Name this creature"}
             style={{
               display: "flex", alignItems: "center", gap: 6, background: "transparent", border: "none",
               padding: 0, cursor: "pointer", fontFamily: "var(--font-heading)", fontSize: 14, fontWeight: 700,
               color: name ? "var(--ink)" : "var(--ink-muted)",
             }}
           >
-            {name || "Name this creature"} <Icon name="notepad-pencil" size={13} />
+            {name ? (
+              <>{name} <Icon name="notepad-pencil" size={15} /> Edit</>
+            ) : (
+              <><Icon name="notepad-pencil" size={15} /> Name this creature</>
+            )}
           </button>
         )}
       </div>
