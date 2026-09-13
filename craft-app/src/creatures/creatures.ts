@@ -179,6 +179,39 @@ export function rollFinalForm(species: Species): EvolutionForm {
   return pool[Math.floor(Math.random() * pool.length)];
 }
 
+// Pulls the trailing number off a creature id like "dragon_03" -> 3.
+// Returns null if the id doesn't match that shape (shouldn't normally
+// happen, but callers fall back to a random roll rather than crashing).
+function indexFromCreatureId(id: string): number | null {
+  const match = id.match(/_(\d+)$/);
+  if (!match) return null;
+  const n = Number(match[1]);
+  return Number.isFinite(n) && n >= 1 ? n : null;
+}
+
+// Looks up the teen/final form whose number matches a given index, so
+// e.g. babydragon3 always evolves into middledragon3 / godd3 — same
+// color/theme carried through every stage, since that's how the art was
+// built. Wraps around if a species' teen/final pool is smaller than its
+// baby roster (only relevant for bunt, which has fewer forms).
+export function formForIndex(species: Species, stage: "teen" | "final", n: number): EvolutionForm {
+  const pool = stage === "teen" ? TEEN_FORMS_BY_SPECIES[species] : FINAL_FORMS_BY_SPECIES[species];
+  const wrapped = ((n - 1) % pool.length + pool.length) % pool.length;
+  return pool[wrapped];
+}
+
+// Given the id of the creature that's evolving (its "hamster_id", e.g.
+// "dragon_03"), returns the matching teen/final form by index. Falls back
+// to a random roll only if the id can't be parsed, so evolution never
+// hard-fails.
+export function evolvedFormFor(species: Species, stage: "teen" | "final", creatureId: string): EvolutionForm {
+  const n = indexFromCreatureId(creatureId);
+  if (n === null) {
+    return stage === "teen" ? rollTeenForm(species) : rollFinalForm(species);
+  }
+  return formForIndex(species, stage, n);
+}
+
 export function imageForForm(
   species: Species,
   stage: EvolutionStage,
