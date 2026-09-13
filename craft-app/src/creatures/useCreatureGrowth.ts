@@ -25,7 +25,7 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { supabase } from "../lib/supabase"; // match your actual client path
 import type { IconName } from "../components/Icon";
-import { rollRandomSpecies, rollRandomCreature, rollTeenForm, rollFinalForm } from "./creatures";
+import { rollRandomSpecies, rollRandomCreature, evolvedFormFor } from "./creatures";
 import type { Creature, Species, EvolutionStage } from "./creatures";
 import { rollPersonality, rollAbilities, abilityPoolFor } from "./personalities";
 import type { Personality } from "./personalities";
@@ -382,8 +382,9 @@ export function useCreatureGrowthState() {
   // Evolves a hamster (baby -> teen -> final) once every trained stat is
   // maxed for its current stage. Re-reads fresh from Supabase rather than
   // trusting local state so a stale `collection` entry can't slip an
-  // ineligible hamster through. Old abilities are kept; evolving rolls a
-  // random new form and appends 1-2 new combat abilities, same as before.
+  // ineligible hamster through. Old abilities are kept; evolving picks the
+  // teen/final form matching this creature's numbered index (same
+  // color/theme every stage) and appends 1-2 new combat abilities.
   const evolveCreature = useCallback(
     async (entryId: number) => {
       const { data: row } = await supabase
@@ -415,11 +416,11 @@ export function useCreatureGrowthState() {
 
       if (stage === "baby") {
         newStage = "teen";
-        teenFormId = rollTeenForm(species).id;
+        teenFormId = evolvedFormFor(species, "teen", row.hamster_id).id;
         newAbilities = rollAbilities(abilityPoolFor(species, "teen"), 2, existingAbilities);
       } else {
         newStage = "final";
-        finalFormId = rollFinalForm(species).id;
+        finalFormId = evolvedFormFor(species, "final", row.hamster_id).id;
         newAbilities = rollAbilities(abilityPoolFor(species, "final"), 2, existingAbilities);
       }
       const abilities = [...existingAbilities, ...newAbilities];
