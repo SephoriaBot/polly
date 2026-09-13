@@ -1,6 +1,6 @@
 // personalities.ts
-// A pool of good traits and quirky "bad" traits, now shared across all
-// three species (a dragon can be just as obsessed with sunbeams as a
+// A pool of good traits and quirky "bad" traits, shared across all
+// species (a dragon can be just as obsessed with sunbeams as a
 // wereham). Each hatched creature gets 2 good traits + 1 quirk, rolled
 // randomly and saved permanently with it.
 
@@ -194,24 +194,68 @@ export const DRAGON_FINAL_ABILITIES: string[] = [
   "Last Hoard of the First Fire — every ability it has ever used lands again, all together, once",
 ];
 
+// --- Bunt (sheep/bat hybrid) — flight/echo themed ----------------------
+
+export const BUNT_BABY_ABILITIES: string[] = [
+  "Wooly Bonk — a soft, fluffy headbutt",
+  "Wing Flutter — an uneven flap that barely lifts it off the ground",
+  "Bleat Squeak — a startled cry caught between a baa and a chirp",
+  "Cling Hop — hops up and clings on, upside down, before it means to",
+];
+
+export const BUNT_TEEN_ABILITIES: string[] = [
+  "Fleece Slam — rams with a wool coat gone suddenly, unnervingly dense",
+  "Echo Screech — a chirp that bounces back wrong, from somewhere it hasn't been yet",
+  "Upside-Down Roost — hangs from nothing and strikes from an angle that shouldn't work",
+  "Static Wool — its fleece crackles, and touching it earths straight through you",
+  "Horn Graze — clips past with curling horns that are longer than they were a second ago",
+  "Moonlit Glide — swoops silent under a light that isn't actually there",
+  "Wool Shed — sheds a tuft that keeps drifting toward you on its own",
+  "Herd Call — bleats once, and for a moment you hear more than one answer",
+  "Blind Sight — closes its eyes and somehow aims better",
+  "Cave Hush — the air around it goes dead quiet, sound-swallowing",
+  "Grazing Bite — nibbles somewhere soft, then somewhere it shouldn't reach",
+  "Wingfold Drop — folds its wings and free-falls onto the rival like dead weight",
+];
+
+export const BUNT_FINAL_ABILITIES: string[] = [
+  "Shepherd's Toll — every bleat it's made tonight rings back at once, and the ground answers",
+  "Great Fleece Unraveling — its wool comes undone into something that moves on its own",
+  "Sonic Chorus — a screech layered with a hundred smaller ones, none of them its own voice",
+  "Ram's Reckoning — horns lock and the impact echoes like it hit something much bigger",
+  "Wings of the Long Dark — spreads wings that blot out more sky than they should",
+  "Static Fleece Storm — every hair stands up at once and the air itself starts arcing",
+  "Hollow Bleat — a cry pitched for ears that aren't in the room, and something answers it",
+  "Upside-Down Chapel — hangs still, and the whole battlefield tilts to match it",
+  "Wool of the Unshorn — a coat that's never been cut, and never stops growing over you",
+  "Blind Prophet's Gaze — its clouded eyes see everything except what's actually there",
+  "Migration Instinct — the whole flock it never had passes through, once, all together",
+  "Cave Mother's Call — a low sound from somewhere deeper than the cave goes",
+  "Last Shearing — the fleece comes off in one motion, and there's something else underneath",
+  "Horns That Remember the Herd — the ram it becomes has led this charge before, somewhere else",
+];
+
 // --- Species-aware lookups ------------------------------------------------
 
 export const BABY_ABILITIES_BY_SPECIES: Record<Species, string[]> = {
   wereham: WEREHAM_BABY_ABILITIES,
   noodle: NOODLE_BABY_ABILITIES,
   dragon: DRAGON_BABY_ABILITIES,
+  bunt: BUNT_BABY_ABILITIES,
 };
 
 export const TEEN_ABILITIES_BY_SPECIES: Record<Species, string[]> = {
   wereham: WEREHAM_TEEN_ABILITIES,
   noodle: NOODLE_TEEN_ABILITIES,
   dragon: DRAGON_TEEN_ABILITIES,
+  bunt: BUNT_TEEN_ABILITIES,
 };
 
 export const FINAL_ABILITIES_BY_SPECIES: Record<Species, string[]> = {
   wereham: WEREHAM_FINAL_ABILITIES,
   noodle: NOODLE_FINAL_ABILITIES,
   dragon: DRAGON_FINAL_ABILITIES,
+  bunt: BUNT_FINAL_ABILITIES,
 };
 
 export function abilityPoolFor(species: Species, stage: EvolutionStage): string[] {

@@ -6,7 +6,7 @@
 //
 // Stat philosophy: abilities already exist as flavor-text strings with no
 // numeric attributes attached, and adding a whole new "ability stats" table
-// would mean hand-tuning every entry across three species. Instead each
+// would mean hand-tuning every entry across every species. Instead each
 // ability's stat bonus is derived deterministically from a hash of its own
 // text — same ability always contributes the same attack/defense/speed
 // bump, no extra schema needed, and the bonus can't be seen/gamed since
@@ -20,7 +20,7 @@
 // across species; nothing here favors one species' stat ceiling over
 // another's.
 
-import { ROSTER_BY_SPECIES, TEEN_FORMS_BY_SPECIES, FINAL_FORMS_BY_SPECIES, rollTeenForm, rollFinalForm } from "./creatures";
+import { ROSTER_BY_SPECIES, TEEN_FORMS_BY_SPECIES, FINAL_FORMS_BY_SPECIES, rollTeenForm, rollFinalForm, SPECIES } from "./creatures";
 import type { EvolutionStage, Species } from "./creatures";
 import { rollPersonality, rollAbilities, abilityPoolFor } from "./personalities";
 import type { Personality } from "./personalities";
@@ -175,7 +175,7 @@ export type WildWereham = WildCreature;
 // random pick across all three when not specified, so wild encounters draw
 // from the whole roster rather than always being werehams.
 export function rollWildCreature(stage: EvolutionStage, species?: Species): WildCreature {
-  const chosenSpecies: Species = species ?? (["wereham", "noodle", "dragon"] as Species[])[Math.floor(Math.random() * 3)];
+  const chosenSpecies: Species = species ?? SPECIES[Math.floor(Math.random() * SPECIES.length)];
   const roster = ROSTER_BY_SPECIES[chosenSpecies];
   const base = roster[Math.floor(Math.random() * roster.length)];
 
