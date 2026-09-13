@@ -3,10 +3,10 @@ import { usePollyCompanion, type PollySpecies } from '../context/PollyCompanionC
 
 const OPTIONS: { species: PollySpecies; label: string; blurb: string; image: string }[] = [
   {
-    species: 'hamster',
-    label: 'Polly the Hamster',
+    species: 'wereham',
+    label: 'Polly the Wereham',
     blurb: 'Cozy, cheerful, and always ready with a snack.',
-    image: '/assets/pollyhamster/polly_7.png',
+    image: '/assets/pollywereham/polly_7.png',
   },
   {
     species: 'noodle',

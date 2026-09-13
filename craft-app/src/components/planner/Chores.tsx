@@ -13,7 +13,7 @@ import Icon, { type IconName } from '../Icon';
 import EmptyState from '../EmptyState';
 import checklistImg from '../../assets/illustrations/checklist.png';
 import { type Chore as ChoreBase, statusFor } from '../../lib/chores';
-import { useHamsterGrowth } from '../../hamsters/HamsterGrowthContext';
+import { useCreatureGrowth } from '../../creatures/CreatureGrowthContext';
 import ChoreCleaningPlan from './ChoreCleaningPlan';
 
 interface Chore extends ChoreBase {
@@ -24,7 +24,7 @@ const CHORE_ICONS: IconName[] = ['cleaning-spray', 'washing-machine', 'sparkle-s
 
 export default function Chores() {
   const { showToast } = useToast();
-  const { notifyGrowth } = useHamsterGrowth();
+  const { notifyGrowth } = useCreatureGrowth();
   const [chores, setChores] = useState<Chore[]>([]);
   const [loading, setLoading] = useState(true);
   const [name, setName] = useState('');

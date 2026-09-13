@@ -1,7 +1,7 @@
 // personalities.ts
 // A pool of good traits and quirky "bad" traits, now shared across all
 // three species (a dragon can be just as obsessed with sunbeams as a
-// hamster). Each hatched creature gets 2 good traits + 1 quirk, rolled
+// wereham). Each hatched creature gets 2 good traits + 1 quirk, rolled
 // randomly and saved permanently with it.
 
 import type { Species, EvolutionStage } from "./creatures";
@@ -61,18 +61,18 @@ export function rollPersonality(): Personality {
 // evolving only adds more on top. Teen abilities lean scrappy/defensive;
 // final abilities lean bigger and more offensive, matching the jump in
 // form size on the teen -> final art. Each species keeps the same cute-
-// then-uncanny tone as the original hamster set.
+// then-uncanny tone as the original wereham set.
 
-// --- Hamster (original) -------------------------------------------------
+// --- Wereham (original) -------------------------------------------------
 
-export const HAMSTER_BABY_ABILITIES = [
+export const WEREHAM_BABY_ABILITIES = [
   "Nibble — a curious, slightly sharp bite",
   "Wobble Charge — an unsteady but earnest rush",
   "Squeak Cry — a surprised little shriek",
   "Little Slap - a charged but very little slap",
 ];
 
-export const HAMSTER_TEEN_ABILITIES: string[] = [
+export const WEREHAM_TEEN_ABILITIES: string[] = [
   "Bristle Charge — lowers a head that turns too far to rush a rival",
   "Cheek Pouch Slam — the impact sounds wetter than it should",
   "Burrow Dodge — vanishes underground; something else surfaces where it left",
@@ -89,7 +89,7 @@ export const HAMSTER_TEEN_ABILITIES: string[] = [
   "Wrong Number of Legs — for one frame there are more of them than there should be",
 ];
 
-export const HAMSTER_FINAL_ABILITIES: string[] = [
+export const WEREHAM_FINAL_ABILITIES: string[] = [
   "Seed Cannon — launches hardened seeds hard enough to go clean through bark and bone",
   "Overgrowth Roots — vines erupt from beneath and drag a foe down into the dark",
   "Sonic Whisker Boom — a shockwave squeak that cracks stone and stops hearts for a beat",
@@ -97,7 +97,7 @@ export const HAMSTER_FINAL_ABILITIES: string[] = [
   "Guardian's Bulwark — hunkers down, and the ground around it stops obeying physics",
   "Frenzied Rampage — a relentless assault with too many limbs moving out of sync",
   "Venom Nibble — a bite that spreads numbness, then silence, then nothing at all",
-  "Storm Caller — the sky answers something that isn't quite a hamster anymore",
+  "Storm Caller — the sky answers something that isn't quite a wereham anymore",
   "Void Burrow — the tunnel it opens has no bottom, and something breathes up from it",
   "Apex Roar — a cry too big for something this small, in a voice that isn't its own",
   "Maw Beneath the Fur — the cheek pouches split open onto rows of teeth that don't fit",
@@ -197,19 +197,19 @@ export const DRAGON_FINAL_ABILITIES: string[] = [
 // --- Species-aware lookups ------------------------------------------------
 
 export const BABY_ABILITIES_BY_SPECIES: Record<Species, string[]> = {
-  hamster: HAMSTER_BABY_ABILITIES,
+  wereham: WEREHAM_BABY_ABILITIES,
   noodle: NOODLE_BABY_ABILITIES,
   dragon: DRAGON_BABY_ABILITIES,
 };
 
 export const TEEN_ABILITIES_BY_SPECIES: Record<Species, string[]> = {
-  hamster: HAMSTER_TEEN_ABILITIES,
+  wereham: WEREHAM_TEEN_ABILITIES,
   noodle: NOODLE_TEEN_ABILITIES,
   dragon: DRAGON_TEEN_ABILITIES,
 };
 
 export const FINAL_ABILITIES_BY_SPECIES: Record<Species, string[]> = {
-  hamster: HAMSTER_FINAL_ABILITIES,
+  wereham: WEREHAM_FINAL_ABILITIES,
   noodle: NOODLE_FINAL_ABILITIES,
   dragon: DRAGON_FINAL_ABILITIES,
 };
@@ -221,10 +221,10 @@ export function abilityPoolFor(species: Species, stage: EvolutionStage): string[
 }
 
 // Backward-compatible aliases — old call sites that imported the
-// hamster-only names keep working unchanged (they just mean "hamster").
-export const BABY_ABILITIES = HAMSTER_BABY_ABILITIES;
-export const TEEN_ABILITIES = HAMSTER_TEEN_ABILITIES;
-export const FINAL_ABILITIES = HAMSTER_FINAL_ABILITIES;
+// wereham-only names keep working unchanged (they just mean "wereham").
+export const BABY_ABILITIES = WEREHAM_BABY_ABILITIES;
+export const TEEN_ABILITIES = WEREHAM_TEEN_ABILITIES;
+export const FINAL_ABILITIES = WEREHAM_FINAL_ABILITIES;
 
 export function rollAbilities(pool: string[], count: number, exclude: string[] = []): string[] {
   const available = pool.filter((a) => !exclude.includes(a));

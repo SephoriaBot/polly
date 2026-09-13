@@ -16,22 +16,22 @@ export type PollyMood =
 
 // Each species has its own set of expression art living in its own
 // /public/assets folder. Not every species has a 1:1 pose for every mood
-// (the hamster set was drawn first and is the most complete), so moods
+// (the wereham set was drawn first and is the most complete), so moods
 // that don't have a dedicated pose fall back to the closest equivalent
 // for that species rather than breaking the image.
 const POLLY_IMAGES: Record<PollySpecies, Record<PollyMood, string>> = {
-  hamster: {
-    neutral: '/assets/pollyhamster/polly_0.png',
-    confused: '/assets/pollyhamster/polly_1.png',
-    disappointed: '/assets/pollyhamster/polly_2.png',
-    searching: '/assets/pollyhamster/polly_3.png',
-    mad: '/assets/pollyhamster/polly_4.png',
-    cheering: '/assets/pollyhamster/polly_5.png',
-    yawning: '/assets/pollyhamster/polly_6.png',
-    happy: '/assets/pollyhamster/polly_7.png',
-    sad: '/assets/pollyhamster/polly_8.png',
-    surprised: '/assets/pollyhamster/polly_9.png',
-    love: '/assets/pollyhamster/polly_10.png',
+  wereham: {
+    neutral: '/assets/pollywereham/polly_0.png',
+    confused: '/assets/pollywereham/polly_1.png',
+    disappointed: '/assets/pollywereham/polly_2.png',
+    searching: '/assets/pollywereham/polly_3.png',
+    mad: '/assets/pollywereham/polly_4.png',
+    cheering: '/assets/pollywereham/polly_5.png',
+    yawning: '/assets/pollywereham/polly_6.png',
+    happy: '/assets/pollywereham/polly_7.png',
+    sad: '/assets/pollywereham/polly_8.png',
+    surprised: '/assets/pollywereham/polly_9.png',
+    love: '/assets/pollywereham/polly_10.png',
   },
   noodle: {
     neutral: '/assets/pollynoodle/pollynoodle_neutral.png',

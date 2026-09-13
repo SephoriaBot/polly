@@ -12,7 +12,7 @@ import { useToast } from '../../hooks/useToast';
 import Icon from '../Icon';
 import { useTheme } from '../../context/ThemeContext';
 import { LIFE_EVENT_TEMPLATES, type LifeEventTemplate } from '../../lib/lifeEventTemplates';
-import { useHamsterGrowth } from '../../hamsters/HamsterGrowthContext';
+import { useCreatureGrowth } from '../../creatures/CreatureGrowthContext';
 import CheckMark from '../CheckMark';
 
 interface LifeEventRow {
@@ -34,7 +34,7 @@ interface LifeEventItemRow {
 export default function LifeEvents() {
   const { theme } = useTheme();
   const { showToast } = useToast();
-  const { notifyGrowth } = useHamsterGrowth();
+  const { notifyGrowth } = useCreatureGrowth();
   const [events, setEvents] = useState<LifeEventRow[]>([]);
   const [itemsByEvent, setItemsByEvent] = useState<Record<string, LifeEventItemRow[]>>({});
   const [loading, setLoading] = useState(true);

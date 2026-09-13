@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { useHamsterGrowth } from "./HamsterGrowthContext";
-import { SOURCE_LABELS } from "./useHamsterGrowth";
+import { useCreatureGrowth } from "./CreatureGrowthContext";
+import { SOURCE_LABELS } from "./useCreatureGrowth";
 import Icon from "../components/Icon";
 import hamsterHatchCrack from "../assets/illustrations/hamster-hatch-crack.PNG";
 import hamsterHatchRibbon from "../assets/illustrations/hamster-hatch-ribbon.PNG";
@@ -34,8 +34,8 @@ function NestEgg({ progressPct, eggColor }: { progressPct: number; eggColor: num
   );
 }
 
-export default function HamsterNest() {
-  const { loading, refreshing, refresh, points, threshold, progressPct, recentPoints, justHatched, clearJustHatched, collection } = useHamsterGrowth();
+export default function CreatureNest() {
+  const { loading, refreshing, refresh, points, threshold, progressPct, recentPoints, justHatched, clearJustHatched, collection } = useCreatureGrowth();
   const [hatchStage, setHatchStage] = useState<"crack" | "ribbon" | "hamster">("crack");
   const eggColor = eggColorForCount(collection.length);
 

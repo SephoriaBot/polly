@@ -9,7 +9,7 @@ import dizzyImg from '../assets/illustrations/error_dizzy.png';
 import emptyGrocery from '../assets/icons/empty-grocery.png';
 import RecipeBox from '../components/meals/RecipeBox';
 import PageTabs, { type PageTab } from '../components/PageTabs';
-import { useHamsterGrowth } from '../hamsters/HamsterGrowthContext';
+import { useCreatureGrowth } from '../creatures/CreatureGrowthContext';
 import StitchDivider from '../components/StitchDivider';
 import CheckMark from '../components/CheckMark';
 import PageTitleLogo from "../components/PageTitleLogo";
@@ -254,7 +254,7 @@ const GROCERY_TABS: PageTab<'list' | 'recipes' | 'smart-cart' | 'price-watch'>[]
 
 export default function Grocery({ initialTab }: { initialTab?: 'list' | 'recipes' | 'smart-cart' | 'price-watch' } = {}) {
   const { theme } = useTheme();
-  const { notifyGrowth } = useHamsterGrowth();
+  const { notifyGrowth } = useCreatureGrowth();
   const [items, setItems] = useState<GroceryItem[]>([])
   const [currentList, setCurrentList] = useState('Default')
   const [currentListId, setCurrentListId] = useState<string | null>(null)
@@ -1653,10 +1653,10 @@ export default function Grocery({ initialTab }: { initialTab?: 'list' | 'recipes
 
               {loadingCart && (
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '20px 0', gap: 10 }}>
-                  <img src={hourglassImg} alt="" style={{ width: 120, animation: 'groceryHamsterPulse 1.4s ease-in-out infinite' }} />
+                  <img src={hourglassImg} alt="" style={{ width: 120, animation: 'groceryLoadingPulse 1.4s ease-in-out infinite' }} />
                   <p style={{ fontSize: '0.8rem', color: 'var(--ink-muted)' }}>Finding prices…</p>
                   <style>{`
-                    @keyframes groceryHamsterPulse {
+                    @keyframes groceryLoadingPulse {
                       0%, 100% { transform: scale(1); opacity: 1; }
                       50% { transform: scale(1.08); opacity: 0.8; }
                     }

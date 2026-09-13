@@ -2,10 +2,10 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from '
 import { supabase } from '../lib/supabase';
 import { useAuth } from './AuthContext';
 
-export type PollySpecies = 'hamster' | 'noodle' | 'dragon';
+export type PollySpecies = 'wereham' | 'noodle' | 'dragon';
 
 interface PollyCompanionContextValue {
-  /** Defaults to 'hamster' while loading or if no choice has been saved yet. */
+  /** Defaults to 'wereham' while loading or if no choice has been saved yet. */
   species: PollySpecies;
   /** True once we've checked Supabase for a saved choice. */
   loaded: boolean;
@@ -18,7 +18,7 @@ const PollyCompanionContext = createContext<PollyCompanionContextValue | undefin
 
 export function PollyCompanionProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
-  const [species, setSpecies] = useState<PollySpecies>('hamster');
+  const [species, setSpecies] = useState<PollySpecies>('wereham');
   const [loaded, setLoaded] = useState(false);
   const [needsChoice, setNeedsChoice] = useState(false);
 

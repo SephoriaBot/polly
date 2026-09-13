@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
-import { useHamsterGrowth } from './HamsterGrowthContext';
+import { useCreatureGrowth } from './CreatureGrowthContext';
 
 const SHELF_PATH = '/shelf';
 const MAX_PER_SHELF = 4;
@@ -249,7 +249,7 @@ function pickDailyMarket(dateStr: string, allKeys: string[], count: number): Set
 }
 
 export default function HabitatScene() {
-  const { loading, decorPoints, spendDecorPoints } = useHamsterGrowth();
+  const { loading, decorPoints, spendDecorPoints } = useCreatureGrowth();
   const [decor, setDecor] = useState<string[]>([]);
   const [unlocked, setUnlocked] = useState<string[]>([]);
   const [themeLoaded, setThemeLoaded] = useState(false);
@@ -437,7 +437,7 @@ export default function HabitatScene() {
         >
           <img
             src={`${SHELF_PATH}/shelf-empty.PNG`}
-            alt="Hamster shelf"
+            alt="Creature shelf"
             style={{
               position: 'absolute',
               inset: 0,

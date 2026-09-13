@@ -11,7 +11,7 @@ import { supabase } from '../../lib/supabase';
 import { useToast } from '../../hooks/useToast';
 import Icon from '../Icon';
 import { useTheme } from '../../context/ThemeContext';
-import { useHamsterGrowth } from '../../hamsters/HamsterGrowthContext';
+import { useCreatureGrowth } from '../../creatures/CreatureGrowthContext';
 import CheckMark from '../CheckMark';
 
 interface GoalRow {
@@ -108,7 +108,7 @@ async function generateSubsteps(goalTitle: string, stepLabel: string, stepCount:
 export default function Goals() {
   const { theme } = useTheme();
   const { showToast } = useToast();
-  const { notifyGrowth } = useHamsterGrowth();
+  const { notifyGrowth } = useCreatureGrowth();
   const [goals, setGoals] = useState<GoalRow[]>([]);
   const [stepsByGoal, setStepsByGoal] = useState<Record<string, GoalStepRow[]>>({});
   const [loading, setLoading] = useState(true);

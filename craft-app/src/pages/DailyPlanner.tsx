@@ -355,7 +355,7 @@ setNewTaskSlot('anytime');
     setAppointments(prev => prev.filter(a => a.id !== id));
   }
 
-  // Marks an appointment attended instead of deleting it, so useHamsterGrowth's
+  // Marks an appointment attended instead of deleting it, so useCreatureGrowth's
   // credited-flag check can pick it up and award points on the next check.
   async function markAttended(id: string) {
     await supabase.from('appointments').update({ attended: true }).eq('id', id);
@@ -738,7 +738,7 @@ setNewTaskSlot('anytime');
                         )}
                         <button
                           onClick={() => markAttended(appt.id)}
-                          title="Mark attended (+10 hamster points)"
+                          title="Mark attended (+10 points)"
                           style={{
                             background: 'none', border: '1.5px solid var(--border)', borderRadius: 'var(--radius-sm)',
                             cursor: 'pointer', color: 'var(--ink-muted)', padding: '6px 10px',

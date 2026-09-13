@@ -1,15 +1,15 @@
 // creatures.ts
-// Replaces hamsters.ts. The roster now spans three species — hamster,
+// Replaces hamsters.ts. The roster now spans three species — wereham,
 // noodle (cat-like), dragon — each with their own baby/teen/final art.
 // Duplicates are allowed within a species — fully random every time, per
 // your original call.
 
-export type Species = "hamster" | "noodle" | "dragon";
+export type Species = "wereham" | "noodle" | "dragon";
 
-export const SPECIES: Species[] = ["hamster", "noodle", "dragon"];
+export const SPECIES: Species[] = ["wereham", "noodle", "dragon"];
 
 export const SPECIES_LABELS: Record<Species, string> = {
-  hamster: "Hamster",
+  wereham: "Wereham",
   noodle: "Noodle",
   dragon: "Dragon",
 };
@@ -22,18 +22,18 @@ export interface Creature {
 
 // Roster sizes differ per species based on how much baby art exists.
 const ROSTER_SIZE: Record<Species, number> = {
-  hamster: 20,
+  wereham: 20,
   noodle: 15,
   dragon: 15,
 };
 
 // Baby image path per species — matches the actual asset folder layout.
-// Hamster kept its historical zero-padded naming; noodle/dragon match the
+// Wereham kept its historical zero-padded naming; noodle/dragon match the
 // files as uploaded (no zero-padding, different per-stage prefixes).
 function babyImage(species: Species, n: number): string {
-  if (species === "hamster") {
+  if (species === "wereham") {
     const padded = String(n).padStart(2, "0");
-    return `/assets/hamsters/hamster_${padded}.png`;
+    return `/assets/wereham/wereham_${padded}.png`;
   }
   if (species === "noodle") {
     return `/assets/noodles/baby${n}.png`;
@@ -43,9 +43,9 @@ function babyImage(species: Species, n: number): string {
 }
 
 function teenImage(species: Species, n: number): string {
-  if (species === "hamster") {
+  if (species === "wereham") {
     const padded = String(n).padStart(2, "0");
-    return `/assets/hamsters/teen_${padded}.png`;
+    return `/assets/wereham/teen_${padded}.png`;
   }
   if (species === "noodle") {
     return `/assets/noodles/middle${n}.png`;
@@ -54,9 +54,9 @@ function teenImage(species: Species, n: number): string {
 }
 
 function finalImage(species: Species, n: number): string {
-  if (species === "hamster") {
+  if (species === "wereham") {
     const padded = String(n).padStart(2, "0");
-    return `/assets/hamsters/final_${padded}.png`;
+    return `/assets/wereham/final_${padded}.png`;
   }
   if (species === "noodle") {
     return `/assets/noodles/finalcat${n}.png`;
@@ -71,22 +71,22 @@ function buildRoster(species: Species): Creature[] {
   });
 }
 
-export const HAMSTERS: Creature[] = buildRoster("hamster");
+export const WEREHAMS: Creature[] = buildRoster("wereham");
 export const NOODLES: Creature[] = buildRoster("noodle");
 export const DRAGONS: Creature[] = buildRoster("dragon");
 
 export const ROSTER_BY_SPECIES: Record<Species, Creature[]> = {
-  hamster: HAMSTERS,
+  wereham: WEREHAMS,
   noodle: NOODLES,
   dragon: DRAGONS,
 };
 
-// --- Seasonal babies (hamster-only, unchanged) -------------------------
+// --- Seasonal babies (wereham-only, unchanged) -------------------------
 // 16 limited babies, only available to hatch during their real-world
 // season. They still evolve through the same TEEN_FORMS / FINAL_FORMS
 // pools as everyone else — evolution art was already random and
 // independent of which baby hatched, so no seasonal teen/final art is
-// needed. Seasonal babies remain hamster-exclusive; noodles and dragons
+// needed. Seasonal babies remain wereham-exclusive; noodles and dragons
 // don't roll into the seasonal pool.
 
 export type Season = "spring" | "summer" | "fall" | "winter";
@@ -102,15 +102,15 @@ const SEASONAL_COUNTS: Record<Season, number> = {
   winter: 7,
 };
 
-export const SEASONAL_HAMSTERS: SeasonalCreature[] = (
+export const SEASONAL_WEREHAMS: SeasonalCreature[] = (
   Object.keys(SEASONAL_COUNTS) as Season[]
 ).flatMap((season) =>
   Array.from({ length: SEASONAL_COUNTS[season] }, (_, i) => {
     const n = i + 1;
     return {
-      id: `hamster_${season}_${n}`,
-      species: "hamster" as Species,
-      image: `/assets/hamsters/hamster_${season}_${n}.png`,
+      id: `wereham_${season}_${n}`,
+      species: "wereham" as Species,
+      image: `/assets/wereham/wereham_${season}_${n}.png`,
       season,
     };
   })
@@ -121,13 +121,13 @@ export const SEASONAL_HAMSTERS: SeasonalCreature[] = (
 // etc.) should search this, not the plain roster array, or seasonal
 // hatches will fail to render.
 export function allBabiesFor(species: Species): Creature[] {
-  if (species === "hamster") return [...HAMSTERS, ...SEASONAL_HAMSTERS];
+  if (species === "wereham") return [...WEREHAMS, ...SEASONAL_WEREHAMS];
   return ROSTER_BY_SPECIES[species];
 }
 
-// Kept for any call sites that haven't migrated to allBabiesFor("hamster")
+// Kept for any call sites that haven't migrated to allBabiesFor("wereham")
 // yet.
-export const ALL_HAMSTERS: Creature[] = allBabiesFor("hamster");
+export const ALL_WEREHAMS: Creature[] = allBabiesFor("wereham");
 
 // Meteorological seasons, Northern Hemisphere: Dec/Jan/Feb = winter,
 // Mar/Apr/May = spring, Jun/Jul/Aug = summer, Sep/Oct/Nov = fall.
@@ -139,38 +139,38 @@ export function currentSeason(date: Date = new Date()): Season {
   return "fall";
 }
 
-// Odds that a hamster hatch rolls today's seasonal pool instead of the
+// Odds that a wereham hatch rolls today's seasonal pool instead of the
 // standard 20 — kept low so seasonal babies stay a "no way, I got one!"
 // moment rather than the default. Only applies when the roll is already
-// for a hamster.
+// for a wereham.
 const SEASONAL_HATCH_CHANCE = 0.12;
 
 // Rolls a random creature of the given species. Species selection (which
 // species hatches at all) happens at the call site — this just picks
 // which individual within that species.
 export function rollRandomCreature(species: Species): Creature {
-  if (species === "hamster") {
-    const seasonalPool = SEASONAL_HAMSTERS.filter((h) => h.season === currentSeason());
+  if (species === "wereham") {
+    const seasonalPool = SEASONAL_WEREHAMS.filter((h) => h.season === currentSeason());
     if (seasonalPool.length > 0 && Math.random() < SEASONAL_HATCH_CHANCE) {
       return seasonalPool[Math.floor(Math.random() * seasonalPool.length)];
     }
-    return HAMSTERS[Math.floor(Math.random() * HAMSTERS.length)];
+    return WEREHAMS[Math.floor(Math.random() * WEREHAMS.length)];
   }
   const roster = ROSTER_BY_SPECIES[species];
   return roster[Math.floor(Math.random() * roster.length)];
 }
 
 // Rolls a species uniformly at random, then a creature within it. Use this
-// at the hatch site instead of always assuming hamster.
+// at the hatch site instead of always assuming wereham.
 export function rollRandomSpecies(): Species {
   return SPECIES[Math.floor(Math.random() * SPECIES.length)];
 }
 
-// Backward-compatible alias for old call sites (always hamster). Prefer
+// Backward-compatible alias for old call sites (always wereham). Prefer
 // rollRandomCreature(species) or rollRandomSpecies() + rollRandomCreature
 // in new code.
-export function rollRandomHamster(): Creature {
-  return rollRandomCreature("hamster");
+export function rollRandomWereham(): Creature {
+  return rollRandomCreature("wereham");
 }
 
 // --- Evolution forms -------------------------------------------------
@@ -179,7 +179,7 @@ export function rollRandomHamster(): Creature {
 // collection keeps its baby image, personality, and traits forever;
 // evolving only adds a teen/final image + new combat abilities on top.
 // Forms are species-scoped: a hatched dragon only ever rolls dragon
-// teen/final art, never noodle or hamster art.
+// teen/final art, never noodle or wereham art.
 
 export type EvolutionStage = "baby" | "teen" | "final";
 
@@ -197,13 +197,13 @@ function buildForms(species: Species, imageFn: (s: Species, n: number) => string
 }
 
 export const TEEN_FORMS_BY_SPECIES: Record<Species, EvolutionForm[]> = {
-  hamster: buildForms("hamster", teenImage, "teen"),
+  wereham: buildForms("wereham", teenImage, "teen"),
   noodle: buildForms("noodle", teenImage, "teen"),
   dragon: buildForms("dragon", teenImage, "teen"),
 };
 
 export const FINAL_FORMS_BY_SPECIES: Record<Species, EvolutionForm[]> = {
-  hamster: buildForms("hamster", finalImage, "final"),
+  wereham: buildForms("wereham", finalImage, "final"),
   noodle: buildForms("noodle", finalImage, "final"),
   dragon: buildForms("dragon", finalImage, "final"),
 };

@@ -1,7 +1,7 @@
 // battle.ts
 // Wild creature encounters + turn-based battle resolution, now
 // species-aware. Growth math, stat caps, and battle resolution are
-// identical across hamster/noodle/dragon — only which abilities get
+// identical across wereham/noodle/dragon — only which abilities get
 // rolled differs, via abilityPoolFor(species, stage) from personalities.ts.
 //
 // Stat philosophy: abilities already exist as flavor-text strings with no
@@ -20,7 +20,7 @@
 // across species; nothing here favors one species' stat ceiling over
 // another's.
 
-import { HAMSTERS, ROSTER_BY_SPECIES, TEEN_FORMS_BY_SPECIES, FINAL_FORMS_BY_SPECIES, rollTeenForm, rollFinalForm } from "./creatures";
+import { ROSTER_BY_SPECIES, TEEN_FORMS_BY_SPECIES, FINAL_FORMS_BY_SPECIES, rollTeenForm, rollFinalForm } from "./creatures";
 import type { EvolutionStage, Species } from "./creatures";
 import { rollPersonality, rollAbilities, abilityPoolFor } from "./personalities";
 import type { Personality } from "./personalities";
@@ -167,15 +167,15 @@ export interface WildCreature {
 }
 
 // Backward-compatible alias for old imports.
-export type WildHamster = WildCreature;
+export type WildWereham = WildCreature;
 
 // Odds shift toward "final" as the player's own furthest-evolved creature
 // climbs, so wild encounters get a little tougher over time without a
 // separate leveling system to maintain. Species defaults to a uniform
 // random pick across all three when not specified, so wild encounters draw
-// from the whole roster rather than always being hamsters.
+// from the whole roster rather than always being werehams.
 export function rollWildCreature(stage: EvolutionStage, species?: Species): WildCreature {
-  const chosenSpecies: Species = species ?? (["hamster", "noodle", "dragon"] as Species[])[Math.floor(Math.random() * 3)];
+  const chosenSpecies: Species = species ?? (["wereham", "noodle", "dragon"] as Species[])[Math.floor(Math.random() * 3)];
   const roster = ROSTER_BY_SPECIES[chosenSpecies];
   const base = roster[Math.floor(Math.random() * roster.length)];
 
@@ -208,19 +208,19 @@ export function rollWildCreature(stage: EvolutionStage, species?: Species): Wild
   };
 }
 
-// Backward-compatible alias — always rolls a hamster, matching the old
-// hamster-only behavior for any call site that hasn't been updated yet.
-export function rollWildHamster(stage: EvolutionStage): WildCreature {
-  return rollWildCreature(stage, "hamster");
+// Backward-compatible alias — always rolls a wereham, matching the old
+// wereham-only behavior for any call site that hasn't been updated yet.
+export function rollWildWereham(stage: EvolutionStage): WildCreature {
+  return rollWildCreature(stage, "wereham");
 }
 
 // A wild encounter persisted to wild_encounter_pending only stores the raw
 // fields (id, species, stage, form, personality, abilities) — image and
 // stats are derived, not stored, so they're recomputed here when loading
-// it back in. species defaults to "hamster" for rows written before the
+// it back in. species defaults to "wereham" for rows written before the
 // species column existed.
 export function hydrateWildCreature(w: WildCreature): WildCreature {
-  const species = w.species || "hamster";
+  const species = w.species || "wereham";
   const forms = w.stage === "final" ? FINAL_FORMS_BY_SPECIES[species] : TEEN_FORMS_BY_SPECIES[species];
   const form = forms.find((f) => f.id === w.formId);
   return {
@@ -231,7 +231,7 @@ export function hydrateWildCreature(w: WildCreature): WildCreature {
   };
 }
 
-export const hydrateWildHamster = hydrateWildCreature;
+export const hydrateWildWereham = hydrateWildCreature;
 
 // --- Battle resolution ------------------------------------------------------
 

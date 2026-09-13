@@ -3,7 +3,7 @@
 // (hamster, noodle, or dragon — species rolls independently of your own
 // fighter's species) using your own teen/final creatures. Fully
 // self-contained — does its own Supabase reads/writes, doesn't touch
-// useHamsterGrowth.ts or any other file. Requires the hamster_battle_log
+// useCreatureGrowth.ts or any other file. Requires the hamster_battle_log
 // table (see migration) — table name kept as-is, now with an
 // opponent_species column alongside the original fields.
 //
@@ -20,7 +20,7 @@ import { supabase } from "../lib/supabase"; // match your actual client path
 import Icon from "../components/Icon";
 import { allBabiesFor, imageForForm, SPECIES_LABELS } from "./creatures";
 import type { EvolutionStage, Species } from "./creatures";
-import { useHamsterGrowth } from "./HamsterGrowthContext";
+import { useCreatureGrowth } from "./CreatureGrowthContext";
 import { BATTLE_REWARDS, TAME_CHANCE, attemptTame } from "./battle";
 import {
   canBattle,
@@ -61,7 +61,7 @@ function HpBar({ current, max, color }: { current: number; max: number; color: s
 }
 
 export default function WildEncounter() {
-  const { wildEncounter, clearWildEncounter, awardBattleWin } = useHamsterGrowth();
+  const { wildEncounter, clearWildEncounter, awardBattleWin } = useCreatureGrowth();
   const [reward, setReward] = useState<{ statPoints: number; shopPoints: number } | null>(null);
   const [loading, setLoading] = useState(true);
   const [fighters, setFighters] = useState<FighterEntry[]>([]);
@@ -82,7 +82,7 @@ export default function WildEncounter() {
   const opponentActingRef = useRef(false);
 
   // A wild creature spawned automatically from an accomplishment (see
-  // useHamsterGrowth.ts) shows up here immediately instead of requiring the
+  // useCreatureGrowth.ts) shows up here immediately instead of requiring the
   // manual "go find one" button.
   useEffect(() => {
     if (wildEncounter && phase === "pick" && !wild) {
@@ -99,7 +99,7 @@ export default function WildEncounter() {
       .order("hatched_at", { ascending: false });
 
     const entries: FighterEntry[] = (data || []).map((r) => {
-      const species = (r.species as Species) || "hamster";
+      const species = (r.species as Species) || "wereham";
       const base = allBabiesFor(species).find((h) => h.id === r.hamster_id);
       const baseImage = base?.image || "";
       const image = imageForForm(species, r.stage as EvolutionStage, r.teen_form_id, r.final_form_id, baseImage);

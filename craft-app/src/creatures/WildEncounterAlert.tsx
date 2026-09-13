@@ -7,12 +7,12 @@
 // Deliberately does NOT render the fight itself here — the fight UI stays a
 // single instance inside Habitat.tsx. Two mounted <WildEncounter /> copies
 // would both try to log/tame the same encounter, which is the same class of
-// bug useHamsterGrowth.ts's checkingRef guards against (two hamsters from
+// bug useCreatureGrowth.ts's checkingRef guards against (two hamsters from
 // one accomplishment). This component only ever reads wildEncounter, never
 // resolves it.
 
 import { useEffect, useState } from "react";
-import { useHamsterGrowth } from "./HamsterGrowthContext";
+import { useCreatureGrowth } from "./CreatureGrowthContext";
 import Icon from "../components/Icon";
 
 interface Props {
@@ -21,7 +21,7 @@ interface Props {
 }
 
 export default function WildEncounterAlert({ currentPage, onNavigate }: Props) {
-  const { wildEncounter } = useHamsterGrowth();
+  const { wildEncounter } = useCreatureGrowth();
   const [dismissed, setDismissed] = useState(false);
   const [visible, setVisible] = useState(false);
 

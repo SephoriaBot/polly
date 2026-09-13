@@ -20,8 +20,8 @@ import PollyCompanionPicker from './components/PollyCompanionPicker';
 import ShapeDefs from './components/ShapeDefs';
 
 import { ToastProvider } from './hooks/useToast';
-import { HamsterGrowthProvider } from './hamsters/HamsterGrowthContext';
-import WildEncounterAlert from './hamsters/WildEncounterAlert';
+import { CreatureGrowthProvider } from './creatures/CreatureGrowthContext';
+import WildEncounterAlert from './creatures/WildEncounterAlert';
 
 import { useAuth } from './context/AuthContext';
 import Login from './pages/Login';
@@ -37,7 +37,7 @@ const DailyPlanner = lazy(() => import('./pages/DailyPlanner'));
 const Wallet = lazy(() => import('./pages/Wallet'));
 const TrackerPage = lazy(() => import('./pages/TrackerPage'));
 const DecisionTree = lazy(() => import('./pages/DecisionTree'));
-const Habitat = lazy(() => import('./hamsters/Habitat'));
+const Habitat = lazy(() => import('./creatures/Habitat'));
 
 type Page =
   | 'dashboard'
@@ -271,7 +271,7 @@ export default function App() {
                 <ShapeDefs />
 
             <ToastProvider>
-              <HamsterGrowthProvider>
+              <CreatureGrowthProvider>
                 <WildEncounterAlert
                   currentPage={page}
                   onNavigate={navigate}
@@ -508,7 +508,7 @@ export default function App() {
                     onNavigate={navigate}
                   />
                 </div>
-              </HamsterGrowthProvider>
+              </CreatureGrowthProvider>
             </ToastProvider>
               </EnergyProvider>
             </CompanionGate>

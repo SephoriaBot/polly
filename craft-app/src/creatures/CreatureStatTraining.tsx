@@ -1,7 +1,7 @@
-// HamsterStatTraining.tsx
+// CreatureStatTraining.tsx
 // Permanent stat allocation UI for a single selected hamster, plus the
-// rename control. Drop this into HamsterHabitat.tsx's detail panel — it
-// pulls allocateStat/renameHamster from the shared HamsterGrowthContext so
+// rename control. Drop this into CreatureHabitat.tsx's detail panel — it
+// pulls allocateStat/renameCreature from the shared CreatureGrowthContext so
 // it doesn't need its own Supabase calls.
 
 import { useState } from "react";
@@ -9,9 +9,9 @@ import Icon from "../components/Icon";
 import { STAT_CAPS } from "./battle";
 import type { TrainedStats } from "./battle";
 import type { EvolutionStage } from "./creatures";
-import { useHamsterGrowth } from "./HamsterGrowthContext";
+import { useCreatureGrowth } from "./CreatureGrowthContext";
 
-interface HamsterStatTrainingProps {
+interface CreatureStatTrainingProps {
   entryId: number;
   stage: EvolutionStage;
   name: string | null;
@@ -100,8 +100,8 @@ const INCREMENT_OPTIONS: Array<{ label: string; value: number }> = [
   { label: "Max", value: Infinity },
 ];
 
-export default function HamsterStatTraining({ entryId, stage, name, trainingPoints, trainedStats }: HamsterStatTrainingProps) {
-  const { allocateStat, renameHamster } = useHamsterGrowth();
+export default function CreatureStatTraining({ entryId, stage, name, trainingPoints, trainedStats }: CreatureStatTrainingProps) {
+  const { allocateStat, renameCreature } = useCreatureGrowth();
   const [editingName, setEditingName] = useState(false);
   const [nameDraft, setNameDraft] = useState(name || "");
   const [busyStat, setBusyStat] = useState<keyof TrainedStats | null>(null);
@@ -124,7 +124,7 @@ export default function HamsterStatTraining({ entryId, stage, name, trainingPoin
   };
 
   const saveName = async () => {
-    await renameHamster(entryId, nameDraft);
+    await renameCreature(entryId, nameDraft);
     setEditingName(false);
   };
 

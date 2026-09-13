@@ -1,12 +1,12 @@
 import { useState } from "react";
-import HamsterNest from "../hamsters/HamsterNest";
-import HamsterHabitat from "../hamsters/HamsterHabitat";
-import WildEncounter from "../hamsters/WildEncounter";
-import HabitatScene from "../hamsters/HabitatScene";
+import CreatureNest from "../creatures/CreatureNest";
+import CreatureHabitat from "../creatures/CreatureHabitat";
+import WildEncounter from "../creatures/WildEncounter";
+import HabitatScene from "../creatures/HabitatScene";
 import PageTabs, { type PageTab } from "../components/PageTabs";
 import PageTitleLogo from "../components/PageTitleLogo";
 
-// HamsterGrowthProvider now wraps the whole app in App.tsx (so the growth
+// CreatureGrowthProvider now wraps the whole app in App.tsx (so the growth
 // check runs on every load and WildEncounterAlert can pop up from any
 // page) — no provider needed here anymore, just consume the context.
 
@@ -42,7 +42,7 @@ export default function Habitat({ initialTab }: { initialTab?: HabitatTab }) {
       {activeTab === 'nest' && (
         <section>
           <div className="section-label">Creature Nest</div>
-          <HamsterNest />
+          <CreatureNest />
         </section>
       )}
 
@@ -56,7 +56,7 @@ export default function Habitat({ initialTab }: { initialTab?: HabitatTab }) {
       {activeTab === 'collection' && (
         <section>
           <div className="section-label">Collection</div>
-          <HamsterHabitat />
+          <CreatureHabitat />
         </section>
       )}
     </div>

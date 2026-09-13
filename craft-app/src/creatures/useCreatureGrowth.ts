@@ -1,4 +1,4 @@
-// useHamsterGrowth.ts
+// useCreatureGrowth.ts
 // Fully self-contained — does NOT touch Wallet.tsx at all. Instead, it
 // checks your existing tables (bill_payments, debts, daily_log) each time
 // it loads and figures out what's new since the last check, then adds
@@ -13,7 +13,7 @@
 // evolve (baby -> teen -> final) once every one of its trained stats is
 // maxed for its current stage (see isMaxedOut in battle.ts) — i.e. it has
 // to actually win enough fights and spend the stat points on training
-// before it can evolve. evolveHamster() below performs the evolution once
+// before it can evolve. evolveCreature() below performs the evolution once
 // eligible. Old traits/abilities are never removed — evolving only rolls a
 // random teen/final form (1 of 20, independent of the starter and of each
 // other) and appends 1-2 new combat abilities on top.
@@ -34,8 +34,8 @@ import type { WildCreature, TrainedStats } from "./battle";
 
 // NOTE: this hook does real Supabase reads/writes and hatches/evolves
 // hamsters as a side effect. It must only ever be instantiated ONCE in the
-// component tree — use HamsterGrowthContext.tsx's <HamsterGrowthProvider>
-// + useHamsterGrowth() everywhere instead of calling this directly. Two
+// component tree — use CreatureGrowthContext.tsx's <CreatureGrowthProvider>
+// + useCreatureGrowth() everywhere instead of calling this directly. Two
 // independent instances (e.g. one per component) race against the same
 // "last checked" timestamp and can double-award points, which is what
 // caused two hamsters to hatch from a single accomplishment.
@@ -68,7 +68,7 @@ const TRAINED_STAT_COLUMNS: Record<keyof TrainedStats, string> = {
   speed: "trained_speed",
 };
 
-interface HamsterCollectionEntry {
+interface CreatureCollectionEntry {
   id: number;
   hamsterId: string;
   species: Species;
@@ -123,7 +123,7 @@ export const SOURCE_LABELS: Record<string, { text: string; icon: IconName }> = {
   battle_win: { text: "Battle won", icon: "trophy" },
 };
 
-export function useHamsterGrowthState() {
+export function useCreatureGrowthState() {
   const [points, setPoints] = useState(0);
   const [threshold, setThreshold] = useState(100);
   // Separate currency from `points` — `points` drives hatching/evolution
@@ -132,7 +132,7 @@ export function useHamsterGrowthState() {
   // together by the same accomplishments (see addPoints), but spending one
   // has zero effect on the other.
   const [decorPoints, setDecorPoints] = useState(0);
-  const [collection, setCollection] = useState<HamsterCollectionEntry[]>([]);
+  const [collection, setCollection] = useState<CreatureCollectionEntry[]>([]);
   const [recentPoints, setRecentPoints] = useState<PointsLogEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -155,7 +155,7 @@ export function useHamsterGrowthState() {
   // to bail instead of proceeding as if the write succeeded).
   const reportError = useCallback((label: string, error: { message?: string } | null) => {
     if (!error) return false;
-    console.error(`[useHamsterGrowth] ${label} failed:`, error);
+    console.error(`[useCreatureGrowth] ${label} failed:`, error);
     setGrowthError(`${label} failed: ${error.message || "unknown error"}`);
     return true;
   }, []);
@@ -182,7 +182,7 @@ export function useHamsterGrowthState() {
       (data || []).map((r) => ({
         id: r.id,
         hamsterId: r.hamster_id,
-        species: (r.species as Species) || "hamster",
+        species: (r.species as Species) || "wereham",
         name: r.name ?? null,
         hatchedAt: r.hatched_at,
         source: r.source,
@@ -222,7 +222,7 @@ export function useHamsterGrowthState() {
       if (!wildEncounter) {
         setWildEncounter({
           creatureId: pending.hamster_id,
-          species: (pending.species as Species) || "hamster",
+          species: (pending.species as Species) || "wereham",
           stage: pending.stage,
           formId: pending.form_id,
           image: "",
@@ -239,8 +239,8 @@ export function useHamsterGrowthState() {
 
     if (Math.random() >= WILD_ENCOUNTER_CHANCE) return;
 
-    const { data: allHamsters } = await supabase.from("hamster_collection").select("stage");
-    const stages = (allHamsters || []).map((r) => r.stage as EvolutionStage);
+    const { data: allCreatures } = await supabase.from("hamster_collection").select("stage");
+    const stages = (allCreatures || []).map((r) => r.stage as EvolutionStage);
     const playerMaxStage: EvolutionStage = stages.includes("final") ? "final" : stages.includes("teen") ? "teen" : "baby";
 
     // Species rolls independently of the player's own creatures — any of
@@ -384,7 +384,7 @@ export function useHamsterGrowthState() {
   // trusting local state so a stale `collection` entry can't slip an
   // ineligible hamster through. Old abilities are kept; evolving rolls a
   // random new form and appends 1-2 new combat abilities, same as before.
-  const evolveHamster = useCallback(
+  const evolveCreature = useCallback(
     async (entryId: number) => {
       const { data: row } = await supabase
         .from("hamster_collection")
@@ -393,7 +393,7 @@ export function useHamsterGrowthState() {
         .maybeSingle();
       if (!row) return { ok: false, reason: "Creature not found" };
 
-      const species = (row.species as Species) || "hamster";
+      const species = (row.species as Species) || "wereham";
       const stage = (row.stage as EvolutionStage) || "baby";
       if (stage === "final") return { ok: false, reason: "Already at final form" };
 
@@ -722,7 +722,7 @@ export function useHamsterGrowthState() {
   // Guards against overlapping/duplicate calls (e.g. React StrictMode's
   // dev-mode double-invoke, or an accidental extra mount) so a single
   // accomplishment can never be counted — and therefore hatched/evolved —
-  // twice. The structural fix is using HamsterGrowthContext so there's only
+  // twice. The structural fix is using CreatureGrowthContext so there's only
   // ever one instance of this hook; this ref is a cheap backstop on top.
   const checkingRef = useRef(false);
   const checkForNewGrowth = useCallback(async () => {
@@ -787,7 +787,7 @@ export function useHamsterGrowthState() {
       if (pending?.hamster_id) {
         setWildEncounter({
           creatureId: pending.hamster_id,
-          species: (pending.species as Species) || "hamster",
+          species: (pending.species as Species) || "wereham",
           stage: pending.stage,
           formId: pending.form_id,
           image: "",
@@ -833,7 +833,7 @@ export function useHamsterGrowthState() {
   // Call this immediately after any write that could earn points (paying a
   // bill, checking off a chore, finishing a grocery list, etc.) instead of
   // waiting for the next focus event or a manual refresh tap. Safe to call
-  // from anywhere via useHamsterGrowth() — checkingRef already guards
+  // from anywhere via useCreatureGrowth() — checkingRef already guards
   // against overlapping runs, so firing this from several pages in quick
   // succession just coalesces into whichever check is already in flight.
   const notifyGrowth = useCallback(() => { checkForNewGrowth(); }, [checkForNewGrowth]);
@@ -862,7 +862,7 @@ export function useHamsterGrowthState() {
   // Renames a hamster. Empty/whitespace-only clears the name back to null
   // (falls back to the default label in the UI). Capped at 24 chars to keep
   // it readable in the small habitat cards.
-  const renameHamster = useCallback(
+  const renameCreature = useCallback(
     async (entryId: number, name: string) => {
       const trimmed = name.trim().slice(0, 24);
       const { error } = await supabase.from("hamster_collection").update({ name: trimmed || null }).eq("id", entryId);
@@ -1000,11 +1000,11 @@ export function useHamsterGrowthState() {
     clearJustEvolved,
     wildEncounter,
     clearWildEncounter,
-    renameHamster,
+    renameCreature,
     allocateStat,
     spendPoints,
     awardBattleWin,
-    evolveHamster,
+    evolveCreature,
     growthError,
     clearGrowthError,
   };

@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { useHamsterGrowth } from "./HamsterGrowthContext";
+import { useCreatureGrowth } from "./CreatureGrowthContext";
 import { allBabiesFor, imageForForm, SPECIES_LABELS, SPECIES } from "./creatures";
 import type { Species, EvolutionStage } from "./creatures";
 import Icon, { type IconName } from "../components/Icon";
-import HamsterStatTraining from "./HamsterStatTraining";
+import CreatureStatTraining from "./CreatureStatTraining";
 import EmptyState from '../components/EmptyState';
 import emptyHabitat from '../assets/icons/empty-habitat.png';
 import { STAT_CAPS, isMaxedOut } from "./battle";
@@ -107,8 +107,8 @@ function EvolutionReadiness({
   );
 }
 
-export default function HamsterHabitat() {
-  const { loading, collection, justEvolved, clearJustEvolved, evolveHamster } = useHamsterGrowth();
+export default function CreatureHabitat() {
+  const { loading, collection, justEvolved, clearJustEvolved, evolveCreature } = useCreatureGrowth();
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [evolving, setEvolving] = useState(false);
   const [evolveMessage, setEvolveMessage] = useState<string | null>(null);
@@ -136,7 +136,7 @@ export default function HamsterHabitat() {
   const handleEvolve = async (entryId: number) => {
     setEvolving(true);
     setEvolveMessage(null);
-    const result = await evolveHamster(entryId);
+    const result = await evolveCreature(entryId);
     if (!result.ok && result.reason) setEvolveMessage(result.reason);
     setEvolving(false);
   };
@@ -331,7 +331,7 @@ export default function HamsterHabitat() {
                   </>
                 )}
 
-                <HamsterStatTraining
+                <CreatureStatTraining
                   entryId={selected.id}
                   stage={selected.stage}
                   name={selected.name}
