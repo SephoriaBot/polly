@@ -41,7 +41,7 @@ function babyImage(species: Species, n: number): string {
     return `/assets/noodles/baby${n}.png`;
   }
   if (species === "bunt") {
-    return `/assets/bunt/buntbaby${n}.png`;
+    return `/assets/bunts/buntbaby${n}.png`;
   }
   // dragon
   return `/assets/Dragons/babydragon${n}.png`;
@@ -56,7 +56,7 @@ function teenImage(species: Species, n: number): string {
     return `/assets/noodles/middle${n}.png`;
   }
   if (species === "bunt") {
-    return `/assets/bunt/buntmiddle${n}.png`;
+    return `/assets/bunts/buntmiddle${n}.png`;
   }
   return `/assets/Dragons/middledragon${n}.png`;
 }
@@ -70,7 +70,7 @@ function finalImage(species: Species, n: number): string {
     return `/assets/noodles/finalcat${n}.png`;
   }
   if (species === "bunt") {
-    return `/assets/bunt/buntfinal${n}.png`;
+    return `/assets/bunts/buntfinal${n}.png`;
   }
   return `/assets/Dragons/godd${n}.png`;
 }
