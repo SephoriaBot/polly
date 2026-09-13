@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from '
 import { supabase } from '../lib/supabase';
 import { useAuth } from './AuthContext';
 
-export type PollySpecies = 'wereham' | 'noodle' | 'dragon';
+export type PollySpecies = 'wereham' | 'noodle' | 'dragon' | 'bunt';
 
 interface PollyCompanionContextValue {
   /** Defaults to 'wereham' while loading or if no choice has been saved yet. */
