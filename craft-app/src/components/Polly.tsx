@@ -59,6 +59,19 @@ const POLLY_IMAGES: Record<PollySpecies, Record<PollyMood, string>> = {
     surprised: '/assets/pollydragon/pollydragon_surprised.png',
     love: '/assets/pollydragon/pollydragon_happy.png',
   },
+  bunt: {
+    neutral: '/assets/pollybunt/pollybunt0.PNG',
+    confused: '/assets/pollybunt/pollybuntscared.PNG',
+    disappointed: '/assets/pollybunt/pollybuntsad.PNG',
+    searching: '/assets/pollybunt/pollybuntneutral.PNG',
+    mad: '/assets/pollybunt/pollybuntmad.PNG',
+    cheering: '/assets/pollybunt/pollybuntexcited.PNG',
+    yawning: '/assets/pollybunt/pollybuntsleeping.PNG',
+    happy: '/assets/pollybunt/pollybuntexcited.PNG',
+    sad: '/assets/pollybunt/pollybuntsad.PNG',
+    surprised: '/assets/pollybunt/pollybuntsurprised.PNG',
+    love: '/assets/pollybunt/pollybunthappy.PNG',
+  },
 };
 
 interface PollyProps {
