@@ -365,22 +365,34 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
   const earlyPayPreset: EarlyPayPreset = earlyPayPresetId === "custom" ? customEarlyPayPreset : EARLY_PAY_PRESETS[earlyPayPresetId];
 
   const walletSettingsSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const walletSettingsPayloadRef = useRef({ tax_rate: taxRate, ot_wage_override: otWageOverride, early_pay_preset_id: earlyPayPresetId, custom_early_pay_preset: customEarlyPayPreset });
+  walletSettingsPayloadRef.current = { tax_rate: taxRate, ot_wage_override: otWageOverride, early_pay_preset_id: earlyPayPresetId, custom_early_pay_preset: customEarlyPayPreset };
+
+  function saveWalletSettingsNow() {
+    supabase.from("wallet_settings").upsert({ id: 1, ...walletSettingsPayloadRef.current }).then(({ error }) => {
+      if (error) console.error("wallet_settings save failed:", error);
+    });
+  }
+
   useEffect(() => {
     if (!walletSettingsLoaded) return; // don't overwrite DB with defaults before initial load completes
     if (walletSettingsSaveTimer.current) clearTimeout(walletSettingsSaveTimer.current);
     walletSettingsSaveTimer.current = setTimeout(() => {
-      supabase.from("wallet_settings").upsert({
-        id: 1,
-        tax_rate: taxRate,
-        ot_wage_override: otWageOverride,
-        early_pay_preset_id: earlyPayPresetId,
-        custom_early_pay_preset: customEarlyPayPreset,
-      }).then(({ error }) => {
-        if (error) console.error("wallet_settings save failed:", error);
-      });
+      walletSettingsSaveTimer.current = null;
+      saveWalletSettingsNow();
     }, 800);
     return () => { if (walletSettingsSaveTimer.current) clearTimeout(walletSettingsSaveTimer.current); };
   }, [taxRate, otWageOverride, earlyPayPresetId, customEarlyPayPreset, walletSettingsLoaded]);
+
+  // Flush any pending save immediately on unmount instead of dropping it (fixes edits made right before navigating away being lost)
+  useEffect(() => {
+    return () => {
+      if (walletSettingsSaveTimer.current) {
+        clearTimeout(walletSettingsSaveTimer.current);
+        saveWalletSettingsNow();
+      }
+    };
+  }, []);
 
 
   const [calcRegWage, setCalcRegWage] = useState("");
@@ -477,8 +489,7 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
         }
 
         if (walletSettingsData) {
-         setTaxRate(walletSettingsData.tax_rate != null ? Number(walletSettingsData.tax_rate) : 20);
-
+          setTaxRate(walletSettingsData.tax_rate != null ? Number(walletSettingsData.tax_rate) : 20);
           setOtWageOverride(walletSettingsData.ot_wage_override || "");
           setEarlyPayPresetId(walletSettingsData.early_pay_preset_id === "custom" ? "custom" : "amazon");
           if (walletSettingsData.custom_early_pay_preset) {
@@ -1914,7 +1925,7 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                   <div>
                     <div className="form-label">Tax Withholding (%)</div>
                     <EditableCell type="number" className="form-input" value={taxRate || ""} placeholder="set in Budget Calculator" onChange={v => setTaxRate(parseFloat(v) || 0)} />
-                   {budgetSaveError && <div style={{ fontSize: 10, color: "var(--danger)", marginTop: 4 }}><Icon name="lightning" size={12} /> {budgetSaveError}</div>}
+                    {budgetSaveError && <div style={{ fontSize: 10, color: "var(--danger)", marginTop: 4 }}><Icon name="lightning" size={12} /> {budgetSaveError}</div>}
                   </div>
 
                   <div>
