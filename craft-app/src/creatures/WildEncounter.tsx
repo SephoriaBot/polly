@@ -21,7 +21,7 @@ import Icon from "../components/Icon";
 import { allBabiesFor, imageForForm, SPECIES_LABELS } from "./creatures";
 import type { EvolutionStage, Species } from "./creatures";
 import { useCreatureGrowth } from "./CreatureGrowthContext";
-import { BATTLE_REWARDS, TAME_CHANCE, attemptTame } from "./battle";
+import { BATTLE_REWARDS } from "./battle";
 import {
   canBattle,
   deriveBattleStats,
@@ -70,8 +70,6 @@ export default function WildEncounter() {
   const [wild, setWild] = useState<WildCreature | null>(null);
   const [isAutoSpawned, setIsAutoSpawned] = useState(false);
   const [winner, setWinner] = useState<"player" | "opponent" | null>(null);
-  // null = no attempt yet, true = tamed successfully, false = it slipped away
-  const [tameOutcome, setTameOutcome] = useState<boolean | null>(null);
 
   // Live battle state
   const [playerHp, setPlayerHp] = useState(0);
@@ -138,7 +136,6 @@ export default function WildEncounter() {
 const goScout = () => {
   if (!selected) return;
 
-  setTameOutcome(null);
   setPhase("scouting");
 
   setTimeout(() => {
@@ -232,7 +229,7 @@ const goScout = () => {
   };
 
   const logBattle = useCallback(
-    async (didTame: boolean) => {
+    async () => {
       if (!selected || !wild || !winner) return;
       await supabase.from("hamster_battle_log").insert({
         player_hamster_entry_id: selected.id,
@@ -244,7 +241,7 @@ const goScout = () => {
         opponent_abilities: wild.abilities,
         result: winner === "player" ? "win" : "loss",
         turns: log,
-        tamed: didTame,
+        tamed: false,
       });
     },
     [selected, wild, winner, log]
@@ -252,7 +249,7 @@ const goScout = () => {
 
   useEffect(() => {
     if (phase === "result" && winner) {
-      logBattle(false);
+      logBattle();
       if (isAutoSpawned) clearWildEncounter();
       if (winner === "player" && selected && wild) {
         awardBattleWin(selected.id, wild.stage).then((res) => {
@@ -263,35 +260,11 @@ const goScout = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase]);
 
-  const tame = async () => {
-    if (!wild) return;
-    const success = attemptTame(wild.stage);
-
-    if (success) {
-      await supabase.from("hamster_collection").insert({
-        hamster_id: wild.creatureId,
-        species: wild.species,
-        source: "wild_tame",
-        personality: wild.personality,
-        stage: wild.stage,
-        evolution_points: 0,
-        teen_form_id: wild.stage === "teen" ? wild.formId : null,
-        final_form_id: wild.stage === "final" ? wild.formId : null,
-        abilities: wild.abilities,
-      });
-      await loadFighters();
-    }
-
-    setTameOutcome(success);
-    await logBattle(success);
-  };
-
   const reset = () => {
     setPhase("pick");
     setWild(null);
     setIsAutoSpawned(false);
     setWinner(null);
-    setTameOutcome(null);
     setLog([]);
     setRoundQueue([]);
     setPlayerHp(0);
@@ -528,39 +501,9 @@ const goScout = () => {
                             +{reward.statPoints} TP for {selected?.name || "your creature"} • +{reward.shopPoints} bank points
                           </div>
                         )}
-                        {tameOutcome === null ? (
-                          <>
-                            <div style={{ fontSize: 11, color: "var(--ink-muted)", marginTop: 6 }}>
-                              {Math.round(TAME_CHANCE[wild.stage] * 100)}% chance to tame it
-                            </div>
-                            <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
-                              <button className="btn-primary" onClick={tame} style={{ flex: 1 }}>
-                                <Icon name="sparkles-cluster" size={14} /> Tame it
-                              </button>
-                              <button onClick={reset} style={{ flex: 1 }}>
-                                Let it go
-                              </button>
-                            </div>
-                          </>
-                        ) : tameOutcome === true ? (
-                          <>
-                            <div style={{ fontSize: 12, color: "var(--ink-muted)", marginTop: 6 }}>
-                              Added to your collection!
-                            </div>
-                            <button className="btn-primary" onClick={reset} style={{ width: "100%", marginTop: 10 }}>
-                              Find another
-                            </button>
-                          </>
-                        ) : (
-                          <>
-                            <div style={{ fontSize: 12, color: "#B85C5C", marginTop: 6 }}>
-                              It slipped free and scurried off!
-                            </div>
-                            <button className="btn-primary" onClick={reset} style={{ width: "100%", marginTop: 10 }}>
-                              Find another
-                            </button>
-                          </>
-                        )}
+                        <button className="btn-primary" onClick={reset} style={{ width: "100%", marginTop: 10 }}>
+                          Find another
+                        </button>
                       </>
                     ) : (
                       <>

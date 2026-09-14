@@ -96,19 +96,10 @@ export const BATTLE_REWARDS: Record<EvolutionStage, { statPoints: number; shopPo
   final: { statPoints: 6, shopPoints: 8 },
 };
 
-// Winning a fight only earns the *chance* to tame — it's no longer a
-// guaranteed add to the collection. Odds fall as the opponent's stage
-// rises, mirroring how much tougher it was to beat in the first place, so
-// the collection grows a lot slower (and more deliberately) than before.
-export const TAME_CHANCE: Record<EvolutionStage, number> = {
-  baby: 0.65,
-  teen: 0.4,
-  final: 0.2,
-};
-
-export function attemptTame(stage: EvolutionStage): boolean {
-  return Math.random() < TAME_CHANCE[stage];
-}
+// Winning a fight earns TP and bank points (see BATTLE_REWARDS above).
+// Wild creatures can no longer be tamed/added to the collection — the
+// breeder (see CreatureBreeder.tsx) is now the only way to acquire a
+// creature.
 
 // A creature is ready to evolve once every trained stat is maxed out for
 // its current stage. Final-stage creatures have nowhere further to go.
