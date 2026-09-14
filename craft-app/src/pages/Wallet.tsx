@@ -364,57 +364,37 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
   const [customEarlyPayPreset, setCustomEarlyPayPreset] = useState<EarlyPayPreset>(EARLY_PAY_PRESETS.custom);
   const earlyPayPreset: EarlyPayPreset = earlyPayPresetId === "custom" ? customEarlyPayPreset : EARLY_PAY_PRESETS[earlyPayPresetId];
 
-  const walletSettingsSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const walletSettingsPayloadRef = useRef({ tax_rate: taxRate, ot_wage_override: otWageOverride, early_pay_preset_id: earlyPayPresetId, custom_early_pay_preset: customEarlyPayPreset });
-
-  // These wrappers update the save-payload ref synchronously, at the moment of the edit,
-  // instead of waiting for a re-render to sync it (a render isn't guaranteed to happen
-  // before unmount if a blur and a nav click land in the same React batch).
-  function updateTaxRate(v: number) {
-    walletSettingsPayloadRef.current.tax_rate = v;
+  // Same pattern as updateBudget: update local state and write to Supabase immediately,
+  // no debounce, nothing that can get lost to unmount/navigation timing.
+  async function updateTaxRate(v: number) {
     setTaxRate(v);
+    const { error } = await supabase.from("wallet_settings").upsert({
+      id: 1, tax_rate: v, ot_wage_override: otWageOverride, early_pay_preset_id: earlyPayPresetId, custom_early_pay_preset: customEarlyPayPreset,
+    });
+    if (error) console.error("wallet_settings save failed:", error);
   }
-  function updateOtWageOverride(v: string) {
-    walletSettingsPayloadRef.current.ot_wage_override = v;
+  async function updateOtWageOverride(v: string) {
     setOtWageOverride(v);
+    const { error } = await supabase.from("wallet_settings").upsert({
+      id: 1, tax_rate: taxRate, ot_wage_override: v, early_pay_preset_id: earlyPayPresetId, custom_early_pay_preset: customEarlyPayPreset,
+    });
+    if (error) console.error("wallet_settings save failed:", error);
   }
-  function updateEarlyPayPresetId(v: EarlyPayPresetId) {
-    walletSettingsPayloadRef.current.early_pay_preset_id = v;
+  async function updateEarlyPayPresetId(v: EarlyPayPresetId) {
     setEarlyPayPresetId(v);
-  }
-  function updateCustomEarlyPayPreset(updater: (prev: EarlyPayPreset) => EarlyPayPreset) {
-    setCustomEarlyPayPreset(prev => {
-      const next = updater(prev);
-      walletSettingsPayloadRef.current.custom_early_pay_preset = next;
-      return next;
+    const { error } = await supabase.from("wallet_settings").upsert({
+      id: 1, tax_rate: taxRate, ot_wage_override: otWageOverride, early_pay_preset_id: v, custom_early_pay_preset: customEarlyPayPreset,
     });
+    if (error) console.error("wallet_settings save failed:", error);
   }
-
-  function saveWalletSettingsNow() {
-    supabase.from("wallet_settings").upsert({ id: 1, ...walletSettingsPayloadRef.current }).then(({ error }) => {
-      if (error) console.error("wallet_settings save failed:", error);
+  async function updateCustomEarlyPayPreset(updater: (prev: EarlyPayPreset) => EarlyPayPreset) {
+    const next = updater(customEarlyPayPreset);
+    setCustomEarlyPayPreset(next);
+    const { error } = await supabase.from("wallet_settings").upsert({
+      id: 1, tax_rate: taxRate, ot_wage_override: otWageOverride, early_pay_preset_id: earlyPayPresetId, custom_early_pay_preset: next,
     });
+    if (error) console.error("wallet_settings save failed:", error);
   }
-
-  useEffect(() => {
-    if (!walletSettingsLoaded) return; // don't overwrite DB with defaults before initial load completes
-    if (walletSettingsSaveTimer.current) clearTimeout(walletSettingsSaveTimer.current);
-    walletSettingsSaveTimer.current = setTimeout(() => {
-      walletSettingsSaveTimer.current = null;
-      saveWalletSettingsNow();
-    }, 800);
-    return () => { if (walletSettingsSaveTimer.current) clearTimeout(walletSettingsSaveTimer.current); };
-  }, [taxRate, otWageOverride, earlyPayPresetId, customEarlyPayPreset, walletSettingsLoaded]);
-
-  // Flush any pending save immediately on unmount instead of dropping it (fixes edits made right before navigating away being lost)
-  useEffect(() => {
-    return () => {
-      if (walletSettingsSaveTimer.current) {
-        clearTimeout(walletSettingsSaveTimer.current);
-        saveWalletSettingsNow();
-      }
-    };
-  }, []);
 
 
   const [calcRegWage, setCalcRegWage] = useState("");
@@ -521,12 +501,6 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
           setOtWageOverride(loadedOtWageOverride);
           setEarlyPayPresetId(loadedEarlyPayPresetId);
           if (walletSettingsData.custom_early_pay_preset) setCustomEarlyPayPreset(loadedCustomEarlyPayPreset);
-          walletSettingsPayloadRef.current = {
-            tax_rate: loadedTaxRate,
-            ot_wage_override: loadedOtWageOverride,
-            early_pay_preset_id: loadedEarlyPayPresetId,
-            custom_early_pay_preset: loadedCustomEarlyPayPreset,
-          };
         }
         setWalletSettingsLoaded(true);
 
