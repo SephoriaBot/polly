@@ -366,7 +366,29 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
 
   const walletSettingsSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const walletSettingsPayloadRef = useRef({ tax_rate: taxRate, ot_wage_override: otWageOverride, early_pay_preset_id: earlyPayPresetId, custom_early_pay_preset: customEarlyPayPreset });
-  walletSettingsPayloadRef.current = { tax_rate: taxRate, ot_wage_override: otWageOverride, early_pay_preset_id: earlyPayPresetId, custom_early_pay_preset: customEarlyPayPreset };
+
+  // These wrappers update the save-payload ref synchronously, at the moment of the edit,
+  // instead of waiting for a re-render to sync it (a render isn't guaranteed to happen
+  // before unmount if a blur and a nav click land in the same React batch).
+  function updateTaxRate(v: number) {
+    walletSettingsPayloadRef.current.tax_rate = v;
+    setTaxRate(v);
+  }
+  function updateOtWageOverride(v: string) {
+    walletSettingsPayloadRef.current.ot_wage_override = v;
+    setOtWageOverride(v);
+  }
+  function updateEarlyPayPresetId(v: EarlyPayPresetId) {
+    walletSettingsPayloadRef.current.early_pay_preset_id = v;
+    setEarlyPayPresetId(v);
+  }
+  function updateCustomEarlyPayPreset(updater: (prev: EarlyPayPreset) => EarlyPayPreset) {
+    setCustomEarlyPayPreset(prev => {
+      const next = updater(prev);
+      walletSettingsPayloadRef.current.custom_early_pay_preset = next;
+      return next;
+    });
+  }
 
   function saveWalletSettingsNow() {
     supabase.from("wallet_settings").upsert({ id: 1, ...walletSettingsPayloadRef.current }).then(({ error }) => {
@@ -489,12 +511,22 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
         }
 
         if (walletSettingsData) {
-          setTaxRate(walletSettingsData.tax_rate != null ? Number(walletSettingsData.tax_rate) : 20);
-          setOtWageOverride(walletSettingsData.ot_wage_override || "");
-          setEarlyPayPresetId(walletSettingsData.early_pay_preset_id === "custom" ? "custom" : "amazon");
-          if (walletSettingsData.custom_early_pay_preset) {
-            setCustomEarlyPayPreset({ ...EARLY_PAY_PRESETS.custom, ...walletSettingsData.custom_early_pay_preset });
-          }
+          const loadedTaxRate = walletSettingsData.tax_rate != null ? Number(walletSettingsData.tax_rate) : 20;
+          const loadedOtWageOverride = walletSettingsData.ot_wage_override || "";
+          const loadedEarlyPayPresetId: EarlyPayPresetId = walletSettingsData.early_pay_preset_id === "custom" ? "custom" : "amazon";
+          const loadedCustomEarlyPayPreset = walletSettingsData.custom_early_pay_preset
+            ? { ...EARLY_PAY_PRESETS.custom, ...walletSettingsData.custom_early_pay_preset }
+            : customEarlyPayPreset;
+          setTaxRate(loadedTaxRate);
+          setOtWageOverride(loadedOtWageOverride);
+          setEarlyPayPresetId(loadedEarlyPayPresetId);
+          if (walletSettingsData.custom_early_pay_preset) setCustomEarlyPayPreset(loadedCustomEarlyPayPreset);
+          walletSettingsPayloadRef.current = {
+            tax_rate: loadedTaxRate,
+            ot_wage_override: loadedOtWageOverride,
+            early_pay_preset_id: loadedEarlyPayPresetId,
+            custom_early_pay_preset: loadedCustomEarlyPayPreset,
+          };
         }
         setWalletSettingsLoaded(true);
 
@@ -1685,7 +1717,7 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                   <select
                     className="form-input"
                     value={earlyPayPresetId}
-                    onChange={e => setEarlyPayPresetId(e.target.value as EarlyPayPresetId)}
+                    onChange={e => updateEarlyPayPresetId(e.target.value as EarlyPayPresetId)}
                   >
                     {Object.values(EARLY_PAY_PRESETS).map(p => (
                       <option key={p.id} value={p.id}>{p.label}</option>
@@ -1703,7 +1735,7 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                         <input
                           type="number" className="form-input"
                           value={customEarlyPayPreset.safetyBufferNormal * 100}
-                          onChange={e => setCustomEarlyPayPreset(prev => ({ ...prev, safetyBufferNormal: (parseFloat(e.target.value) || 0) / 100 }))}
+                          onChange={e => updateCustomEarlyPayPreset(prev => ({ ...prev, safetyBufferNormal: (parseFloat(e.target.value) || 0) / 100 }))}
                         />
                       </div>
                       <div>
@@ -1711,7 +1743,7 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                         <input
                           type="number" className="form-input"
                           value={customEarlyPayPreset.safetyBufferHighHours * 100}
-                          onChange={e => setCustomEarlyPayPreset(prev => ({ ...prev, safetyBufferHighHours: (parseFloat(e.target.value) || 0) / 100 }))}
+                          onChange={e => updateCustomEarlyPayPreset(prev => ({ ...prev, safetyBufferHighHours: (parseFloat(e.target.value) || 0) / 100 }))}
                         />
                       </div>
                       <div>
@@ -1719,7 +1751,7 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                         <input
                           type="number" className="form-input"
                           value={customEarlyPayPreset.highHoursThreshold}
-                          onChange={e => setCustomEarlyPayPreset(prev => ({ ...prev, highHoursThreshold: parseFloat(e.target.value) || 0 }))}
+                          onChange={e => updateCustomEarlyPayPreset(prev => ({ ...prev, highHoursThreshold: parseFloat(e.target.value) || 0 }))}
                         />
                       </div>
                       <div>
@@ -1727,7 +1759,7 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                         <input
                           type="number" className="form-input"
                           value={customEarlyPayPreset.garnishments}
-                          onChange={e => setCustomEarlyPayPreset(prev => ({ ...prev, garnishments: parseFloat(e.target.value) || 0 }))}
+                          onChange={e => updateCustomEarlyPayPreset(prev => ({ ...prev, garnishments: parseFloat(e.target.value) || 0 }))}
                         />
                       </div>
                     </div>
@@ -1924,7 +1956,7 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 10 }}>
                   <div>
                     <div className="form-label">Tax Withholding (%)</div>
-                    <EditableCell type="number" className="form-input" value={taxRate || ""} placeholder="set in Budget Calculator" onChange={v => setTaxRate(parseFloat(v) || 0)} />
+                    <EditableCell type="number" className="form-input" value={taxRate || ""} placeholder="set in Budget Calculator" onChange={v => updateTaxRate(parseFloat(v) || 0)} />
                     {budgetSaveError && <div style={{ fontSize: 10, color: "var(--danger)", marginTop: 4 }}><Icon name="lightning" size={12} /> {budgetSaveError}</div>}
                   </div>
 
@@ -1935,7 +1967,7 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                   </div>
                   <div>
                     <div className="form-label">OT Wage</div>
-                    <input type="number" className="form-input" value={otWageOverride} placeholder={budget.hourly_wage > 0 ? `${(budget.hourly_wage * 1.5).toFixed(2)} (1.5x)` : "e.g. 29.25"} onChange={e => setOtWageOverride(e.target.value)} />
+                    <input type="number" className="form-input" value={otWageOverride} placeholder={budget.hourly_wage > 0 ? `${(budget.hourly_wage * 1.5).toFixed(2)} (1.5x)` : "e.g. 29.25"} onChange={e => updateOtWageOverride(e.target.value)} />
                   </div>
                   <div style={{ display: "flex", alignItems: "flex-end" }}>
                     <div style={{ fontSize: 10, color: "var(--ink-muted)" }}>leave blank to auto-use 1.5x your hourly wage</div>
