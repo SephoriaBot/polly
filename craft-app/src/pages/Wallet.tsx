@@ -1912,7 +1912,8 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 10 }}>
                   <div>
                     <div className="form-label">Tax Withholding (%)</div>
-                    <input type="number" className="form-input" value={taxRate} onChange={e => setTaxRate(parseFloat(e.target.value) || 0)} />
+                    <EditableCell type="number" className="form-input" value={budget.tax_rate || ""} placeholder="set in Budget Calculator" onChange={valueTax => updateBudget("tax_rate", parseFloat(valueTax) || 0)} />
+                    {budgetSaveError && <div style={{ fontSize: 10, color: "var(--danger)", marginTop: 4 }}><Icon name="lightning" size={12} /> {budgetSaveError}</div>}
                   </div>
 
                   <div>
