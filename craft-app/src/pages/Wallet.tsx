@@ -477,7 +477,8 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
         }
 
         if (walletSettingsData) {
-          setTaxRate(typeof walletSettingsData.tax_rate === "number" ? walletSettingsData.tax_rate : 20);
+         setTaxRate(walletSettingsData.tax_rate != null ? Number(walletSettingsData.tax_rate) : 20);
+
           setOtWageOverride(walletSettingsData.ot_wage_override || "");
           setEarlyPayPresetId(walletSettingsData.early_pay_preset_id === "custom" ? "custom" : "amazon");
           if (walletSettingsData.custom_early_pay_preset) {
@@ -1912,8 +1913,8 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 10 }}>
                   <div>
                     <div className="form-label">Tax Withholding (%)</div>
-                    <EditableCell type="number" className="form-input" value={budget.tax_rate || ""} placeholder="set in Budget Calculator" onChange={taxRate => updateBudget("tax_rate", parseFloat(taxRate) || 0)} />
-                    {budgetSaveError && <div style={{ fontSize: 10, color: "var(--danger)", marginTop: 4 }}><Icon name="lightning" size={12} /> {budgetSaveError}</div>}
+                    <EditableCell type="number" className="form-input" value={taxRate || ""} placeholder="set in Budget Calculator" onChange={v => setTaxRate(parseFloat(v) || 0)} />
+                   {budgetSaveError && <div style={{ fontSize: 10, color: "var(--danger)", marginTop: 4 }}><Icon name="lightning" size={12} /> {budgetSaveError}</div>}
                   </div>
 
                   <div>
