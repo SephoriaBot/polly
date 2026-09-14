@@ -30,6 +30,7 @@ interface Budget {
   current_balance: number;
   net_to_gross_ratio: number;
   flat_deductions_prev: number;
+  tax_rate?: number;
 }
 
 interface Bill {
@@ -329,7 +330,7 @@ export default function Wallet({ initialView }: { initialView?: 'home' | 'calend
   const [debts, setDebts] = useState<Debt[]>([]);
   const [debtStrategy, setDebtStrategy] =
   useState<DebtStrategy>("snowball");
-const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, hourly_wage: 0, current_balance: 0, net_to_gross_ratio: 0, flat_deductions_prev: 0 });
+const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, hourly_wage: 0, current_balance: 0, net_to_gross_ratio: 0, flat_deductions_prev: 0, tax_rate: 20 });
   const [bills, setBills] = useState<Bill[]>([]);
   const [payments, setPayments] = useState<BillPayment[]>([]);
   const [nextId, setNextId] = useState(20);
@@ -357,33 +358,25 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
   const [showNewListInput, setShowNewListInput] = useState(false);
   const [newListName, setNewListName] = useState("");
   const [newItemDrafts, setNewItemDrafts] = useState<Record<number, string>>({});
-  const [taxRate, setTaxRate] = useState<number>(20);
   const [otWageOverride, setOtWageOverride] = useState<string>("");
   const [walletSettingsLoaded, setWalletSettingsLoaded] = useState(false);
   const [earlyPayPresetId, setEarlyPayPresetId] = useState<EarlyPayPresetId>("amazon");
   const [customEarlyPayPreset, setCustomEarlyPayPreset] = useState<EarlyPayPreset>(EARLY_PAY_PRESETS.custom);
   const earlyPayPreset: EarlyPayPreset = earlyPayPresetId === "custom" ? customEarlyPayPreset : EARLY_PAY_PRESETS[earlyPayPresetId];
+  // Tax rate now lives on the budget table (budget.tax_rate), saved via updateBudget like everything else on this page.
+  const taxRate = budget.tax_rate != null ? Number(budget.tax_rate) : 20;
 
-  // Same pattern as updateBudget: update local state and write to Supabase immediately,
-  // no debounce, nothing that can get lost to unmount/navigation timing.
-  async function updateTaxRate(v: number) {
-    setTaxRate(v);
-    const { error } = await supabase.from("wallet_settings").upsert({
-      id: 1, tax_rate: v, ot_wage_override: otWageOverride, early_pay_preset_id: earlyPayPresetId, custom_early_pay_preset: customEarlyPayPreset,
-    });
-    if (error) console.error("wallet_settings save failed:", error);
-  }
   async function updateOtWageOverride(v: string) {
     setOtWageOverride(v);
     const { error } = await supabase.from("wallet_settings").upsert({
-      id: 1, tax_rate: taxRate, ot_wage_override: v, early_pay_preset_id: earlyPayPresetId, custom_early_pay_preset: customEarlyPayPreset,
+      id: 1, ot_wage_override: v, early_pay_preset_id: earlyPayPresetId, custom_early_pay_preset: customEarlyPayPreset,
     });
     if (error) console.error("wallet_settings save failed:", error);
   }
   async function updateEarlyPayPresetId(v: EarlyPayPresetId) {
     setEarlyPayPresetId(v);
     const { error } = await supabase.from("wallet_settings").upsert({
-      id: 1, tax_rate: taxRate, ot_wage_override: otWageOverride, early_pay_preset_id: v, custom_early_pay_preset: customEarlyPayPreset,
+      id: 1, ot_wage_override: otWageOverride, early_pay_preset_id: v, custom_early_pay_preset: customEarlyPayPreset,
     });
     if (error) console.error("wallet_settings save failed:", error);
   }
@@ -391,7 +384,7 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
     const next = updater(customEarlyPayPreset);
     setCustomEarlyPayPreset(next);
     const { error } = await supabase.from("wallet_settings").upsert({
-      id: 1, tax_rate: taxRate, ot_wage_override: otWageOverride, early_pay_preset_id: earlyPayPresetId, custom_early_pay_preset: next,
+      id: 1, ot_wage_override: otWageOverride, early_pay_preset_id: earlyPayPresetId, custom_early_pay_preset: next,
     });
     if (error) console.error("wallet_settings save failed:", error);
   }
@@ -491,13 +484,11 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
         }
 
         if (walletSettingsData) {
-          const loadedTaxRate = walletSettingsData.tax_rate != null ? Number(walletSettingsData.tax_rate) : 20;
           const loadedOtWageOverride = walletSettingsData.ot_wage_override || "";
           const loadedEarlyPayPresetId: EarlyPayPresetId = walletSettingsData.early_pay_preset_id === "custom" ? "custom" : "amazon";
           const loadedCustomEarlyPayPreset = walletSettingsData.custom_early_pay_preset
             ? { ...EARLY_PAY_PRESETS.custom, ...walletSettingsData.custom_early_pay_preset }
             : customEarlyPayPreset;
-          setTaxRate(loadedTaxRate);
           setOtWageOverride(loadedOtWageOverride);
           setEarlyPayPresetId(loadedEarlyPayPresetId);
           if (walletSettingsData.custom_early_pay_preset) setCustomEarlyPayPreset(loadedCustomEarlyPayPreset);
@@ -1930,7 +1921,7 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 10 }}>
                   <div>
                     <div className="form-label">Tax Withholding (%)</div>
-                    <EditableCell type="number" className="form-input" value={taxRate || ""} placeholder="set in Budget Calculator" onChange={v => updateTaxRate(parseFloat(v) || 0)} />
+                    <EditableCell type="number" className="form-input" value={budget.tax_rate ?? ""} placeholder="set in Budget Calculator" onChange={v => updateBudget("tax_rate", parseFloat(v) || 0)} />
                     {budgetSaveError && <div style={{ fontSize: 10, color: "var(--danger)", marginTop: 4 }}><Icon name="lightning" size={12} /> {budgetSaveError}</div>}
                   </div>
 
