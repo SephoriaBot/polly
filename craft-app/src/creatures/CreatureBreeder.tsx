@@ -5,6 +5,19 @@ import { SPECIES, SPECIES_LABELS, allBabiesFor } from "./creatures";
 import type { Creature, Species } from "./creatures";
 import { todayKey, pickDaily } from "../lib/dailyRandom";
 import Icon from "../components/Icon";
+import ShopkeeperBubble, { type ShopkeeperExpression } from "./ShopkeeperBubble";
+
+// A handful of stock greetings, one drawn per day (same pattern as the
+// litter itself) so the breeder isn't saying the exact same line on every
+// visit but still feels stable within a given day.
+const BREEDER_GREETINGS = [
+  "Take a look at today's litter!",
+  "Got some real sweeties in today.",
+  "Come on in, have a look around.",
+  "These little ones just came in this morning.",
+  "Take your time picking — no rush at all.",
+  "Every one of these is a good egg, if you ask me.",
+];
 
 // Today's litter: every baby across every species, pooled together and
 // deterministically shuffled by the calendar date — same pattern as the
@@ -34,12 +47,16 @@ export default function CreatureBreeder() {
   // Stable for the lifetime of this mount — recomputing on every render
   // would be harmless (same date = same result) but there's no reason to.
   const litter = useMemo(() => todaysLitter(), []);
+  const greeting = useMemo(
+    () => pickDaily(`${todayKey()}:breeder-greeting`, BREEDER_GREETINGS, 1)[0],
+    []
+  );
 
   if (loading) {
     return (
       <div className="card">
-        <div className="card-body" style={{ textAlign: "center", fontSize: 12, color: "var(--ink-muted)" }}>
-          checking in with the breeder...
+        <div className="card-body">
+          <ShopkeeperBubble expression="thinking" message="Just checking my ledger..." />
         </div>
       </div>
     );
@@ -55,6 +72,24 @@ export default function CreatureBreeder() {
         entry.hamsterId === creatureId &&
         new Date(entry.hatchedAt) >= todayStart
     );
+  }
+
+  const allAdoptedToday = litter.length > 0 && litter.every((c) => alreadyAdoptedToday(c.id));
+
+  let expression: ShopkeeperExpression = "welcome";
+  let keeperMessage = greeting;
+  if (justAdopted) {
+    expression = "showing";
+    keeperMessage = "Welcome home, little one! Take good care of them.";
+  } else if (error) {
+    expression = "neutral";
+    keeperMessage = error;
+  } else if (buyingId) {
+    expression = "thinking";
+    keeperMessage = "Hold on now, let me wrap that up...";
+  } else if (allAdoptedToday) {
+    expression = "neutral";
+    keeperMessage = "That's everyone for today — new litter at midnight.";
   }
 
   async function handleBuy(species: Species, creature: Creature) {
@@ -109,6 +144,8 @@ export default function CreatureBreeder() {
             </button>
           </div>
         </div>
+
+        <ShopkeeperBubble expression={expression} message={keeperMessage} />
 
         {justAdopted ? (
           <div style={{ textAlign: "center", padding: "10px 0" }}>
