@@ -1,0 +1,74 @@
+/* ================================
+   SHOPKEEPER SPEECH BUBBLE
+   Portrait sits on the left, bubble
+   tail points left toward him.
+   ================================ */
+
+.shopkeeper-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.shopkeeper-portrait {
+  width: 56px;
+  height: 56px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.shopkeeper-bubble {
+  position: relative;
+  flex: 1;
+  padding: 8px 12px;
+  background: var(--cream);
+  border: 1.5px solid var(--pink-light);
+  border-radius: 14px;
+  color: var(--ink-muted);
+  font-size: 0.72rem;
+  line-height: 1.35;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+  animation: shopkeeper-bubble-pop 0.2s ease-out;
+}
+
+.shopkeeper-bubble::after {
+  content: "";
+  position: absolute;
+  bottom: 12px;
+  left: -8px;
+  width: 0;
+  height: 0;
+  border-top: 7px solid transparent;
+  border-bottom: 7px solid transparent;
+  border-right: 8px solid var(--pink-light);
+}
+
+.shopkeeper-bubble::before {
+  content: "";
+  position: absolute;
+  bottom: 13px;
+  left: -6px;
+  z-index: 1;
+  width: 0;
+  height: 0;
+  border-top: 6px solid transparent;
+  border-bottom: 6px solid transparent;
+  border-right: 7px solid var(--cream);
+}
+
+@keyframes shopkeeper-bubble-pop {
+  0% {
+    transform: scale(0.85);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shopkeeper-bubble {
+    animation: none;
+  }
+}
