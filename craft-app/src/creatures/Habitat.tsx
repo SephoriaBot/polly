@@ -1,5 +1,5 @@
 import { useState } from "react";
-import CreatureNest from "../creatures/CreatureNest";
+import CreatureBreeder from "../creatures/CreatureBreeder";
 import CreatureHabitat from "../creatures/CreatureHabitat";
 import WildEncounter from "../creatures/WildEncounter";
 import HabitatScene from "../creatures/HabitatScene";
@@ -10,11 +10,11 @@ import PageTitleLogo from "../components/PageTitleLogo";
 // check runs on every load and WildEncounterAlert can pop up from any
 // page) — no provider needed here anymore, just consume the context.
 
-type HabitatTab = 'shelf' | 'nest' | 'wild' | 'collection';
+type HabitatTab = 'shelf' | 'breeder' | 'wild' | 'collection';
 
 const HABITAT_TABS: PageTab<HabitatTab>[] = [
   { key: 'shelf', label: 'Shelf', icon: 'house' },
-  { key: 'nest', label: 'Nest', icon: 'egg-nest' },
+  { key: 'breeder', label: 'Breeder', icon: 'shopping-cart' },
   { key: 'wild', label: 'Wild Encounter', icon: 'hamster-wild' },
   { key: 'collection', label: 'Collection', icon: 'trophy' },
 ];
@@ -39,10 +39,10 @@ export default function Habitat({ initialTab }: { initialTab?: HabitatTab }) {
         </section>
       )}
 
-      {activeTab === 'nest' && (
+      {activeTab === 'breeder' && (
         <section>
-          <div className="section-label">Creature Nest</div>
-          <CreatureNest />
+          <div className="section-label">The Breeder</div>
+          <CreatureBreeder />
         </section>
       )}
 

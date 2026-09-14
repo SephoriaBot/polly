@@ -1,18 +1,20 @@
 // creatures.ts
-// Replaces hamsters.ts. The roster now spans four species — wereham,
-// noodle (cat-like), dragon — each with their own baby/teen/final art.
+// Replaces hamsters.ts. The roster now spans five species — wereham,
+// noodle (cat-like), dragon, bunt (sheep/bat hybrid), and wrendel
+// (antlered forest wraith) — each with their own baby/teen/final art.
 // Duplicates are allowed within a species — fully random every time, per
 // your original call.
 
-export type Species = "wereham" | "noodle" | "dragon" | "bunt";
+export type Species = "wereham" | "noodle" | "dragon" | "bunt" | "wrendel";
 
-export const SPECIES: Species[] = ["wereham", "noodle", "dragon", "bunt"];
+export const SPECIES: Species[] = ["wereham", "noodle", "dragon", "bunt", "wrendel"];
 
 export const SPECIES_LABELS: Record<Species, string> = {
   wereham: "Wereham",
   noodle: "Noodle",
   dragon: "Dragon",
   bunt: "Bunt",
+  wrendel: "Wrendel",
 };
 
 export interface Creature {
@@ -27,6 +29,7 @@ const ROSTER_SIZE: Record<Species, number> = {
   noodle: 15,
   dragon: 15,
   bunt: 10,
+  wrendel: 10,
 };
 
 // Baby image path per species — matches the actual asset folder layout.
@@ -43,6 +46,9 @@ function babyImage(species: Species, n: number): string {
   if (species === "bunt") {
     return `/assets/bunts/buntbaby${n}.png`;
   }
+  if (species === "wrendel") {
+    return `/assets/wrendels/wrendelbaby${n}.png`;
+  }
   // dragon
   return `/assets/Dragons/babydragon${n}.png`;
 }
@@ -58,6 +64,9 @@ function teenImage(species: Species, n: number): string {
   if (species === "bunt") {
     return `/assets/bunts/buntmiddle${n}.png`;
   }
+  if (species === "wrendel") {
+    return `/assets/wrendels/wrendelmiddle${n}.png`;
+  }
   return `/assets/Dragons/middledragon${n}.png`;
 }
 
@@ -71,6 +80,9 @@ function finalImage(species: Species, n: number): string {
   }
   if (species === "bunt") {
     return `/assets/bunts/buntfinal${n}.png`;
+  }
+  if (species === "wrendel") {
+    return `/assets/wrendels/wrendelfinal${n}.png`;
   }
   return `/assets/Dragons/godd${n}.png`;
 }
@@ -86,12 +98,14 @@ export const WEREHAMS: Creature[] = buildRoster("wereham");
 export const NOODLES: Creature[] = buildRoster("noodle");
 export const DRAGONS: Creature[] = buildRoster("dragon");
 export const BUNTS: Creature[] = buildRoster("bunt");
+export const WRENDELS: Creature[] = buildRoster("wrendel");
 
 export const ROSTER_BY_SPECIES: Record<Species, Creature[]> = {
   wereham: WEREHAMS,
   noodle: NOODLES,
   dragon: DRAGONS,
   bunt: BUNTS,
+  wrendel: WRENDELS,
 };
 
 // Every baby for a given species. Anything that looks up a hatched
@@ -154,6 +168,7 @@ export const TEEN_FORMS_BY_SPECIES: Record<Species, EvolutionForm[]> = {
   noodle: buildForms("noodle", teenImage, "teen"),
   dragon: buildForms("dragon", teenImage, "teen"),
   bunt: buildForms("bunt", teenImage, "teen"),
+  wrendel: buildForms("wrendel", teenImage, "teen"),
 };
 
 export const FINAL_FORMS_BY_SPECIES: Record<Species, EvolutionForm[]> = {
@@ -161,6 +176,7 @@ export const FINAL_FORMS_BY_SPECIES: Record<Species, EvolutionForm[]> = {
   noodle: buildForms("noodle", finalImage, "final"),
   dragon: buildForms("dragon", finalImage, "final"),
   bunt: buildForms("bunt", finalImage, "final"),
+  wrendel: buildForms("wrendel", finalImage, "final"),
 };
 
 // Flattened across all species — kept for any old call site that expects

@@ -1,0 +1,256 @@
+import { useMemo, useState } from "react";
+import { useCreatureGrowth } from "./CreatureGrowthContext";
+import { BREEDER_COST, SOURCE_LABELS } from "./useCreatureGrowth";
+import { SPECIES, SPECIES_LABELS, allBabiesFor } from "./creatures";
+import type { Creature, Species } from "./creatures";
+import { todayKey, pickDaily } from "../lib/dailyRandom";
+import Icon from "../components/Icon";
+
+// Today's litter: every baby across every species, pooled together and
+// deterministically shuffled by the calendar date — same pattern as the
+// habitat's rotating decor market (see dailyRandom.ts), just seeded with
+// a distinct suffix so the two daily draws aren't correlated with each
+// other. Resets at local midnight when todayKey() rolls over.
+function todaysLitter(): Creature[] {
+  const fullPool: Creature[] = SPECIES.flatMap((s) => allBabiesFor(s));
+  return pickDaily(`${todayKey()}:breeder`, fullPool, 3);
+}
+
+export default function CreatureBreeder() {
+  const {
+    loading,
+    refreshing,
+    refresh,
+    bankPoints,
+    recentPoints,
+    buyFromBreeder,
+    collection,
+    justAdopted,
+    clearJustAdopted,
+  } = useCreatureGrowth();
+  const [buyingId, setBuyingId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  // Stable for the lifetime of this mount — recomputing on every render
+  // would be harmless (same date = same result) but there's no reason to.
+  const litter = useMemo(() => todaysLitter(), []);
+
+  if (loading) {
+    return (
+      <div className="card">
+        <div className="card-body" style={{ textAlign: "center", fontSize: 12, color: "var(--ink-muted)" }}>
+          checking in with the breeder...
+        </div>
+      </div>
+    );
+  }
+
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+
+  function alreadyAdoptedToday(creatureId: string) {
+    return collection.some(
+      (entry) =>
+        entry.source === "breeder" &&
+        entry.hamsterId === creatureId &&
+        new Date(entry.hatchedAt) >= todayStart
+    );
+  }
+
+  async function handleBuy(species: Species, creature: Creature) {
+    if (buyingId) return;
+    setError(null);
+    setBuyingId(creature.id);
+    const result = await buyFromBreeder(species, creature.id);
+    if (!result.ok) {
+      setError(result.reason || "Couldn't adopt that one");
+    }
+    setBuyingId(null);
+  }
+
+  return (
+    <div className="card">
+      <div className="card-body">
+        <div
+          className="section-label"
+          style={{ marginBottom: 10, display: "flex", alignItems: "center", justifyContent: "space-between" }}
+        >
+          <span>
+            <Icon name="shopping-cart" size={16} /> The Breeder
+          </span>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <div style={{ fontSize: "0.68rem", fontWeight: 700, color: "var(--ink-muted)" }}>{bankPoints} pts</div>
+            <button
+              type="button"
+              onClick={refresh}
+              disabled={refreshing}
+              aria-label="Refresh bank points"
+              title="Refresh bank points"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                width: 26,
+                height: 26,
+                padding: 0,
+                border: "1px solid var(--pink-light)",
+                borderRadius: 99,
+                background: "var(--blush)",
+                cursor: refreshing ? "default" : "pointer",
+                opacity: refreshing ? 0.6 : 1,
+              }}
+            >
+              <Icon
+                name="icon-recur"
+                size={24}
+                color="var(--pink-dark)"
+                style={refreshing ? { animation: "breederRefreshSpin 0.8s linear infinite" } : undefined}
+              />
+            </button>
+          </div>
+        </div>
+
+        {justAdopted ? (
+          <div style={{ textAlign: "center", padding: "10px 0" }}>
+            <img
+              src={justAdopted.image}
+              alt="a new creature you adopted from the breeder"
+              style={{ width: 96, height: 96, objectFit: "contain", animation: "adoptPop 0.7s ease" }}
+            />
+            <div style={{ fontSize: 14, fontWeight: 800, color: "var(--pink-dark)", marginTop: 6 }}>
+              Welcome home! <Icon name="sparkles-cluster" size={16} />
+            </div>
+            <button
+              type="button"
+              onClick={clearJustAdopted}
+              style={{
+                marginTop: 8,
+                fontSize: 11,
+                color: "var(--pink-dark)",
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                textDecoration: "underline",
+              }}
+            >
+              back to the breeder
+            </button>
+          </div>
+        ) : (
+          <>
+            <div style={{ fontSize: 11, color: "var(--ink-muted)", marginBottom: 10, textAlign: "center" }}>
+              Today's litter — {BREEDER_COST} pts each, new babies at midnight
+            </div>
+
+            <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
+              {litter.map((creature) => {
+                const adopted = alreadyAdoptedToday(creature.id);
+                const canAfford = bankPoints >= BREEDER_COST;
+                const disabled = adopted || !canAfford || buyingId === creature.id;
+                return (
+                  <div
+                    key={creature.id}
+                    style={{
+                      width: 96,
+                      textAlign: "center",
+                      border: "1px solid var(--pink-light)",
+                      borderRadius: 14,
+                      padding: 8,
+                      background: "var(--blush)",
+                    }}
+                  >
+                    <img
+                      src={creature.image}
+                      alt={`${SPECIES_LABELS[creature.species]} baby`}
+                      style={{ width: 64, height: 64, objectFit: "contain" }}
+                    />
+                    <div style={{ fontSize: 10, fontWeight: 700, color: "var(--ink-muted)", marginTop: 4 }}>
+                      {SPECIES_LABELS[creature.species]}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleBuy(creature.species, creature)}
+                      disabled={disabled}
+                      style={{
+                        marginTop: 6,
+                        fontSize: 11,
+                        fontWeight: 700,
+                        color: adopted ? "var(--ink-muted)" : "var(--pink-dark)",
+                        background: "var(--cream)",
+                        border: "1px solid var(--pink-light)",
+                        borderRadius: 99,
+                        padding: "4px 8px",
+                        width: "100%",
+                        cursor: disabled ? "default" : "pointer",
+                        opacity: buyingId === creature.id ? 0.6 : 1,
+                      }}
+                    >
+                      {adopted ? "Adopted" : buyingId === creature.id ? "..." : `${BREEDER_COST} pts`}
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+
+            {error && (
+              <div style={{ fontSize: 11, color: "var(--pink-dark)", marginTop: 10, textAlign: "center" }}>
+                {error}
+              </div>
+            )}
+
+            {recentPoints.length > 0 && (
+              <div
+                style={{
+                  display: "flex",
+                  gap: 6,
+                  overflowX: "auto",
+                  marginTop: 14,
+                  paddingBottom: 2,
+                }}
+              >
+                {recentPoints.map((entry) => (
+                  <div
+                    key={entry.id}
+                    style={{
+                      flexShrink: 0,
+                      whiteSpace: "nowrap",
+                      fontSize: 11,
+                      fontWeight: 600,
+                      color: "var(--pink-dark)",
+                      background: "var(--blush)",
+                      border: "1px solid var(--pink-light)",
+                      borderRadius: 99,
+                      padding: "4px 10px",
+                    }}
+                  >
+                    {SOURCE_LABELS[entry.source] ? (
+                      <>
+                        <Icon name={SOURCE_LABELS[entry.source].icon} size={13} /> {SOURCE_LABELS[entry.source].text}
+                      </>
+                    ) : (
+                      entry.source
+                    )}{" "}
+                    {entry.amount >= 0 ? "+" : ""}
+                    {entry.amount}
+                  </div>
+                ))}
+              </div>
+            )}
+          </>
+        )}
+
+        <style>{`
+          @keyframes adoptPop {
+            0% { transform: scale(0.3); opacity: 0; }
+            60% { transform: scale(1.15); opacity: 1; }
+            100% { transform: scale(1); }
+          }
+          @keyframes breederRefreshSpin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+          }
+        `}</style>
+      </div>
+    </div>
+  );
+}

@@ -26,6 +26,12 @@ const OPTIONS: { species: PollySpecies; label: string; blurb: string; image: str
     blurb: 'Graceful, nocturnal, and always watching out for you.',
     image: '/assets/pollybunt/pollybunthappy.PNG',
   },
+  {
+    species: 'wrendel',
+    label: 'Polly the Wrendel',
+    blurb: 'Quiet, otherworldly, and never quite where you last looked.',
+    image: '/assets/pollywrendel/pollywrendelhappy.png',
+  },
 ];
 
 export default function PollyCompanionPicker() {

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { useCreatureGrowth } from './CreatureGrowthContext';
+import { todayKey, pickDaily } from '../lib/dailyRandom';
 
 const SHELF_PATH = '/shelf';
 const MAX_PER_SHELF = 4;
@@ -208,48 +209,15 @@ interface HabitatThemeRow {
 // the shop feels like it's stocked fresh rather than a static catalog.
 // Everything already unlocked stays visible/placeable regardless.
 
-// Small deterministic PRNG, seeded from a plain date string (not a
-// timestamp), so the draw is stable all day and only changes when the
-// calendar date rolls over.
-function mulberry32(seed: number) {
-  return function () {
-    seed |= 0;
-    seed = (seed + 0x6d2b79f5) | 0;
-    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
-
-function hashString(str: string): number {
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    hash = (Math.imul(31, hash) + str.charCodeAt(i)) | 0;
-  }
-  return hash;
-}
-
-function todayKey(): string {
-  const now = new Date();
-  return `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}`;
-}
-
-// Picks today's rotating market from the full catalog, seeded by the
-// calendar date. Owned items can still land in the draw — harmless,
-// since they're already unlocked and the "today's pick" styling is
-// just a no-op for those.
+// Small deterministic PRNG helpers now live in ../lib/dailyRandom.ts so
+// the breeder's daily litter (CreatureBreeder.tsx) can share the same
+// "resets at midnight" logic.
 function pickDailyMarket(dateStr: string, allKeys: string[], count: number): Set<string> {
-  const rng = mulberry32(hashString(dateStr));
-  const pool = [...allKeys];
-  for (let i = pool.length - 1; i > 0; i--) {
-    const j = Math.floor(rng() * (i + 1));
-    [pool[i], pool[j]] = [pool[j], pool[i]];
-  }
-  return new Set(pool.slice(0, count));
+  return new Set(pickDaily(dateStr, allKeys, count));
 }
 
 export default function HabitatScene() {
-  const { loading, decorPoints, spendDecorPoints } = useCreatureGrowth();
+  const { loading, bankPoints, spendBankPoints } = useCreatureGrowth();
   const [decor, setDecor] = useState<string[]>([]);
   const [unlocked, setUnlocked] = useState<string[]>([]);
   const [themeLoaded, setThemeLoaded] = useState(false);
@@ -357,7 +325,7 @@ export default function HabitatScene() {
     setUnlockingKey(key);
 
     const cost = costFor(key);
-    const result = await spendDecorPoints(cost);
+    const result = await spendBankPoints(cost);
     if (!result.ok) {
       setUnlockError(result.reason || "Couldn't unlock that yet");
       setUnlockingKey(null);
@@ -418,7 +386,7 @@ export default function HabitatScene() {
               color: 'var(--ink-muted)',
             }}
           >
-            {decorPoints} pts
+            {bankPoints} pts
           </div>
         </div>
 

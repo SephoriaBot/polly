@@ -235,6 +235,47 @@ export const BUNT_FINAL_ABILITIES: string[] = [
   "Horns That Remember the Herd — the ram it becomes has led this charge before, somewhere else",
 ];
 
+// --- Wrendel (antlered forest wraith) — shadow/starlight themed --------
+
+export const WRENDEL_BABY_ABILITIES: string[] = [
+  "Antler Bonk — an off-balance headbutt with antlers still growing in",
+  "Skull Peek — pokes its bone mask out from the dark and pulls right back",
+  "Wisp Trail — leaves a little smoke behind when it moves too fast",
+  "Startled Wail — a small cry pitched somewhere between a fawn and something else",
+];
+
+export const WRENDEL_TEEN_ABILITIES: string[] = [
+  "Antler Rake — swings a rack of antlers sharper than it looks",
+  "Shadow Step — slips sideways into its own shadow and out of another",
+  "Starlit Gaze — its eye sockets fill with tiny cold lights that don't blink",
+  "Wraith Coil — smoke tendrils wrap tight and don't let go",
+  "Hollow Howl — a call that seems to come from behind you no matter where you stand",
+  "Bone Mask Crack — the skull splits along a seam that wasn't there a moment ago",
+  "Mist Bind — the air around the rival thickens into something that holds them still",
+  "Forest's Reach — vines of shadow root up through the ground mid-fight",
+  "Static Antlers — a charge crackles between the tines before it strikes",
+  "Withered Bloom — flowers that shouldn't grow, growing anyway, right where it touched",
+  "Cold Constellation — a scatter of tiny lights crosses its robe, and the air drops cold",
+  "Silent Approach — somehow it's already there before the sound of it arrives",
+];
+
+export const WRENDEL_FINAL_ABILITIES: string[] = [
+  "Antler Crown of Thorns — a rack grown vast and wrong, spearing everything in its arc",
+  "Wraith's Cloak Unravels — the smoke coat comes apart into a hundred grasping shapes",
+  "Starfall Requiem — the sky it wears sheds real light, and it burns cold",
+  "Skull Beneath the Skull — cracks its mask to reveal another mask underneath",
+  "Deadwood March — every root in the ground answers its call at once",
+  "Hollow Choir — the howl becomes many voices, none of them entirely its own",
+  "Eclipse Antlers — the antlers block out the light overhead, on purpose",
+  "Wander Between — steps once and is suddenly on the other side of the fight",
+  "Bone-Deep Frost — the cold doesn't stop at the skin",
+  "Nightgarden Bloom — a field of pale flowers erupts, each one watching",
+  "The Old Path Opens — a trail through the woods appears that shouldn't exist here",
+  "Constellation Unbound — the stars sewn into its robe pull loose and strike on their own",
+  "Grief It Wears Like a Cloak — the sorrow radiating off it lands heavier than any blow",
+  "The Forest Remembers — every creature that ever died beneath these antlers answers once more",
+];
+
 // --- Species-aware lookups ------------------------------------------------
 
 export const BABY_ABILITIES_BY_SPECIES: Record<Species, string[]> = {
@@ -242,6 +283,7 @@ export const BABY_ABILITIES_BY_SPECIES: Record<Species, string[]> = {
   noodle: NOODLE_BABY_ABILITIES,
   dragon: DRAGON_BABY_ABILITIES,
   bunt: BUNT_BABY_ABILITIES,
+  wrendel: WRENDEL_BABY_ABILITIES,
 };
 
 export const TEEN_ABILITIES_BY_SPECIES: Record<Species, string[]> = {
@@ -249,6 +291,7 @@ export const TEEN_ABILITIES_BY_SPECIES: Record<Species, string[]> = {
   noodle: NOODLE_TEEN_ABILITIES,
   dragon: DRAGON_TEEN_ABILITIES,
   bunt: BUNT_TEEN_ABILITIES,
+  wrendel: WRENDEL_TEEN_ABILITIES,
 };
 
 export const FINAL_ABILITIES_BY_SPECIES: Record<Species, string[]> = {
@@ -256,6 +299,7 @@ export const FINAL_ABILITIES_BY_SPECIES: Record<Species, string[]> = {
   noodle: NOODLE_FINAL_ABILITIES,
   dragon: DRAGON_FINAL_ABILITIES,
   bunt: BUNT_FINAL_ABILITIES,
+  wrendel: WRENDEL_FINAL_ABILITIES,
 };
 
 export function abilityPoolFor(species: Species, stage: EvolutionStage): string[] {

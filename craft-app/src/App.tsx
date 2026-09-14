@@ -493,7 +493,7 @@ export default function App() {
                           initialTab={
                             initialTab as
                               | 'shelf'
-                              | 'nest'
+                              | 'breeder'
                               | 'wild'
                               | 'collection'
                               | undefined

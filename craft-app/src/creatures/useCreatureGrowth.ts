@@ -1,13 +1,18 @@
 // useCreatureGrowth.ts
 // Fully self-contained — does NOT touch Wallet.tsx at all. Instead, it
 // checks your existing tables (bill_payments, debts, daily_log) each time
-// it loads and figures out what's new since the last check, then adds
-// growth points for it. Hatches a random hamster when the threshold hits.
+// it loads and figures out what's new since the last check, then credits
+// a single unified point bank (bank_points) for it.
 //
-// Daily accomplishments (bills, chores, tasks, etc.) now ONLY move the egg
-// toward hatching — see addPoints below. They no longer touch evolution,
-// stat training, or the habitat shop currency; those all come exclusively
-// from winning battles (see awardBattleWin and WildEncounter.tsx).
+// That bank is the ONE currency in the game now — earned from daily
+// accomplishments (see addPoints below) and from battle wins (see
+// awardBattleWin), spent on both habitat shelf decor (HabitatScene.tsx)
+// and on adopting a specific baby from the breeder's daily litter (see
+// buyFromBreeder below and CreatureBreeder.tsx). There used to be a
+// separate nest/egg-hatch mechanic driven by a points/threshold pair
+// (hamster_growth) that auto-hatched a random hamster once enough daily
+// accomplishments piled up — that's gone. Creature acquisition is now
+// entirely player-chosen via the breeder, never automatic.
 //
 // Evolution: no longer point/threshold-based. A hamster is eligible to
 // evolve (baby -> teen -> final) once every one of its trained stats is
@@ -25,7 +30,7 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { supabase } from "../lib/supabase"; // match your actual client path
 import type { IconName } from "../components/Icon";
-import { rollRandomSpecies, rollRandomCreature, evolvedFormFor } from "./creatures";
+import { evolvedFormFor, allBabiesFor } from "./creatures";
 import type { Creature, Species, EvolutionStage } from "./creatures";
 import { rollPersonality, rollAbilities, abilityPoolFor } from "./personalities";
 import type { Personality } from "./personalities";
@@ -54,6 +59,11 @@ const POINTS = {
   life_event_item_completed: 2,
   grocery_list_completed: 5,
 } as const;
+
+// Cost, in unified bank points, to adopt any one baby from the breeder's
+// daily litter (see buyFromBreeder below) — same price point the old nest
+// used to hatch a random hamster, now spent on a creature of your choice.
+export const BREEDER_COST = 100;
 
 
 // Chance, per point-earning event, that a wild hamster shows up. Only rolls
@@ -121,22 +131,20 @@ export const SOURCE_LABELS: Record<string, { text: string; icon: IconName }> = {
   life_event_item_completed: { text: "Life event step", icon: "clipboard-check" },
   grocery_list_completed: { text: "Grocery list finished", icon: "notebook-pen" },
   battle_win: { text: "Battle won", icon: "trophy" },
+  breeder_adoption: { text: "Adopted from breeder", icon: "shopping-cart" },
 };
 
 export function useCreatureGrowthState() {
-  const [points, setPoints] = useState(0);
-  const [threshold, setThreshold] = useState(100);
-  // Separate currency from `points` — `points` drives hatching/evolution
-  // via the threshold above; `decorPoints` is spent unlocking shelf items
-  // in the Habitat and never touches the hatch balance. Both are credited
-  // together by the same accomplishments (see addPoints), but spending one
-  // has zero effect on the other.
-  const [decorPoints, setDecorPoints] = useState(0);
+  // The single unified currency — earned from daily accomplishments (see
+  // addPoints) and battle wins (see awardBattleWin), spent on both habitat
+  // shelf decor (spendBankPoints, used by HabitatScene) and breeder
+  // adoptions (buyFromBreeder below, used by CreatureBreeder).
+  const [bankPoints, setBankPoints] = useState(0);
   const [collection, setCollection] = useState<CreatureCollectionEntry[]>([]);
   const [recentPoints, setRecentPoints] = useState<PointsLogEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [justHatched, setJustHatched] = useState<Creature | null>(null);
+  const [justAdopted, setJustAdopted] = useState<Creature | null>(null);
   const [justEvolved, setJustEvolved] = useState<JustEvolved | null>(null);
   const [wildEncounter, setWildEncounter] = useState<WildCreature | null>(null);
 
@@ -262,78 +270,37 @@ export function useCreatureGrowthState() {
     setWildEncounter(wild);
   }, [wildEncounter, reportError]);
 
-  // Adds points, hatching as many times as needed if a jump crosses the
-  // threshold more than once, and persists everything. This is now the
-  // ONLY thing daily accomplishments do — no more evolution growth,
-  // training points, or decor currency from here. Those all come from
-  // winning battles (see awardBattleWin below).
+  // Credits `amount` to the unified bank and persists everything. This is
+  // now the ONLY thing daily accomplishments do — no more auto-hatching,
+  // evolution growth, or training points from here. Creature acquisition
+  // is entirely player-driven via buyFromBreeder below; battle wins are
+  // the only other source of bank points (see awardBattleWin).
   const addPoints = useCallback(
-    async (amount: number, source: string, currentPoints: number) => {
-      let newPoints = currentPoints + amount;
-      let hatched = false;
+    async (amount: number, source: string, currentBankPoints: number) => {
+      const newBankPoints = currentBankPoints + amount;
 
       const { error: logError } = await supabase.from("hamster_points_log").insert({ source, amount });
       reportError("Log points", logError);
 
-      while (newPoints >= threshold) {
-        const species = rollRandomSpecies();
-        const h = rollRandomCreature(species);
-        const personality = rollPersonality();
-        const abilities = rollAbilities(abilityPoolFor(species, "baby"), 2);
-        const pointsBeforeHatch = newPoints;
-        newPoints -= threshold;
-        const { error: hatchError } = await supabase
-          .from("hamster_collection")
-          .insert({
-            hamster_id: h.id,
-            species,
-            source,
-            personality,
-            stage: "baby",
-            evolution_points: 0,
-            abilities,
-            hatched_at: new Date().toISOString(),
-            training_points: 0,
-            trained_hp: 0,
-            trained_attack: 0,
-            trained_defense: 0,
-            trained_speed: 0,
-          });
-
-        // If the insert failed, no hamster actually exists to show for the
-        // points we're about to spend. Put the points back and stop trying
-        // to hatch, rather than silently draining points into nothing.
-        if (reportError("Hatch hamster", hatchError)) {
-          newPoints = pointsBeforeHatch;
-          break;
-        }
-
-        setJustHatched(h);
-        hatched = true;
-      }
-
       // Still rolls a chance at a wild encounter on every accomplishment —
-      // that trigger is about pacing/frequency, not about paying out
-      // points, so it stays here even though the points it used to grant
-      // don't exist anymore.
+      // that trigger is about pacing/frequency, unrelated to the bank.
       await checkWildEncounterSpawn();
 
-      const { error: growthSaveError } = await supabase
-        .from("hamster_growth")
-        .upsert({ points: newPoints, threshold }, { onConflict: "user_id" });
+      const { error: bankSaveError } = await supabase
+        .from("bank_points")
+        .upsert({ points: newBankPoints }, { onConflict: "user_id" });
 
-      // This is THE write that caused the original bug: if points/threshold
-      // don't persist, the next load re-reads the old (lower) points value,
-      // and any progress this call made toward a hatch effectively repeats
-      // itself on the next check. Surface it loudly rather than pressing on
-      // as if newPoints is safely saved.
-      reportError("Save points/threshold", growthSaveError);
+      // This is THE write that caused the original nest-era bug: if the
+      // balance doesn't persist, the next load re-reads the old (lower)
+      // balance and this accomplishment's credit effectively repeats
+      // itself on the next check. Surface it loudly rather than pressing
+      // on as if newBankPoints is safely saved.
+      reportError("Save bank points", bankSaveError);
 
-      if (hatched) await refreshCollection();
       await refreshRecentPoints();
-      return newPoints;
+      return newBankPoints;
     },
-    [threshold, refreshCollection, refreshRecentPoints, checkWildEncounterSpawn, reportError]
+    [refreshRecentPoints, checkWildEncounterSpawn, reportError]
   );
 
   // Credits stat points (training_points) to the specific hamster that won
@@ -361,13 +328,13 @@ export function useCreatureGrowthState() {
         return { ok: false as const, statPoints: 0, shopPoints: 0, reason: tpError.message || "Save failed" };
       }
 
-      const { data: decorRow } = await supabase.from("habitat_points").select("points").maybeSingle();
-      const newDecorPoints = (Number(decorRow?.points) || 0) + reward.shopPoints;
-      const { error: decorError } = await supabase
-        .from("habitat_points")
-        .upsert({ points: newDecorPoints }, { onConflict: "user_id" });
-      if (!reportError("Award battle shop points", decorError)) {
-        setDecorPoints(newDecorPoints);
+      const { data: bankRow } = await supabase.from("bank_points").select("points").maybeSingle();
+      const newBankPoints = (Number(bankRow?.points) || 0) + reward.shopPoints;
+      const { error: bankError } = await supabase
+        .from("bank_points")
+        .upsert({ points: newBankPoints }, { onConflict: "user_id" });
+      if (!reportError("Award battle bank points", bankError)) {
+        setBankPoints(newBankPoints);
       }
 
       await supabase.from("hamster_points_log").insert({ source: "battle_win", amount: reward.statPoints });
@@ -478,7 +445,7 @@ export function useCreatureGrowthState() {
       lastCheck = seed;
     }
 
-    let runningPoints = points;
+    let runningPoints = bankPoints;
     const now = new Date().toISOString();
 
     // 1. Bills paid on time — tracked with a per-payment "hamster_credited"
@@ -696,7 +663,7 @@ export function useCreatureGrowthState() {
       }
     }
 
-    setPoints(runningPoints);
+    setBankPoints(runningPoints);
 
     const { error: finalSaveError } = await supabase
       .from("hamster_last_check")
@@ -718,7 +685,7 @@ export function useCreatureGrowthState() {
     // and debt snapshot don't persist here, every "all done" state looks
     // fresh again on the next load and gets re-credited. Surface it.
     reportError("Save last-check state", finalSaveError);
-  }, [points, addPoints, reportError]);
+  }, [bankPoints, addPoints, reportError]);
 
   // Guards against overlapping/duplicate calls (e.g. React StrictMode's
   // dev-mode double-invoke, or an accidental extra mount) so a single
@@ -759,23 +726,12 @@ export function useCreatureGrowthState() {
   useEffect(() => {
     (async () => {
       setLoading(true);
-      const { data: growthRow } = await supabase.from("hamster_growth").select("points, threshold").maybeSingle();
-      if (growthRow) {
-        setPoints(Number(growthRow.points) || 0);
-        setThreshold(Number(growthRow.threshold) || 100);
+      const { data: bankRow } = await supabase.from("bank_points").select("points").maybeSingle();
+      if (bankRow) {
+        setBankPoints(Number(bankRow.points) || 0);
       } else {
-        const { error } = await supabase
-          .from("hamster_growth")
-          .upsert({ points: 0, threshold: 100 }, { onConflict: "user_id" });
-        reportError("Initialize hamster_growth", error);
-      }
-
-      const { data: decorRow } = await supabase.from("habitat_points").select("points").maybeSingle();
-      if (decorRow) {
-        setDecorPoints(Number(decorRow.points) || 0);
-      } else {
-        const { error } = await supabase.from("habitat_points").upsert({ points: 0 }, { onConflict: "user_id" });
-        reportError("Initialize habitat_points", error);
+        const { error } = await supabase.from("bank_points").upsert({ points: 0 }, { onConflict: "user_id" });
+        reportError("Initialize bank_points", error);
       }
 
       await refreshCollection();
@@ -839,7 +795,6 @@ export function useCreatureGrowthState() {
   // succession just coalesces into whichever check is already in flight.
   const notifyGrowth = useCallback(() => { checkForNewGrowth(); }, [checkForNewGrowth]);
 
-  const clearJustHatched = useCallback(() => setJustHatched(null), []);
   const clearJustEvolved = useCallback(() => setJustEvolved(null), []);
 
   // Call once a wild encounter has been fought (win, loss, or tamed) so a
@@ -919,47 +874,15 @@ export function useCreatureGrowthState() {
     [refreshCollection]
   );
 
-  // Spends points from the same shared balance that drives hatching, e.g.
-  // for unlocking a habitat item. Re-reads the row fresh from Supabase
-  // first (rather than trusting local state) so two quick spends can't
-  // both succeed against a stale balance. Returns a reason string when the
-  // spend can't happen at all; never partially spends.
-  const spendPoints = useCallback(
+  // Spends from the unified bank, e.g. for unlocking a habitat item.
+  // Re-reads the row fresh from Supabase first (rather than trusting local
+  // state) so two quick spends can't both succeed against a stale balance.
+  // Returns a reason string when the spend can't happen at all; never
+  // partially spends.
+  const spendBankPoints = useCallback(
     async (amount: number): Promise<{ ok: boolean; reason?: string }> => {
       const { data: row } = await supabase
-        .from("hamster_growth")
-        .select("points, threshold")
-        .maybeSingle();
-
-      const current = Number(row?.points) || 0;
-      if (current < amount) {
-        return { ok: false, reason: "Not enough points yet" };
-      }
-
-      const newPoints = current - amount;
-      const { error } = await supabase
-        .from("hamster_growth")
-        .upsert({ points: newPoints, threshold: Number(row?.threshold) || threshold }, { onConflict: "user_id" });
-
-      if (reportError("Spend points", error)) {
-        return { ok: false, reason: error.message || "Save failed" };
-      }
-
-      setPoints(newPoints);
-      return { ok: true };
-    },
-    [threshold, reportError]
-  );
-
-  // Spends from the separate decor pool used for unlocking habitat shelf
-  // items. Completely independent of `points`/spendPoints above — spending
-  // here can never reduce hatch/evolution progress. Same re-read-fresh
-  // pattern as spendPoints so two quick spends can't both succeed against a
-  // stale balance.
-  const spendDecorPoints = useCallback(
-    async (amount: number): Promise<{ ok: boolean; reason?: string }> => {
-      const { data: row } = await supabase
-        .from("habitat_points")
+        .from("bank_points")
         .select("points")
         .maybeSingle();
 
@@ -968,42 +891,105 @@ export function useCreatureGrowthState() {
         return { ok: false, reason: "Not enough points yet" };
       }
 
-      const newDecorPoints = current - amount;
+      const newBankPoints = current - amount;
       const { error } = await supabase
-        .from("habitat_points")
-        .upsert({ points: newDecorPoints }, { onConflict: "user_id" });
+        .from("bank_points")
+        .upsert({ points: newBankPoints }, { onConflict: "user_id" });
 
-      if (reportError("Spend decor points", error)) {
+      if (reportError("Spend bank points", error)) {
         return { ok: false, reason: error.message || "Save failed" };
       }
 
-      setDecorPoints(newDecorPoints);
+      setBankPoints(newBankPoints);
       return { ok: true };
     },
     [reportError]
   );
+
+  // Adopts a specific baby from the breeder's daily litter (see
+  // CreatureBreeder.tsx / todaysLitter there for how the 3 offered babies
+  // are picked). Spends BREEDER_COST from the same unified bank that funds
+  // the habitat shop, then inserts it into the collection exactly like the
+  // old hatch insert used to. Re-reads the bank balance fresh first so two
+  // quick taps can't both succeed against a stale balance, and refunds the
+  // spend if the insert itself fails so a Supabase hiccup can't just eat
+  // the player's points for nothing.
+  const buyFromBreeder = useCallback(
+    async (species: Species, creatureId: string): Promise<{ ok: boolean; reason?: string; creature?: Creature }> => {
+      const roster = allBabiesFor(species);
+      const chosen = roster.find((c) => c.id === creatureId);
+      if (!chosen) return { ok: false, reason: "That creature isn't available" };
+
+      const { data: row } = await supabase.from("bank_points").select("points").maybeSingle();
+      const current = Number(row?.points) || 0;
+      if (current < BREEDER_COST) {
+        return { ok: false, reason: "Not enough points yet" };
+      }
+
+      const newBankPoints = current - BREEDER_COST;
+      const { error: spendError } = await supabase
+        .from("bank_points")
+        .upsert({ points: newBankPoints }, { onConflict: "user_id" });
+      if (reportError("Spend bank points on breeder", spendError)) {
+        return { ok: false, reason: spendError.message || "Save failed" };
+      }
+
+      const personality = rollPersonality();
+      const abilities = rollAbilities(abilityPoolFor(species, "baby"), 2);
+      const { error: insertError } = await supabase.from("hamster_collection").insert({
+        hamster_id: chosen.id,
+        species,
+        source: "breeder",
+        personality,
+        stage: "baby",
+        evolution_points: 0,
+        abilities,
+        hatched_at: new Date().toISOString(),
+        training_points: 0,
+        trained_hp: 0,
+        trained_attack: 0,
+        trained_defense: 0,
+        trained_speed: 0,
+      });
+
+      if (reportError("Adopt from breeder", insertError)) {
+        // Refund — a failed insert means nothing was actually adopted, so
+        // the points shouldn't have left the bank.
+        await supabase.from("bank_points").upsert({ points: current }, { onConflict: "user_id" });
+        return { ok: false, reason: insertError.message || "Save failed" };
+      }
+
+      await supabase.from("hamster_points_log").insert({ source: "breeder_adoption", amount: -BREEDER_COST });
+
+      setBankPoints(newBankPoints);
+      setJustAdopted(chosen);
+      await refreshCollection();
+      await refreshRecentPoints();
+      return { ok: true, creature: chosen };
+    },
+    [reportError, refreshCollection, refreshRecentPoints]
+  );
+
+  const clearJustAdopted = useCallback(() => setJustAdopted(null), []);
 
   return {
     loading,
     refreshing,
     refresh,
     notifyGrowth,
-    points,
-    threshold,
-    progressPct: Math.min(100, Math.round((points / threshold) * 100)),
-    decorPoints,
-    spendDecorPoints,
+    bankPoints,
+    spendBankPoints,
+    buyFromBreeder,
     collection,
     recentPoints,
-    justHatched,
-    clearJustHatched,
+    justAdopted,
+    clearJustAdopted,
     justEvolved,
     clearJustEvolved,
     wildEncounter,
     clearWildEncounter,
     renameCreature,
     allocateStat,
-    spendPoints,
     awardBattleWin,
     evolveCreature,
     growthError,

@@ -322,7 +322,7 @@ const goScout = () => {
         </div>
 
         {fighters.length === 0 ? (
-        <EmptyState image={emptyHabitat} message="No creatures hatched yet — hit the threshold to get your first one." />
+        <EmptyState image={emptyHabitat} message="No creatures yet — visit the breeder to adopt your first one." />
 ) : (
           <>
             {(phase === "pick" || phase === "scouting" || phase === "found") && (
@@ -427,7 +427,7 @@ const goScout = () => {
                       Knows: {wild.abilities.map(abilityShortName).join(", ")}
                     </div>
                     <div style={{ fontSize: 10, color: "var(--ink-muted)", marginTop: 6, textAlign: "center" }}>
-                      Win for +{BATTLE_REWARDS[wild.stage].statPoints} TP / +{BATTLE_REWARDS[wild.stage].shopPoints} shop points
+                      Win for +{BATTLE_REWARDS[wild.stage].statPoints} TP / +{BATTLE_REWARDS[wild.stage].shopPoints} bank points
                     </div>
                     <button className="btn-primary" onClick={startFight} style={{ width: "100%", marginTop: 12 }}>
                       <Icon name="lightning" size={14} /> Fight!
@@ -525,7 +525,7 @@ const goScout = () => {
                         </div>
                         {reward && (
                           <div style={{ fontSize: 11, color: "var(--ink-muted)", marginTop: 4 }}>
-                            +{reward.statPoints} TP for {selected?.name || "your creature"} • +{reward.shopPoints} shop points
+                            +{reward.statPoints} TP for {selected?.name || "your creature"} • +{reward.shopPoints} bank points
                           </div>
                         )}
                         {tameOutcome === null ? (
