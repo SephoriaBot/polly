@@ -12,7 +12,6 @@ import ShopkeeperBubble, { type ShopkeeperExpression } from "./ShopkeeperBubble"
 // visit but still feels stable within a given day.
 const BREEDER_GREETINGS = [
   "Take a look at today's litter!",
-  "Got some real sweeties in today.",
   "Come on in, have a look around.",
   "These little ones just came in this morning.",
   "Take your time picking — no rush at all.",
