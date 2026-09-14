@@ -21,8 +21,6 @@ import ShapeDefs from './components/ShapeDefs';
 
 import { ToastProvider } from './hooks/useToast';
 import { CreatureGrowthProvider } from './creatures/CreatureGrowthContext';
-import WildEncounterAlert from './creatures/WildEncounterAlert';
-
 import { useAuth } from './context/AuthContext';
 import Login from './pages/Login';
 
