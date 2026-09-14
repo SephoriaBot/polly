@@ -272,10 +272,7 @@ export default function App() {
 
             <ToastProvider>
               <CreatureGrowthProvider>
-                <WildEncounterAlert
-                  currentPage={page}
-                  onNavigate={navigate}
-                />
+               
 
                 <div className="app-shell">
                   <header className="topbar">
