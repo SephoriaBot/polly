@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import useTheme from "../hooks/useTheme";
 
 const icons = {
   polly: { light: "/icons/polly_black.png", dark: "/icons/polly_white.png" },
@@ -13,18 +13,7 @@ const icons = {
 type IconName = keyof typeof icons;
 
 export default function PageTitleLogo({ name, height = 32 }: { name: IconName; height?: number }) {
-  const [theme, setTheme] = useState<"light" | "dark">(
-    (document.documentElement.getAttribute("data-theme") as "light" | "dark") || "light"
-  );
-
-  useEffect(() => {
-    const el = document.documentElement;
-    const observer = new MutationObserver(() => {
-      setTheme((el.getAttribute("data-theme") as "light" | "dark") || "light");
-    });
-    observer.observe(el, { attributes: true, attributeFilter: ["data-theme"] });
-    return () => observer.disconnect();
-  }, []);
+  const theme = useTheme();
 
   return (
     <img

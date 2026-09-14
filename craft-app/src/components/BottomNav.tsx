@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import Icon, { type IconName } from './Icon';
+import NavIcon from './NavIcon';
 
 interface BottomNavProps {
   currentPage: string;
@@ -10,22 +10,22 @@ const PRIMARY_TABS = [
   {
     id: 'dashboard',
     label: 'Home',
-    icon: <Icon name="icon-home" size={35} />,
+    icon: <NavIcon name="dashboard" size={35} />,
   },
   {
     id: 'wallet',
     label: 'Wallet',
-    icon: <Icon name="icon-wallet" size={35} />,
+    icon: <NavIcon name="wallet" size={35} />,
   },
   {
     id: 'dailyplanner',
     label: 'Planner',
-    icon: <Icon name="icon-planner" size={35} />,
+    icon: <NavIcon name="planner" size={35} />,
   },
   {
     id: 'grocery',
     label: 'Grocery',
-    icon: <Icon name="icon-grocery" size={35} />,
+    icon: <NavIcon name="grocery" size={35} />,
   },
 ];
 
@@ -35,17 +35,17 @@ const MORE_ITEMS = [
   {
     id: 'trackers',
     label: 'Trackers',
-    icon: <Icon name="icon-trackers" size={35} />,
+    icon: <NavIcon name="tracker" size={35} />,
   },
   {
     id: 'decisions',
     label: 'Decisions',
-    icon: <Icon name="icon-decisions" size={35} />,
+    icon: <NavIcon name="decisions" size={35} />,
   },
   {
     id: 'habitat',
     label: 'Habitat',
-    icon: <Icon name="icon-habitat" size={35} />,
+    icon: <NavIcon name="habitat" size={35} />,
   },
 ];
 
