@@ -24,7 +24,7 @@ const OPTIONS: { species: PollySpecies; label: string; blurb: string; image: str
     species: 'bunt',
     label: 'Polly the Bunt',
     blurb: 'Graceful, nocturnal, and always watching out for you.',
-    image: '/assets/pollybunt/pollybunthappy.PNG',
+    image: '/assets/pollybunt/pollybunthappy.png',
   },
   {
     species: 'wrendel',
