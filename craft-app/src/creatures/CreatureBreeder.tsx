@@ -106,7 +106,22 @@ export default function CreatureBreeder() {
   const [firstCreatureError, setFirstCreatureError] =
     useState<string | null>(null);
 
+  /*
+   * This state belongs specifically to the first-creature event.
+   *
+   * It is intentionally separate from `justAdopted`.
+   * The normal breeder adoption flow can update `justAdopted`, but that
+   * should never determine whether this first-time event is complete.
+   */
   const [firstCreatureClaimedHere, setFirstCreatureClaimedHere] =
+    useState(false);
+
+  /*
+   * Local saving state gives the first-creature button its own stable
+   * loading state while the database operation and collection refresh
+   * are occurring.
+   */
+  const [firstCreatureSaving, setFirstCreatureSaving] =
     useState(false);
 
 
@@ -177,7 +192,7 @@ export default function CreatureBreeder() {
     species: Species,
     creature: Creature
   ) {
-    if (buyingId) return;
+    if (buyingId || firstCreatureSaving) return;
 
     setBuyError(null);
 
@@ -205,29 +220,71 @@ export default function CreatureBreeder() {
   async function handleFirstCreatureClaim(
     creature: Creature
   ) {
-    if (claimingFirstCreature) return;
-
-    setFirstCreatureError(null);
-
-    const result = await claimFirstCreature(
-      creature.species,
-      creature.id
-    );
-
-    if (!result.ok) {
-      setFirstCreatureError(
-        result.reason ||
-          "Couldn't bring this little one home."
-      );
-
+    /*
+     * Do not allow another click once the first creature is being saved.
+     *
+     * We check both states because the hook has its own loading state while
+     * this component also maintains a local UI lock.
+     */
+    if (
+      firstCreatureSaving ||
+      claimingFirstCreature ||
+      firstCreatureClaimedHere
+    ) {
       return;
     }
 
+    setFirstCreatureError(null);
+
     /*
-     * This is only UI state for the current visit.
-     * The permanent completion flag itself is stored by the hook.
+     * Immediately lock the entire first-creature UI before awaiting
+     * anything. This prevents the user from triggering multiple inserts
+     * or causing the candidate list to bounce between states.
      */
-    setFirstCreatureClaimedHere(true);
+    setFirstCreatureSaving(true);
+
+    try {
+      const result = await claimFirstCreature(
+        creature.species,
+        creature.id
+      );
+
+      if (!result.ok) {
+        setFirstCreatureError(
+          result.reason ||
+            "Couldn't bring this little one home."
+        );
+
+        setFirstCreatureSaving(false);
+        return;
+      }
+
+      /*
+       * The local success state is the source of truth for THIS screen.
+       *
+       * We intentionally do not call clearJustAdopted() here.
+       * We also do not navigate anywhere.
+       *
+       * The breeder should remain mounted and display the success state
+       * until the user explicitly chooses to continue.
+       */
+      setFirstCreatureClaimedHere(true);
+
+      setFirstCreatureError(null);
+
+      setFirstCreatureSaving(false);
+    } catch (error) {
+      console.error(
+        "Failed to claim first creature:",
+        error
+      );
+
+      setFirstCreatureError(
+        "Something went wrong while bringing your new baby home. Please try again."
+      );
+
+      setFirstCreatureSaving(false);
+    }
   }
 
 
@@ -236,7 +293,7 @@ export default function CreatureBreeder() {
   // ---------------------------------------------------------------------------
 
   async function handleSell(entryId: number) {
-    if (sellingId) return;
+    if (sellingId || firstCreatureSaving) return;
 
     setSellError(null);
 
@@ -265,19 +322,28 @@ export default function CreatureBreeder() {
   let keeperMessage = greeting;
 
 
-  if (firstCreatureEventActive) {
-    expression = "showing";
-
-    keeperMessage =
-      "Well, this is unexpected! I just got a little litter in, and I don't have room for all of them. Do you think you have room for one baby?";
-  } else if (
-    firstCreatureClaimedHere &&
-    justAdopted
-  ) {
+  /*
+   * The first-creature states are deliberately checked before the normal
+   * justAdopted state.
+   *
+   * This prevents the normal breeder adoption UI from taking over after
+   * the first creature is inserted into the collection.
+   */
+  if (firstCreatureClaimedHere) {
     expression = "showing";
 
     keeperMessage =
       "There you go! I think the two of you are going to get along just fine.";
+  } else if (firstCreatureSaving || claimingFirstCreature) {
+    expression = "thinking";
+
+    keeperMessage =
+      "Just a moment — let me get the little one ready...";
+  } else if (firstCreatureEventActive) {
+    expression = "showing";
+
+    keeperMessage =
+      "Well, this is unexpected! I just got a little litter in, and I don't have room for all of them. Do you think you have room for one baby?";
   } else if (justAdopted) {
     expression = "showing";
 
@@ -300,11 +366,6 @@ export default function CreatureBreeder() {
 
     keeperMessage =
       "Hold on now, let me wrap that up...";
-  } else if (claimingFirstCreature) {
-    expression = "thinking";
-
-    keeperMessage =
-      "Just a moment — let me get the little one ready...";
   } else if (allAdoptedToday) {
     expression = "neutral";
 
@@ -362,7 +423,10 @@ export default function CreatureBreeder() {
             <button
               type="button"
               onClick={refresh}
-              disabled={refreshing}
+              disabled={
+                refreshing ||
+                firstCreatureSaving
+              }
               aria-label="Refresh bank points"
               title="Refresh bank points"
               style={{
@@ -376,10 +440,16 @@ export default function CreatureBreeder() {
                   "1px solid var(--pink-light)",
                 borderRadius: 99,
                 background: "var(--blush)",
-                cursor: refreshing
-                  ? "default"
-                  : "pointer",
-                opacity: refreshing ? 0.6 : 1,
+                cursor:
+                  refreshing ||
+                  firstCreatureSaving
+                    ? "default"
+                    : "pointer",
+                opacity:
+                  refreshing ||
+                  firstCreatureSaving
+                    ? 0.6
+                    : 1,
               }}
             >
               <Icon
@@ -411,10 +481,192 @@ export default function CreatureBreeder() {
 
 
         {/* =============================================================== */}
-        {/* FIRST-CREATURE EVENT                                            */}
+        {/* FIRST-CREATURE SAVING                                          */}
         {/* =============================================================== */}
 
-        {firstCreatureEventActive ? (
+        {firstCreatureSaving ? (
+          <div
+            style={{
+              textAlign: "center",
+              padding: "24px 10px 18px",
+            }}
+          >
+            <div
+              style={{
+                width: 74,
+                height: 74,
+                margin: "0 auto 12px",
+                borderRadius: "50%",
+                background: "var(--blush)",
+                border:
+                  "1px solid var(--pink-light)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Icon
+                name="sparkles-cluster"
+                size={30}
+                color="var(--pink-dark)"
+                style={{
+                  animation:
+                    "breederSavingPulse 1s ease-in-out infinite",
+                }}
+              />
+            </div>
+
+            <div
+              style={{
+                fontSize: 14,
+                fontWeight: 800,
+                color: "var(--pink-dark)",
+              }}
+            >
+              Bringing your baby home...
+            </div>
+
+            <div
+              style={{
+                fontSize: 11,
+                color: "var(--ink-muted)",
+                marginTop: 6,
+                lineHeight: 1.5,
+              }}
+            >
+              Just getting everything ready for
+              your new creature.
+            </div>
+
+            <div
+              style={{
+                marginTop: 14,
+                fontSize: 10,
+                color: "var(--ink-muted)",
+              }}
+            >
+              Please wait a moment...
+            </div>
+          </div>
+
+        ) : firstCreatureClaimedHere ? (
+
+          /* ============================================================= */
+          /* FIRST-CREATURE ADOPTION COMPLETE                              */
+          /* ============================================================= */
+
+          <div
+            style={{
+              textAlign: "center",
+              padding: "10px 0",
+            }}
+          >
+            {justAdopted ? (
+              <img
+                src={justAdopted.image}
+                alt="a new creature you adopted from the breeder"
+                style={{
+                  width: 96,
+                  height: 96,
+                  objectFit: "contain",
+                  animation:
+                    "adoptPop 0.7s ease",
+                }}
+              />
+            ) : (
+              <div
+                style={{
+                  width: 96,
+                  height: 96,
+                  margin: "0 auto",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <Icon
+                  name="sparkles-cluster"
+                  size={40}
+                  color="var(--pink-dark)"
+                />
+              </div>
+            )}
+
+            <div
+              style={{
+                fontSize: 14,
+                fontWeight: 800,
+                color: "var(--pink-dark)",
+                marginTop: 6,
+              }}
+            >
+              Welcome home!{" "}
+              <Icon
+                name="sparkles-cluster"
+                size={16}
+              />
+            </div>
+
+            <div
+              style={{
+                fontSize: 11,
+                color: "var(--ink-muted)",
+                marginTop: 5,
+                lineHeight: 1.5,
+              }}
+            >
+              Your new baby is now part of your
+              creature collection.
+            </div>
+
+            <div
+              style={{
+                fontSize: 10,
+                color: "var(--ink-muted)",
+                marginTop: 6,
+              }}
+            >
+              You can train, evolve, and battle
+              with your new creature.
+            </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                /*
+                 * Clear the normal adoption notification only when the
+                 * user explicitly leaves the success screen.
+                 *
+                 * We do NOT navigate here. This component simply returns
+                 * to its normal breeder UI.
+                 */
+                clearJustAdopted();
+
+                setFirstCreatureClaimedHere(false);
+                setFirstCreatureError(null);
+                setBuyError(null);
+                setSellError(null);
+              }}
+              style={{
+                marginTop: 12,
+                fontSize: 11,
+                color: "var(--pink-dark)",
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                textDecoration: "underline",
+              }}
+            >
+              back to the breeder
+            </button>
+          </div>
+
+        ) : firstCreatureEventActive ? (
+
+          /* ============================================================= */
+          /* FIRST-CREATURE EVENT                                          */
+          /* ============================================================= */
+
           <div
             style={{
               padding: "6px 0 4px",
@@ -468,6 +720,10 @@ export default function CreatureBreeder() {
                       borderRadius: 14,
                       padding: 9,
                       background: "var(--blush)",
+                      opacity:
+                        firstCreatureSaving
+                          ? 0.6
+                          : 1,
                     }}
                   >
 
@@ -502,7 +758,10 @@ export default function CreatureBreeder() {
                           creature
                         )
                       }
-                      disabled={claimingFirstCreature}
+                      disabled={
+                        firstCreatureSaving ||
+                        claimingFirstCreature
+                      }
                       style={{
                         marginTop: 7,
                         fontSize: 11,
@@ -516,16 +775,19 @@ export default function CreatureBreeder() {
                         padding: "5px 8px",
                         width: "100%",
                         cursor:
+                          firstCreatureSaving ||
                           claimingFirstCreature
                             ? "default"
                             : "pointer",
                         opacity:
+                          firstCreatureSaving ||
                           claimingFirstCreature
                             ? 0.55
                             : 1,
                       }}
                     >
-                      {claimingFirstCreature
+                      {firstCreatureSaving ||
+                      claimingFirstCreature
                         ? "..."
                         : "Take me home"}
                     </button>
@@ -566,10 +828,11 @@ export default function CreatureBreeder() {
             </div>
 
           </div>
+
         ) : justAdopted ? (
 
           /* ============================================================= */
-          /* ADOPTION COMPLETE                                             */
+          /* NORMAL ADOPTION COMPLETE                                      */
           /* ============================================================= */
 
           <div
@@ -1143,6 +1406,23 @@ export default function CreatureBreeder() {
 
             to {
               transform: rotate(360deg);
+            }
+          }
+
+          @keyframes breederSavingPulse {
+            0% {
+              transform: scale(0.9);
+              opacity: 0.55;
+            }
+
+            50% {
+              transform: scale(1.1);
+              opacity: 1;
+            }
+
+            100% {
+              transform: scale(0.9);
+              opacity: 0.55;
             }
           }
         `}</style>
