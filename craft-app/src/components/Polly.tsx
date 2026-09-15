@@ -73,19 +73,16 @@ const POLLY_IMAGES: Record<PollySpecies, Record<PollyMood, string>> = {
     love: '/assets/pollybunt/pollybunthappy.png',
   },
   wrendel: {
-    // No dedicated sleeping/wink pose was drawn for this set, so yawning
-    // and love fall back to the closest equivalent already available
-    // (neutral and happy), same convention as the other species above.
     neutral: '/assets/pollywrendel/pollywrendelneutral.png',
-    confused: '/assets/pollywrendel/pollywrendelsearching.png',
+    confused: '/assets/pollywrendel/pollywrendelsurprised.png',
     disappointed: '/assets/pollywrendel/pollywrendelsad.png',
     searching: '/assets/pollywrendel/pollywrendelsearching.png',
     mad: '/assets/pollywrendel/pollywrendelmad.png',
-    cheering: '/assets/pollywrendel/pollywrendelexcited.png',
-    yawning: '/assets/pollywrendel/pollywrendelneutral.png',
+    cheering: '/assets/pollywrendel/pollywrendelhappy.png',
+    yawning: '/assets/pollywrendel/pollywrendelsleeping.png',
     happy: '/assets/pollywrendel/pollywrendelhappy.png',
     sad: '/assets/pollywrendel/pollywrendelsad.png',
-    surprised: '/assets/pollywrendel/pollywrendelsurprised.png',
+    surprised: '/assets/pollywrendel/pollywrendelscared.png',
     love: '/assets/pollywrendel/pollywrendelhappy.png',
   },
 };
