@@ -1,11 +1,11 @@
 import { useMemo, useState } from "react";
 import { useCreatureGrowth } from "./CreatureGrowthContext";
-import { BREEDER_COST, SOURCE_LABELS } from "./useCreatureGrowth";
-import { SPECIES, SPECIES_LABELS, allBabiesFor } from "./creatures";
-import type { Creature, Species } from "./creatures";
+import { SPECIES, SPECIES_LABELS, allBabiesFor, imageForForm } from "./creatures";
+import type { Creature, Species, EvolutionStage } from "./creatures";
 import { todayKey, pickDaily } from "../lib/dailyRandom";
 import Icon from "../components/Icon";
 import ShopkeeperBubble, { type ShopkeeperExpression } from "./ShopkeeperBubble";
+import { BREEDER_COST, SOURCE_LABELS, computeSellPrice } from "./useCreatureGrowth";
 
 // A handful of stock greetings, one drawn per day (same pattern as the
 // litter itself) so the breeder isn't saying the exact same line on every
@@ -18,6 +18,14 @@ const BREEDER_GREETINGS = [
   "Every one of these is a good egg, if you ask me.",
 ];
 
+
+const STAGE_LABELS: Record<EvolutionStage, string> = {
+  baby: "Baby",
+  teen: "Middle",
+  final: "Final",
+};
+
+
 // Today's litter: every baby across every species, pooled together and
 // deterministically shuffled by the calendar date — same pattern as the
 // habitat's rotating decor market (see dailyRandom.ts), just seeded with
@@ -29,19 +37,22 @@ function todaysLitter(): Creature[] {
 }
 
 export default function CreatureBreeder() {
-  const {
+    const {
     loading,
     refreshing,
     refresh,
     bankPoints,
     recentPoints,
     buyFromBreeder,
+    sellToBreeder,
     collection,
     justAdopted,
     clearJustAdopted,
   } = useCreatureGrowth();
   const [buyingId, setBuyingId] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [sellingId, setSellingId] = useState<number | null>(null);
+  const [confirmSellId, setConfirmSellId] = useState<number | null>(null);
+  const [sellError, setSellError] = useState<string | null>(null);
 
   // Stable for the lifetime of this mount — recomputing on every render
   // would be harmless (same date = same result) but there's no reason to.
@@ -90,6 +101,19 @@ export default function CreatureBreeder() {
     expression = "neutral";
     keeperMessage = "That's everyone for today — new litter at midnight.";
   }
+
+  async function handleSell(entryId: number) {
+    if (sellingId) return;
+    setSellError(null);
+    setSellingId(entryId);
+    const result = await sellToBreeder(entryId);
+    if (!result.ok) {
+      setSellError(result.reason || "Couldn't sell that one");
+    }
+    setSellingId(null);
+    setConfirmSellId(null);
+  }
+
 
   async function handleBuy(species: Species, creature: Creature) {
     if (buyingId) return;
@@ -233,6 +257,123 @@ export default function CreatureBreeder() {
                 {error}
               </div>
             )}
+
+            {collection.length > 0 && (
+              <div className="card" style={{ marginTop: 14, border: "1px solid var(--pink-light)" }}>
+                <div className="card-body">
+                  <div className="section-label" style={{ marginBottom: 8 }}>
+                    Sell to the Breeder
+                  </div>
+                  <div style={{ fontSize: 11, color: "var(--ink-muted)", marginBottom: 10, textAlign: "center" }}>
+                    Price scales with stage and trained stats. Unused training points are lost on sale.
+                  </div>
+
+                  <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
+                    {collection.map((entry) => {
+                      const baseImage =
+                        allBabiesFor(entry.species).find((c) => c.id === entry.hamsterId)?.image || "";
+                      const image = imageForForm(
+                        entry.species,
+                        entry.stage,
+                        entry.teenFormId,
+                        entry.finalFormId,
+                        baseImage
+                      );
+                      const price = computeSellPrice(entry.stage, entry.trainedStats);
+                      const isThisSelling = sellingId === entry.id;
+                      const isConfirming = confirmSellId === entry.id;
+
+                      return (
+                        <div
+                          key={entry.id}
+                          style={{
+                            width: 96,
+                            textAlign: "center",
+                            border: "1px solid var(--pink-light)",
+                            borderRadius: 14,
+                            padding: 8,
+                            background: "var(--blush)",
+                          }}
+                        >
+                          <img
+                            src={image}
+                            alt={`${SPECIES_LABELS[entry.species]} (${STAGE_LABELS[entry.stage]})`}
+                            style={{ width: 64, height: 64, objectFit: "contain" }}
+                          />
+                          <div style={{ fontSize: 10, fontWeight: 700, color: "var(--ink-muted)", marginTop: 4 }}>
+                            {entry.name || SPECIES_LABELS[entry.species]}
+                          </div>
+                          <div style={{ fontSize: 9, color: "var(--ink-muted)" }}>{STAGE_LABELS[entry.stage]}</div>
+
+                          {isConfirming ? (
+                            <div style={{ display: "flex", flexDirection: "column", gap: 4, marginTop: 6 }}>
+                              <button
+                                type="button"
+                                onClick={() => handleSell(entry.id)}
+                                disabled={isThisSelling}
+                                style={{
+                                  fontSize: 10,
+                                  fontWeight: 700,
+                                  color: "white",
+                                  background: "var(--pink-dark)",
+                                  border: "none",
+                                  borderRadius: 99,
+                                  padding: "4px 8px",
+                                  cursor: isThisSelling ? "default" : "pointer",
+                                }}
+                              >
+                                {isThisSelling ? "..." : `Confirm (${price} pts)`}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setConfirmSellId(null)}
+                                disabled={isThisSelling}
+                                style={{
+                                  fontSize: 10,
+                                  color: "var(--ink-muted)",
+                                  background: "none",
+                                  border: "none",
+                                  cursor: "pointer",
+                                  textDecoration: "underline",
+                                }}
+                              >
+                                cancel
+                              </button>
+                            </div>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => setConfirmSellId(entry.id)}
+                              style={{
+                                marginTop: 6,
+                                fontSize: 11,
+                                fontWeight: 700,
+                                color: "var(--pink-dark)",
+                                background: "var(--cream)",
+                                border: "1px solid var(--pink-light)",
+                                borderRadius: 99,
+                                padding: "4px 8px",
+                                width: "100%",
+                                cursor: "pointer",
+                              }}
+                            >
+                              Sell — {price} pts
+                            </button>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {sellError && (
+                    <div style={{ fontSize: 11, color: "var(--pink-dark)", marginTop: 10, textAlign: "center" }}>
+                      {sellError}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
 
             {recentPoints.length > 0 && (
               <div
