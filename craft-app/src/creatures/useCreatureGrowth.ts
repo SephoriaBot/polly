@@ -30,7 +30,7 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { supabase } from "../lib/supabase"; // match your actual client path
 import type { IconName } from "../components/Icon";
-import { evolvedFormFor, allBabiesFor } from "./creatures";
+import { evolvedFormFor, allBabiesFor, SPECIES } from "./creatures";
 import type { Creature, Species, EvolutionStage } from "./creatures";
 import { rollPersonality, rollAbilities, abilityPoolFor } from "./personalities";
 import type { Personality } from "./personalities";
@@ -175,8 +175,17 @@ export function useCreatureGrowthState() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [justAdopted, setJustAdopted] = useState<Creature | null>(null);
-  const [justEvolved, setJustEvolved] = useState<JustEvolved | null>(null);
-  const [wildEncounter, setWildEncounter] = useState<WildCreature | null>(null);
+const [justEvolved, setJustEvolved] = useState<JustEvolved | null>(null);
+const [wildEncounter, setWildEncounter] = useState<WildCreature | null>(null);
+
+// First-time breeder event.
+// The candidates and completion flag are stored in Supabase auth metadata,
+// so refreshing the page or returning later cannot reroll the litter or
+// replay the event after the creature has been sold.
+const [firstCreatureCandidates, setFirstCreatureCandidates] = useState<Creature[]>([]);
+const [firstCreatureEventCompleted, setFirstCreatureEventCompleted] = useState(false);
+const [firstCreatureEventReady, setFirstCreatureEventReady] = useState(false);
+const [claimingFirstCreature, setClaimingFirstCreature] = useState(false);
 
   // Surfaced Supabase errors from the writes that guard against double
   // counting (credit flags, awarded flags, points/threshold persistence,
@@ -246,6 +255,171 @@ export function useCreatureGrowthState() {
     }))
   );
 }, [reportError]);
+
+
+  /*
+   * FIRST-CREATURE BREEDER EVENT
+   *
+   * This event is intentionally stored in auth.user_metadata rather than
+   * localStorage. That means:
+   *
+   * - refreshing does not reroll the five babies
+   * - leaving and returning does not reroll them
+   * - selling the first creature does not make the event return
+   * - the event follows the user's account rather than one device/browser
+   *
+   * The five candidates are always exactly one random baby from each of the
+   * five species, then shuffled into a random display order.
+   */
+
+  const saveFirstCreatureMetadata = useCallback(
+    async (metadata: Record<string, unknown>) => {
+      const { error } = await supabase.auth.updateUser({
+        data: metadata,
+      });
+
+      if (error) {
+        reportError("Save first-creature event", error);
+        return false;
+      }
+
+      return true;
+    },
+    [reportError]
+  );
+
+  const initializeFirstCreatureEvent = useCallback(async () => {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      setFirstCreatureEventReady(true);
+      return;
+    }
+
+    const metadata = user.user_metadata || {};
+
+    /*
+     * Once completed, this event is permanently finished.
+     * We intentionally check this BEFORE collection.length so that selling
+     * every creature later can never cause the event to come back.
+     */
+    if (metadata.first_creature_event_completed === true) {
+      setFirstCreatureEventCompleted(true);
+      setFirstCreatureCandidates([]);
+      setFirstCreatureEventReady(true);
+      return;
+    }
+
+    /*
+     * If this account already has creatures but somehow predates the event
+     * flag, permanently mark the event complete. Existing users should never
+     * suddenly receive the "first creature" event.
+     */
+    if (collection.length > 0) {
+      setFirstCreatureEventCompleted(true);
+      setFirstCreatureCandidates([]);
+
+      await saveFirstCreatureMetadata({
+        first_creature_event_completed: true,
+      });
+
+      setFirstCreatureEventReady(true);
+      return;
+    }
+
+    /*
+     * If candidates already exist in metadata, restore those exact babies.
+     * This is what prevents a refresh from rerolling the litter.
+     */
+    const storedCandidates = metadata.first_creature_candidates;
+
+    if (Array.isArray(storedCandidates) && storedCandidates.length === SPECIES.length) {
+      const restored: Creature[] = [];
+
+      for (const stored of storedCandidates) {
+        if (
+          !stored ||
+          typeof stored !== "object" ||
+          typeof (stored as { species?: unknown }).species !== "string" ||
+          typeof (stored as { creatureId?: unknown }).creatureId !== "string"
+        ) {
+          continue;
+        }
+
+        const candidate = stored as {
+          species: Species;
+          creatureId: string;
+        };
+
+        if (!SPECIES.includes(candidate.species)) continue;
+
+        const creature = allBabiesFor(candidate.species).find(
+          (baby) => baby.id === candidate.creatureId
+        );
+
+        if (creature) {
+          restored.push(creature);
+        }
+      }
+
+      /*
+       * Only use the stored litter if all five candidates can still be
+       * reconstructed. This protects against an old/deleted art ID.
+       */
+      const restoredSpecies = new Set(restored.map((c) => c.species));
+
+      if (restored.length === SPECIES.length && restoredSpecies.size === SPECIES.length) {
+        setFirstCreatureCandidates(restored);
+        setFirstCreatureEventCompleted(false);
+        setFirstCreatureEventReady(true);
+        return;
+      }
+    }
+
+    /*
+     * No saved litter exists yet.
+     *
+     * Pick exactly one random baby from every species, then shuffle the five
+     * candidates so the species order itself is random.
+     */
+    const candidates = SPECIES.map((species) => {
+      const roster = allBabiesFor(species);
+      return roster[Math.floor(Math.random() * roster.length)];
+    });
+
+    for (let i = candidates.length - 1; i > 0; i -= 1) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [candidates[i], candidates[j]] = [candidates[j], candidates[i]];
+    }
+
+    const candidateMetadata = candidates.map((creature) => ({
+      species: creature.species,
+      creatureId: creature.id,
+    }));
+
+    /*
+     * Save the exact litter before showing it to the user.
+     * Even if metadata saving fails, keep the local candidates visible so the
+     * user isn't blocked. The error banner will surface the persistence issue.
+     */
+    await saveFirstCreatureMetadata({
+      first_creature_event_completed: false,
+      first_creature_candidates: candidateMetadata,
+    });
+
+    setFirstCreatureCandidates(candidates);
+    setFirstCreatureEventCompleted(false);
+    setFirstCreatureEventReady(true);
+  }, [collection.length, reportError, saveFirstCreatureMetadata]);
+
+  const firstCreatureEventActive =
+    !loading &&
+    firstCreatureEventReady &&
+    !firstCreatureEventCompleted &&
+    collection.length === 0 &&
+    firstCreatureCandidates.length === SPECIES.length;
 
   // Rolls a chance to spawn a wild hamster whenever an accomplishment is
   // earned — battling is still tied to the same daily-activity trigger, it
@@ -793,6 +967,29 @@ export function useCreatureGrowthState() {
     })();
   }, [refreshCollection, refreshRecentPoints, reportError]);
 
+  /*
+   * Initialize the first-creature event only after the collection has been
+   * loaded. This prevents the event from briefly appearing while the
+   * collection is still being fetched.
+   */
+  useEffect(() => {
+    if (loading) return;
+
+    let cancelled = false;
+
+    const initialize = async () => {
+      await initializeFirstCreatureEvent();
+
+      if (cancelled) return;
+    };
+
+    initialize();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [loading, initializeFirstCreatureEvent]);
+
     useEffect(() => {
     if (!loading) checkForNewGrowth();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -939,6 +1136,155 @@ export function useCreatureGrowthState() {
       return { ok: true };
     },
     [reportError]
+  );
+
+  /*
+   * Claims the free first creature.
+   *
+   * This is deliberately separate from buyFromBreeder().
+   * The normal breeder still costs BREEDER_COST (100 points).
+   * This first creature costs ZERO points and is saved with
+   * source = "first_creature".
+   */
+  const claimFirstCreature = useCallback(
+    async (
+      species: Species,
+      creatureId: string
+    ): Promise<{ ok: boolean; reason?: string; creature?: Creature }> => {
+      if (claimingFirstCreature) {
+        return { ok: false, reason: "Please wait..." };
+      }
+
+      if (firstCreatureEventCompleted) {
+        return { ok: false, reason: "The first-creature event has already been completed" };
+      }
+
+      if (!firstCreatureEventActive) {
+        return { ok: false, reason: "The first-creature event isn't available" };
+      }
+
+      const chosen = firstCreatureCandidates.find(
+        (candidate) =>
+          candidate.species === species &&
+          candidate.id === creatureId
+      );
+
+      if (!chosen) {
+        return { ok: false, reason: "That creature isn't one of the available babies" };
+      }
+
+      setClaimingFirstCreature(true);
+
+      try {
+        /*
+         * Re-check the database immediately before inserting.
+         *
+         * This prevents a stale UI from giving another free creature if the
+         * user already adopted one from another tab/device.
+         */
+        const { data: existingCreature, error: existingError } = await supabase
+          .from("hamster_collection")
+          .select("id")
+          .limit(1);
+
+        if (existingError) {
+          reportError("Check first-creature collection", existingError);
+          return {
+            ok: false,
+            reason: existingError.message || "Couldn't check your collection",
+          };
+        }
+
+        if (existingCreature && existingCreature.length > 0) {
+          setFirstCreatureEventCompleted(true);
+          setFirstCreatureCandidates([]);
+
+          await saveFirstCreatureMetadata({
+            first_creature_event_completed: true,
+          });
+
+          await refreshCollection();
+
+          return {
+            ok: false,
+            reason: "You already have a creature",
+          };
+        }
+
+        const personality = rollPersonality();
+        const abilities = rollAbilities(
+          abilityPoolFor(species, "baby"),
+          2
+        );
+
+        const { error: insertError } = await supabase
+          .from("hamster_collection")
+          .insert({
+            hamster_id: chosen.id,
+            species,
+            source: "first_creature",
+            personality,
+            stage: "baby",
+            evolution_points: 0,
+            abilities,
+            hatched_at: new Date().toISOString(),
+            training_points: 0,
+            trained_hp: 0,
+            trained_attack: 0,
+            trained_defense: 0,
+            trained_speed: 0,
+          });
+
+        if (reportError("Claim first creature", insertError)) {
+          return {
+            ok: false,
+            reason: insertError.message || "Couldn't save your creature",
+          };
+        }
+
+        /*
+         * No bank_points update happens here.
+         * No breeder_adoption points log is created.
+         *
+         * The first creature is completely free.
+         */
+
+        setFirstCreatureEventCompleted(true);
+        setFirstCreatureCandidates([]);
+
+        /*
+         * This is the permanent "you already completed this event" flag.
+         * Even if the creature is sold later and collection becomes empty,
+         * this stays true.
+         */
+        await saveFirstCreatureMetadata({
+          first_creature_event_completed: true,
+          first_creature_candidates: [],
+        });
+
+        setJustAdopted(chosen);
+
+        await refreshCollection();
+        await refreshRecentPoints();
+
+        return {
+          ok: true,
+          creature: chosen,
+        };
+      } finally {
+        setClaimingFirstCreature(false);
+      }
+    },
+    [
+      claimingFirstCreature,
+      firstCreatureEventCompleted,
+      firstCreatureEventActive,
+      firstCreatureCandidates,
+      reportError,
+      refreshCollection,
+      refreshRecentPoints,
+      saveFirstCreatureMetadata,
+    ]
   );
 
   // Adopts a specific baby from the breeder's daily litter (see
@@ -1139,6 +1485,11 @@ export function useCreatureGrowthState() {
     loading,
     refreshing,
     refresh,
+  firstCreatureCandidates,
+  firstCreatureEventActive,
+  firstCreatureEventCompleted,
+  claimingFirstCreature,
+  claimFirstCreature,
     notifyGrowth,
     bankPoints,
     spendBankPoints,
