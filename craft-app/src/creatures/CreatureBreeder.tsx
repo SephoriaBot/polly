@@ -38,21 +38,24 @@ function todaysLitter(): Creature[] {
 
 export default function CreatureBreeder() {
     const {
-    loading,
-    refreshing,
-    refresh,
-    bankPoints,
-    recentPoints,
-    buyFromBreeder,
-    sellToBreeder,
-    collection,
-    justAdopted,
-    clearJustAdopted,
-  } = useCreatureGrowth();
+  loading,
+  refreshing,
+  refresh,
+  bankPoints,
+  recentPoints,
+  buyFromBreeder,
+  sellToBreeder,
+  collection,
+  justAdopted,
+  clearJustAdopted,
+  growthError,
+  clearGrowthError,
+} = useCreatureGrowth();
   const [buyingId, setBuyingId] = useState<string | null>(null);
   const [sellingId, setSellingId] = useState<number | null>(null);
   const [confirmSellId, setConfirmSellId] = useState<number | null>(null);
   const [sellError, setSellError] = useState<string | null>(null);
+  const [breederError, setBreederError] = useState<string | null>(null);
 
   // Stable for the lifetime of this mount — recomputing on every render
   // would be harmless (same date = same result) but there's no reason to.
@@ -91,10 +94,10 @@ export default function CreatureBreeder() {
   if (justAdopted) {
     expression = "showing";
     keeperMessage = "Welcome home, little one! Take good care of them.";
-  } else if (error) {
-    expression = "neutral";
-    keeperMessage = error;
-  } else if (buyingId) {
+  } else if (growthError) {
+  expression = "neutral";
+  keeperMessage = growthError;
+} else if (buyingId) {
     expression = "thinking";
     keeperMessage = "Hold on now, let me wrap that up...";
   } else if (allAdoptedToday) {
@@ -103,28 +106,52 @@ export default function CreatureBreeder() {
   }
 
   async function handleSell(entryId: number) {
-    if (sellingId) return;
-    setSellError(null);
-    setSellingId(entryId);
+  if (sellingId !== null) return;
+
+  setSellError(null);
+  clearGrowthError();
+  setSellingId(entryId);
+
+  try {
     const result = await sellToBreeder(entryId);
+
     if (!result.ok) {
       setSellError(result.reason || "Couldn't sell that one");
     }
+  } catch (err) {
+    console.error("[CreatureBreeder] sell failed:", err);
+    setSellError(
+      err instanceof Error ? err.message : "Couldn't sell that one"
+    );
+  } finally {
     setSellingId(null);
     setConfirmSellId(null);
   }
+}
 
 
   async function handleBuy(species: Species, creature: Creature) {
-    if (buyingId) return;
-    setError(null);
-    setBuyingId(creature.id);
+  if (buyingId !== null) return;
+
+  setBreederError(null);
+  clearGrowthError();
+  setBuyingId(creature.id);
+
+  try {
     const result = await buyFromBreeder(species, creature.id);
+
     if (!result.ok) {
-      setError(result.reason || "Couldn't adopt that one");
+      setBreederError(result.reason || "Couldn't adopt that one");
     }
+  } catch (err) {
+    console.error("[CreatureBreeder] adoption failed:", err);
+    setBreederError(
+      err instanceof Error ? err.message : "Couldn't adopt that one"
+    );
+  } finally {
     setBuyingId(null);
   }
+}
 
   return (
     <div className="card">
@@ -252,11 +279,18 @@ export default function CreatureBreeder() {
               })}
             </div>
 
-            {error && (
-              <div style={{ fontSize: 11, color: "var(--pink-dark)", marginTop: 10, textAlign: "center" }}>
-                {error}
-              </div>
-            )}
+           {breederError && (
+  <div
+    style={{
+      fontSize: 11,
+      color: "var(--pink-dark)",
+      marginTop: 10,
+      textAlign: "center",
+    }}
+  >
+    {breederError}
+  </div>
+)}
 
             {collection.length > 0 && (
               <div className="card" style={{ marginTop: 14, border: "1px solid var(--pink-light)" }}>
