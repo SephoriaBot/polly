@@ -65,6 +65,34 @@ const POINTS = {
 // used to hatch a random hamster, now spent on a creature of your choice.
 export const BREEDER_COST = 100;
 
+// Stage multiplier applied to BREEDER_COST when selling a creature back —
+// three stages only (baby/teen/final; "teen" is labeled "Middle" in the UI).
+const STAGE_SELL_MULTIPLIER: Record<EvolutionStage, number> = {
+  baby: 0.5,
+  teen: 1,
+  final: 1.5,
+};
+
+// Sell price = stage-scaled baseline (half at baby, full at middle, 1.5x at
+// final) further scaled by how close the creature's trained stats are to
+// that stage's caps — a freshly-hatched final-stage creature (if that ever
+// happens) sells for the 50% floor, a fully maxed one sells for the full
+// stage-scaled amount. Exported so the breeder UI can show the price before
+// the player commits to selling.
+export function computeSellPrice(stage: EvolutionStage, trainedStats: TrainedStats): number {
+  const stats: (keyof TrainedStats)[] = ["hp", "attack", "defense", "speed"];
+  let totalTrained = 0;
+  let totalCap = 0;
+  for (const s of stats) {
+    totalTrained += trainedStats[s];
+    totalCap += capFor(stage, s);
+  }
+  const statFraction = totalCap > 0 ? Math.min(1, totalTrained / totalCap) : 0;
+  const price = BREEDER_COST * STAGE_SELL_MULTIPLIER[stage] * (0.5 + 0.5 * statFraction);
+  return Math.round(price);
+}
+
+
 
 // Chance, per point-earning event, that a wild hamster shows up. Only rolls
 // at all if you already have a teen/final hamster capable of fighting, and
@@ -132,6 +160,8 @@ export const SOURCE_LABELS: Record<string, { text: string; icon: IconName }> = {
   grocery_list_completed: { text: "Grocery list finished", icon: "notebook-pen" },
   battle_win: { text: "Battle won", icon: "trophy" },
   breeder_adoption: { text: "Adopted from breeder", icon: "shopping-cart" },
+  breeder_sale: { text: "Sold to breeder", icon: "shopping-cart" },
+
 };
 
 export function useCreatureGrowthState() {
@@ -970,6 +1000,62 @@ export function useCreatureGrowthState() {
     [reportError, refreshCollection, refreshRecentPoints]
   );
 
+  // Sells a creature from the collection back to the breeder. Any entry in
+  // hamster_collection is sellable — the active companion lives in a
+  // separate table (polly_companion) and never shows up here, so there's
+  // no separate "not your companion" check needed. Unused training_points
+  // are forfeited: since the row is deleted outright, there's nothing to
+  // carry over. Credits the bank BEFORE deleting the creature (mirroring
+  // buyFromBreeder's spend-then-refund-on-failure pattern in reverse) so a
+  // failed delete can be refunded rather than leaving the player with a
+  // vanished creature and no payout.
+  const sellToBreeder = useCallback(
+    async (entryId: number): Promise<{ ok: boolean; reason?: string; price?: number }> => {
+      const { data: row } = await supabase
+        .from("hamster_collection")
+        .select("stage, trained_hp, trained_attack, trained_defense, trained_speed")
+        .eq("id", entryId)
+        .maybeSingle();
+      if (!row) return { ok: false, reason: "Creature not found" };
+
+      const stage = (row.stage as EvolutionStage) || "baby";
+      const trained: TrainedStats = {
+        hp: Number(row.trained_hp) || 0,
+        attack: Number(row.trained_attack) || 0,
+        defense: Number(row.trained_defense) || 0,
+        speed: Number(row.trained_speed) || 0,
+      };
+      const price = computeSellPrice(stage, trained);
+
+      const { data: bankRow } = await supabase.from("bank_points").select("points").maybeSingle();
+      const current = Number(bankRow?.points) || 0;
+      const newBankPoints = current + price;
+
+      const { error: bankError } = await supabase
+        .from("bank_points")
+        .upsert({ points: newBankPoints }, { onConflict: "user_id" });
+      if (reportError("Credit bank points from sale", bankError)) {
+        return { ok: false, reason: bankError.message || "Save failed" };
+      }
+
+      const { error: deleteError } = await supabase.from("hamster_collection").delete().eq("id", entryId);
+      if (reportError("Remove sold creature", deleteError)) {
+        // Delete failed — the creature is still there, so the payout
+        // shouldn't have landed. Refund back to the pre-sale balance.
+        await supabase.from("bank_points").upsert({ points: current }, { onConflict: "user_id" });
+        return { ok: false, reason: deleteError.message || "Save failed" };
+      }
+
+      await supabase.from("hamster_points_log").insert({ source: "breeder_sale", amount: price });
+
+      setBankPoints(newBankPoints);
+      await refreshCollection();
+      await refreshRecentPoints();
+      return { ok: true, price };
+    },
+    [reportError, refreshCollection, refreshRecentPoints]
+  );
+
   const clearJustAdopted = useCallback(() => setJustAdopted(null), []);
 
   return {
@@ -980,6 +1066,7 @@ export function useCreatureGrowthState() {
     bankPoints,
     spendBankPoints,
     buyFromBreeder,
+    sellToBreeder,
     collection,
     recentPoints,
     justAdopted,
