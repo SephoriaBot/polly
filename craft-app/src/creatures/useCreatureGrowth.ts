@@ -210,36 +210,42 @@ export function useCreatureGrowthState() {
   }, []);
 
   const refreshCollection = useCallback(async () => {
-    const { data } = await supabase
-      .from("hamster_collection")
-      .select(
-        "id, hamster_id, species, name, hatched_at, source, personality, stage, evolution_points, teen_form_id, final_form_id, abilities, training_points, trained_hp, trained_attack, trained_defense, trained_speed"
-      )
-      .order("hatched_at", { ascending: false });
-    setCollection(
-      (data || []).map((r) => ({
-        id: r.id,
-        hamsterId: r.hamster_id,
-        species: (r.species as Species) || "wereham",
-        name: r.name ?? null,
-        hatchedAt: r.hatched_at,
-        source: r.source,
-        personality: r.personality,
-        stage: (r.stage as EvolutionStage) || "baby",
-        evolutionPoints: Number(r.evolution_points) || 0,
-        teenFormId: r.teen_form_id,
-        finalFormId: r.final_form_id,
-        abilities: r.abilities || [],
-        trainingPoints: Number(r.training_points) || 0,
-        trainedStats: {
-          hp: Number(r.trained_hp) || 0,
-          attack: Number(r.trained_attack) || 0,
-          defense: Number(r.trained_defense) || 0,
-          speed: Number(r.trained_speed) || 0,
-        },
-      }))
-    );
-  }, []);
+  const { data, error } = await supabase
+    .from("hamster_collection")
+    .select(
+      "id, hamster_id, species, name, hatched_at, source, personality, stage, evolution_points, teen_form_id, final_form_id, abilities, training_points, trained_hp, trained_attack, trained_defense, trained_speed"
+    )
+    .order("hatched_at", { ascending: false });
+
+  if (error) {
+    reportError("Load creature collection", error);
+    return;
+  }
+
+  setCollection(
+    (data || []).map((r) => ({
+      id: r.id,
+      hamsterId: r.hamster_id,
+      species: (r.species as Species) || "wereham",
+      name: r.name ?? null,
+      hatchedAt: r.hatched_at,
+      source: r.source,
+      personality: r.personality,
+      stage: (r.stage as EvolutionStage) || "baby",
+      evolutionPoints: Number(r.evolution_points) || 0,
+      teenFormId: r.teen_form_id,
+      finalFormId: r.final_form_id,
+      abilities: r.abilities || [],
+      trainingPoints: Number(r.training_points) || 0,
+      trainedStats: {
+        hp: Number(r.trained_hp) || 0,
+        attack: Number(r.trained_attack) || 0,
+        defense: Number(r.trained_defense) || 0,
+        speed: Number(r.trained_speed) || 0,
+      },
+    }))
+  );
+}, [reportError]);
 
   // Rolls a chance to spawn a wild hamster whenever an accomplishment is
   // earned — battling is still tied to the same daily-activity trigger, it
@@ -745,7 +751,6 @@ export function useCreatureGrowthState() {
     if (checkingRef.current) return;
     setRefreshing(true);
     try {
-      await checkForNewGrowth();
       await refreshCollection();
       await refreshRecentPoints();
     } finally {
@@ -1000,61 +1005,133 @@ export function useCreatureGrowthState() {
     [reportError, refreshCollection, refreshRecentPoints]
   );
 
-  // Sells a creature from the collection back to the breeder. Any entry in
-  // hamster_collection is sellable — the active companion lives in a
-  // separate table (polly_companion) and never shows up here, so there's
-  // no separate "not your companion" check needed. Unused training_points
-  // are forfeited: since the row is deleted outright, there's nothing to
-  // carry over. Credits the bank BEFORE deleting the creature (mirroring
-  // buyFromBreeder's spend-then-refund-on-failure pattern in reverse) so a
-  // failed delete can be refunded rather than leaving the player with a
-  // vanished creature and no payout.
   const sellToBreeder = useCallback(
-    async (entryId: number): Promise<{ ok: boolean; reason?: string; price?: number }> => {
-      const { data: row } = await supabase
-        .from("hamster_collection")
-        .select("stage, trained_hp, trained_attack, trained_defense, trained_speed")
-        .eq("id", entryId)
-        .maybeSingle();
-      if (!row) return { ok: false, reason: "Creature not found" };
+  async (
+    entryId: number
+  ): Promise<{ ok: boolean; reason?: string; price?: number }> => {
+    // Always re-read the creature from Supabase.
+    // This prevents selling a stale/deleted card from local state.
+    const { data: row, error: fetchError } = await supabase
+      .from("hamster_collection")
+      .select(
+        "id, stage, trained_hp, trained_attack, trained_defense, trained_speed"
+      )
+      .eq("id", entryId)
+      .maybeSingle();
 
-      const stage = (row.stage as EvolutionStage) || "baby";
-      const trained: TrainedStats = {
-        hp: Number(row.trained_hp) || 0,
-        attack: Number(row.trained_attack) || 0,
-        defense: Number(row.trained_defense) || 0,
-        speed: Number(row.trained_speed) || 0,
+    if (fetchError) {
+      reportError("Find creature to sell", fetchError);
+
+      return {
+        ok: false,
+        reason: fetchError.message || "Couldn't find creature",
       };
-      const price = computeSellPrice(stage, trained);
+    }
 
-      const { data: bankRow } = await supabase.from("bank_points").select("points").maybeSingle();
-      const current = Number(bankRow?.points) || 0;
-      const newBankPoints = current + price;
+    if (!row) {
+      return {
+        ok: false,
+        reason: "Creature not found",
+      };
+    }
 
-      const { error: bankError } = await supabase
-        .from("bank_points")
-        .upsert({ points: newBankPoints }, { onConflict: "user_id" });
-      if (reportError("Credit bank points from sale", bankError)) {
-        return { ok: false, reason: bankError.message || "Save failed" };
-      }
+    const stage = (row.stage as EvolutionStage) || "baby";
 
-      const { error: deleteError } = await supabase.from("hamster_collection").delete().eq("id", entryId);
-      if (reportError("Remove sold creature", deleteError)) {
-        // Delete failed — the creature is still there, so the payout
-        // shouldn't have landed. Refund back to the pre-sale balance.
-        await supabase.from("bank_points").upsert({ points: current }, { onConflict: "user_id" });
-        return { ok: false, reason: deleteError.message || "Save failed" };
-      }
+    const trained: TrainedStats = {
+      hp: Number(row.trained_hp) || 0,
+      attack: Number(row.trained_attack) || 0,
+      defense: Number(row.trained_defense) || 0,
+      speed: Number(row.trained_speed) || 0,
+    };
 
-      await supabase.from("hamster_points_log").insert({ source: "breeder_sale", amount: price });
+    const price = computeSellPrice(stage, trained);
 
-      setBankPoints(newBankPoints);
-      await refreshCollection();
-      await refreshRecentPoints();
-      return { ok: true, price };
-    },
-    [reportError, refreshCollection, refreshRecentPoints]
-  );
+    // Read the current bank balance immediately before the sale.
+    const { data: bankRow, error: bankReadError } = await supabase
+      .from("bank_points")
+      .select("points")
+      .maybeSingle();
+
+    if (bankReadError) {
+      reportError("Read bank before sale", bankReadError);
+
+      return {
+        ok: false,
+        reason: bankReadError.message || "Couldn't read bank",
+      };
+    }
+
+    const current = Number(bankRow?.points) || 0;
+    const newBankPoints = current + price;
+
+    // Delete the creature first.
+    // We don't want to pay for a creature that failed to delete.
+    const { error: deleteError } = await supabase
+      .from("hamster_collection")
+      .delete()
+      .eq("id", entryId);
+
+    if (deleteError) {
+      reportError("Remove sold creature", deleteError);
+
+      return {
+        ok: false,
+        reason: deleteError.message || "Couldn't remove creature",
+      };
+    }
+
+    // Now credit the bank.
+    const { error: bankError } = await supabase
+      .from("bank_points")
+      .upsert(
+        { points: newBankPoints },
+        { onConflict: "user_id" }
+      );
+
+    if (bankError) {
+      reportError("Credit bank points from sale", bankError);
+
+      /*
+       * The creature has already been deleted at this point.
+       *
+       * A completely atomic implementation should eventually move
+       * delete + bank credit into a Supabase RPC/database transaction.
+       *
+       * We intentionally do NOT pretend the sale succeeded here.
+       */
+      return {
+        ok: false,
+        reason: bankError.message || "Couldn't credit sale",
+      };
+    }
+
+    // Logging is secondary. Don't make a successful sale fail just
+    // because the history log couldn't be written.
+    const { error: logError } = await supabase
+      .from("hamster_points_log")
+      .insert({
+        source: "breeder_sale",
+        amount: price,
+      });
+
+    if (logError) {
+      reportError("Log breeder sale", logError);
+    }
+
+    // Update local state only after the database writes succeeded.
+    setBankPoints(newBankPoints);
+
+    // Refresh both pieces of UI state.
+    await refreshCollection();
+    await refreshRecentPoints();
+
+    return {
+      ok: true,
+      price,
+    };
+  },
+  [reportError, refreshCollection, refreshRecentPoints]
+);
 
   const clearJustAdopted = useCallback(() => setJustAdopted(null), []);
 
