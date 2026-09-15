@@ -30,7 +30,6 @@ export function getPollyMessage(mood: PollyMood): string | null {
 
 const POLLY_POPIN_MESSAGES: string[] = [
   "Just checking in!",
-  "Boop.",
   "Still here if you need me.",
   "Hi again!",
   "Sneaking by...",
@@ -67,13 +66,11 @@ const POLLY_POPIN_MESSAGES_BY_PAGE: Partial<Record<string, string[]>> = {
   decisions: [
     "Tough call?",
     "Trust your gut.",
-    "I believe in you.",
     "Weighing your options, I see.",
   ],
   habitat: [
     "The habitat critters say hi.",
-    "Someone's been busy decorating.",
-    "Squeak squeak!",
+    "I love what you've done with the shelf.",
     "Don't forget your daily visit.",
   ],
 };
