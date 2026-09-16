@@ -15,6 +15,8 @@ import checklistImg from '../../assets/illustrations/checklist.png';
 import { type Chore as ChoreBase, statusFor } from '../../lib/chores';
 import { useCreatureGrowth } from '../../creatures/CreatureGrowthContext';
 import ChoreCleaningPlan from './ChoreCleaningPlan';
+import { useAuth } from '../../context/AuthContext';
+import { completeChoreQuest } from '../../lib/questSystem';
 
 interface Chore extends ChoreBase {
   icon: IconName;
@@ -25,6 +27,7 @@ const CHORE_ICONS: IconName[] = ['cleaning-spray', 'washing-machine', 'sparkle-s
 export default function Chores() {
   const { showToast } = useToast();
   const { notifyGrowth } = useCreatureGrowth();
+  const { user } = useAuth();
   const [chores, setChores] = useState<Chore[]>([]);
   const [loading, setLoading] = useState(true);
   const [name, setName] = useState('');
@@ -69,6 +72,7 @@ export default function Chores() {
     if (error) { showToast("Couldn't save that — try again?", 'error'); load(); return; }
     showToast(`${chore.name} — nice work! 🧺`);
     notifyGrowth();
+    if (user) completeChoreQuest(user.id, chore.id);
   }
 
   async function removeChore(id: string) {
