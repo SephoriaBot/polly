@@ -23,7 +23,8 @@ export type IconName =
   | 'flowerfull' | 'icon-clear' | 'full_sun' | 'empty_sun' | 'full_moon' | 'empty_moon'
   | 'icon-recur' | 'shopping-cart' | 'pagedivider' | 'empty-wallet' | 'empty-dashboard'
   | 'empty-grocery' | 'empty-habitat' | 'empty-planner' | 'empty-trackers'| '_extra-unnamed-heart'
-  | 'title-wallet' | 'title-planner' | 'title-grocery' | 'title-decisions' | 'title-tracker';
+  | 'title-wallet' | 'title-planner' | 'title-grocery' | 'title-decisions' | 'title-tracker' |
+ 'tab-breeder' | 'tab-encounter' | 'tab-shelf';
 
 
 interface IconProps {
