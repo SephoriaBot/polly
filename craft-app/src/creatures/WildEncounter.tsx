@@ -22,6 +22,8 @@ import { allBabiesFor, imageForForm, SPECIES_LABELS } from "./creatures";
 import type { EvolutionStage, Species } from "./creatures";
 import { useCreatureGrowth } from "./CreatureGrowthContext";
 import { BATTLE_REWARDS } from "./battle";
+import { useAuth } from "../context/AuthContext";
+import { triggerActionEvent } from "../lib/questSystem";
 import {
   canBattle,
   deriveBattleStats,
@@ -62,6 +64,7 @@ function HpBar({ current, max, color }: { current: number; max: number; color: s
 
 export default function WildEncounter() {
   const { wildEncounter, clearWildEncounter, awardBattleWin } = useCreatureGrowth();
+  const { user } = useAuth();
   const [reward, setReward] = useState<{ statPoints: number; shopPoints: number } | null>(null);
   const [loading, setLoading] = useState(true);
   const [fighters, setFighters] = useState<FighterEntry[]>([]);
@@ -255,6 +258,7 @@ const goScout = () => {
         awardBattleWin(selected.id, wild.stage).then((res) => {
           if (res.ok) setReward({ statPoints: res.statPoints, shopPoints: res.shopPoints });
         });
+        if (user) triggerActionEvent(user.id, "battle_won");
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
