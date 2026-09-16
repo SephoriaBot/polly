@@ -14,6 +14,7 @@ import { Polly } from '../lib';
 import { getPollyMessage } from '../lib/pollyMessages';
 import PollyBubble from '../components/PollyBubble';
 import CheckMark from '../components/CheckMark';
+import { triggerActionEvent } from '../lib/questSystem';
 
 
 interface Focus {
@@ -95,11 +96,16 @@ export default function Dashboard({ onNavigate }: { onNavigate?: (page: string, 
   }
 
   async function toggleFocus(focus: Focus) {
+    const newCompleted = !focus.completed;
     const { data } = await supabase.from('focuses')
-      .update({ completed: !focus.completed })
+      .update({ completed: newCompleted })
       .eq('id', focus.id)
       .select().single();
     if (data) setFocuses(prev => prev.map(f => f.id === focus.id ? data : f));
+    if (newCompleted) {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) triggerActionEvent(user.id, 'focus_completed');
+    }
   }
 
   async function toggleFocusPriority(focus: Focus) {
