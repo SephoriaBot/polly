@@ -21,17 +21,17 @@ export type PollyMood =
 // for that species rather than breaking the image.
 const POLLY_IMAGES: Record<PollySpecies, Record<PollyMood, string>> = {
   wereham: {
-    neutral: '/assets/pollywereham/polly_0.png',
-    confused: '/assets/pollywereham/polly_1.png',
-    disappointed: '/assets/pollywereham/polly_2.png',
-    searching: '/assets/pollywereham/polly_3.png',
-    mad: '/assets/pollywereham/polly_4.png',
-    cheering: '/assets/pollywereham/polly_5.png',
-    yawning: '/assets/pollywereham/polly_6.png',
-    happy: '/assets/pollywereham/polly_7.png',
-    sad: '/assets/pollywereham/polly_8.png',
-    surprised: '/assets/pollywereham/polly_9.png',
-    love: '/assets/pollywereham/polly_10.png',
+    neutral: '/assets/pollywereham/pollyneutral.png',
+    confused: '/assets/pollywereham/pollysearching.png',
+    disappointed: '/assets/pollywereham/pollysad.png',
+    searching: '/assets/pollywereham/pollysearching.png',
+    mad: '/assets/pollywereham/pollymad.png',
+    cheering: '/assets/pollywereham/pollyhappy.png',
+    yawning: '/assets/pollywereham/pollysleeping.png',
+    happy: '/assets/pollywereham/pollyhappy.png',
+    sad: '/assets/pollywereham/pollysad.png',
+    surprised: '/assets/pollywereham/pollyhappy.png',
+    love: '/assets/pollywereham/pollyhappy.png',
   },
   noodle: {
     neutral: '/assets/pollynoodle/pollynoodle_neutral.png',
