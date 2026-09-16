@@ -1010,7 +1010,7 @@ const todayCalendarResult = useMemo(
 );
 const todayRow = todayCalendarResult.rows[0];
 const todayEarlyPay = (todayRow?.availableToday || 0) + (todayRow?.releasedToday || 0);
-
+const todayExtraNet = (todayRow?.extraToday || 0) - (todayRow?.extraExpenseToday || 0);
 
   const moneyCalendarWeekChunks = useMemo(() => {
     const rows = moneyCalendarResult.rows;
@@ -1083,7 +1083,7 @@ const todayEarlyPay = (todayRow?.availableToday || 0) + (todayRow?.releasedToday
 
   const near5Total = near5Bills.reduce((s, b) => s + b.amount, 0);
   const SAFE_TO_SPEND_BUFFER = 50;
-  const safeToSpend = Math.max(0, (budget.current_balance || 0) + todayEarlyPay - near5Total - SAFE_TO_SPEND_BUFFER);
+  const safeToSpend = Math.max(0, (budget.current_balance || 0) + todayEarlyPay + todayExtraNet - near5Total - SAFE_TO_SPEND_BUFFER);
   function tierForDaySafe(amount: number): { label: string; color: string; bg: string } {
     if (amount <= 0) return { label: "Tight", color: "var(--danger)", bg: "var(--danger-bg)" };
     if (amount < SAFE_TO_SPEND_BUFFER) return { label: "OK", color: "var(--gold-dark)", bg: "var(--gold-light)" };
@@ -1493,6 +1493,16 @@ const todayEarlyPay = (todayRow?.availableToday || 0) + (todayRow?.releasedToday
     <span style={{ fontWeight: 700, color: "var(--green-dark)" }}>+{fmt(todayEarlyPay)}</span>
   </div>
 )}
+
+{todayExtraNet !== 0 && (
+  <div style={{ display: "flex", justifyContent: "space-between" }}>
+    <span style={{ color: "var(--ink-soft)" }}>{todayExtraNet > 0 ? "+ Expected extra funds today" : "− Expected expense today"}</span>
+    <span style={{ fontWeight: 700, color: todayExtraNet > 0 ? "var(--green-dark)" : "var(--danger)" }}>
+      {todayExtraNet > 0 ? "+" : ""}{fmt(todayExtraNet)}
+    </span>
+  </div>
+)}
+
 
                       <div style={{ display: "flex", justifyContent: "space-between" }}>
                         <span style={{ color: "var(--ink-soft)" }}>− Bills due within 5 days</span>
