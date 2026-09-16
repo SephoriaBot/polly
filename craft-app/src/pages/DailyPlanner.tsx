@@ -18,6 +18,7 @@ import Icon, { type IconName } from '../components/Icon';
 import PageTabs, { type PageTab } from '../components/PageTabs';
 import { useTheme } from '../context/ThemeContext';
 import CheckMark from '../components/CheckMark';
+import { triggerActionEvent } from '../lib/questSystem';
 import PageTitleLogo from "../components/PageTitleLogo";
 
 interface DailyTask {
@@ -360,6 +361,8 @@ setNewTaskSlot('anytime');
   async function markAttended(id: string) {
     await supabase.from('appointments').update({ attended: true }).eq('id', id);
     setAppointments(prev => prev.map(a => a.id === id ? { ...a, attended: true } : a));
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) triggerActionEvent(user.id, 'appointment_attended');
   }
 
 
