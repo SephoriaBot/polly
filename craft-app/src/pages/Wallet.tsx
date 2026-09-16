@@ -1006,9 +1006,17 @@ const todayCalendarResult = useMemo(
   () => buildMoneyCalendarRows([new Date()], budget.current_balance || 0),
   [dailyHours, recurringHours, extraFunds, extraExpenses, budget.current_balance,
    budget.net_to_gross_ratio, budget.flat_deductions_prev, budget.hourly_wage,
-   effectiveOtWage, earlyPayPreset, priorWeekHours, closedWeekHours]
+   effectiveOtWage, earlyPayPreset, taxRate, priorWeekHours, closedWeekHours]
 );
-const todayRow = todayCalendarResult.rows[0];
+
+// When the Calendar tab is on the current month, its rows[0] IS today —
+// reuse it directly so the home card can never drift from the heat strip.
+// Only fall back to the separate today-only calc if the Calendar tab has
+// been navigated to a future month (so moneyCalendarResult's rows don't
+// include today at all).
+const todayRow = isCalendarCurrentMonth
+  ? moneyCalendarResult.rows[0]
+  : todayCalendarResult.rows[0];
 const todayEarlyPay = (todayRow?.availableToday || 0) + (todayRow?.releasedToday || 0);
 const todayExtraNet = (todayRow?.extraToday || 0) - (todayRow?.extraExpenseToday || 0);
 
