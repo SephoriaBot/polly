@@ -6,7 +6,7 @@ const OPTIONS: { species: PollySpecies; label: string; blurb: string; image: str
     species: 'wereham',
     label: 'Polly the Wereham',
     blurb: 'Cozy, cheerful, and always ready with a snack.',
-    image: '/assets/pollywereham/polly_7.png',
+    image: '/assets/pollywereham/pollyhappy.png',
   },
   {
     species: 'noodle',
