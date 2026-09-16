@@ -998,6 +998,20 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
     () => buildMoneyCalendarRows(calendarDays, calendarStartingBalance),
     [calendarDays, billsByDate, dailyHours, recurringHours, extraFunds, extraExpenses, netHourlyWage, netOtWage, calendarStartingBalance, budget.net_to_gross_ratio, budget.flat_deductions_prev, priorWeekHours, closedWeekHours]
   );
+
+// Today's Anytime Pay availability, computed independently of whatever
+// month is selected in the Calendar tab, so viewing a future month there
+// doesn't skew the home-tab number.
+const todayCalendarResult = useMemo(
+  () => buildMoneyCalendarRows([new Date()], budget.current_balance || 0),
+  [dailyHours, recurringHours, extraFunds, extraExpenses, budget.current_balance,
+   budget.net_to_gross_ratio, budget.flat_deductions_prev, budget.hourly_wage,
+   effectiveOtWage, earlyPayPreset, priorWeekHours, closedWeekHours]
+);
+const todayRow = todayCalendarResult.rows[0];
+const todayEarlyPay = (todayRow?.availableToday || 0) + (todayRow?.releasedToday || 0);
+
+
   const moneyCalendarWeekChunks = useMemo(() => {
     const rows = moneyCalendarResult.rows;
     const chunks: { title: string; rows: typeof rows }[] = [];
@@ -1069,8 +1083,7 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
 
   const near5Total = near5Bills.reduce((s, b) => s + b.amount, 0);
   const SAFE_TO_SPEND_BUFFER = 50;
-  const safeToSpend = Math.max(0, (budget.current_balance || 0) - near5Total - SAFE_TO_SPEND_BUFFER);
-
+  const safeToSpend = Math.max(0, (budget.current_balance || 0) + todayEarlyPay - near5Total - SAFE_TO_SPEND_BUFFER);
   function tierForDaySafe(amount: number): { label: string; color: string; bg: string } {
     if (amount <= 0) return { label: "Tight", color: "var(--danger)", bg: "var(--danger-bg)" };
     if (amount < SAFE_TO_SPEND_BUFFER) return { label: "OK", color: "var(--gold-dark)", bg: "var(--gold-light)" };
@@ -1474,6 +1487,13 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                         <span style={{ color: "var(--ink-soft)" }}>Current balance</span>
                         <span style={{ fontWeight: 700 }}>{fmt(budget.current_balance)}</span>
                       </div>
+{todayEarlyPay > 0.005 && (
+  <div style={{ display: "flex", justifyContent: "space-between" }}>
+    <span style={{ color: "var(--ink-soft)" }}>+ Available today (Anytime Pay)</span>
+    <span style={{ fontWeight: 700, color: "var(--green-dark)" }}>+{fmt(todayEarlyPay)}</span>
+  </div>
+)}
+
                       <div style={{ display: "flex", justifyContent: "space-between" }}>
                         <span style={{ color: "var(--ink-soft)" }}>− Bills due within 5 days</span>
                         <span style={{ fontWeight: 700, color: "var(--danger)" }}>−{fmt(near5Total)}</span>
