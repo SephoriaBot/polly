@@ -13,6 +13,7 @@ import Icon from '../Icon';
 import { useTheme } from '../../context/ThemeContext';
 import { useCreatureGrowth } from '../../creatures/CreatureGrowthContext';
 import CheckMark from '../CheckMark';
+import { triggerActionEvent } from '../../lib/questSystem';
 
 interface GoalRow {
   id: string;
@@ -195,7 +196,11 @@ export default function Goals() {
     await supabase.from('goal_steps').update({ done: newDone }).eq('id', step.id);
     // Only newly-completing a step can earn points (the growth check's own
     // credited flag is the real guard against double-awarding either way).
-    if (newDone) notifyGrowth();
+    if (newDone) {
+      notifyGrowth();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) triggerActionEvent(user.id, 'goal_step_completed');
+    }
   }
 
   async function breakdownStep(goalTitle: string, step: GoalStepRow, subCount: number) {
