@@ -999,27 +999,6 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
     [calendarDays, billsByDate, dailyHours, recurringHours, extraFunds, extraExpenses, netHourlyWage, netOtWage, calendarStartingBalance, budget.net_to_gross_ratio, budget.flat_deductions_prev, priorWeekHours, closedWeekHours]
   );
 
-// Today's Anytime Pay availability, computed independently of whatever
-// month is selected in the Calendar tab, so viewing a future month there
-// doesn't skew the home-tab number.
-const todayCalendarResult = useMemo(
-  () => buildMoneyCalendarRows([new Date()], budget.current_balance || 0),
-  [dailyHours, recurringHours, extraFunds, extraExpenses, budget.current_balance,
-   budget.net_to_gross_ratio, budget.flat_deductions_prev, budget.hourly_wage,
-   effectiveOtWage, earlyPayPreset, taxRate, priorWeekHours, closedWeekHours]
-);
-
-// When the Calendar tab is on the current month, its rows[0] IS today —
-// reuse it directly so the home card can never drift from the heat strip.
-// Only fall back to the separate today-only calc if the Calendar tab has
-// been navigated to a future month (so moneyCalendarResult's rows don't
-// include today at all).
-const todayRow = isCalendarCurrentMonth
-  ? moneyCalendarResult.rows[0]
-  : todayCalendarResult.rows[0];
-const todayEarlyPay = (todayRow?.availableToday || 0) + (todayRow?.releasedToday || 0);
-const todayExtraNet = (todayRow?.extraToday || 0) - (todayRow?.extraExpenseToday || 0);
-
   const moneyCalendarWeekChunks = useMemo(() => {
     const rows = moneyCalendarResult.rows;
     const chunks: { title: string; rows: typeof rows }[] = [];
@@ -1091,7 +1070,7 @@ const todayExtraNet = (todayRow?.extraToday || 0) - (todayRow?.extraExpenseToday
 
   const near5Total = near5Bills.reduce((s, b) => s + b.amount, 0);
   const SAFE_TO_SPEND_BUFFER = 50;
-  const safeToSpend = Math.max(0, (budget.current_balance || 0) + todayEarlyPay + todayExtraNet - near5Total - SAFE_TO_SPEND_BUFFER);
+
   function tierForDaySafe(amount: number): { label: string; color: string; bg: string } {
     if (amount <= 0) return { label: "Tight", color: "var(--danger)", bg: "var(--danger-bg)" };
     if (amount < SAFE_TO_SPEND_BUFFER) return { label: "OK", color: "var(--gold-dark)", bg: "var(--gold-light)" };
@@ -1110,6 +1089,15 @@ const todayExtraNet = (todayRow?.extraToday || 0) - (todayRow?.extraExpenseToday
       return { key: row.key, date: row.date, daySafe };
     });
   }, [moneyCalendarResult]);
+
+  // Today's safe-to-spend number, shown above the heat strip. Reads directly
+  // from heatStripDays — the same array the strip itself renders — so this
+  // number and the strip's today-tile can never disagree. Only resolves when
+  // the Calendar tab is showing the current month (the only time "today" is
+  // actually one of the rendered rows).
+  const todayHeatEntry = isCalendarCurrentMonth
+    ? heatStripDays.find(d => d.key === dateKey(new Date()))
+    : undefined;
 
   const pay = parseFloat(anytimePay) || 0;
   const inputAmount = pay;
@@ -1476,66 +1464,6 @@ const todayExtraNet = (todayRow?.extraToday || 0) - (todayRow?.extraExpenseToday
 
         {view === "home" && (
           <>
-
-            {/* SAFE TO SPEND */}
-
-            <div className="card" style={{ borderColor: budget.current_balance ? (safeToSpend > 0 ? "var(--green-dark)" : "var(--danger)") : "var(--border)" }}>
-              <div className="card-body">
-                <div className="section-label">Safe to Spend Right Now</div>
-                {budget.current_balance ? (
-                  <>
-                    <div style={{ fontSize: 32, fontWeight: 800, color: safeToSpend > 0 ? "var(--green-dark)" : "var(--danger)", marginTop: 4 }}>
-                      {fmt(safeToSpend)}
-                    </div>
-                    <div style={{ fontSize: 11, color: "var(--ink-muted)", marginBottom: 12 }}>
-                      after bills due within 5 days (debt minimums included) and a {fmt(SAFE_TO_SPEND_BUFFER)} safety buffer
-                    </div>
-                    <div style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: 12 }}>
-                      <div style={{ display: "flex", justifyContent: "space-between" }}>
-                        <span style={{ color: "var(--ink-soft)" }}>Current balance</span>
-                        <span style={{ fontWeight: 700 }}>{fmt(budget.current_balance)}</span>
-                      </div>
-{todayEarlyPay > 0.005 && (
-  <div style={{ display: "flex", justifyContent: "space-between" }}>
-    <span style={{ color: "var(--ink-soft)" }}>+ Available today (Anytime Pay)</span>
-    <span style={{ fontWeight: 700, color: "var(--green-dark)" }}>+{fmt(todayEarlyPay)}</span>
-  </div>
-)}
-
-{todayExtraNet !== 0 && (
-  <div style={{ display: "flex", justifyContent: "space-between" }}>
-    <span style={{ color: "var(--ink-soft)" }}>{todayExtraNet > 0 ? "+ Expected extra funds today" : "− Expected expense today"}</span>
-    <span style={{ fontWeight: 700, color: todayExtraNet > 0 ? "var(--green-dark)" : "var(--danger)" }}>
-      {todayExtraNet > 0 ? "+" : ""}{fmt(todayExtraNet)}
-    </span>
-  </div>
-)}
-
-
-                      <div style={{ display: "flex", justifyContent: "space-between" }}>
-                        <span style={{ color: "var(--ink-soft)" }}>− Bills due within 5 days</span>
-                        <span style={{ fontWeight: 700, color: "var(--danger)" }}>−{fmt(near5Total)}</span>
-                      </div>
-                      <div style={{ display: "flex", justifyContent: "space-between" }}>
-                        <span style={{ color: "var(--ink-soft)" }}>− Safety buffer</span>
-                        <span style={{ fontWeight: 700, color: "var(--danger)" }}>−{fmt(SAFE_TO_SPEND_BUFFER)}</span>
-                      </div>
-                    </div>
-                    {safeToSpend <= 0 && (
-                      <div style={{ marginTop: 10, fontSize: 12, color: "var(--danger)", fontWeight: 600 }}>
-                        Nothing free right now — committed money covers everything. Hold off on treats until this clears.
-                      </div>
-                    )}
-                  </>
-                ) : (
-                  <div style={{ fontSize: 12, color: "var(--ink-muted)" }}>
-                    Enter your current balance below (Money Calendar settings) to see this number.
-                  </div>
-                )}
-              </div>
-            </div>
-
-             <StitchDivider />
 
             {/* EQUITY MODE CHECK / TODAYS PAYCHECK CALCULATOR */}
 
@@ -2011,6 +1939,22 @@ const todayExtraNet = (todayRow?.extraToday || 0) - (todayRow?.extraExpenseToday
 
                 {budget.hourly_wage > 0 && heatStripDays.length > 0 && (
                   <div style={{ marginBottom: 16 }}>
+                    {todayHeatEntry && (() => {
+                      const todayTier = tierForDaySafe(todayHeatEntry.daySafe);
+                      return (
+                        <div className="card" style={{ marginBottom: 12, borderColor: todayTier.color }}>
+                          <div className="card-body">
+                            <div className="section-label">Safe to Spend Today</div>
+                            <div style={{ fontSize: 32, fontWeight: 800, color: todayTier.color, marginTop: 4 }}>
+                              {fmt(Math.max(0, todayHeatEntry.daySafe))}
+                            </div>
+                            <div style={{ fontSize: 11, color: "var(--ink-muted)" }}>
+                              projected balance minus bills landing in the next few days and a {fmt(SAFE_TO_SPEND_BUFFER)} buffer
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })()}
                     <div className="form-label" style={{ marginBottom: 6 }}>Safe-to-Spend at a Glance</div>
                     <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 4 }}>
                       {heatStripDays.map(d => {
