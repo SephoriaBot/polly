@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { useCreatureGrowth } from './CreatureGrowthContext';
 import { todayKey, pickDaily } from '../lib/dailyRandom';
+import { triggerActionEvent } from '../lib/questSystem';
 
 const SHELF_PATH = '/shelf';
 const MAX_PER_SHELF = 4;
@@ -344,6 +345,9 @@ export default function HabitatScene() {
 
     setUnlocked(prev => [...prev, key]);
     setUnlockingKey(null);
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) triggerActionEvent(user.id, 'decor_purchased');
   }
 
   if (loading || !themeLoaded) {
