@@ -1,5 +1,6 @@
 import { supabase } from './supabase'
 import type { TrackerType, TrackerValue, TrackerLog, CustomTrackerDef } from '../types/tracker';
+import { triggerActionEvent } from './questSystem';
 
 export async function upsertTrackerLog(
   type: TrackerType,
@@ -17,6 +18,10 @@ export async function upsertTrackerLog(
     .maybeSingle();
 
   if (error) throw error;
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (user) triggerActionEvent(user.id, 'tracker_logged');
+
   return data as TrackerLog;
 }
 
