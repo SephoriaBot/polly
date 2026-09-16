@@ -1,5 +1,6 @@
 import {
   useState,
+  useEffect,
   Suspense,
   lazy,
   Component,
@@ -23,6 +24,7 @@ import { ToastProvider } from './hooks/useToast';
 import { CreatureGrowthProvider } from './creatures/CreatureGrowthContext';
 import { useAuth } from './context/AuthContext';
 import Login from './pages/Login';
+import { refreshQuestBoard } from './lib/questSystem';
 
 import PollyPageTour from './components/PollyPageTour';
 import PollyPopIn from './components/PollyPopIn';
@@ -243,11 +245,18 @@ function CompanionGate({ children }: { children: ReactNode }) {
    ========================================================= */
 
 export default function App() {
-  const { session, loading, signOut } = useAuth();
+  const { session, user, loading, signOut } = useAuth();
 
   const [page, setPage] = useState<Page>('dashboard');
   const [initialTab, setInitialTab] = useState<string | undefined>(undefined);
   const [brainDumpOpen, setBrainDumpOpen] = useState(false);
+
+  // Once per session: generate any due chore quests, backfill action
+  // quests, and let the companion note anything that expired unclaimed.
+  useEffect(() => {
+    if (user) refreshQuestBoard(user.id);
+  }, [user]);
+
 
   function navigate(p: string, tab?: string) {
     setPage(p as Page);
