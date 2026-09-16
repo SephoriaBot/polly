@@ -13,9 +13,9 @@ import PageTitleLogo from "../components/PageTitleLogo";
 type HabitatTab = 'shelf' | 'breeder' | 'wild' | 'collection';
 
 const HABITAT_TABS: PageTab<HabitatTab>[] = [
-  { key: 'shelf', label: 'Shelf', icon: 'house' },
-  { key: 'breeder', label: 'Breeder', icon: 'shopping-cart' },
-  { key: 'wild', label: 'Wild Encounter', icon: 'hamster-wild' },
+  { key: 'shelf', label: 'Shelf', icon: 'tab-shelf' },
+  { key: 'breeder', label: 'Breeder', icon: 'tab-breeder' },
+  { key: 'wild', label: 'Wild Encounter', icon: 'tab-encounter' },
   { key: 'collection', label: 'Collection', icon: 'trophy' },
 ];
 
