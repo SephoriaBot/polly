@@ -19,6 +19,9 @@ import { todayKey, pickDaily } from "../lib/dailyRandom";
 
 import Icon from "../components/Icon";
 
+import { useAuth } from "../context/AuthContext";
+import { triggerActionEvent } from "../lib/questSystem";
+
 import ShopkeeperBubble, {
   type ShopkeeperExpression,
 } from "./ShopkeeperBubble";
@@ -65,6 +68,7 @@ function todaysLitter(): Creature[] {
 // -----------------------------------------------------------------------------
 
 export default function CreatureBreeder() {
+  const { user } = useAuth();
   const {
     loading,
     refreshing,
@@ -207,6 +211,8 @@ export default function CreatureBreeder() {
       setBuyError(
         result.reason || "Couldn't adopt that one"
       );
+    } else if (user) {
+      triggerActionEvent(user.id, "creature_purchased");
     }
 
     setBuyingId(null);
