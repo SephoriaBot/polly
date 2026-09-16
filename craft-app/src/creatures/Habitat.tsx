@@ -3,24 +3,28 @@ import CreatureBreeder from "../creatures/CreatureBreeder";
 import CreatureHabitat from "../creatures/CreatureHabitat";
 import WildEncounter from "../creatures/WildEncounter";
 import HabitatScene from "../creatures/HabitatScene";
+import IncubatorTab from "../creatures/IncubatorTab";
 import PageTabs, { type PageTab } from "../components/PageTabs";
 import PageTitleLogo from "../components/PageTitleLogo";
+import { useAuth } from "../context/AuthContext";
 
 // CreatureGrowthProvider now wraps the whole app in App.tsx (so the growth
 // check runs on every load and WildEncounterAlert can pop up from any
 // page) — no provider needed here anymore, just consume the context.
 
-type HabitatTab = 'shelf' | 'breeder' | 'wild' | 'collection';
+type HabitatTab = 'shelf' | 'breeder' | 'incubator' | 'wild' | 'collection';
 
 const HABITAT_TABS: PageTab<HabitatTab>[] = [
   { key: 'shelf', label: 'Shelf', icon: 'tab-shelf' },
   { key: 'breeder', label: 'Breeder', icon: 'tab-breeder' },
+  { key: 'incubator', label: 'Incubator', icon: 'tab-breeder' }, // swap in a dedicated egg icon when you have one
   { key: 'wild', label: 'Wild Encounter', icon: 'tab-encounter' },
   { key: 'collection', label: 'Collection', icon: 'trophy' },
 ];
 
 export default function Habitat({ initialTab }: { initialTab?: HabitatTab }) {
   const [activeTab, setActiveTab] = useState<HabitatTab>(initialTab ?? 'shelf');
+  const { user } = useAuth();
 
   return (
     <div>
@@ -43,6 +47,13 @@ export default function Habitat({ initialTab }: { initialTab?: HabitatTab }) {
         <section>
           <div className="section-label">The Breeder</div>
           <CreatureBreeder />
+        </section>
+      )}
+
+      {activeTab === 'incubator' && user && (
+        <section>
+          <div className="section-label">Incubator</div>
+          <IncubatorTab userId={user.id} />
         </section>
       )}
 
