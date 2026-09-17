@@ -11,7 +11,7 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import { usePollyCompanion } from '../context/PollyCompanionContext';
 import { useToast } from '../hooks/useToast';
-import Polly from '../components/Polly';
+import Polly from './Polly';
 
 interface OwnedCosmetic {
   cosmeticId: string;
