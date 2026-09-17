@@ -9,6 +9,7 @@
 // several functions read/write rows the RLS default alone can't target
 // (e.g. checking polly_companion before granting an egg).
 import { supabase } from './supabase';
+import { publishToast } from './toastBus';
 
 const SPECIES = ['wereham', 'noodle', 'dragon', 'bunt', 'wrendel'] as const;
 type Species = (typeof SPECIES)[number];
@@ -206,6 +207,7 @@ export async function claimQuest(userId: string, questId: string): Promise<Claim
       .update({ status: 'claimed', claimed_at: new Date().toISOString() })
       .eq('id', questId);
 
+    publishToast(`Quest complete: ${quest.title}! An egg is in the Incubator 🥚`);
     return { ok: true, reward: 'egg', hatchAt };
   }
 
@@ -222,6 +224,13 @@ export async function claimQuest(userId: string, questId: string): Promise<Claim
     .update({ status: 'claimed', claimed_at: new Date().toISOString() })
     .eq('id', questId);
 
+  const { data: cosmetic } = await supabase
+    .from('cosmetics')
+    .select('name')
+    .eq('id', quest.reward_cosmetic_id)
+    .maybeSingle();
+
+  publishToast(`Quest complete: ${quest.title}! You won ${cosmetic?.name ?? 'a new cosmetic'} 🎀`);
   return { ok: true, reward: 'cosmetic', cosmeticId: quest.reward_cosmetic_id };
 }
 

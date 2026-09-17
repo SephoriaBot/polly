@@ -1,6 +1,7 @@
-import { createContext, useContext, useState, useCallback } from 'react';
+import { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import Icon from '../components/Icon';
+import { subscribeToastBus } from '../lib/toastBus';
 
 interface Toast {
   id: string;
@@ -22,6 +23,8 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     setToasts(prev => [...prev, { id, message, type }]);
     setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 3000);
   }, []);
+
+  useEffect(() => subscribeToastBus(showToast), [showToast]);
 
   return (
     <ToastContext.Provider value={{ showToast }}>

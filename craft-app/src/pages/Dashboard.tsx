@@ -15,6 +15,8 @@ import { getPollyMessage } from '../lib/pollyMessages';
 import PollyBubble from '../components/PollyBubble';
 import CheckMark from '../components/CheckMark';
 import { triggerActionEvent } from '../lib/questSystem';
+import QuestBoard from '../components/QuestBoard';
+import { useAuth } from '../context/AuthContext';
 
 
 interface Focus {
@@ -51,6 +53,7 @@ function StitchDivider() {
 export default function Dashboard({ onNavigate }: { onNavigate?: (page: string, tab?: string) => void }) {
   const { theme } = useTheme();
   const { mode } = useEnergy();
+  const { user } = useAuth();
   const [focuses, setFocuses] = useState<Focus[]>([]);
   const [newFocus, setNewFocus] = useState('');
   const [newFocusMins, setNewFocusMins] = useState('');
@@ -162,6 +165,12 @@ export default function Dashboard({ onNavigate }: { onNavigate?: (page: string, 
               </div>
               <TodaySnapshot onNavigate={onNavigate} />
             </section>
+
+            {user && (
+              <section style={{ marginTop: 4 }}>
+                <QuestBoard userId={user.id} />
+              </section>
+            )}
           </>
         ) : (
           <>
@@ -309,6 +318,12 @@ export default function Dashboard({ onNavigate }: { onNavigate?: (page: string, 
               </div>
               <TodaySnapshot onNavigate={onNavigate} />
             </section>
+
+            {user && (
+              <section style={{ marginTop: 4 }}>
+                <QuestBoard userId={user.id} />
+              </section>
+            )}
           </>
         )}
       </div>
