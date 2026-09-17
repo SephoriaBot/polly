@@ -167,9 +167,34 @@ export async function triggerActionEvent(userId: string, eventKey: string) {
 type ClaimResult =
   | { ok: true; reward: 'cosmetic'; cosmeticId: string }
   | { ok: true; reward: 'egg'; hatchAt: string }
-  | { ok: false; reason: 'egg_already_incubating' | 'not_found' | 'already_claimed' };
+  | {
+      ok: false;
+      reason:
+        | 'egg_already_incubating'
+        | 'not_found'
+        | 'already_claimed'
+        | 'not_current_quest';
+    };
 
-export async function claimQuest(userId: string, questId: string): Promise<ClaimResult> {
+export async function claimQuest(
+  userId: string,
+  questId: string
+): Promise<ClaimResult> {
+  // The oldest active quest is the one currently displayed on QuestBoard.
+  const { data: currentQuest } = await supabase
+    .from('quests')
+    .select('id')
+    .eq('user_id', userId)
+    .eq('status', 'active')
+    .order('created_at', { ascending: true })
+    .limit(1)
+    .maybeSingle();
+
+  // A quest that isn't currently displayed cannot give a reward.
+  if (!currentQuest || currentQuest.id !== questId) {
+    return { ok: false, reason: 'not_current_quest' };
+  }
+
   const { data: quest } = await supabase
     .from('quests')
     .select('*')
@@ -178,8 +203,9 @@ export async function claimQuest(userId: string, questId: string): Promise<Claim
     .maybeSingle();
 
   if (!quest) return { ok: false, reason: 'not_found' };
-  if (quest.status !== 'active') return { ok: false, reason: 'already_claimed' };
-
+  if (quest.status !== 'active') {
+    return { ok: false, reason: 'already_claimed' };
+    
   if (quest.reward_type === 'egg') {
     const { data: companion } = await supabase
       .from('polly_companion')
