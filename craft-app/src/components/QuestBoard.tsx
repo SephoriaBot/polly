@@ -74,10 +74,15 @@ export default function QuestBoard({ userId }: { userId: string }) {
   if (loading) return null;
 
   return (
-    <section className="quest-board">
+    <section className="quest-board quest-board__card">
       <div className="section-label">
         <Icon name="clipboard-list" size={18} /> Quests
       </div>
+
+      <p className="quest-board__descriptor">
+        Your companion hands out one quest at a time — finish it to claim your
+        reward and unlock the next.
+      </p>
 
       {sadMessage && (
         <div className="quest-board__companion-line">
@@ -105,15 +110,9 @@ export default function QuestBoard({ userId }: { userId: string }) {
 
           <span className="quest-board__title">{quest.title}</span>
 
-          <span className="quest-board__reward">
-            <Icon
-              name={quest.reward_type === 'egg' ? 'egg' : 'trophy'}
-              size={16}
-            />
-
-            {quest.reward_type === 'egg'
-              ? 'Egg'
-              : quest.reward_name ?? 'Cosmetic'}
+          <span className="quest-board__reward quest-board__reward--mystery">
+            <Icon name="help-circle" size={16} />
+            ???
           </span>
         </div>
       )}
