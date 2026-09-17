@@ -4,6 +4,11 @@ import { useAuth } from './AuthContext';
 
 export type PollySpecies = 'wereham' | 'noodle' | 'dragon' | 'bunt' | 'wrendel';
 
+interface EquippedHeadwear {
+  id: string;
+  assetKey: string;
+}
+
 interface PollyCompanionContextValue {
   /** Defaults to 'wereham' while loading or if no choice has been saved yet. */
   species: PollySpecies;
@@ -12,6 +17,10 @@ interface PollyCompanionContextValue {
   /** True if the user has never picked a companion — used to show the picker. */
   needsChoice: boolean;
   chooseSpecies: (species: PollySpecies) => Promise<void>;
+  /** Currently equipped headwear cosmetic, or null if none equipped. */
+  equippedHeadwear: EquippedHeadwear | null;
+  /** Pass a cosmetic id to equip it, or null to unequip. */
+  setEquippedHeadwear: (cosmeticId: string | null) => Promise<void>;
 }
 
 const PollyCompanionContext = createContext<PollyCompanionContextValue | undefined>(undefined);
@@ -21,6 +30,7 @@ export function PollyCompanionProvider({ children }: { children: ReactNode }) {
   const [species, setSpecies] = useState<PollySpecies>('wereham');
   const [loaded, setLoaded] = useState(false);
   const [needsChoice, setNeedsChoice] = useState(false);
+  const [equippedHeadwear, setEquippedHeadwearState] = useState<EquippedHeadwear | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -30,6 +40,7 @@ export function PollyCompanionProvider({ children }: { children: ReactNode }) {
         if (!cancelled) {
           setLoaded(false);
           setNeedsChoice(false);
+          setEquippedHeadwearState(null);
         }
         return;
       }
@@ -37,7 +48,7 @@ export function PollyCompanionProvider({ children }: { children: ReactNode }) {
       setLoaded(false);
       const { data, error } = await supabase
         .from('polly_companion')
-        .select('species')
+        .select('species, equipped_headwear_id, cosmetics(id, asset_key)')
         .maybeSingle();
 
       if (cancelled) return;
@@ -45,6 +56,10 @@ export function PollyCompanionProvider({ children }: { children: ReactNode }) {
       if (!error && data?.species) {
         setSpecies(data.species as PollySpecies);
         setNeedsChoice(false);
+        const cosmetic = Array.isArray(data.cosmetics) ? data.cosmetics[0] : data.cosmetics;
+        setEquippedHeadwearState(
+          cosmetic ? { id: cosmetic.id, assetKey: cosmetic.asset_key } : null
+        );
       } else {
         setNeedsChoice(true);
       }
@@ -66,8 +81,26 @@ export function PollyCompanionProvider({ children }: { children: ReactNode }) {
     if (error) console.error('Failed to save Polly companion choice:', error);
   }
 
+  async function setEquippedHeadwear(cosmeticId: string | null) {
+    const { data, error } = await supabase
+      .from('polly_companion')
+      .update({ equipped_headwear_id: cosmeticId })
+      .select('cosmetics(id, asset_key)')
+      .maybeSingle();
+
+    if (error) {
+      console.error('Failed to update equipped headwear:', error);
+      return;
+    }
+
+    const cosmetic = Array.isArray(data?.cosmetics) ? data?.cosmetics[0] : data?.cosmetics;
+    setEquippedHeadwearState(cosmetic ? { id: cosmetic.id, assetKey: cosmetic.asset_key } : null);
+  }
+
   return (
-    <PollyCompanionContext.Provider value={{ species, loaded, needsChoice, chooseSpecies }}>
+    <PollyCompanionContext.Provider
+      value={{ species, loaded, needsChoice, chooseSpecies, equippedHeadwear, setEquippedHeadwear }}
+    >
       {children}
     </PollyCompanionContext.Provider>
   );
