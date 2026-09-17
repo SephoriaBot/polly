@@ -205,7 +205,7 @@ export async function claimQuest(
   if (!quest) return { ok: false, reason: 'not_found' };
   if (quest.status !== 'active') {
     return { ok: false, reason: 'already_claimed' };
-    
+  }
   if (quest.reward_type === 'egg') {
     const { data: companion } = await supabase
       .from('polly_companion')
