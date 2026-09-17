@@ -7,6 +7,7 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  position: relative;
 }
 
 .polly-image {
@@ -14,6 +15,21 @@
   width: 100%;
   height: 100%;
   object-fit: contain;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+/* Flat hat icon shown only as a fallback for species without full
+   per-expression art yet — sits as a small badge over the top of the
+   body sprite rather than being sized/posed like a real headwear layer. */
+.polly-headwear-fallback {
+  position: absolute;
+  top: -6%;
+  right: -6%;
+  width: 40%;
+  height: 40%;
+  object-fit: contain;
+  pointer-events: none;
   user-select: none;
   -webkit-user-drag: none;
 }
