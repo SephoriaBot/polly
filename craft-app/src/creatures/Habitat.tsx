@@ -4,7 +4,7 @@ import CreatureHabitat from "../creatures/CreatureHabitat";
 import WildEncounter from "../creatures/WildEncounter";
 import HabitatScene from "../creatures/HabitatScene";
 import IncubatorTab from "../creatures/IncubatorTab";
-import Closet from "../creatures/Closet";
+import Closet from "../components/Closet";
 import PageTabs, { type PageTab } from "../components/PageTabs";
 import PageTitleLogo from "../components/PageTitleLogo";
 import { useAuth } from "../context/AuthContext";
