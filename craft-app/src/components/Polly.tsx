@@ -1,5 +1,6 @@
 import './Polly.css';
 import { usePollyCompanion, type PollySpecies } from '../context/PollyCompanionContext';
+import { resolveEquipRender, hatIdFromAssetKey, type Expression } from '../creatures/equipRender';
 
 export type PollyMood =
   | 'neutral'
@@ -13,6 +14,24 @@ export type PollyMood =
   | 'sad'
   | 'surprised'
   | 'love';
+
+// Headwear only has 3 expressions (happy/sad/thinking) vs. the body's 11
+// moods, so multiple moods collapse onto the same hat pose. "thinking" is
+// used for anything puzzled/searching/neutral-ish; "sad" covers anything
+// negative; everything upbeat gets "happy".
+const MOOD_TO_EXPRESSION: Record<PollyMood, Expression> = {
+  neutral: 'thinking',
+  confused: 'thinking',
+  searching: 'thinking',
+  disappointed: 'sad',
+  mad: 'sad',
+  sad: 'sad',
+  yawning: 'sad',
+  cheering: 'happy',
+  happy: 'happy',
+  surprised: 'happy',
+  love: 'happy',
+};
 
 // Each species has its own set of expression art living in its own
 // /public/assets folder. Not every species has a 1:1 pose for every mood
@@ -105,8 +124,24 @@ export default function Polly({
   animate = true,
   species,
 }: PollyProps) {
-  const { species: chosenSpecies } = usePollyCompanion();
+  const { species: chosenSpecies, equippedHeadwear } = usePollyCompanion();
   const activeSpecies = species ?? chosenSpecies;
+
+  const headwear = equippedHeadwear
+    ? resolveEquipRender({
+        species: activeSpecies,
+        hatId: hatIdFromAssetKey(equippedHeadwear.assetKey),
+        expression: MOOD_TO_EXPRESSION[mood],
+      })
+    : null;
+
+  // Full-art hat sprites (isFallback: false) are complete character images —
+  // noodle-wearing-the-hat, not just a hat graphic — so they replace the base
+  // body image rather than stacking on it. Only the flat-icon fallback
+  // (species without full art yet) overlays on top of the plain body sprite.
+  const bodyImage =
+    headwear?.imagePath && !headwear.isFallback ? headwear.imagePath : POLLY_IMAGES[activeSpecies][mood];
+  const overlayIcon = headwear?.isFallback ? headwear.imagePath : null;
 
   return (
     <div
@@ -114,11 +149,10 @@ export default function Polly({
         animate ? 'polly-animate' : ''
       } ${className}`}
     >
-      <img
-        src={POLLY_IMAGES[activeSpecies][mood]}
-        alt={alt}
-        className="polly-image"
-      />
+      <img src={bodyImage} alt={alt} className="polly-image" />
+      {overlayIcon && (
+        <img src={overlayIcon} alt="" className="polly-headwear-fallback" />
+      )}
     </div>
   );
 }
