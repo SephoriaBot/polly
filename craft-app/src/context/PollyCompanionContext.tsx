@@ -82,9 +82,12 @@ export function PollyCompanionProvider({ children }: { children: ReactNode }) {
   }
 
   async function setEquippedHeadwear(cosmeticId: string | null): Promise<{ error: string | null }> {
+    if (!user) return { error: 'Not signed in' };
+
     const { data, error } = await supabase
       .from('polly_companion')
       .update({ equipped_headwear_id: cosmeticId })
+      .eq('user_id', user.id)
       .select('cosmetics(id, asset_key)')
       .maybeSingle();
 
