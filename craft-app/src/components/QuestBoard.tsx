@@ -74,14 +74,14 @@ export default function QuestBoard({ userId }: { userId: string }) {
   if (loading) return null;
 
   return (
-    <section className="quest-board quest-board__card">
+    <section className="quest-board card">
       <div className="section-label">
         <Icon name="clipboard-list" size={18} /> Quests
       </div>
 
       <p className="quest-board__descriptor">
-        Your companion hands out one quest at a time — finish it to claim your
-        reward and unlock the next.
+        Your companion hands out one quest at a time — finish it to claim
+        your reward and unlock the next.
       </p>
 
       {sadMessage && (
@@ -110,7 +110,7 @@ export default function QuestBoard({ userId }: { userId: string }) {
 
           <span className="quest-board__title">{quest.title}</span>
 
-          <span className="quest-board__reward quest-board__reward--mystery">
+          <span className="quest-board__reward--mystery">
             <Icon name="help-circle" size={16} />
             ???
           </span>
