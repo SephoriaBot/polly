@@ -29,6 +29,10 @@ interface SpeciesAssetConfig {
 // Only entries present here are treated as "full art done".
 const SPECIES_CONFIG: Partial<Record<CreatureSpecies, SpeciesAssetConfig>> = {
   noodle: { folder: "pollynoodle", filePrefix: "noodle" },
+  wereham: { folder: "pollywereham", filePrefix: "wereham" },
+  dragon: { folder: "pollydragon", filePrefix: "dragon" },
+  bunt: { folder: "pollybunt", filePrefix: "bunt" },
+  wrendel: { folder: "pollywrendel", filePrefix: "wrendel" },
 };
 
 interface EquipRenderInput {
