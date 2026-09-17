@@ -19,8 +19,8 @@ interface PollyCompanionContextValue {
   chooseSpecies: (species: PollySpecies) => Promise<void>;
   /** Currently equipped headwear cosmetic, or null if none equipped. */
   equippedHeadwear: EquippedHeadwear | null;
-  /** Pass a cosmetic id to equip it, or null to unequip. */
-  setEquippedHeadwear: (cosmeticId: string | null) => Promise<void>;
+  /** Pass a cosmetic id to equip it, or null to unequip. Returns an error message on failure. */
+  setEquippedHeadwear: (cosmeticId: string | null) => Promise<{ error: string | null }>;
 }
 
 const PollyCompanionContext = createContext<PollyCompanionContextValue | undefined>(undefined);
@@ -81,7 +81,7 @@ export function PollyCompanionProvider({ children }: { children: ReactNode }) {
     if (error) console.error('Failed to save Polly companion choice:', error);
   }
 
-  async function setEquippedHeadwear(cosmeticId: string | null) {
+  async function setEquippedHeadwear(cosmeticId: string | null): Promise<{ error: string | null }> {
     const { data, error } = await supabase
       .from('polly_companion')
       .update({ equipped_headwear_id: cosmeticId })
@@ -90,11 +90,12 @@ export function PollyCompanionProvider({ children }: { children: ReactNode }) {
 
     if (error) {
       console.error('Failed to update equipped headwear:', error);
-      return;
+      return { error: error.message };
     }
 
     const cosmetic = Array.isArray(data?.cosmetics) ? data?.cosmetics[0] : data?.cosmetics;
     setEquippedHeadwearState(cosmetic ? { id: cosmetic.id, assetKey: cosmetic.asset_key } : null);
+    return { error: null };
   }
 
   return (
