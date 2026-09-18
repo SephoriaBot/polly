@@ -1,10 +1,12 @@
 // QuestBoard.tsx
 // Location: craft-app/src/components/QuestBoard.tsx
 //
-// Shows the companion's currently active quest (one at a time) and
-// shows the companion's sad line if anything expired unclaimed since the
-// last visit. Quests themselves are claimed automatically wherever the
-// underlying action happens (see lib/questSystem.ts) — this is a
+// Shows the companion's currently active quest (at most one exists at a
+// time — see lib/questSystem.ts) and the companion's sad line if anything
+// expired unclaimed since the last visit. Quests spawn on their own
+// schedule (a daily chance roll, not a guaranteed one), so it's normal
+// for there to be no quest at all on a given day. Quests are claimed
+// automatically wherever the underlying action happens — this is a
 // read-only board so the player knows what's pending and what they'll get.
 
 import { useEffect, useState } from 'react';
@@ -12,13 +14,13 @@ import { supabase } from '../lib/supabase';
 import Icon from './Icon';
 import Polly from './Polly';
 import PollyBubble from './PollyBubble';
-import { getMissedQuestMessage } from '../lib/questSystem';
+import { getMissedQuestMessage, maybeSpawnQuest } from '../lib/questSystem';
 
 interface QuestRow {
   id: string;
   title: string;
   source_type: 'chore' | 'action';
-  reward_type: 'cosmetic' | 'egg';
+  reward_type: 'cosmetic' | 'egg' | 'points' | 'shelf_item';
   reward_cosmetic_id: string | null;
   reward_name?: string;
 }
@@ -33,6 +35,9 @@ export default function QuestBoard({ userId }: { userId: string }) {
 
     async function load() {
       const missed = await getMissedQuestMessage(userId);
+      // Rolls today's spawn chance (once per calendar day) and creates a
+      // quest if the roll succeeds and nothing is currently active.
+      await maybeSpawnQuest(userId);
 
       const { data } = await supabase
         .from('quests')
@@ -80,8 +85,8 @@ export default function QuestBoard({ userId }: { userId: string }) {
       </div>
 
       <p className="quest-board__descriptor">
-        Your companion hands out one quest at a time — finish it to claim
-        your reward and unlock the next.
+        Your companion doesn't always have a quest ready — when one shows
+        up, finish it before the day's out to claim your reward.
       </p>
 
       {sadMessage && (
@@ -93,7 +98,7 @@ export default function QuestBoard({ userId }: { userId: string }) {
 
       {!quest && (
         <p className="quest-board__empty">
-          No quests right now — check back soon!
+          No quest today — check back tomorrow!
         </p>
       )}
 
