@@ -8,7 +8,6 @@ import Goals from '../components/planner/Goals';
 import { useAppointmentNoteMap } from '../hooks/useAppointmentNoteMap';
 import EmptyState from '../components/EmptyState';
 import checklistImg from '../assets/illustrations/checklist.png';
-import celebrationImg from '../assets/illustrations/celebration.png';
 import hamsterAmImg from '../assets/illustrations/hamster-am.png';
 import hamsterAfternoonImg from '../assets/illustrations/hamster-afternoon.png';
 import hamsterPmImg from '../assets/illustrations/hamster-pm.png';
@@ -19,6 +18,7 @@ import PageTabs, { type PageTab } from '../components/PageTabs';
 import { useTheme } from '../context/ThemeContext';
 import CheckMark from '../components/CheckMark';
 import { triggerActionEvent } from '../lib/questSystem';
+import { useToast } from '../hooks/useToast';
 import PageTitleLogo from "../components/PageTitleLogo";
 
 interface DailyTask {
@@ -133,7 +133,7 @@ export default function DailyPlanner({ initialTab }: { initialTab?: 'tasks' | 'a
   const [newApptDate, setNewApptDate] = useState('');
   const [sparks, setSparks] = useState<Spark[]>([]);
   const [focusNote, setFocusNote] = useState<AppointmentNoteSelection | null>(null);
-  const [showAllDoneCelebration, setShowAllDoneCelebration] = useState(false);
+  const { showToast } = useToast();
   const [repeatMode, setRepeatMode] = useState(false); // false = one-off (date picker), true = recurring (day chips)
   const [newTaskDays, setNewTaskDays] = useState<number[]>([]);
   const [newTaskSlot, setNewTaskSlot] = useState<TimeSlot>('anytime');
@@ -234,8 +234,7 @@ setNewTaskSlot('anytime');
       // If checking this task off finishes the whole list, celebrate.
       const willAllBeDone = tasks.length > 0 && tasks.every(t => t.id === task.id ? true : t.done);
       if (willAllBeDone) {
-        setShowAllDoneCelebration(true);
-        setTimeout(() => setShowAllDoneCelebration(false), 3200);
+        showToast('All done! Good job. 🎉');
       }
     }
   }
@@ -399,35 +398,6 @@ setNewTaskSlot('anytime');
         <SparkParticle key={spark.id} x={spark.x} y={spark.y} color={spark.color} />
       ))}
 
-      {showAllDoneCelebration && (
-        <div style={{
-          position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          pointerEvents: 'none', zIndex: 9999,
-        }}>
-          <div style={{
-            display: 'flex', flexDirection: 'column', alignItems: 'center',
-            background: 'var(--white)', border: '2px solid var(--border)',
-            borderRadius: 32, padding: '20px 28px', textAlign: 'center',
-            animation: 'plannerCelebrationPop 0.4s ease-out',
-          }}>
-            <img src={celebrationImg} alt="" style={{ width: 140 }} />
-            <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--pink-dark)', marginTop: 4 }}>
-              All done for today!
-            </div>
-            <div style={{ fontSize: 13, color: 'var(--ink-muted)', marginTop: 2 }}>
-              Every task checked off. Nicely done.
-            </div>
-          </div>
-          <style>{`
-            @keyframes plannerCelebrationPop {
-              0% { transform: scale(0.7); opacity: 0; }
-              100% { transform: scale(1); opacity: 1; }
-            }
-          `}</style>
-        </div>
-      )}
-
       <div className="page-header">
         <div>
           <div className="title-row">
@@ -454,7 +424,7 @@ setNewTaskSlot('anytime');
 
             {activeTab === 'tasks' && (
             <p style={{ color: allDone ? 'var(--pink-dark)' : 'var(--ink-muted)' }}>
-            {allDone ? 'All done! Good job.' : `${doneCount} of ${tasks.length} done today`}
+            {`${doneCount} of ${tasks.length} done today`}
           </p>
           )}
 
