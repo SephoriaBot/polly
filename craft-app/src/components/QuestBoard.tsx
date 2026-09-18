@@ -15,6 +15,7 @@ import Icon from './Icon';
 import Polly from './Polly';
 import PollyBubble from './PollyBubble';
 import { getMissedQuestMessage, maybeSpawnQuest } from '../lib/questSystem';
+import { subscribeQuestBus } from '../lib/questBus';
 
 interface QuestRow {
   id: string;
@@ -33,11 +34,14 @@ export default function QuestBoard({ userId }: { userId: string }) {
   useEffect(() => {
     let cancelled = false;
 
-    async function load() {
+    async function load(opts: { spawnCheck: boolean }) {
       const missed = await getMissedQuestMessage(userId);
       // Rolls today's spawn chance (once per calendar day) and creates a
-      // quest if the roll succeeds and nothing is currently active.
-      await maybeSpawnQuest(userId);
+      // quest if the roll succeeds and nothing is currently active. Only
+      // needed on mount — a quest-changed event from claiming doesn't
+      // need its own spawn check, since maybeSpawnQuest already handles
+      // "already rolled today" internally either way.
+      if (opts.spawnCheck) await maybeSpawnQuest(userId);
 
       const { data } = await supabase
         .from('quests')
@@ -69,10 +73,16 @@ export default function QuestBoard({ userId }: { userId: string }) {
       setLoading(false);
     }
 
-    load();
+    load({ spawnCheck: true });
+
+    // Refetch whenever a quest is claimed or spawned anywhere in the
+    // app — e.g. marking a chore done on a different page — so this
+    // board never sits showing a quest that's already been completed.
+    const unsubscribe = subscribeQuestBus(() => load({ spawnCheck: false }));
 
     return () => {
       cancelled = true;
+      unsubscribe();
     };
   }, [userId]);
 

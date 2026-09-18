@@ -9,14 +9,17 @@
 // several functions read/write rows the RLS default alone can't target
 // (e.g. checking polly_companion before granting an egg).
 //
-// Spawn model: at most one active quest exists at a time. Each calendar
-// day rolls once — via maybeSpawnQuest, called on app load — for whether
-// a new quest appears at all; there's no guaranteed daily/weekly quest
-// anymore. A quest that isn't claimed by the end of the day it spawned on
-// simply disappears (expires) with no carryover; the next quest, if any,
-// comes from a fresh roll on a later day.
+// Spawn model: at most one active quest exists at a time, enforced by a
+// DB constraint (quests_one_active_per_user) as well as in application
+// logic. Each calendar day rolls once — via maybeSpawnQuest, called from
+// QuestBoard.tsx on mount, the single place that triggers spawning — for
+// whether a new quest appears at all; there's no guaranteed daily/weekly
+// quest anymore. A quest that isn't claimed by the end of the day it
+// spawned on simply disappears (expires) with no carryover; the next
+// quest, if any, comes from a fresh roll on a later day.
 import { supabase } from './supabase';
 import { publishToast } from './toastBus';
+import { publishQuestChanged } from './questBus';
 import { HABITAT_ITEMS } from './habitatItems';
 
 const SPECIES = ['wereham', 'noodle', 'dragon', 'bunt', 'wrendel'] as const;
@@ -204,14 +207,18 @@ async function rollReward(
  * happened (whether or not it succeeded).
  */
 export async function maybeSpawnQuest(userId: string) {
-  const { data: activeQuest } = await supabase
+  // limit(1) instead of maybeSingle(): if duplicate active quests ever
+  // exist (e.g. from an old race before the DB-level unique constraint
+  // below was added), this must not throw — it should just see "yes,
+  // something's active" and stop, same as the single-quest case.
+  const { data: activeQuests } = await supabase
     .from('quests')
     .select('id')
     .eq('user_id', userId)
     .eq('status', 'active')
-    .maybeSingle();
+    .limit(1);
 
-  if (activeQuest) return; // one active quest at a time — nothing to do
+  if (activeQuests && activeQuests.length > 0) return; // one active quest at a time — nothing to do
 
   const today = todayDateKey();
   const { data: spawnState } = await supabase
@@ -236,7 +243,7 @@ export async function maybeSpawnQuest(userId: string) {
   const candidate = pool[Math.floor(Math.random() * pool.length)];
   const reward = await rollReward(userId, candidate.source_type, candidate.difficulty);
 
-  await supabase.from('quests').insert({
+  const { error: insertError } = await supabase.from('quests').insert({
     source_type: candidate.source_type,
     chore_id: candidate.chore_id ?? null,
     template_id: candidate.template_id ?? null,
@@ -249,6 +256,17 @@ export async function maybeSpawnQuest(userId: string) {
     // no carryover into tomorrow.
     expires_at: endOfTodayIso(),
   });
+
+  // If this loses a race against another spawn call, the DB's
+  // quests_one_active_per_user constraint rejects the insert here
+  // rather than throwing — nothing was actually created, so skip the
+  // "something changed" broadcast.
+  if (insertError) {
+    console.error('maybeSpawnQuest: insert failed', insertError);
+    return;
+  }
+
+  publishQuestChanged();
 }
 
 /**
@@ -256,14 +274,15 @@ export async function maybeSpawnQuest(userId: string) {
  * matching active quest (if any) and claims it automatically.
  */
 export async function completeChoreQuest(userId: string, choreId: string) {
-  const { data: quest } = await supabase
+  const { data: quests } = await supabase
     .from('quests')
-    .select('*')
+    .select('id')
     .eq('user_id', userId)
     .eq('chore_id', choreId)
     .eq('status', 'active')
-    .maybeSingle();
+    .limit(1);
 
+  const quest = quests?.[0];
   if (!quest) return null;
   return claimQuest(userId, quest.id);
 }
@@ -276,15 +295,16 @@ export async function completeChoreQuest(userId: string, choreId: string) {
  * only shows up via the next daily spawn roll, same as any other quest.
  */
 export async function triggerActionEvent(userId: string, eventKey: string) {
-  const { data: quest } = await supabase
+  const { data: quests } = await supabase
     .from('quests')
-    .select('*, quest_templates!inner(event_key)')
+    .select('id, quest_templates!inner(event_key)')
     .eq('user_id', userId)
     .eq('source_type', 'action')
     .eq('status', 'active')
     .eq('quest_templates.event_key', eventKey)
-    .maybeSingle();
+    .limit(1);
 
+  const quest = quests?.[0];
   if (!quest) return null;
   return claimQuest(userId, quest.id);
 }
@@ -300,31 +320,13 @@ type ClaimResult =
   | { ok: true; reward: 'shelf_item'; itemKey: string; itemLabel: string }
   | {
       ok: false;
-      reason:
-        | 'egg_already_incubating'
-        | 'not_found'
-        | 'already_claimed'
-        | 'not_current_quest';
+      reason: 'egg_already_incubating' | 'not_found' | 'already_claimed';
     };
 
 export async function claimQuest(
   userId: string,
   questId: string
 ): Promise<ClaimResult> {
-  // With only one active quest ever existing at a time, "the current
-  // quest" is just "the active quest" — this guards against a stale
-  // client trying to claim a quest that already expired/was replaced.
-  const { data: currentQuest } = await supabase
-    .from('quests')
-    .select('id')
-    .eq('user_id', userId)
-    .eq('status', 'active')
-    .maybeSingle();
-
-  if (!currentQuest || currentQuest.id !== questId) {
-    return { ok: false, reason: 'not_current_quest' };
-  }
-
   const { data: quest } = await supabase
     .from('quests')
     .select('*')
@@ -365,6 +367,7 @@ export async function claimQuest(
       .eq('id', questId);
 
     publishToast(`Quest complete: ${quest.title}! An egg is in the Incubator 🥚`);
+    publishQuestChanged();
     return { ok: true, reward: 'egg', hatchAt };
   }
 
@@ -386,6 +389,7 @@ export async function claimQuest(
       .eq('id', questId);
 
     publishToast(`Quest complete: ${quest.title}! +${rewardPoints} points 💰`);
+    publishQuestChanged();
     return { ok: true, reward: 'points', points: rewardPoints };
   }
 
@@ -403,6 +407,7 @@ export async function claimQuest(
     publishToast(
       `Quest complete: ${quest.title}! You found ${item?.label ?? 'a new item'} for the shelf 🗄️`
     );
+    publishQuestChanged();
     return {
       ok: true,
       reward: 'shelf_item',
@@ -431,6 +436,7 @@ export async function claimQuest(
     .maybeSingle();
 
   publishToast(`Quest complete: ${quest.title}! You won ${cosmetic?.name ?? 'a new cosmetic'} 🎀`);
+  publishQuestChanged();
   return { ok: true, reward: 'cosmetic', cosmeticId: quest.reward_cosmetic_id };
 }
 
@@ -513,22 +519,4 @@ export async function getMissedQuestMessage(userId: string): Promise<string | nu
   const missedCount = await expireOverdueQuests(userId);
   if (missedCount === 0) return null;
   return SAD_LINES[Math.floor(Math.random() * SAD_LINES.length)];
-}
-
-// ---------------------------------------------------------------------------
-// 7. Convenience — call once on app load / dashboard mount
-// ---------------------------------------------------------------------------
-
-export async function refreshQuestBoard(userId: string) {
-  const sadMessage = await getMissedQuestMessage(userId);
-  await maybeSpawnQuest(userId);
-
-  const { data: quests } = await supabase
-    .from('quests')
-    .select('*')
-    .eq('user_id', userId)
-    .eq('status', 'active')
-    .order('created_at', { ascending: true });
-
-  return { quests: quests ?? [], sadMessage };
 }
