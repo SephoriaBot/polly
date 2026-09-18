@@ -8,8 +8,16 @@
 // only on the RLS default the way Chores.tsx does — needed here because
 // several functions read/write rows the RLS default alone can't target
 // (e.g. checking polly_companion before granting an egg).
+//
+// Spawn model: at most one active quest exists at a time. Each calendar
+// day rolls once — via maybeSpawnQuest, called on app load — for whether
+// a new quest appears at all; there's no guaranteed daily/weekly quest
+// anymore. A quest that isn't claimed by the end of the day it spawned on
+// simply disappears (expires) with no carryover; the next quest, if any,
+// comes from a fresh roll on a later day.
 import { supabase } from './supabase';
 import { publishToast } from './toastBus';
+import { HABITAT_ITEMS } from './habitatItems';
 
 const SPECIES = ['wereham', 'noodle', 'dragon', 'bunt', 'wrendel'] as const;
 type Species = (typeof SPECIES)[number];
@@ -17,62 +25,230 @@ type Species = (typeof SPECIES)[number];
 // How long a hatching egg takes to be ready. Tune as you like.
 const EGG_HATCH_HOURS = 24;
 
-// Odds that an eligible quest hands out an egg instead of a cosmetic.
-// Only applies to chore quests — action quests use whatever reward_type
-// is set on their template.
-const CHORE_EGG_CHANCE = 0.2;
+// Chance, on any given day, that a quest spawns at all — only rolled when
+// no quest is currently active. Tune as you like.
+const DAILY_SPAWN_CHANCE = 0.4;
+
+type RewardType = 'cosmetic' | 'egg' | 'points' | 'shelf_item';
+
+// Relative odds each reward type is picked. Equal by default — tune as
+// you like (e.g. lower egg/shelf_item if they should feel rarer).
+const REWARD_WEIGHTS: Record<RewardType, number> = {
+  cosmetic: 1,
+  egg: 1,
+  points: 1,
+  shelf_item: 1,
+};
+
+// Bank-point reward scaling. Chore "difficulty" is estimated_minutes off
+// the chore itself; action-quest difficulty comes from the
+// quest_templates.difficulty column (a small int you set per template,
+// e.g. 1-5). Clamped so no single quest is worth an absurd number of
+// points. Tune all four as you like.
+const CHORE_POINTS_PER_MINUTE = 2;
+const ACTION_POINTS_PER_DIFFICULTY = 15;
+const MIN_POINTS_REWARD = 10;
+const MAX_POINTS_REWARD = 150;
+
+function pointsForDifficulty(sourceType: 'chore' | 'action', difficulty: number): number {
+  const raw =
+    sourceType === 'chore'
+      ? difficulty * CHORE_POINTS_PER_MINUTE
+      : difficulty * ACTION_POINTS_PER_DIFFICULTY;
+  return Math.max(MIN_POINTS_REWARD, Math.min(MAX_POINTS_REWARD, Math.round(raw)));
+}
+
+function pickWeightedRewardType(weights: Record<RewardType, number>): RewardType {
+  const entries = Object.entries(weights) as [RewardType, number][];
+  const total = entries.reduce((sum, [, w]) => sum + w, 0);
+  let roll = Math.random() * total;
+  for (const [type, weight] of entries) {
+    if (roll < weight) return type;
+    roll -= weight;
+  }
+  return entries[entries.length - 1][0];
+}
+
+function todayDateKey(): string {
+  return new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+}
+
+function endOfTodayIso(): string {
+  const d = new Date();
+  d.setHours(23, 59, 59, 999);
+  return d.toISOString();
+}
 
 // ---------------------------------------------------------------------------
-// 1. CHORE QUESTS — generated from the user's recurring chores, capped so a
-//    chore never produces a quest more often than it actually recurs.
+// 1. CANDIDATE POOL — every chore and every active action template is a
+//    possible quest. One is drawn at random when a quest spawns (see
+//    maybeSpawnQuest below), rather than each chore/template guaranteeing
+//    its own quest on a fixed schedule.
+// ---------------------------------------------------------------------------
+
+interface QuestCandidate {
+  source_type: 'chore' | 'action';
+  chore_id?: string;
+  template_id?: string;
+  title: string;
+  difficulty: number;
+}
+
+async function getCandidatePool(userId: string): Promise<QuestCandidate[]> {
+  const [{ data: chores, error: choresErr }, { data: templates, error: templatesErr }] =
+    await Promise.all([
+      supabase.from('chores').select('id, name, estimated_minutes').eq('user_id', userId),
+      supabase.from('quest_templates').select('id, title, difficulty').eq('active', true),
+    ]);
+
+  if (choresErr) console.error('getCandidatePool: failed to load chores', choresErr);
+  if (templatesErr) console.error('getCandidatePool: failed to load templates', templatesErr);
+
+  const choreCandidates: QuestCandidate[] = (chores ?? []).map((c) => ({
+    source_type: 'chore' as const,
+    chore_id: c.id,
+    title: c.name,
+    difficulty: c.estimated_minutes ?? 15,
+  }));
+
+  const actionCandidates: QuestCandidate[] = (templates ?? []).map((t) => ({
+    source_type: 'action' as const,
+    template_id: t.id,
+    title: t.title,
+    difficulty: t.difficulty ?? 1,
+  }));
+
+  return [...choreCandidates, ...actionCandidates];
+}
+
+// ---------------------------------------------------------------------------
+// 2. REWARD ROLL — one reward, of one of four types, per spawned quest.
+// ---------------------------------------------------------------------------
+
+interface RewardRoll {
+  reward_type: RewardType;
+  reward_cosmetic_id: string | null;
+  reward_points: number | null;
+  reward_shelf_item_key: string | null;
+}
+
+async function rollReward(
+  userId: string,
+  sourceType: 'chore' | 'action',
+  difficulty: number
+): Promise<RewardRoll> {
+  let type = pickWeightedRewardType(REWARD_WEIGHTS);
+
+  if (type === 'shelf_item') {
+    const { data: unlocked } = await supabase
+      .from('habitat_unlocked_items')
+      .select('item_key')
+      .eq('user_id', userId);
+    const owned = new Set((unlocked ?? []).map((r) => r.item_key));
+    const available = HABITAT_ITEMS.filter((i) => !owned.has(i.key));
+
+    if (available.length === 0) {
+      // Every shelf item is already owned — fall back to points instead
+      // of leaving the quest without a reward.
+      type = 'points';
+    } else {
+      const picked = available[Math.floor(Math.random() * available.length)];
+      return {
+        reward_type: 'shelf_item',
+        reward_cosmetic_id: null,
+        reward_points: null,
+        reward_shelf_item_key: picked.key,
+      };
+    }
+  }
+
+  if (type === 'points') {
+    return {
+      reward_type: 'points',
+      reward_cosmetic_id: null,
+      reward_points: pointsForDifficulty(sourceType, difficulty),
+      reward_shelf_item_key: null,
+    };
+  }
+
+  if (type === 'egg') {
+    return {
+      reward_type: 'egg',
+      reward_cosmetic_id: null,
+      reward_points: null,
+      reward_shelf_item_key: null,
+    };
+  }
+
+  // cosmetic
+  const { data: cosmetics } = await supabase.from('cosmetics').select('id');
+  const pool = cosmetics ?? [];
+  const picked = pool[Math.floor(Math.random() * pool.length)];
+  return {
+    reward_type: 'cosmetic',
+    reward_cosmetic_id: picked?.id ?? null,
+    reward_points: null,
+    reward_shelf_item_key: null,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// 3. SPAWNING — call on app load (or on a timer). At most one active quest
+//    at a time; each calendar day rolls once for whether a new one appears.
 // ---------------------------------------------------------------------------
 
 /**
- * Call this on app load (or on a timer). For every chore belonging to the
- * user, checks whether it's time for a new quest — i.e. the most recent
- * chore-linked quest for that chore is at least `interval_days` old (or
- * doesn't exist yet) — and creates one if so.
+ * Rolls today's spawn chance (once per calendar day) and, if it succeeds
+ * and no quest is currently active, creates one from a random candidate.
+ * A no-op if a quest is already active, or if today's roll already
+ * happened (whether or not it succeeded).
  */
-export async function generateChoreQuests(userId: string) {
-  const { data: chores, error: choresErr } = await supabase
-    .from('chores')
-    .select('id, name, interval_days')
-    .eq('user_id', userId);
+export async function maybeSpawnQuest(userId: string) {
+  const { data: activeQuest } = await supabase
+    .from('quests')
+    .select('id')
+    .eq('user_id', userId)
+    .eq('status', 'active')
+    .maybeSingle();
 
-  if (choresErr || !chores) {
-    console.error('generateChoreQuests: failed to load chores', choresErr);
-    return;
-  }
+  if (activeQuest) return; // one active quest at a time — nothing to do
 
-  for (const chore of chores) {
-    const { data: lastQuest } = await supabase
-      .from('quests')
-      .select('created_at')
-      .eq('user_id', userId)
-      .eq('chore_id', chore.id)
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .maybeSingle();
+  const today = todayDateKey();
+  const { data: spawnState } = await supabase
+    .from('quest_spawn_state')
+    .select('last_roll_date')
+    .eq('user_id', userId)
+    .maybeSingle();
 
-    const intervalMs = chore.interval_days * 24 * 60 * 60 * 1000;
-    const dueForNewQuest =
-      !lastQuest ||
-      Date.now() - new Date(lastQuest.created_at).getTime() >= intervalMs;
+  if (spawnState?.last_roll_date === today) return; // already rolled today
 
-    if (!dueForNewQuest) continue;
+  // Record that today's roll happened regardless of outcome, so reopening
+  // the app later today doesn't roll again.
+  await supabase
+    .from('quest_spawn_state')
+    .upsert({ last_roll_date: today }, { onConflict: 'user_id' });
 
-    const reward = await pickReward(userId, CHORE_EGG_CHANCE);
-    const expiresAt = new Date(Date.now() + intervalMs).toISOString();
+  if (Math.random() >= DAILY_SPAWN_CHANCE) return; // no quest today
 
-    await supabase.from('quests').insert({
-      source_type: 'chore',
-      chore_id: chore.id,
-      title: chore.name,
-      reward_type: reward.reward_type,
-      reward_cosmetic_id: reward.reward_cosmetic_id,
-      expires_at: expiresAt,
-    });
-  }
+  const pool = await getCandidatePool(userId);
+  if (pool.length === 0) return;
+
+  const candidate = pool[Math.floor(Math.random() * pool.length)];
+  const reward = await rollReward(userId, candidate.source_type, candidate.difficulty);
+
+  await supabase.from('quests').insert({
+    source_type: candidate.source_type,
+    chore_id: candidate.chore_id ?? null,
+    template_id: candidate.template_id ?? null,
+    title: candidate.title,
+    reward_type: reward.reward_type,
+    reward_cosmetic_id: reward.reward_cosmetic_id,
+    reward_points: reward.reward_points,
+    reward_shelf_item_key: reward.reward_shelf_item_key,
+    // Missed = gone: expires at the end of the day it spawned on, with
+    // no carryover into tomorrow.
+    expires_at: endOfTodayIso(),
+  });
 }
 
 /**
@@ -92,55 +268,12 @@ export async function completeChoreQuest(userId: string, choreId: string) {
   return claimQuest(userId, quest.id);
 }
 
-// ---------------------------------------------------------------------------
-// 2. ACTION QUESTS — always-present quests pulled from the global
-//    quest_templates pool (win a battle, buy a creature, etc.)
-// ---------------------------------------------------------------------------
-
-/**
- * Ensures every active quest_template has a corresponding active quest
- * instance for this user. Call on app load alongside generateChoreQuests.
- */
-export async function ensureActionQuests(userId: string) {
-  const { data: templates, error: templatesErr } = await supabase
-    .from('quest_templates')
-    .select('*')
-    .eq('active', true);
-
-  if (templatesErr || !templates) {
-    console.error('ensureActionQuests: failed to load templates', templatesErr);
-    return;
-  }
-
-  const { data: existing } = await supabase
-    .from('quests')
-    .select('template_id')
-    .eq('user_id', userId)
-    .eq('source_type', 'action')
-    .eq('status', 'active');
-
-  const activeTemplateIds = new Set((existing ?? []).map((q) => q.template_id));
-
-  const missing = templates.filter((t) => !activeTemplateIds.has(t.id));
-  if (missing.length === 0) return;
-
-  await supabase.from('quests').insert(
-    missing.map((t) => ({
-      source_type: 'action' as const,
-      template_id: t.id,
-      title: t.title,
-      reward_type: t.reward_type,
-      reward_cosmetic_id: t.reward_cosmetic_id,
-      // Action quests don't expire on their own — they persist until done.
-      expires_at: null,
-    })),
-  );
-}
-
 /**
  * Call this wherever the corresponding in-app event happens, e.g.:
  *   await triggerActionEvent(userId, 'battle_won')
  * after a battle resolves, or 'creature_purchased' after a Breeder purchase.
+ * Only claims — it does NOT backfill a new quest. The next quest (if any)
+ * only shows up via the next daily spawn roll, same as any other quest.
  */
 export async function triggerActionEvent(userId: string, eventKey: string) {
   const { data: quest } = await supabase
@@ -153,20 +286,18 @@ export async function triggerActionEvent(userId: string, eventKey: string) {
     .maybeSingle();
 
   if (!quest) return null;
-
-  const result = await claimQuest(userId, quest.id);
-  // Action quests are always present — immediately backfill a fresh one.
-  await ensureActionQuests(userId);
-  return result;
+  return claimQuest(userId, quest.id);
 }
 
 // ---------------------------------------------------------------------------
-// 3. CLAIM / REWARD FLOW — shared by chore and action quests
+// 4. CLAIM / REWARD FLOW
 // ---------------------------------------------------------------------------
 
 type ClaimResult =
   | { ok: true; reward: 'cosmetic'; cosmeticId: string }
   | { ok: true; reward: 'egg'; hatchAt: string }
+  | { ok: true; reward: 'points'; points: number }
+  | { ok: true; reward: 'shelf_item'; itemKey: string; itemLabel: string }
   | {
       ok: false;
       reason:
@@ -180,17 +311,16 @@ export async function claimQuest(
   userId: string,
   questId: string
 ): Promise<ClaimResult> {
-  // The oldest active quest is the one currently displayed on QuestBoard.
+  // With only one active quest ever existing at a time, "the current
+  // quest" is just "the active quest" — this guards against a stale
+  // client trying to claim a quest that already expired/was replaced.
   const { data: currentQuest } = await supabase
     .from('quests')
     .select('id')
     .eq('user_id', userId)
     .eq('status', 'active')
-    .order('created_at', { ascending: true })
-    .limit(1)
     .maybeSingle();
 
-  // A quest that isn't currently displayed cannot give a reward.
   if (!currentQuest || currentQuest.id !== questId) {
     return { ok: false, reason: 'not_current_quest' };
   }
@@ -206,6 +336,7 @@ export async function claimQuest(
   if (quest.status !== 'active') {
     return { ok: false, reason: 'already_claimed' };
   }
+
   if (quest.reward_type === 'egg') {
     const { data: companion } = await supabase
       .from('polly_companion')
@@ -237,6 +368,49 @@ export async function claimQuest(
     return { ok: true, reward: 'egg', hatchAt };
   }
 
+  if (quest.reward_type === 'points') {
+    // Direct read-modify-write against bank_points, same pattern
+    // useCreatureGrowth uses elsewhere. Note this doesn't push the new
+    // total into any already-mounted useCreatureGrowth state — components
+    // showing the bank balance pick it up on their own next fetch.
+    const { data: bankRow } = await supabase.from('bank_points').select('points').maybeSingle();
+    const current = Number(bankRow?.points) || 0;
+    const rewardPoints = quest.reward_points ?? 0;
+    const newPoints = current + rewardPoints;
+
+    await supabase.from('bank_points').upsert({ points: newPoints }, { onConflict: 'user_id' });
+
+    await supabase
+      .from('quests')
+      .update({ status: 'claimed', claimed_at: new Date().toISOString() })
+      .eq('id', questId);
+
+    publishToast(`Quest complete: ${quest.title}! +${rewardPoints} points 💰`);
+    return { ok: true, reward: 'points', points: rewardPoints };
+  }
+
+  if (quest.reward_type === 'shelf_item') {
+    await supabase
+      .from('habitat_unlocked_items')
+      .upsert({ item_key: quest.reward_shelf_item_key }, { onConflict: 'item_key' });
+
+    await supabase
+      .from('quests')
+      .update({ status: 'claimed', claimed_at: new Date().toISOString() })
+      .eq('id', questId);
+
+    const item = HABITAT_ITEMS.find((i) => i.key === quest.reward_shelf_item_key);
+    publishToast(
+      `Quest complete: ${quest.title}! You found ${item?.label ?? 'a new item'} for the shelf 🗄️`
+    );
+    return {
+      ok: true,
+      reward: 'shelf_item',
+      itemKey: quest.reward_shelf_item_key,
+      itemLabel: item?.label ?? 'a new item',
+    };
+  }
+
   // Cosmetic reward
   await supabase
     .from('user_cosmetics')
@@ -260,20 +434,8 @@ export async function claimQuest(
   return { ok: true, reward: 'cosmetic', cosmeticId: quest.reward_cosmetic_id };
 }
 
-async function pickReward(userId: string, eggChance: number) {
-  if (Math.random() < eggChance) {
-    return { reward_type: 'egg' as const, reward_cosmetic_id: null };
-  }
-
-  const { data: cosmetics } = await supabase.from('cosmetics').select('id');
-  const pool = cosmetics ?? [];
-  const picked = pool[Math.floor(Math.random() * pool.length)];
-
-  return { reward_type: 'cosmetic' as const, reward_cosmetic_id: picked?.id ?? null };
-}
-
 // ---------------------------------------------------------------------------
-// 4. EGG COLLECTION — hatch a ready egg into a random new collection creature
+// 5. EGG COLLECTION — hatch a ready egg into a random new collection creature
 // ---------------------------------------------------------------------------
 
 export async function collectEgg(userId: string) {
@@ -316,12 +478,14 @@ export async function collectEgg(userId: string) {
 }
 
 // ---------------------------------------------------------------------------
-// 5. MISSED QUESTS — expiry sweep + sad companion line
+// 6. MISSED QUESTS — expiry sweep + sad companion line
 // ---------------------------------------------------------------------------
 
 /**
  * Marks any active-but-overdue quests as expired. Call on app load, before
- * checking for a sad-companion message.
+ * checking for a sad-companion message. With expires_at now always set to
+ * end-of-day-spawned, this is what makes a missed quest disappear for
+ * good rather than carrying over.
  */
 export async function expireOverdueQuests(userId: string) {
   const { data: expired } = await supabase
@@ -352,13 +516,12 @@ export async function getMissedQuestMessage(userId: string): Promise<string | nu
 }
 
 // ---------------------------------------------------------------------------
-// 6. Convenience — call once on app load / dashboard mount
+// 7. Convenience — call once on app load / dashboard mount
 // ---------------------------------------------------------------------------
 
 export async function refreshQuestBoard(userId: string) {
   const sadMessage = await getMissedQuestMessage(userId);
-  await generateChoreQuests(userId);
-  await ensureActionQuests(userId);
+  await maybeSpawnQuest(userId);
 
   const { data: quests } = await supabase
     .from('quests')
