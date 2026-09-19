@@ -9,6 +9,7 @@ import emptyWallet from '../assets/icons/empty-wallet.png';
 import EmptyState from '../components/EmptyState';
 import StitchDivider from '../components/StitchDivider';
 import CheckMark from '../components/CheckMark';
+import { useCreatureGrowth } from '../creatures/CreatureGrowthContext';
 import PageTitleLogo from "../components/PageTitleLogo";
 
 interface Debt {
@@ -322,6 +323,7 @@ function EditableCell({ value, onChange, type = "number", style, className, plac
 
 export default function Wallet({ initialView }: { initialView?: 'home' | 'calendar' | 'bills' | 'debts' } = {}) {
   const { theme } = useTheme();
+  const { notifyGrowth } = useCreatureGrowth();
   const [debts, setDebts] = useState<Debt[]>([]);
   const [debtStrategy, setDebtStrategy] =
   useState<DebtStrategy>("snowball");
@@ -1279,7 +1281,10 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
   async function updateGoal(id: number, patch: Partial<Pick<SavingsGoal, "name" | "target" | "saved">>) {
     setGoals(prev => prev.map(g => (g.id === id ? { ...g, ...patch } : g)));
     const { error } = await supabase.from("savings_goals").update(patch).eq("id", id);
-    if (error) console.error("updateGoal failed:", error);
+    if (error) { console.error("updateGoal failed:", error); return; }
+    // Only a saved/target edit can complete a goal. The growth check's own
+    // hamster_credited flag is what actually prevents double-awarding.
+    if (patch.saved !== undefined || patch.target !== undefined) notifyGrowth();
   }
 
   async function moveGoal(id: number, dir: -1 | 1) {
