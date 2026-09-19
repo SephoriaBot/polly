@@ -215,11 +215,18 @@ setNewTaskSlot('anytime');
 
   async function toggleTask(task: DailyTask, e: React.MouseEvent) {
     const newDone = !task.done;
+
+    // Capture what we need from the event synchronously, before the
+    // `await` below — a DOM event's currentTarget is only valid while
+    // the event is actively dispatching, so reading it after an await
+    // can throw (it was silently killing everything below it: the spark
+    // animation, and now the "all done" toast too).
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+
     await supabase.from('daily_tasks').update({ done: newDone }).eq('id', task.id);
     setTasks(prev => prev.map(t => t.id === task.id ? { ...t, done: newDone } : t));
 
     if (newDone) {
-      const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
       const x = rect.left + rect.width / 2;
       const y = rect.top + rect.height / 2;
       const newSparks: Spark[] = Array.from({ length: 8 }, (_, i) => ({
