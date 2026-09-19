@@ -86,17 +86,12 @@ interface MonthSnap {
   deferredTotal: number;
 }
 
-interface ListDef {
+interface SavingsGoal {
   id: number;
   name: string;
-  created_at?: string;
-}
-
-interface ListItem {
-  id: number;
-  list_id: number;
-  label: string;
-  done: boolean;
+  target: number;
+  saved: number;
+  position: number;
   created_at?: string;
 }
 
@@ -350,14 +345,10 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
   const [showConfetti, setShowConfetti] = useState(false);
   const [celebration, setCelebration] = useState<{ title: string; subtitle: string }>({ title: "", subtitle: "" });
 
-  const [lists, setLists] = useState<ListDef[]>([]);
-  const [listItems, setListItems] = useState<ListItem[]>([]);
-  const [activeListId, setActiveListId] = useState<number | null>(null);
-  const [nextListId, setNextListId] = useState(1);
-  const [nextListItemId, setNextListItemId] = useState(1);
-  const [showNewListInput, setShowNewListInput] = useState(false);
-  const [newListName, setNewListName] = useState("");
-  const [newItemDrafts, setNewItemDrafts] = useState<Record<number, string>>({});
+  const [goals, setGoals] = useState<SavingsGoal[]>([]);
+  const [showGoalForm, setShowGoalForm] = useState(false);
+  const [newGoalName, setNewGoalName] = useState("");
+  const [newGoalTarget, setNewGoalTarget] = useState("");
   const [otWageOverride, setOtWageOverride] = useState<string>("");
   const [walletSettingsLoaded, setWalletSettingsLoaded] = useState(false);
   const [earlyPayPresetId, setEarlyPayPresetId] = useState<EarlyPayPresetId>("amazon");
@@ -420,8 +411,7 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
           { data: budgetData },
           { data: billData },
           { data: paymentData },
-          { data: listData },
-          { data: listItemData },
+          { data: goalData },
           { data: walletSettingsData },
           { data: dailyHoursData },
           { data: extraFundsData },
@@ -434,8 +424,7 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
           supabase.from("budget").select("*").eq("id", 1).maybeSingle(),
           supabase.from("bills").select("*").order("due_day"),
           supabase.from("bill_payments").select("*"),
-          supabase.from("lists").select("*").order("created_at"),
-          supabase.from("list_items").select("*").order("created_at"),
+          supabase.from("savings_goals").select("*").order("position").order("created_at"),
           supabase.from("wallet_settings").select("*").eq("id", 1).maybeSingle(),
           supabase.from("daily_hours_log").select("*"),
           supabase.from("extra_funds_log").select("*"),
@@ -455,16 +444,8 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
         }
 
         if (budgetData) setBudget(prev => ({ ...prev, ...budgetData }));
-        if (listData) {
-          setLists(listData);
-          if (listData.length > 0) {
-            setNextListId(Math.max(...listData.map((l: ListDef) => l.id)) + 1);
-            setActiveListId(prev => prev ?? listData[0].id);
-          }
-        }
-        if (listItemData) {
-          setListItems(listItemData);
-          if (listItemData.length > 0) setNextListItemId(Math.max(...listItemData.map((li: ListItem) => li.id)) + 1);
+        if (goalData) {
+          setGoals(goalData.map((g: SavingsGoal) => ({ ...g, target: Number(g.target) || 0, saved: Number(g.saved) || 0 })));
         }
 
         const isPastMonth = (m: number, y: number) =>
@@ -629,10 +610,12 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
     [debts, debtStrategy]
   );
   const deferredDebts = debts.filter(d => d.deferred);
-  const activeList = lists.find(l => l.id === activeListId) || null;
-  const activeListItems = useMemo(
-    () => listItems.filter(li => li.list_id === activeListId).sort((a, b) => (a.done === b.done ? 0 : a.done ? 1 : -1)),
-    [listItems, activeListId]
+  const goalTotals = useMemo(
+    () => ({
+      target: goals.reduce((sum, g) => sum + g.target, 0),
+      saved: goals.reduce((sum, g) => sum + Math.min(g.saved, g.target), 0),
+    }),
+    [goals]
   );
 
   function dateKey(d: Date) {
@@ -1277,52 +1260,47 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
     setTimeout(() => setBudgetSavedMsg(false), 2000);
   }
 
-  async function addList() {
-    const name = newListName.trim();
-    if (!name) return;
-    const list: ListDef = { id: nextListId, name };
-    setLists(prev => [...prev, list]);
-    setNextListId(n => n + 1);
-    setActiveListId(list.id);
-    setNewListName("");
-    setShowNewListInput(false);
-    const { data, error } = await supabase.from("lists").insert(list).select().single();
-    if (error) console.error("addList failed:", error);
-    else if (data) setLists(prev => prev.map(l => l.id === list.id ? data : l));
+  async function addGoal() {
+    const name = newGoalName.trim();
+    const target = parseFloat(newGoalTarget);
+    if (!name || !(target > 0)) return;
+    const position = goals.length > 0 ? Math.max(...goals.map(g => g.position)) + 1 : 0;
+    const { data, error } = await supabase
+      .from("savings_goals")
+      .insert({ name, target, saved: 0, position })
+      .select()
+      .single();
+    if (error) { console.error("addGoal failed:", error); return; }
+    if (data) setGoals(prev => [...prev, { ...data, target: Number(data.target) || 0, saved: Number(data.saved) || 0 }]);
+    setNewGoalName("");
+    setNewGoalTarget("");
   }
 
-  async function deleteList(id: number) {
-    setLists(prev => prev.filter(l => l.id !== id));
-    setListItems(prev => prev.filter(li => li.list_id !== id));
-    if (activeListId === id) {
-      const remaining = lists.filter(l => l.id !== id);
-      setActiveListId(remaining.length > 0 ? remaining[0].id : null);
-    }
-    await supabase.from("list_items").delete().eq("list_id", id);
-    await supabase.from("lists").delete().eq("id", id);
+  async function updateGoal(id: number, patch: Partial<Pick<SavingsGoal, "name" | "target" | "saved">>) {
+    setGoals(prev => prev.map(g => (g.id === id ? { ...g, ...patch } : g)));
+    const { error } = await supabase.from("savings_goals").update(patch).eq("id", id);
+    if (error) console.error("updateGoal failed:", error);
   }
 
-  async function addListItem(listId: number) {
-    const label = (newItemDrafts[listId] || "").trim();
-    if (!label) return;
-    const item: ListItem = { id: nextListItemId, list_id: listId, label, done: false };
-    setListItems(prev => [...prev, item]);
-    setNextListItemId(n => n + 1);
-    setNewItemDrafts(prev => ({ ...prev, [listId]: "" }));
-    const { data, error } = await supabase.from("list_items").insert(item).select().single();
-    if (error) console.error("addListItem failed:", error);
-    else if (data) setListItems(prev => prev.map(li => li.id === item.id ? data : li));
+  async function moveGoal(id: number, dir: -1 | 1) {
+    const idx = goals.findIndex(g => g.id === id);
+    const swapIdx = idx + dir;
+    if (idx < 0 || swapIdx < 0 || swapIdx >= goals.length) return;
+    const next = [...goals];
+    [next[idx], next[swapIdx]] = [next[swapIdx], next[idx]];
+    const renumbered = next.map((g, i) => ({ ...g, position: i }));
+    setGoals(renumbered);
+    const changed = renumbered.filter(g => goals.find(o => o.id === g.id)?.position !== g.position);
+    const results = await Promise.all(
+      changed.map(g => supabase.from("savings_goals").update({ position: g.position }).eq("id", g.id))
+    );
+    if (results.some(r => r.error)) console.error("moveGoal failed:", results.map(r => r.error).filter(Boolean));
   }
 
-  async function toggleListItem(item: ListItem) {
-    const newDone = !item.done;
-    setListItems(prev => prev.map(li => li.id === item.id ? { ...li, done: newDone } : li));
-    await supabase.from("list_items").update({ done: newDone }).eq("id", item.id);
-  }
-
-  async function deleteListItem(id: number) {
-    setListItems(prev => prev.filter(li => li.id !== id));
-    await supabase.from("list_items").delete().eq("id", id);
+  async function deleteGoal(id: number) {
+    setGoals(prev => prev.filter(g => g.id !== id));
+    const { error } = await supabase.from("savings_goals").delete().eq("id", id);
+    if (error) console.error("deleteGoal failed:", error);
   }
 
   async function addBill() {
@@ -1527,91 +1505,109 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
 
             <StitchDivider />
 
-            {/* ── LISTS ── */}
+            {/* ── SAVINGS GOALS ── */}
             <div className="card">
               <div className="card-body">
                 <div className="section-header">
-                  <div className="section-label" style={{ marginBottom: 0 }}><Icon name="clipboard-list" size={16} /> Lists</div>
-                  <button className="btn btn-primary btn-sm" onClick={() => setShowNewListInput(v => !v)}>+ New List</button>
+                  <div className="section-label" style={{ marginBottom: 0 }}><Icon name="piggy-bank" size={16} /> Savings Goals</div>
+                  <button className="btn btn-primary btn-sm" onClick={() => setShowGoalForm(v => !v)}>+ Add Goal</button>
                 </div>
-                {showNewListInput && (
-                  <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
+
+                {showGoalForm && (
+                  <div style={{ display: "flex", gap: 8, marginBottom: 12, flexWrap: "wrap" }}>
                     <input
                       type="text"
                       className="form-input"
-                      placeholder="e.g. Groceries, Hardware Store..."
-                      value={newListName}
-                      onChange={e => setNewListName(e.target.value)}
-                      onKeyDown={e => { if (e.key === "Enter") addList(); }}
+                      style={{ flex: "2 1 140px" }}
+                      placeholder="What do you want?"
+                      value={newGoalName}
+                      onChange={e => setNewGoalName(e.target.value)}
+                      onKeyDown={e => { if (e.key === "Enter") addGoal(); }}
                       autoFocus
                     />
-                    <button className="btn btn-green btn-sm" onClick={addList}>Add</button>
+                    <input
+                      type="number"
+                      inputMode="decimal"
+                      min="0"
+                      step="0.01"
+                      className="form-input"
+                      style={{ flex: "1 1 90px" }}
+                      placeholder="How much?"
+                      value={newGoalTarget}
+                      onChange={e => setNewGoalTarget(e.target.value)}
+                      onKeyDown={e => { if (e.key === "Enter") addGoal(); }}
+                    />
+                    <button className="btn btn-green btn-sm" onClick={addGoal}>Add</button>
                   </div>
                 )}
 
-                {lists.length === 0 ? (
-                  <EmptyState image={emptyWallet} message="No lists yet. Create one to get started." />
+                {goals.length === 0 ? (
+                  <EmptyState image={emptyWallet} message="No savings goals yet. Add something you're saving for." />
                 ) : (
                   <>
-                    <div style={{ display: "flex", gap: 6, overflowX: "auto", paddingBottom: 8, marginBottom: 8 }}>
-                      {lists.map(l => (
-                        <button
-                          key={l.id}
-                          onClick={() => setActiveListId(l.id)}
-                          className={activeListId === l.id ? "btn btn-primary btn-sm" : "btn btn-ghost btn-sm"}
-                          style={{ whiteSpace: "nowrap" }}
-                        >
-                          {l.name}
-                        </button>
-                      ))}
+                    <div style={{ fontSize: 12, color: "var(--ink-muted)", marginBottom: 10 }}>
+                      {fmt(goalTotals.saved)} saved of {fmt(goalTotals.target)} across {goals.length} {goals.length === 1 ? "goal" : "goals"}. Top of the list is what you want first.
                     </div>
 
-                    {activeList && (
-                      <div>
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
-                          <div style={{ fontSize: 13, fontWeight: 700, color: "var(--ink)" }}>{activeList.name}</div>
-                          <button className="btn btn-ghost btn-sm" onClick={() => deleteList(activeList.id)}><Icon name="icon-trash2" size={24} /></button>
-                        </div>
-
-                        <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 10 }}>
-                          {activeListItems.map(item => (
-                            <div key={item.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 0", borderBottom: "1px solid var(--border)" }}>
-                              <button
-                                onClick={() => toggleListItem(item)}
-                                aria-label={item.done ? "Mark not done" : "Mark done"}
-                                style={{
-                                  width: 24, height: 24, flexShrink: 0,
-                                  border: "none", background: "none", padding: 0,
-                                  cursor: "pointer", display: "flex",
-                                  alignItems: "center", justifyContent: "center",
-                                }}
-                              >
-                                <CheckMark completed={item.done} size={17} />
-                              </button>
-                              <div style={{ flex: 1, fontSize: 13, color: item.done ? "var(--ink-muted)" : "var(--ink)", textDecoration: item.done ? "line-through" : "none" }}>
-                                {item.label}
+                    <div style={{ display: "flex", flexDirection: "column" }}>
+                      {goals.map((g, i) => {
+                        const done = g.target > 0 && g.saved >= g.target;
+                        const fill = g.target > 0 ? Math.min(100, (g.saved / g.target) * 100) : 0;
+                        const remaining = Math.max(0, g.target - g.saved);
+                        return (
+                          <div key={g.id} style={{ padding: "10px 0", borderBottom: "1px solid var(--border)" }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+                              <div style={{ width: 22, textAlign: "center", fontSize: 13, fontWeight: 800, color: "var(--pink-dark)", flexShrink: 0 }}>{i + 1}</div>
+                              <div style={{ flex: 1, minWidth: 0 }}>
+                                <EditableCell
+                                  type="text"
+                                  value={g.name}
+                                  onChange={v => { const name = v.trim(); if (name) updateGoal(g.id, { name }); }}
+                                  style={{ fontWeight: 700 }}
+                                />
                               </div>
-                              <button className="btn btn-ghost btn-sm" onClick={() => deleteListItem(item.id)}><Icon name="icon-trash2" size={24} /></button>
+                              <button className="btn btn-ghost btn-sm" onClick={() => moveGoal(g.id, -1)} disabled={i === 0} aria-label="Move up" style={{ opacity: i === 0 ? 0.35 : 1 }}>
+                                <Icon name="icon-chevronup" size={20} />
+                              </button>
+                              <button className="btn btn-ghost btn-sm" onClick={() => moveGoal(g.id, 1)} disabled={i === goals.length - 1} aria-label="Move down" style={{ opacity: i === goals.length - 1 ? 0.35 : 1 }}>
+                                <Icon name="icon-chevrondown" size={20} />
+                              </button>
+                              <button className="btn btn-ghost btn-sm" onClick={() => deleteGoal(g.id)} aria-label="Delete goal">
+                                <Icon name="icon-trash2" size={24} />
+                              </button>
                             </div>
-                          ))}
-                          {activeListItems.length === 0 && (
-                            <div style={{ fontSize: 12, color: "var(--ink-muted)", padding: "8px 0" }}>Nothing on this list yet.</div>
-                          )}
-                        </div>
 
-                        <div style={{ display: "flex", gap: 8 }}>
-                          <input
-                            type="text"
-                            className="form-input"
-                            placeholder="Add an item..."
-                            value={newItemDrafts[activeList.id] || ""}
-                            onChange={e => setNewItemDrafts(prev => ({ ...prev, [activeList.id]: e.target.value }))}
-                            onKeyDown={e => { if (e.key === "Enter") addListItem(activeList.id); }}
-                          />
-                          <button className="btn btn-green btn-sm" onClick={() => addListItem(activeList.id)}>Add</button>
-                        </div>
-                      </div>
-                    )}
+                            <div style={{ height: 12, borderRadius: 99, overflow: "hidden", background: "var(--border)", marginBottom: 8 }}>
+                              <div style={{ width: `${fill}%`, height: "100%", borderRadius: 99, background: done ? "var(--green-dark)" : "var(--pink-dark)", transition: "width 0.3s" }} />
+                            </div>
+
+                            <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", fontSize: 12, color: "var(--ink-muted)" }}>
+                              <span>Saved $</span>
+                              <div style={{ width: 80 }}>
+                                <EditableCell
+                                  type="number"
+                                  value={g.saved || ""}
+                                  placeholder="0"
+                                  onChange={v => updateGoal(g.id, { saved: Math.max(0, parseFloat(v) || 0) })}
+                                />
+                              </div>
+                              <span>of $</span>
+                              <div style={{ width: 80 }}>
+                                <EditableCell
+                                  type="number"
+                                  value={g.target || ""}
+                                  placeholder="0"
+                                  onChange={v => { const t = parseFloat(v); if (t > 0) updateGoal(g.id, { target: t }); }}
+                                />
+                              </div>
+                              <span style={{ marginLeft: "auto", fontWeight: 700, color: done ? "var(--green-dark)" : "var(--ink-muted)" }}>
+                                {done ? "Goal reached!" : `${Math.round(fill)}% · ${fmt(remaining)} to go`}
+                              </span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
                   </>
                 )}
               </div>
