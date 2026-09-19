@@ -50,6 +50,7 @@ const POINTS = {
   debt_payment_logged: 10,
   debt_paid_off: 40,
   savings_contribution: 8,
+  savings_goal_completed: 40,
   tracker_log_entry: 4,
   daily_task_list_complete: 3,
   daily_focuses_complete: 7,
@@ -150,6 +151,7 @@ export const SOURCE_LABELS: Record<string, { text: string; icon: IconName }> = {
   debt_payment_logged: { text: "Debt payment", icon: "calculator-hearts" },
   debt_paid_off: { text: "Debt paid off", icon: "trophy" },
   savings_contribution: { text: "Savings contribution", icon: "piggy-bank" },
+  savings_goal_completed: { text: "Savings goal reached", icon: "piggy-bank" },
   tracker_log_entry: { text: "Tracker log", icon: "notebook-pen" },
   daily_task_list_complete: { text: "Full task list", icon: "clipboard-check" },
     daily_focuses_complete: { text: "All focuses completed", icon: "clipboard-check"},
@@ -871,6 +873,34 @@ const [claimingFirstCreature, setClaimingFirstCreature] = useState(false);
       if (fullyChecked && !prevGrocery[listId]) {
         runningPoints = await addPoints(POINTS.grocery_list_completed, "grocery_list_completed", runningPoints);
       }
+    }
+
+    // 12. Savings goals reached (Wallet -> Savings Goals card) — a goal
+    // counts as complete once saved >= target. Same per-row credited-flag
+    // pattern as bills/appointments/goal steps, so editing the saved amount
+    // down and back up on the SAME goal can never award twice. The flag is
+    // locked BEFORE points are added here (rather than after, like the
+    // patterns above): if the lock write fails we skip the award entirely
+    // and retry on the next check, so a failed lock can never mint
+    // duplicate points. PostgREST can't compare two columns in a filter,
+    // so the saved >= target test happens client-side.
+    const { data: pendingGoals } = await supabase
+      .from("savings_goals")
+      .select("id, target, saved")
+      .or("hamster_credited.is.null,hamster_credited.eq.false");
+
+    for (const goal of pendingGoals || []) {
+      const target = Number(goal.target) || 0;
+      const saved = Number(goal.saved) || 0;
+      if (target <= 0 || saved < target) continue;
+
+      const { error: creditError } = await supabase
+        .from("savings_goals")
+        .update({ hamster_credited: true })
+        .eq("id", goal.id);
+      if (reportError(`Lock credit for savings goal #${goal.id}`, creditError)) continue;
+
+      runningPoints = await addPoints(POINTS.savings_goal_completed, "savings_goal_completed", runningPoints);
     }
 
     setBankPoints(runningPoints);
