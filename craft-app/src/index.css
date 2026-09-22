@@ -1438,46 +1438,57 @@
 [data-palette='storm-clouds'] .list-item::before {
   content: "";
   position: absolute;
-  top: -7px;
-  left: 14px;
-  right: 14px;
-  height: 14px;
+
+  top: -8px;
+  left: 12px;
+  right: 12px;
+  height: 16px;
+
+  /* The pseudo-element itself has NO visible surface, border,
+     shadow, outline, or filter. Only the individual cloud circles
+     are painted. */
   background:
     radial-gradient(
-      circle at 6% 100%,
+      circle at 5% 100%,
+      var(--surface) 0 6px,
+      transparent 6.5px
+    ),
+    radial-gradient(
+      circle at 17% 70%,
+      var(--surface) 0 9px,
+      transparent 9.5px
+    ),
+    radial-gradient(
+      circle at 30% 100%,
       var(--surface) 0 7px,
       transparent 7.5px
     ),
     radial-gradient(
-      circle at 18% 75%,
+      circle at 45% 62%,
       var(--surface) 0 10px,
       transparent 10.5px
     ),
     radial-gradient(
-      circle at 32% 100%,
-      var(--surface) 0 8px,
-      transparent 8.5px
-    ),
-    radial-gradient(
-      circle at 47% 65%,
-      var(--surface) 0 11px,
-      transparent 11.5px
-    ),
-    radial-gradient(
-      circle at 62% 100%,
-      var(--surface) 0 8px,
-      transparent 8.5px
-    ),
-    radial-gradient(
-      circle at 76% 72%,
-      var(--surface) 0 10px,
-      transparent 10.5px
-    ),
-    radial-gradient(
-      circle at 91% 100%,
+      circle at 60% 100%,
       var(--surface) 0 7px,
       transparent 7.5px
+    ),
+    radial-gradient(
+      circle at 75% 70%,
+      var(--surface) 0 9px,
+      transparent 9.5px
+    ),
+    radial-gradient(
+      circle at 90% 100%,
+      var(--surface) 0 6px,
+      transparent 6.5px
     );
+
+  border: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+  filter: none !important;
+
   pointer-events: none;
   z-index: 0;
 }
