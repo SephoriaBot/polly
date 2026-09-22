@@ -1397,8 +1397,7 @@
   --info-card-text: #C4D2E5;
 }
 
-/* ---------- cards: puffy cloud-rim top edge ---------- */
-
+/* ---------- cards: soft cloud-rim top edge ---------- */
 [data-palette='storm-clouds'][data-theme='light'] .card,
 [data-palette='storm-clouds'][data-theme='light'] .stat-card,
 [data-palette='storm-clouds'][data-theme='light'] .pet-card,
@@ -1414,7 +1413,6 @@
     0 8px 22px rgba(46, 52, 64, .12);
   overflow: visible;
 }
-
 [data-palette='storm-clouds'][data-theme='dark'] .card,
 [data-palette='storm-clouds'][data-theme='dark'] .stat-card,
 [data-palette='storm-clouds'][data-theme='dark'] .pet-card,
@@ -1430,7 +1428,8 @@
     0 10px 26px rgba(0, 0, 0, .38);
   overflow: visible;
 }
-
+/* Soft cloud puffs.
+   No pill, no outline, no visible container. */
 [data-palette='storm-clouds'] .card::before,
 [data-palette='storm-clouds'] .stat-card::before,
 [data-palette='storm-clouds'] .pet-card::before,
@@ -1439,21 +1438,53 @@
 [data-palette='storm-clouds'] .list-item::before {
   content: "";
   position: absolute;
-  top: -9px;
-  left: 8%;
-  right: 8%;
-  height: 18px;
+  top: -7px;
+  left: 14px;
+  right: 14px;
+  height: 14px;
   background:
-    radial-gradient(circle at 10% 60%, var(--surface) 0 9px, transparent 10px),
-    radial-gradient(circle at 28% 40%, var(--surface) 0 11px, transparent 12px),
-    radial-gradient(circle at 48% 55%, var(--surface) 0 10px, transparent 11px),
-    radial-gradient(circle at 68% 40%, var(--surface) 0 11px, transparent 12px),
-    radial-gradient(circle at 88% 60%, var(--surface) 0 9px, transparent 10px);
-  filter: drop-shadow(0 2px 3px rgba(46, 52, 64, .12));
+    radial-gradient(
+      circle at 6% 100%,
+      var(--surface) 0 7px,
+      transparent 7.5px
+    ),
+    radial-gradient(
+      circle at 18% 75%,
+      var(--surface) 0 10px,
+      transparent 10.5px
+    ),
+    radial-gradient(
+      circle at 32% 100%,
+      var(--surface) 0 8px,
+      transparent 8.5px
+    ),
+    radial-gradient(
+      circle at 47% 65%,
+      var(--surface) 0 11px,
+      transparent 11.5px
+    ),
+    radial-gradient(
+      circle at 62% 100%,
+      var(--surface) 0 8px,
+      transparent 8.5px
+    ),
+    radial-gradient(
+      circle at 76% 72%,
+      var(--surface) 0 10px,
+      transparent 10.5px
+    ),
+    radial-gradient(
+      circle at 91% 100%,
+      var(--surface) 0 7px,
+      transparent 7.5px
+    );
   pointer-events: none;
+  z-index: 0;
 }
-
+/* Keep the card contents above the cloud edge */
 [data-palette='storm-clouds'] .card-body {
+  position: relative;
+  z-index: 1;
   background: transparent;
   border: none;
 }
