@@ -1281,6 +1281,253 @@
   border-radius: 999px;
 }
 
+/* ================================================================
+   ================================================================
+   PALETTE: STORM CLOUDS
+   data-palette="storm-clouds"
+   Overcast sky, misty slate blues, distant lightning
+   ================================================================
+   ================================================================ */
+
+/* ---------- tokens: light ---------- */
+[data-palette='storm-clouds'][data-theme='light'] {
+  --bg: #E7EBF2;
+  --surface: #F5F7FA;
+  --text: #2E3440;
+
+  --primary: #5B7290;
+  --secondary: #8C9BAE;
+  --accent: #4A5A72;
+  --mint: #7C93A8;
+
+  --border: rgba(46, 52, 64, .16);
+  --shadow: 0 8px 24px rgba(46, 52, 64, .14);
+
+  --ink: #2E3440;
+  --ink-soft: #5B6472;
+  --ink-muted: #8892A0;
+  --btn-ink: #FFFFFF;
+
+  --white: #FFFFFF;
+  --cream: #EEF1F6;
+  --blush: rgba(91, 114, 144, .13);
+
+  --green-dark: #4A5A72;
+  --citrus-blue: #6B84A3;
+  --sage: #8C9BAE;
+  --sage-dark: #5B7290;
+  --sage-light: rgba(91, 114, 144, .13);
+
+  --pink: #7B6C9E;
+  --pink-dark: #52456F;
+  --pink-light: rgba(123, 108, 158, .13);
+  --pink-light-solid: #E1DCEE;
+
+  --sky: #B8C4D4;
+
+  --gold: #D9B94E;
+  --gold-dark: #A8891F;
+  --gold-light: rgba(217, 185, 78, .15);
+  --gold-light-solid: #F5E9C0;
+
+  --danger: #B5615B;
+  --danger-bg: #F1E4E3;
+
+  --accent-text: #FFFFFF;
+  --accent-text-muted: rgba(255, 255, 255, .78);
+  --active-bg: #DCE3ED;
+  --active-text: #3A4A63;
+
+  --info-card-bg: #E3E8F0;
+  --info-card-border: rgba(74, 90, 114, 0.20);
+  --info-card-text: #3A4A63;
+}
+
+/* ---------- tokens: dark ---------- */
+[data-palette='storm-clouds'][data-theme='dark'] {
+  --bg: #14181F;
+  --surface: #1F252F;
+  --text: #E8ECF3;
+
+  --primary: #7A93B5;
+  --secondary: #5B6E8C;
+  --accent: #90A5C4;
+  --mint: #7C93A8;
+
+  --border: rgba(232, 236, 243, .12);
+  --shadow: 0 10px 28px rgba(0, 0, 0, .40);
+
+  --ink: #E8ECF3;
+  --ink-soft: #B7C0CE;
+  --ink-muted: #7C8697;
+  --btn-ink: #14181F;
+
+  --white: #2A303C;
+  --cream: #1A1F28;
+  --blush: rgba(122, 147, 181, .15);
+
+  --green-dark: #90A5C4;
+  --citrus-blue: #7C93A8;
+  --sage: #5B6E8C;
+  --sage-dark: #90A5C4;
+  --sage-light: rgba(144, 165, 196, .13);
+
+  --pink: #9B8CC4;
+  --pink-dark: #C4B8E5;
+  --pink-light: rgba(155, 140, 196, .15);
+  --pink-light-solid: #332C47;
+
+  --sky: #4A5568;
+
+  --gold: #E8CD70;
+  --gold-dark: #F2DD96;
+  --gold-light: rgba(232, 205, 112, .16);
+  --gold-light-solid: #3D341C;
+
+  --danger: #D4877D;
+  --danger-bg: #3A2624;
+
+  --accent-text: #14181F;
+  --accent-text-muted: rgba(20, 24, 31, .78);
+  --active-bg: #2C3648;
+  --active-text: #C4D2E5;
+
+  --info-card-bg: #232A36;
+  --info-card-border: rgba(144, 165, 196, 0.20);
+  --info-card-text: #C4D2E5;
+}
+
+/* ---------- cards: puffy cloud-rim top edge ---------- */
+
+[data-palette='storm-clouds'][data-theme='light'] .card,
+[data-palette='storm-clouds'][data-theme='light'] .stat-card,
+[data-palette='storm-clouds'][data-theme='light'] .pet-card,
+[data-palette='storm-clouds'][data-theme='light'] .plant-card,
+[data-palette='storm-clouds'][data-theme='light'] .wizard-box,
+[data-palette='storm-clouds'][data-theme='light'] .list-item {
+  position: relative;
+  background: var(--surface);
+  border: 1px solid var(--border) !important;
+  border-radius: 18px !important;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, .6) inset,
+    0 8px 22px rgba(46, 52, 64, .12);
+  overflow: visible;
+}
+
+[data-palette='storm-clouds'][data-theme='dark'] .card,
+[data-palette='storm-clouds'][data-theme='dark'] .stat-card,
+[data-palette='storm-clouds'][data-theme='dark'] .pet-card,
+[data-palette='storm-clouds'][data-theme='dark'] .plant-card,
+[data-palette='storm-clouds'][data-theme='dark'] .wizard-box,
+[data-palette='storm-clouds'][data-theme='dark'] .list-item {
+  position: relative;
+  background: var(--surface);
+  border: 1px solid var(--border) !important;
+  border-radius: 18px !important;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, .04) inset,
+    0 10px 26px rgba(0, 0, 0, .38);
+  overflow: visible;
+}
+
+[data-palette='storm-clouds'] .card::before,
+[data-palette='storm-clouds'] .stat-card::before,
+[data-palette='storm-clouds'] .pet-card::before,
+[data-palette='storm-clouds'] .plant-card::before,
+[data-palette='storm-clouds'] .wizard-box::before,
+[data-palette='storm-clouds'] .list-item::before {
+  content: "";
+  position: absolute;
+  top: -9px;
+  left: 8%;
+  right: 8%;
+  height: 18px;
+  background:
+    radial-gradient(circle at 10% 60%, var(--surface) 0 9px, transparent 10px),
+    radial-gradient(circle at 28% 40%, var(--surface) 0 11px, transparent 12px),
+    radial-gradient(circle at 48% 55%, var(--surface) 0 10px, transparent 11px),
+    radial-gradient(circle at 68% 40%, var(--surface) 0 11px, transparent 12px),
+    radial-gradient(circle at 88% 60%, var(--surface) 0 9px, transparent 10px);
+  filter: drop-shadow(0 2px 3px rgba(46, 52, 64, .12));
+  pointer-events: none;
+}
+
+[data-palette='storm-clouds'] .card-body {
+  background: transparent;
+  border: none;
+}
+
+/* ---------- checkmarks: reuse circle icon, storm-tinted ---------- */
+
+[data-palette='storm-clouds'] .theme-check--full {
+  background-color: var(--pink-dark);
+  -webkit-mask-image: url('/circle-full.svg');
+  mask-image: url('/circle-full.svg');
+}
+
+[data-palette='storm-clouds'] .theme-check--empty {
+  background-color: var(--border);
+  -webkit-mask-image: url('/circle-empty.svg');
+  mask-image: url('/circle-empty.svg');
+}
+
+/* ---------- stitch divider: lightning bolt mark ---------- */
+
+[data-palette='storm-clouds'] .stitch-divider .mark {
+  width: 14px;
+  height: 20px;
+  background-color: var(--gold);
+  -webkit-mask-image: url('/bolt-mark.svg');
+  mask-image: url('/bolt-mark.svg');
+  -webkit-mask-size: contain;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+  animation: storm-flicker 5s ease-in-out infinite;
+}
+
+[data-palette='storm-clouds'] .stitch-divider .mark::before,
+[data-palette='storm-clouds'] .stitch-divider .mark::after {
+  content: none !important;
+}
+
+@keyframes storm-flicker {
+  0%, 88%, 100% { opacity: 1; }
+  90%  { opacity: .35; }
+  92%  { opacity: 1; }
+  94%  { opacity: .5; }
+}
+
+/* ---------- ambient: distant lightning flash over page-body ---------- */
+
+[data-palette='storm-clouds'] .page-body {
+  position: relative;
+}
+
+[data-palette='storm-clouds'] .page-body::before {
+  content: "";
+  position: absolute;
+  top: -6px;
+  left: 0;
+  right: 0;
+  height: 6px;
+  background: radial-gradient(ellipse at 30% 50%, rgba(232, 205, 112, .5) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 5;
+  animation: distant-flash 7s ease-in-out infinite;
+}
+
+@keyframes distant-flash {
+  0%, 92%, 100% { opacity: 0; }
+  93% { opacity: 1; }
+  94% { opacity: .2; }
+  95% { opacity: .8; }
+  96% { opacity: 0; }
+}
+
 
 /* ================================================================
    ================================================================
