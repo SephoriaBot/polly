@@ -1,6 +1,6 @@
 import './Polly.css';
 import { usePollyCompanion, type PollySpecies } from '../context/PollyCompanionContext';
-import { resolveEquipRender, hatIdFromAssetKey, type Expression } from '../creatures/equipRender';
+import { resolveEquipRender, resolveOutfitRender, hatIdFromAssetKey, type Expression } from '../creatures/equipRender';
 
 export type PollyMood =
   | 'neutral'
@@ -124,24 +124,41 @@ export default function Polly({
   animate = true,
   species,
 }: PollyProps) {
-  const { species: chosenSpecies, equippedHeadwear } = usePollyCompanion();
+  const { species: chosenSpecies, equippedHeadwear, equippedOutfit } = usePollyCompanion();
   const activeSpecies = species ?? chosenSpecies;
+  const expression = MOOD_TO_EXPRESSION[mood];
 
   const headwear = equippedHeadwear
     ? resolveEquipRender({
         species: activeSpecies,
         hatId: hatIdFromAssetKey(equippedHeadwear.assetKey),
-        expression: MOOD_TO_EXPRESSION[mood],
+        expression,
       })
     : null;
 
-  // Full-art hat sprites (isFallback: false) are complete character images —
+  const outfit = equippedOutfit
+    ? resolveOutfitRender({
+        species: activeSpecies,
+        hatId: hatIdFromAssetKey(equippedOutfit.assetKey),
+        expression,
+      })
+    : null;
+
+  // Full-art sprites (isFallback: false) are complete character images —
   // noodle-wearing-the-hat, not just a hat graphic — so they replace the base
   // body image rather than stacking on it. Only the flat-icon fallback
   // (species without full art yet) overlays on top of the plain body sprite.
-  const bodyImage =
-    headwear?.imagePath && !headwear.isFallback ? headwear.imagePath : POLLY_IMAGES[activeSpecies][mood];
-  const overlayIcon = headwear?.isFallback ? headwear.imagePath : null;
+  // An outfit takes precedence over headwear when both are equipped — the
+  // art for each is a full-body swap, so there's no way to show both at
+  // once; the outfit wins since it was equipped as the more specific choice.
+  const fullArt =
+    outfit?.imagePath && !outfit.isFallback
+      ? outfit.imagePath
+      : headwear?.imagePath && !headwear.isFallback
+      ? headwear.imagePath
+      : null;
+  const bodyImage = fullArt ?? POLLY_IMAGES[activeSpecies][mood];
+  const overlayIcon = !fullArt && (outfit?.isFallback ? outfit.imagePath : headwear?.isFallback ? headwear.imagePath : null);
 
   return (
     <div

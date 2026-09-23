@@ -59,12 +59,63 @@ function buildFlatIconPath(hatId: string): string {
 }
 
 /**
- * cosmetics.asset_key in Supabase is stored as e.g. "headwear_flower_crown",
- * but the uploaded sprite files use just "flower_crown" as the hatId. Strip
- * the slot prefix here so callers can pass the raw asset_key straight through.
+ * cosmetics.asset_key in Supabase is stored as e.g. "headwear_flower_crown"
+ * or "outfit_innertube", but the uploaded per-species sprite files use just
+ * the bare id ("flower_crown", "innertube") as the hatId. Strip whichever
+ * slot prefix is present so callers can pass the raw asset_key straight
+ * through regardless of slot.
  */
 export function hatIdFromAssetKey(assetKey: string): string {
-  return assetKey.replace(/^headwear_/, "");
+  return assetKey.replace(/^headwear_/, "").replace(/^outfit_/, "");
+}
+
+/**
+ * Outfits flat-icon filenames don't follow the "{slot}_{id}.png" pattern
+ * headwear uses (the uploaded file is just "duckinnertube.png", living in
+ * /assets/cosmetics/outfits/) — map each outfit hatId to its actual filename
+ * here as new outfits land, rather than assuming a naming convention that
+ * doesn't match what's on disk.
+ */
+const OUTFIT_ICON_FILENAMES: Record<string, string> = {
+  innertube: "duckinnertube.png",
+};
+
+export function outfitIconPath(hatId: string): string {
+  const filename = OUTFIT_ICON_FILENAMES[hatId] ?? `${hatId}.png`;
+  return `${BASE_PATH}/outfits/${filename}`;
+}
+
+// Unlike headwear (which has full parity across all 5 species), outfit art
+// has only been drawn for wereham/noodle/dragon so far — the same 3 species
+// left in the companion picker after bunt/wrendel were removed as pickable
+// options. A legacy companion still set to bunt/wrendel falls back to the
+// flat icon rather than pointing at a sprite that doesn't exist on disk.
+// Extend this list as more species get outfit art.
+const OUTFIT_SPECIES_WITH_ART: CreatureSpecies[] = ["wereham", "noodle", "dragon"];
+
+/**
+ * Resolves what image to render for a creature's equipped outfit. Mirrors
+ * resolveEquipRender but checks per-outfit species coverage (above) instead
+ * of assuming every species in SPECIES_CONFIG has full art for every item,
+ * since that assumption only held while headwear was the only slot.
+ */
+export function resolveOutfitRender({ species, hatId, expression }: EquipRenderInput): EquipRenderResult {
+  if (!hatId) {
+    return { imagePath: null, isFallback: false };
+  }
+
+  if (OUTFIT_SPECIES_WITH_ART.includes(species)) {
+    const config = SPECIES_CONFIG[species]!;
+    return {
+      imagePath: buildSpritePath(config, hatId, expression),
+      isFallback: false,
+    };
+  }
+
+  return {
+    imagePath: outfitIconPath(hatId),
+    isFallback: true,
+  };
 }
 
 /**

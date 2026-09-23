@@ -11,18 +11,22 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import { usePollyCompanion } from '../context/PollyCompanionContext';
 import { useToast } from '../hooks/useToast';
+import { outfitIconPath, hatIdFromAssetKey } from '../creatures/equipRender';
 import Polly from './Polly';
+
+type CosmeticSlot = 'headwear' | 'outfits';
 
 interface OwnedCosmetic {
   cosmeticId: string;
   name: string;
   assetKey: string;
   rarity: string | null;
+  slot: CosmeticSlot;
 }
 
 export default function Closet() {
   const { user } = useAuth();
-  const { equippedHeadwear, setEquippedHeadwear } = usePollyCompanion();
+  const { equippedHeadwear, setEquippedHeadwear, equippedOutfit, setEquippedOutfit } = usePollyCompanion();
   const { showToast } = useToast();
   const [owned, setOwned] = useState<OwnedCosmetic[]>([]);
   const [loading, setLoading] = useState(true);
@@ -37,7 +41,7 @@ export default function Closet() {
 
       const { data, error } = await supabase
         .from('user_cosmetics')
-        .select('cosmetic_id, cosmetics(id, name, asset_key, rarity)')
+        .select('cosmetic_id, cosmetics(id, name, asset_key, rarity, slot)')
         .order('unlocked_at', { ascending: false });
 
       if (cancelled) return;
@@ -53,6 +57,7 @@ export default function Closet() {
             name: cosmetic?.name ?? 'Unknown item',
             assetKey: cosmetic?.asset_key ?? '',
             rarity: cosmetic?.rarity ?? null,
+            slot: (cosmetic?.slot ?? 'headwear') as CosmeticSlot,
           };
         });
         setOwned(rows);
@@ -66,16 +71,25 @@ export default function Closet() {
     };
   }, [user]);
 
-  async function handleEquip(cosmeticId: string, itemName: string, alreadyEquipped: boolean) {
-    setPendingId(cosmeticId);
-    const { error } = await setEquippedHeadwear(alreadyEquipped ? null : cosmeticId);
+  async function handleEquip(item: OwnedCosmetic, alreadyEquipped: boolean) {
+    setPendingId(item.cosmeticId);
+    const { error } =
+      item.slot === 'outfits'
+        ? await setEquippedOutfit(alreadyEquipped ? null : item.cosmeticId)
+        : await setEquippedHeadwear(alreadyEquipped ? null : item.cosmeticId);
     setPendingId(null);
 
     if (error) {
-      showToast(`Couldn't equip ${itemName}: ${error}`, 'error');
+      showToast(`Couldn't equip ${item.name}: ${error}`, 'error');
     } else {
-      showToast(alreadyEquipped ? `${itemName} removed` : `${itemName} equipped!`, 'success');
+      showToast(alreadyEquipped ? `${item.name} removed` : `${item.name} equipped!`, 'success');
     }
+  }
+
+  function iconSrcFor(item: OwnedCosmetic): string {
+    return item.slot === 'outfits'
+      ? outfitIconPath(hatIdFromAssetKey(item.assetKey))
+      : `/assets/cosmetics/headwear/${item.assetKey}.png`;
   }
 
   if (loading) {
@@ -85,7 +99,7 @@ export default function Closet() {
   if (owned.length === 0) {
     return (
       <div className="empty-state">
-        <p>No cosmetics unlocked yet — complete quests to win headwear for your companion.</p>
+        <p>No cosmetics unlocked yet — complete quests to win headwear and outfits for your companion.</p>
       </div>
     );
   }
@@ -106,13 +120,16 @@ export default function Closet() {
         }}
       >
         {owned.map(item => {
-          const isEquipped = equippedHeadwear?.id === item.cosmeticId;
+          const isEquipped =
+            item.slot === 'outfits'
+              ? equippedOutfit?.id === item.cosmeticId
+              : equippedHeadwear?.id === item.cosmeticId;
           const isPending = pendingId === item.cosmeticId;
 
           return (
             <button
               key={item.cosmeticId}
-              onClick={() => handleEquip(item.cosmeticId, item.name, isEquipped)}
+              onClick={() => handleEquip(item, isEquipped)}
               disabled={isPending}
               style={{
                 display: 'flex',
@@ -132,7 +149,7 @@ export default function Closet() {
               }}
             >
               <img
-                src={`/assets/cosmetics/headwear/${item.assetKey}.png`}
+                src={iconSrcFor(item)}
                 alt={item.name}
                 style={{ width: 48, height: 48, objectFit: 'contain' }}
               />
