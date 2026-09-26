@@ -1,0 +1,94 @@
+.habit-tracker {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.habit-card {
+  background: #fdf9f3;
+  border: 1px solid #eee2cf;
+  border-radius: 18px;
+  padding: 1rem 1.25rem;
+  box-shadow: 0 2px 0 #eee2cf;
+}
+
+.habit-card__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 0.5rem;
+}
+
+.habit-card__name {
+  font-weight: 600;
+  color: #5c4a3a;
+}
+
+.habit-card__streak {
+  font-size: 0.8rem;
+  color: #8a9a7e;
+}
+
+.habit-bar {
+  position: relative;
+  height: 22px;
+  border-radius: 999px;
+  background: #f2e9da;
+  overflow: hidden;
+  margin-bottom: 0.75rem;
+}
+
+.habit-bar__fill {
+  height: 100%;
+  border-radius: 999px;
+  /* the satisfying part: fill glides to its new width instead of snapping */
+  transition: width 900ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.habit-bar__label {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.72rem;
+  color: #5c4a3a;
+  font-variant-numeric: tabular-nums;
+}
+
+.habit-card__checkin {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.habit-card__prompt {
+  font-size: 0.85rem;
+  color: #8a7a68;
+  margin-right: auto;
+}
+
+.habit-btn {
+  border: 1px solid #eee2cf;
+  background: #fff;
+  border-radius: 999px;
+  padding: 0.35rem 0.9rem;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: transform 150ms ease, background 150ms ease;
+}
+
+.habit-btn:active {
+  transform: scale(0.94);
+}
+
+.habit-btn--no.is-active {
+  background: #a8d8b0;
+  border-color: #a8d8b0;
+  color: #2f4a34;
+}
+
+.habit-btn--yes.is-active {
+  background: #e8a0a8;
+  border-color: #e8a0a8;
+  color: #5c2028;
+}
