@@ -13,7 +13,7 @@ import { getTrackerLogsInRange, listCustomTrackers, addCustomTracker, removeCust
 import { getMoonPhase, MOON_ICON_BY_PHASE, type MoonPhase } from '../lib/almanac';
 import StitchDivider from '../components/StitchDivider';
 import PageTitleLogo from "../components/PageTitleLogo";
-
+import HabitTracker from '../components/tracker/HabitTracker';
 function todayISO() {
   return new Date().toISOString().slice(0, 10);
 }
@@ -300,6 +300,8 @@ export default function TrackerPage({ initialTab }: { initialTab?: TabType } = {
             label={activeCustomTracker?.label}
             unit={activeCustomTracker?.unit}
           />
+
+<HabitTracker />
         </>
       )}
 
