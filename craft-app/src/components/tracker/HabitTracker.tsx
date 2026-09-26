@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { supabase } from '../../lib/supabase';
+import './HabitTracker.css';
+
 
 // ---------- types ----------
 
