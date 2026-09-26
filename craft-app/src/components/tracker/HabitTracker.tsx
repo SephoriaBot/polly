@@ -374,24 +374,16 @@ export default function HabitTracker() {
       )}
 
       {habits.length === 0 && !showAdd && (
-        <div className="habit-tracker__empty">
-          <div className="habit-tracker__empty-title">
-            No habits yet
-          </div>
+  <div className="habit-tracker__empty">
+    <div className="habit-tracker__empty-title">
+      No habits yet
+    </div>
 
-          <div className="habit-tracker__empty-text">
-            Add your first habit above to start tracking it.
-          </div>
-
-          <button
-            type="button"
-            className="habit-add-btn"
-            onClick={() => setShowAdd(true)}
-          >
-            + Add Your First Habit
-          </button>
-        </div>
-      )}
+    <div className="habit-tracker__empty-text">
+      Add your first habit above to start tracking it.
+    </div>
+  </div>
+)}
 
       {habits.length > 0 && (
         <div className="habit-tracker__list">
