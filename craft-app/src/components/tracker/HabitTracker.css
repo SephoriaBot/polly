@@ -92,3 +92,32 @@
   border-color: #e8a0a8;
   color: #5c2028;
 }
+
+.habit-color-picker {
+  display: flex;
+  gap: 0.6rem;
+}
+
+.habit-color-option {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  padding: 0;
+  transition: transform 150ms ease, border-color 150ms ease;
+}
+
+.habit-color-option:hover {
+  transform: scale(1.08);
+}
+
+.habit-color-option.is-active {
+  border-color: #5c4a3a;
+}
+
+.habit-color-option--blush    { background: linear-gradient(135deg, #e8a0a8, #a8d8b0); }
+.habit-color-option--lavender { background: linear-gradient(135deg, #c3a6d9, #a8d8b0); }
+.habit-color-option--sage     { background: linear-gradient(135deg, #c9c48f, #7fb88a); }
+.habit-color-option--honey    { background: linear-gradient(135deg, #e6b877, #a8d8b0); }
+
