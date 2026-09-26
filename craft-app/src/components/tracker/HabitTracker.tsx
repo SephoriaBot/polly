@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
-import { supabase } from '@/lib/supabase'; // adjust to Polly's actual client path
+import { supabase } from '../../lib/supabase'; // adjust to Polly's actual client path
 
 // ---------- types ----------
 
