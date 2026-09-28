@@ -59,9 +59,7 @@ export function rollPersonality(): Personality {
 // --- Combat abilities --------------------------------------------------
 // Rolled when a creature evolves. Old traits/abilities are never removed —
 // evolving only adds more on top. Teen abilities lean scrappy/defensive;
-// final abilities lean bigger and more offensive, matching the jump in
-// form size on the teen -> final art. Each species keeps the same cute-
-// then-uncanny tone as the original wereham set.
+// final abilities lean bigger and more offensive.
 
 // --- Wereham (original) -------------------------------------------------
 
@@ -69,7 +67,7 @@ export const WEREHAM_BABY_ABILITIES = [
   "Nibble — a curious, slightly sharp bite",
   "Wobble Charge — an unsteady but earnest rush",
   "Squeak Cry — a surprised little shriek",
-  "Little Slap - a charged but very little slap",
+  "Little Slap — a charged but very little slap",
 ];
 
 export const WEREHAM_TEEN_ABILITIES: string[] = [
@@ -276,7 +274,93 @@ export const WRENDEL_FINAL_ABILITIES: string[] = [
   "The Forest Remembers — every creature that ever died beneath these antlers answers once more",
 ];
 
-// --- Species-aware lookups ------------------------------------------------
+// --- Yeni (hyena/deer hybrid) — scavenger/hunt/uncanny themed -----------
+
+export const YENI_BABY_ABILITIES: string[] = [
+  "Nervous Chitter — a tiny laugh that sounds much too knowing",
+  "Fawn Kick — a wobbly little kick with surprisingly sharp hooves",
+  "Sniff and Snap — investigates first, nips second",
+  "Little Lunge — an awkward rush that ends with far too many teeth showing",
+];
+
+export const YENI_TEEN_ABILITIES: string[] = [
+  "Hyena Pounce — drops low, then springs forward with a laugh already in its throat",
+  "Antler Hook — catches a rival with growing antlers and pulls them off balance",
+  "Bone Crunch — bites down hard enough that the sound carries farther than it should",
+  "Laughing Charge — rushes forward laughing until the laugh becomes something else",
+  "Scavenger's Nose — finds the weakest point without needing to look",
+  "Carrion Step — moves with the loose, uneven gait of something that has forgotten how to walk normally",
+  "Pack Echo — calls once, and distant laughter answers from places that are empty",
+  "Dead-Eye Stare — one unblinking look makes the rival hesitate at exactly the wrong moment",
+  "Fawn's False Step — stumbles deliberately, then attacks from the angle nobody expected",
+  "Rib Rattle — a deep chitter vibrates through the ground beneath its feet",
+  "Bone Toss — hurls a picked-clean bone with unnerving accuracy",
+  "Grinning Maw — the smile stretches wider than the jaw should allow",
+];
+
+export const YENI_FINAL_ABILITIES: string[] = [
+  "Graveyard Laugh — a chorus of hyena laughter rises from beneath the ground",
+  "Antlered Ravager — charges with a crown of branching antlers built for tearing",
+  "Bone Orchard — every discarded bone nearby rises from the earth and points toward the rival",
+  "Feast of the Fallen — every wound on the battlefield seems to become something it can feed from",
+  "Pack That Never Was — invisible companions surround the rival and attack from every direction",
+  "Death Rattle — a single chitter makes every bone in the rival's body answer",
+  "Carrion Crown — wears a crown of bones that move slightly when nobody is looking",
+  "Laughing Hunt — once it starts chasing, distance stops behaving normally",
+  "Hollow Fawn — its gentle deer face splits open to reveal the predator beneath",
+  "Antler Grave — drives its antlers into the ground and roots of bone spread outward",
+  "The Last Scavenger — consumes what remains of an attack and becomes stronger from it",
+  "Moonlit Hyena — under moonlight its body becomes briefly transparent, showing something much larger inside",
+  "Warren of Teeth — small mouths open across the ground wherever its shadow falls",
+  "Old Hunger — something ancient wakes behind its eyes and recognizes the rival",
+  "Bone Choir — every bone it has ever touched begins clicking together in rhythm",
+  "The Laughing Stag — for one terrible moment, its silhouette becomes enormous and antlered",
+];
+
+// --- Siren — song/depth/tide themed -------------------------------------
+
+export const SIREN_BABY_ABILITIES: string[] = [
+  "Tiny Trill — a sweet little note that makes everyone look up",
+  "Splash Flick — a harmless-looking splash with suspiciously good aim",
+  "Fin Flutter — an awkward flap that sends a small wave outward",
+  "Luring Humm — a soft hum that makes you forget what you were doing",
+];
+
+export const SIREN_TEEN_ABILITIES: string[] = [
+  "Bewitching Note — a single beautiful note that makes the rival forget to defend itself",
+  "Undertow Pull — water gathers around the rival's feet and drags backward",
+  "Echoing Lament — sings once, then the same note comes from somewhere behind you",
+  "Siren's Gaze — holds eye contact until the rival forgets which way is up",
+  "Glasswater Voice — a clear note that fractures the air like thin ice",
+  "Drowning Melody — a song that makes the rival feel water filling lungs that are still dry",
+  "Tidal Sweep — calls a sudden wave from nowhere and rides it straight through the fight",
+  "Whispering Current — sends a voice through water, stone, and anything else that should block it",
+  "False Shore — creates the illusion of solid ground where there is only deep water",
+  "Pearl Tear — sheds a single shining tear that bursts into a blinding spray",
+  "Deepwater Lullaby — a gentle melody that makes everything around it slow down",
+  "Many-Mouthed Chorus — her voice harmonizes with something underneath the water",
+];
+
+export const SIREN_FINAL_ABILITIES: string[] = [
+  "Song of the Drowned — every voice lost beneath the water sings through it at once",
+  "Abyssal Call — something enormous hears its song from impossibly far below",
+  "Black Tide — a wave rises without wind and moves against the natural current",
+  "Siren's Dominion — the entire battlefield becomes subject to the pull of the tide",
+  "Drowned Reflection — the rival sees its own reflection beneath the water, and it moves first",
+  "Lullaby of the Deep — a beautiful song that makes the world itself grow quiet",
+  "Thousand-Fathom Voice — a single note travels through the ground and shakes everything above it",
+  "Pearl Heart — its chest opens briefly, revealing a glowing pearl surrounded by darkness",
+  "Leviathan's Answer — something beneath the sea answers its call",
+  "Sea Without Shore — water spreads outward until there is nowhere left to stand",
+  "The Beautiful Face — its face becomes impossibly beautiful, right before the mouth opens too far",
+  "Drowning Moon — the moon's reflection sinks beneath the water and takes the light with it",
+  "Chorus Below — hundreds of unseen sirens join the song from beneath the surface",
+  "Voice in Your Head — its song stops traveling through the air and begins coming from inside the rival",
+  "Abyssal Embrace — dark water coils around the rival like arms that never learned how to let go",
+  "The Last Song — one final note, so beautiful that everything listening forgets it was ever afraid",
+];
+
+// --- Species-aware lookups ----------------------------------------------
 
 export const BABY_ABILITIES_BY_SPECIES: Record<Species, string[]> = {
   wereham: WEREHAM_BABY_ABILITIES,
@@ -284,6 +368,8 @@ export const BABY_ABILITIES_BY_SPECIES: Record<Species, string[]> = {
   dragon: DRAGON_BABY_ABILITIES,
   bunt: BUNT_BABY_ABILITIES,
   wrendel: WRENDEL_BABY_ABILITIES,
+  yeni: YENI_BABY_ABILITIES,
+  siren: SIREN_BABY_ABILITIES,
 };
 
 export const TEEN_ABILITIES_BY_SPECIES: Record<Species, string[]> = {
@@ -292,6 +378,8 @@ export const TEEN_ABILITIES_BY_SPECIES: Record<Species, string[]> = {
   dragon: DRAGON_TEEN_ABILITIES,
   bunt: BUNT_TEEN_ABILITIES,
   wrendel: WRENDEL_TEEN_ABILITIES,
+  yeni: YENI_TEEN_ABILITIES,
+  siren: SIREN_TEEN_ABILITIES,
 };
 
 export const FINAL_ABILITIES_BY_SPECIES: Record<Species, string[]> = {
@@ -300,9 +388,14 @@ export const FINAL_ABILITIES_BY_SPECIES: Record<Species, string[]> = {
   dragon: DRAGON_FINAL_ABILITIES,
   bunt: BUNT_FINAL_ABILITIES,
   wrendel: WRENDEL_FINAL_ABILITIES,
+  yeni: YENI_FINAL_ABILITIES,
+  siren: SIREN_FINAL_ABILITIES,
 };
 
-export function abilityPoolFor(species: Species, stage: EvolutionStage): string[] {
+export function abilityPoolFor(
+  species: Species,
+  stage: EvolutionStage,
+): string[] {
   if (stage === "final") return FINAL_ABILITIES_BY_SPECIES[species];
   if (stage === "teen") return TEEN_ABILITIES_BY_SPECIES[species];
   return BABY_ABILITIES_BY_SPECIES[species];
@@ -314,7 +407,11 @@ export const BABY_ABILITIES = WEREHAM_BABY_ABILITIES;
 export const TEEN_ABILITIES = WEREHAM_TEEN_ABILITIES;
 export const FINAL_ABILITIES = WEREHAM_FINAL_ABILITIES;
 
-export function rollAbilities(pool: string[], count: number, exclude: string[] = []): string[] {
+export function rollAbilities(
+  pool: string[],
+  count: number,
+  exclude: string[] = [],
+): string[] {
   const available = pool.filter((a) => !exclude.includes(a));
   return pickRandom(available, Math.min(count, available.length));
 }
