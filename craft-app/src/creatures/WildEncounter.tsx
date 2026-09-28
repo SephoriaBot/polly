@@ -341,7 +341,7 @@ const goScout = () => {
                 }}
               >
                 <Icon name="hamster-wild" size={18} />
-                A wild {wild ? SPECIES_LABELS[wild.species].toLowerCase() : "creature"} appeared while you were busy!
+                A wild creature appeared while you were busy!
               </div>
             )}
 
