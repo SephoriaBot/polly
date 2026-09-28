@@ -5,9 +5,9 @@
 // Duplicates are allowed within a species — fully random every time, per
 // your original call.
 
-export type Species = "wereham" | "noodle" | "dragon" | "bunt" | "wrendel";
+export type Species = "wereham" | "noodle" | "dragon" | "bunt" | "wrendel" | "yeni" | "siren";
 
-export const SPECIES: Species[] = ["wereham", "noodle", "dragon", "bunt", "wrendel"];
+export const SPECIES: Species[] = ["wereham", "noodle", "dragon", "bunt", "wrendel", "yeni", "siren"];
 
 export const SPECIES_LABELS: Record<Species, string> = {
   wereham: "Wereham",
@@ -15,6 +15,8 @@ export const SPECIES_LABELS: Record<Species, string> = {
   dragon: "Dragon",
   bunt: "Bunt",
   wrendel: "Wrendel",
+  yeni: "Yeni",
+  siren: "Siren",
 };
 
 export interface Creature {
@@ -30,6 +32,8 @@ const ROSTER_SIZE: Record<Species, number> = {
   dragon: 15,
   bunt: 10,
   wrendel: 10,
+  yeni: 9,
+  siren: 10,
 };
 
 // Baby image path per species — matches the actual asset folder layout.
@@ -49,6 +53,12 @@ function babyImage(species: Species, n: number): string {
   if (species === "wrendel") {
     return `/assets/wrendels/wrendelbaby${n}.png`;
   }
+   if (species === "yeni") {
+    return `/assets/yeni/babyyeni${n}.png`;
+  }
+   if (species === "siren") {
+    return `/assets/siren/sirenbaby${n}.PNG`;
+  }
   // dragon
   return `/assets/Dragons/babydragon${n}.png`;
 }
@@ -67,6 +77,12 @@ function teenImage(species: Species, n: number): string {
   if (species === "wrendel") {
     return `/assets/wrendels/wrendelmiddle${n}.png`;
   }
+  if (species === "yeni") {
+    return `/assets/yeni/middleyeni${n}.png`;
+  }
+  if (species === "siren") {
+    return `/assets/siren/sirenmiddle${n}.PNG`;
+  }
   return `/assets/Dragons/middledragon${n}.png`;
 }
 
@@ -84,6 +100,12 @@ function finalImage(species: Species, n: number): string {
   if (species === "wrendel") {
     return `/assets/wrendels/wrendelfinal${n}.png`;
   }
+  if (species === "yeni") {
+    return `/assets/yeni/finalyeni${n}.png`;
+  }
+  if (species === "siren") {
+    return `/assets/siren/sirenfinal${n}.PNG`;
+  }
   return `/assets/Dragons/godd${n}.png`;
 }
 
@@ -99,6 +121,8 @@ export const NOODLES: Creature[] = buildRoster("noodle");
 export const DRAGONS: Creature[] = buildRoster("dragon");
 export const BUNTS: Creature[] = buildRoster("bunt");
 export const WRENDELS: Creature[] = buildRoster("wrendel");
+export const YENIS: Creature[] = buildRoster("yeni");
+export const SIRENS: Creature[] = buildRoster("siren");
 
 export const ROSTER_BY_SPECIES: Record<Species, Creature[]> = {
   wereham: WEREHAMS,
@@ -106,6 +130,8 @@ export const ROSTER_BY_SPECIES: Record<Species, Creature[]> = {
   dragon: DRAGONS,
   bunt: BUNTS,
   wrendel: WRENDELS,
+  yeni: YENIS,
+  siren: SIRENS,
 };
 
 // Every baby for a given species. Anything that looks up a hatched
@@ -169,6 +195,8 @@ export const TEEN_FORMS_BY_SPECIES: Record<Species, EvolutionForm[]> = {
   dragon: buildForms("dragon", teenImage, "teen"),
   bunt: buildForms("bunt", teenImage, "teen"),
   wrendel: buildForms("wrendel", teenImage, "teen"),
+  yeni: buildForms("yeni", teenImage, "teen"),
+  siren: buildForms("siren", teenImage, "teen"),
 };
 
 export const FINAL_FORMS_BY_SPECIES: Record<Species, EvolutionForm[]> = {
@@ -177,6 +205,8 @@ export const FINAL_FORMS_BY_SPECIES: Record<Species, EvolutionForm[]> = {
   dragon: buildForms("dragon", finalImage, "final"),
   bunt: buildForms("bunt", finalImage, "final"),
   wrendel: buildForms("wrendel", finalImage, "final"),
+  yeni: buildForms("yeni", finalImage, "final"),
+  siren: buildForms("siren", finalImage, "final"),
 };
 
 // Flattened across all species — kept for any old call site that expects
