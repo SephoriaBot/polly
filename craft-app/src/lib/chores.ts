@@ -23,8 +23,11 @@ export interface ChoreStatus {
 }
 
 export function daysSince(iso: string, now: Date): number {
-  return Math.floor((now.getTime() - new Date(iso).getTime()) / MS_PER_DAY);
+  const a = new Date(iso); a.setHours(0, 0, 0, 0);
+  const b = new Date(now); b.setHours(0, 0, 0, 0);
+  return Math.round((b.getTime() - a.getTime()) / MS_PER_DAY);
 }
+
 
 export function statusFor(chore: Chore, now: Date): ChoreStatus {
   if (!chore.last_done_at) {
