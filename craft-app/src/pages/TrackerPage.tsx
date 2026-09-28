@@ -32,15 +32,14 @@ import {
 
 import StitchDivider from '../components/StitchDivider';
 import PageTitleLogo from '../components/PageTitleLogo';
+import { localDateKey, localDaysAgoKey } from '../lib/dateKey';
 
 function todayISO() {
-  return new Date().toISOString().slice(0, 10);
+  return localDateKey();
 }
 
 function daysAgoISO(days: number) {
-  const d = new Date();
-  d.setDate(d.getDate() - days);
-  return d.toISOString().slice(0, 10);
+  return localDaysAgoKey(days);
 }
 
 function currentMonthKey() {

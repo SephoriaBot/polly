@@ -13,6 +13,7 @@ import { useCreatureGrowth } from '../creatures/CreatureGrowthContext';
 import StitchDivider from '../components/StitchDivider';
 import CheckMark from '../components/CheckMark';
 import PageTitleLogo from "../components/PageTitleLogo";
+import { localDateKey } from '../lib/dateKey';
 
 interface GroceryList { id: string; name: string; created_at: string }
 
@@ -914,7 +915,7 @@ export default function Grocery({ initialTab }: { initialTab?: 'list' | 'recipes
         item_name: itemName,
         store: priceForm.store.trim(),
         price: parseFloat(priceForm.price),
-        updated_at: new Date().toISOString().split('T')[0],
+        updated_at: localDateKey(),
       })
       .select().single()
     if (data) setPrices(prev => [...prev, data].sort((a, b) => a.price - b.price))

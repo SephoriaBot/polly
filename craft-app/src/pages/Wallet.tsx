@@ -11,6 +11,7 @@ import StitchDivider from '../components/StitchDivider';
 import CheckMark from '../components/CheckMark';
 import { useCreatureGrowth } from '../creatures/CreatureGrowthContext';
 import PageTitleLogo from "../components/PageTitleLogo";
+import { localDateKey } from "../lib/dateKey";
 
 interface Debt {
   id: number;
@@ -157,7 +158,7 @@ function pct(n: number, total: number) {
 }
 
 function todayStr() {
-  return new Date().toISOString().split("T")[0];
+  return localDateKey();
 }
 
 function isLate(dueDay: number, month: number, year: number, paid: boolean) {
