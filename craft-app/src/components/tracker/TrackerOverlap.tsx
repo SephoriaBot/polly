@@ -13,6 +13,7 @@ import {
 import { TRACKER_CONFIG } from '../../data/trackerConfig';
 import type { TrackerType } from '../../types/tracker';
 import { getTrackerLogsInRange } from '../../lib/trackerApi';
+import { localDateKey, localDaysAgoKey } from '../../lib/dateKey';
 
 interface OverlapPoint {
   log_date: string;
@@ -53,12 +54,10 @@ function interpretR(r: number): string {
 }
 
 function todayISO() {
-  return new Date().toISOString().slice(0, 10);
+  return localDateKey();
 }
 function daysAgoISO(days: number) {
-  const d = new Date();
-  d.setDate(d.getDate() - days);
-  return d.toISOString().slice(0, 10);
+  return localDaysAgoKey(days);
 }
 
 const ALL_TYPES = Object.keys(TRACKER_CONFIG) as TrackerType[];
