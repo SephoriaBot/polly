@@ -9,6 +9,7 @@ import emptyWallet from '../../assets/icons/empty-wallet.png';
 import errorDizzyImg from '../../assets/illustrations/error_dizzy.png';
 import EmptyState from '../EmptyState';
 import StitchDivider from '../StitchDivider';
+import { localDateKey } from '../../lib/dateKey'
 
 const DIETS = ['vegetarian','vegan','gluten free','ketogenic','paleo','whole30']
 const INTOLERANCES = ['dairy','egg','gluten','peanut','soy','tree nut']
@@ -641,7 +642,7 @@ function PlanNightForm({
   onCancel: () => void
   onConfirm: (meal: SavedMeal, dateStr: string, includeGroceries: boolean) => void
 }) {
-  const todayStr = new Date().toISOString().slice(0, 10)
+  const todayStr = localDateKey()
   const [date, setDate] = useState(todayStr)
   const [includeGroceries, setIncludeGroceries] = useState(hasIngredients)
   const [saving, setSaving] = useState(false)
