@@ -201,11 +201,11 @@ export function getHerbOfDay(date: Date): { name: string; lore: string } {
 
 export async function fetchTodaysHolidayUS(date: Date): Promise<string | null> {
   try {
-    const year = date.getUTCFullYear();
+    const year = date.getFullYear();
     const res = await fetch(`https://date.nager.at/api/v3/PublicHolidays/${year}/US`);
     if (!res.ok) return null;
     const holidays: { date: string; localName: string }[] = await res.json();
-    const iso = date.toISOString().slice(0, 10);
+    const iso = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
     const match = holidays.find((h) => h.date === iso);
     return match ? match.localName : null;
   } catch {

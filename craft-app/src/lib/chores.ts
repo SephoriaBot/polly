@@ -4,6 +4,8 @@
 // planner card and the Dashboard Today snapshot so the two never drift
 // out of sync on what counts as due.
 
+import { calendarDaysBetween } from './dateKey';
+
 export interface Chore {
   id: string;
   name: string;
@@ -14,8 +16,6 @@ export interface Chore {
   estimated_minutes: number;
 }
 
-const MS_PER_DAY = 1000 * 60 * 60 * 24;
-
 export interface ChoreStatus {
   label: string;
   overdueDays: number; // higher = more overdue; used for sorting
@@ -23,11 +23,9 @@ export interface ChoreStatus {
 }
 
 export function daysSince(iso: string, now: Date): number {
-  const a = new Date(iso); a.setHours(0, 0, 0, 0);
-  const b = new Date(now); b.setHours(0, 0, 0, 0);
-  return Math.round((b.getTime() - a.getTime()) / MS_PER_DAY);
+  // Calendar days (local midnight), not elapsed 24h blocks.
+  return calendarDaysBetween(iso, now);
 }
-
 
 export function statusFor(chore: Chore, now: Date): ChoreStatus {
   if (!chore.last_done_at) {

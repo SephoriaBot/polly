@@ -21,6 +21,7 @@ import { supabase } from './supabase';
 import { publishToast } from './toastBus';
 import { publishQuestChanged } from './questBus';
 import { HABITAT_ITEMS } from './habitatItems';
+import { localDateKey } from './dateKey';
 
 const SPECIES = ['wereham', 'noodle', 'dragon', 'bunt', 'wrendel'] as const;
 type Species = (typeof SPECIES)[number];
@@ -73,10 +74,8 @@ function pickWeightedRewardType(weights: Record<RewardType, number>): RewardType
 }
 
 function todayDateKey(): string {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  return localDateKey(); // local YYYY-MM-DD, so the daily roll resets at local midnight
 }
-
 
 function endOfTodayIso(): string {
   const d = new Date();
