@@ -1599,6 +1599,7 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
   if (periodStartSunday >= rangeStart || weekIsStillOpen) return null;
 
   const periodStartKey = dateKey(periodStartSunday);
+  const partlyVisibleWeek = closingSaturday >= rangeStart;
   const fmt = (d: Date) =>
     d.toLocaleDateString(undefined, {
       month: "short",
@@ -1615,7 +1616,9 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
       }}
     >
             <div className="form-label" style={{ marginBottom: 4, color: "var(--info-card-text)" }}>
-        Hours worked {fmt(periodStartSunday)}–{fmt(closingSaturday)}
+        {partlyVisibleWeek
+          ? <>Hours worked {fmt(periodStartSunday)}–{fmt(new Date(rangeStart.getFullYear(), rangeStart.getMonth(), rangeStart.getDate() - 1))} (before this calendar starts)</>
+          : <>Hours worked {fmt(periodStartSunday)}–{fmt(closingSaturday)}</>}
       </div>
 
       <div
@@ -1625,10 +1628,14 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
           marginBottom: 8,
         }}
       >
-        This week already closed out before the calendar's visible window,
-        so it never had a row to log hours into. Enter it here and
-        Wednesday {fmt(firstWednesday)} will show its release using the
-        same math as everywhere else.
+        {partlyVisibleWeek
+          ? <>This week started before the calendar's first day. Enter only the hours
+            from before {fmt(rangeStart)} here — the days you log below ({fmt(rangeStart)}–{fmt(closingSaturday)}) count
+            on their own, and Wednesday {fmt(firstWednesday)} shows the release for the whole week.</>
+          : <>This week already closed out before the calendar's visible window,
+            so it never had a row to log hours into. Enter it here and
+            Wednesday {fmt(firstWednesday)} will show its release using the
+            same math as everywhere else.</>}
       </div>
 
       <div style={{ display: "flex", gap: 8 }}>
