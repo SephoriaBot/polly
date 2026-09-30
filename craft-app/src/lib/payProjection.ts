@@ -247,11 +247,25 @@ export function buildMoneyCalendarRows(inputs: PayProjectionInputs, allDays: Dat
         const closedWithdrawnGross = closedEarnedGross * eligiblePercent(closedEarnedGross, budget.net_to_gross_ratio, budget.flat_deductions_prev, closedHours, earlyPayPreset);
         const closedTaxableGross = Math.max(0, closedEarnedGross - budget.flat_deductions_prev);
         const closedNetOwed = closedTaxableGross * (1 - taxRate / 100);
-        pendingPayout = Math.max(0, closedNetOwed - closedWithdrawnGross);
-        // Any part of this same week that IS visible (e.g. Oct 1–3 when the
-        // week started Sept 27) is already folded into that manual total —
-        // mark it so the loop below skips re-accumulating those days.
-        closedWeekEndKey = dateKey(closingSaturday);
+        if (closingSaturday >= allDays[0]) {
+          // The week is only PARTLY before the visible window (e.g. an October
+          // view starting Thu Oct 1 while the week began Sun Sep 27). The card
+          // holds just the hours worked BEFORE the window; the visible days
+          // (Oct 1–3) are real rows the person logs hours into, so they must
+          // keep earning / releasing Anytime Pay. Seed the period with the
+          // card's hours — exactly how "hours already worked this week" seeds
+          // the current week — and let the loop finish the week on Saturday.
+          if (closedHours > 0) {
+            periodEarnedGross = closedEarnedGross;
+            periodHoursSoFar = closedHours;
+            periodWithdrawnGross = closedWithdrawnGross;
+          }
+        } else {
+          // The whole week closed before the window: its leftover payout
+          // releases on the first Wednesday and no visible day belongs to it.
+          pendingPayout = Math.max(0, closedNetOwed - closedWithdrawnGross);
+          closedWeekEndKey = dateKey(closingSaturday);
+        }
       }
     }
   }
