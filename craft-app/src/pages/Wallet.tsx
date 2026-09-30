@@ -12,6 +12,17 @@ import CheckMark from '../components/CheckMark';
 import { useCreatureGrowth } from '../creatures/CreatureGrowthContext';
 import PageTitleLogo from "../components/PageTitleLogo";
 import { localDateKey } from "../lib/dateKey";
+import {
+  EARLY_PAY_PRESETS,
+  buildBillsByDate as buildBillsByDateShared,
+  buildMoneyCalendarRows as buildMoneyCalendarRowsShared,
+  weeklyOccurrencesInRange,
+  type EarlyPayPreset,
+  type EarlyPayPresetId,
+  type PayProjectionInputs,
+  SAFE_TO_SPEND_BUFFER,
+  SAFE_TO_SPEND_LOOKAHEAD_DAYS,
+} from "../lib/payProjection";
 
 interface Debt {
   id: number;
@@ -186,79 +197,13 @@ function frequencyLabel(unit: "month" | "week" | undefined, interval: number | u
   return `Every ${n} weeks`;
 }
 
-// All occurrence dates for a week-based bill that fall within [rangeStart, rangeEnd] (inclusive).
-function weeklyOccurrencesInRange(anchor: Date, intervalWeeks: number, rangeStart: Date, rangeEnd: Date): Date[] {
-  const stepDays = Math.max(1, intervalWeeks) * 7;
-  let cursor = new Date(anchor);
-  if (cursor < rangeStart) {
-    const diffDays = Math.ceil((rangeStart.getTime() - cursor.getTime()) / (1000 * 60 * 60 * 24));
-    const steps = Math.ceil(diffDays / stepDays);
-    cursor = new Date(cursor);
-    cursor.setDate(cursor.getDate() + steps * stepDays);
-  }
-  const occurrences: Date[] = [];
-  while (cursor <= rangeEnd) {
-    occurrences.push(new Date(cursor));
-    cursor = new Date(cursor);
-    cursor.setDate(cursor.getDate() + stepDays);
-  }
-  return occurrences;
-}
-
 function hoursOfWork(amount: number, wage: number) {
   if (!wage || wage <= 0) return null;
   return (amount / wage).toFixed(1);
 }
 
-// ── EARLY PAY ELIGIBLE PERCENTAGE ──
-// Employer presets for early-pay/advance-pay eligibility formulas. "Amazon"
-// mirrors Amazon's real Anytime Pay math (garnishments, a 2% safety buffer
-// that steps up to 8% past 55 hours in a week). "Custom" lets anyone using
-// a different employer's early-pay program plug in their own numbers.
-export type EarlyPayPresetId = "amazon" | "custom";
-
-export interface EarlyPayPreset {
-  id: EarlyPayPresetId;
-  label: string;
-  garnishments: number;
-  safetyBufferNormal: number;
-  safetyBufferHighHours: number;
-  highHoursThreshold: number;
-}
-
-export const EARLY_PAY_PRESETS: Record<EarlyPayPresetId, EarlyPayPreset> = {
-  amazon: {
-    id: "amazon",
-    label: "Amazon Anytime Pay",
-    garnishments: 0,
-    safetyBufferNormal: 0.02,
-    safetyBufferHighHours: 0.08,
-    highHoursThreshold: 55,
-  },
-  custom: {
-    id: "custom",
-    label: "Custom / Other Employer",
-    garnishments: 0,
-    safetyBufferNormal: 0.02,
-    safetyBufferHighHours: 0.02,
-    highHoursThreshold: 999,
-  },
-};
-
-function getSafetyBuffer(hoursSoFar: number, preset: EarlyPayPreset) {
-  return hoursSoFar >= preset.highHoursThreshold
-    ? preset.safetyBufferHighHours
-    : preset.safetyBufferNormal;
-}
-
-function eligiblePercent(preTaxEarnedSoFar: number, netToGrossRatio: number, flatDeductionsPrev: number, hoursSoFar: number, preset: EarlyPayPreset) {
-  if (preTaxEarnedSoFar <= 0 || netToGrossRatio <= 0) return 0;
-  const availableEarlyPay = preTaxEarnedSoFar * netToGrossRatio;
-  const afterFlatDeductions = availableEarlyPay - flatDeductionsPrev;
-  const afterGarnishments = afterFlatDeductions - preset.garnishments;
-  const rawPct = afterGarnishments / preTaxEarnedSoFar;
-  return Math.max(0, rawPct - getSafetyBuffer(hoursSoFar, preset));
-}
+// Early-pay presets + the eligiblePercent math now live in lib/payProjection.ts
+// (shared with lib/money.ts so "Can I afford this?" matches this page).
 
 const PERIOD_MULTIPLIERS: Record<string, number> = {
   weekly: 52 / 12,
@@ -642,49 +587,7 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
   }, [selectedMonth, selectedYear]);
 
   function buildBillsByDate(allDays: Date[]) {
-    const map: Record<string, { id: number; name: string; amount: number }[]> = {};
-    const monthsInView = new Set(allDays.map(d => `${d.getFullYear()}-${d.getMonth() + 1}`));
-
-    bills.forEach(bill => {
-      if (bill.recurring) {
-        monthsInView.forEach(key => {
-          const [y, m] = key.split("-").map(Number);
-          const occurrences = payments.filter(p => p.bill_id === bill.id && p.month === m && p.year === y);
-
-          if (occurrences.length === 0) {
-            // Payment row(s) not generated yet (race with ensurePaymentsExist on
-            // first load) — synthesize a single fallback so the calendar doesn't
-            // blank out momentarily. Only meaningful for the monthly cadence;
-            // weekly bills will fill in for real within a moment.
-            const dueDate = new Date(y, m - 1, bill.due_day);
-            const dKey = dateKey(dueDate);
-            if (!map[dKey]) map[dKey] = [];
-            map[dKey].push({ id: bill.id, name: bill.name, amount: bill.amount });
-            return;
-          }
-
-          occurrences.forEach(payment => {
-            if (payment.paid) return;
-            const effectiveDueDay = payment.due_day ?? bill.due_day;
-            const amount = payment.amount ?? bill.amount;
-            const name = payment.name ?? bill.name;
-            const dueDate = payment.due_date ? new Date(payment.due_date + "T00:00:00") : new Date(y, m - 1, effectiveDueDay);
-            const dKey = dateKey(dueDate);
-            if (!map[dKey]) map[dKey] = [];
-            map[dKey].push({ id: bill.id, name, amount });
-          });
-        });
-      } else if (bill.bill_month && bill.bill_year) {
-        const payment = payments.find(p => p.bill_id === bill.id && p.month === bill.bill_month && p.year === bill.bill_year);
-        const paid = payment?.paid ?? false;
-        if (paid) return;
-        const dueDate = new Date(bill.bill_year, bill.bill_month - 1, bill.due_day);
-        const dKey = dateKey(dueDate);
-        if (!map[dKey]) map[dKey] = [];
-        map[dKey].push({ id: bill.id, name: bill.name, amount: bill.amount });
-      }
-    });
-    return map;
+    return buildBillsByDateShared(bills, payments, allDays);
   }
 
   const billsByDate = useMemo(
@@ -854,128 +757,25 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
   const netHourlyWage = budget.hourly_wage > 0 ? budget.hourly_wage * (1 - taxRate / 100) : 0;
   const netOtWage = effectiveOtWage > 0 ? effectiveOtWage * (1 - taxRate / 100) : 0;
 
+  // Everything the shared pay projection needs, gathered from page state.
+  const payInputs: PayProjectionInputs = {
+    hourlyWage: budget.hourly_wage || 0,
+    otWage: effectiveOtWage || 0,
+    netToGrossRatio: budget.net_to_gross_ratio,
+    flatDeductionsPrev: budget.flat_deductions_prev,
+    taxRate,
+    earlyPayPreset,
+    priorWeekHours,
+    closedWeekHours,
+    dailyHours,
+    recurringHours,
+    extraFunds,
+    extraExpenses,
+  };
+
   function buildMoneyCalendarRows(allDays: Date[], startingBalance: number, billsMap: Record<string, { id: number; name: string; amount: number }[]> = billsByDate) {
-  let runningBalance = startingBalance;
-
-  let periodEarnedGross = 0;
-  let periodHoursSoFar = 0;
-  let periodWithdrawnGross = 0;
-  let pendingPayout = 0;
-
-  const grossHourlyWage = budget.hourly_wage || 0;
-  const grossOtWage = effectiveOtWage || 0;
-
-  if (allDays.length && allDays[0].getDay() !== 0 && priorWeekHours.weekStart === currentWeekStartKey()) {
-    const priorReg = parseFloat(priorWeekHours.reg) || 0;
-    const priorOt = parseFloat(priorWeekHours.ot) || 0;
-    const priorGross = priorReg * grossHourlyWage + priorOt * grossOtWage;
-
-    const priorHours = priorReg + priorOt;
-    periodEarnedGross = priorGross;
-    periodHoursSoFar = priorHours;
-    periodWithdrawnGross = priorGross * eligiblePercent(priorGross, budget.net_to_gross_ratio, budget.flat_deductions_prev, priorHours, earlyPayPreset);
+    return buildMoneyCalendarRowsShared(payInputs, allDays, startingBalance, billsMap);
   }
-
-  // A week's leftover payout only needs to come from the manual
-  // closedWeekHours card when that week's *Sunday* isn't in the visible
-  // range — i.e. the loop can't see enough of the week to total it itself.
-  // (Checking "does a Saturday appear before the first Wednesday in the
-  // array" instead of this breaks for any month/view starting on a
-  // Thu/Fri/Sat, since the closing Saturday can still land inside the
-  // visible window even though the week's Sunday doesn't — e.g. a month
-  // that starts on a Thursday, where day 3 of the view is a Saturday but
-  // the week began the prior Sunday, outside the view.)
-  const firstWednesdayIdx = allDays.findIndex(d => d.getDay() === 3);
-  let closedWeekEndKey: string | null = null;
-  if (firstWednesdayIdx !== -1) {
-    const firstWednesday = allDays[firstWednesdayIdx];
-    const closingSaturday = new Date(firstWednesday);
-    closingSaturday.setDate(closingSaturday.getDate() - 4);
-    const periodStartSunday = new Date(closingSaturday);
-    periodStartSunday.setDate(periodStartSunday.getDate() - 6);
-
-    if (periodStartSunday < allDays[0]) {
-      const periodStartKey = dateKey(periodStartSunday);
-
-      if (closedWeekHours.weekStart === periodStartKey) {
-        const closedReg = parseFloat(closedWeekHours.reg) || 0;
-        const closedOt = parseFloat(closedWeekHours.ot) || 0;
-        const closedEarnedGross = closedReg * grossHourlyWage + closedOt * grossOtWage;
-        const closedHours = closedReg + closedOt;
-        const closedWithdrawnGross = closedEarnedGross * eligiblePercent(closedEarnedGross, budget.net_to_gross_ratio, budget.flat_deductions_prev, closedHours, earlyPayPreset);
-        const closedTaxableGross = Math.max(0, closedEarnedGross - budget.flat_deductions_prev);
-        const closedNetOwed = closedTaxableGross * (1 - taxRate / 100);
-        pendingPayout = Math.max(0, closedNetOwed - closedWithdrawnGross);
-        // Any part of this same week that IS visible (e.g. Oct 1–3 when the
-        // week started Sept 27) is already folded into that manual total —
-        // mark it so the loop below skips re-accumulating those days.
-        closedWeekEndKey = dateKey(closingSaturday);
-      }
-    }
-  }
-
-  const rows = allDays.map(d => {
-    const key = dateKey(d);
-    const dow = d.getDay();
-    const alreadyCoveredByClosedWeekCard = closedWeekEndKey !== null && key <= closedWeekEndKey;
-
-    if (dow === 0) {
-      periodEarnedGross = 0;
-      periodHoursSoFar = 0;
-      periodWithdrawnGross = 0;
-    }
-
-    const extraToday = parseFloat(extraFunds[key]) || 0;
-    const extraExpenseToday = parseFloat(extraExpenses[key]) || 0;
-    const billsToday = billsMap[key] || [];
-    const billsTotal = billsToday.reduce((s, b) => s + b.amount, 0);
-
-    const regHoursToday = parseFloat(dailyHours[key]?.reg ?? recurringHours[dow]?.reg ?? "") || 0;
-    const otHoursToday = parseFloat(dailyHours[key]?.ot ?? recurringHours[dow]?.ot ?? "") || 0;
-    const hoursToday = regHoursToday + otHoursToday;
-
-    const fullEarnedToday =
-      grossHourlyWage > 0
-        ? regHoursToday * grossHourlyWage + otHoursToday * grossOtWage
-        : 0;
-
-    if (!alreadyCoveredByClosedWeekCard) {
-      periodEarnedGross += fullEarnedToday;
-      periodHoursSoFar += hoursToday;
-    }
-
-    const eligiblePct = eligiblePercent(periodEarnedGross, budget.net_to_gross_ratio, budget.flat_deductions_prev, periodHoursSoFar, earlyPayPreset);
-    const maxWithdrawableGrossSoFar = periodEarnedGross * eligiblePct;
-    const withdrawnBeforeToday = periodWithdrawnGross;
-    const availableToday = alreadyCoveredByClosedWeekCard ? 0 : Math.max(0, maxWithdrawableGrossSoFar - periodWithdrawnGross);
-    periodWithdrawnGross += availableToday;
-
-        if (dow === 6 && !alreadyCoveredByClosedWeekCard) {
-      const taxableGross = Math.max(0, periodEarnedGross - budget.flat_deductions_prev);
-      const netOwedForPeriod = taxableGross * (1 - taxRate / 100);
-      pendingPayout += Math.max(0, netOwedForPeriod - periodWithdrawnGross);
-    }
-
-
-    let releasedToday = 0;
-    if (dow === 3 && pendingPayout > 0) {
-      releasedToday = pendingPayout;
-      pendingPayout = 0;
-    }
-
-    runningBalance += availableToday + releasedToday + extraToday - extraExpenseToday - billsTotal;
-    const heldInPool = Math.max(0, periodEarnedGross - periodWithdrawnGross);
-
-    return {
-      date: d, key, billsToday, billsTotal, regHoursToday, otHoursToday,
-      hoursToday, earnedToday: fullEarnedToday, availableToday, releasedToday,
-      eligiblePct, heldInPool, extraToday, extraExpenseToday, balance: runningBalance,
-      ceilingToday: maxWithdrawableGrossSoFar, withdrawnBeforeToday,
-    };
-  });
-
-  return { rows, endingBalance: runningBalance };
-}
 
 
   const isCalendarCurrentMonth = selectedYear === today.getFullYear() && selectedMonth === today.getMonth() + 1;
@@ -986,7 +786,7 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
 
   const moneyCalendarResult = useMemo(
     () => buildMoneyCalendarRows(calendarDays, calendarStartingBalance),
-    [calendarDays, billsByDate, dailyHours, recurringHours, extraFunds, extraExpenses, netHourlyWage, netOtWage, calendarStartingBalance, budget.net_to_gross_ratio, budget.flat_deductions_prev, priorWeekHours, closedWeekHours]
+    [calendarDays, billsByDate, dailyHours, recurringHours, extraFunds, extraExpenses, netHourlyWage, netOtWage, calendarStartingBalance, budget.hourly_wage, budget.net_to_gross_ratio, budget.flat_deductions_prev, taxRate, earlyPayPreset, effectiveOtWage, priorWeekHours, closedWeekHours]
   );
 
   const moneyCalendarWeekChunks = useMemo(() => {
@@ -1059,7 +859,6 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
   const unpaidTotal = monthBills.filter(b => !b.paid).reduce((s, b) => s + b.amount, 0);
 
   const near5Total = near5Bills.reduce((s, b) => s + b.amount, 0);
-  const SAFE_TO_SPEND_BUFFER = 50;
 
   function tierForDaySafe(amount: number): { label: string; color: string; bg: string } {
     if (amount <= 0) return { label: "Tight", color: "var(--danger)", bg: "var(--danger-bg)" };
@@ -1070,7 +869,6 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
   // Safe-to-spend looks this many days ahead for the lowest point your
   // balance will hit. It's deliberately longer than "bills in the next few
   // days" so rent a week out is already reflected today.
-  const SAFE_TO_SPEND_LOOKAHEAD_DAYS = 10;
 
   // The month view stops at the last day of the month, which made the card
   // blind to anything due after it (e.g. on Sep 30, October's rent was
