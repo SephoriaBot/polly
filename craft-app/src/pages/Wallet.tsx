@@ -641,9 +641,8 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
     return days;
   }, [selectedMonth, selectedYear]);
 
-  const billsByDate = useMemo(() => {
+  function buildBillsByDate(allDays: Date[]) {
     const map: Record<string, { id: number; name: string; amount: number }[]> = {};
-    const allDays = calendarDays;
     const monthsInView = new Set(allDays.map(d => `${d.getFullYear()}-${d.getMonth() + 1}`));
 
     bills.forEach(bill => {
@@ -686,7 +685,12 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
       }
     });
     return map;
-  }, [bills, payments, calendarDays]);
+  }
+
+  const billsByDate = useMemo(
+    () => buildBillsByDate(calendarDays),
+    [bills, payments, calendarDays]
+  );
 
   const [dailyHours, setDailyHours] = useState<Record<string, { reg: string; ot: string }>>({});
   const dailyHoursSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -850,7 +854,7 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
   const netHourlyWage = budget.hourly_wage > 0 ? budget.hourly_wage * (1 - taxRate / 100) : 0;
   const netOtWage = effectiveOtWage > 0 ? effectiveOtWage * (1 - taxRate / 100) : 0;
 
-  function buildMoneyCalendarRows(allDays: Date[], startingBalance: number) {
+  function buildMoneyCalendarRows(allDays: Date[], startingBalance: number, billsMap: Record<string, { id: number; name: string; amount: number }[]> = billsByDate) {
   let runningBalance = startingBalance;
 
   let periodEarnedGross = 0;
@@ -923,7 +927,7 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
 
     const extraToday = parseFloat(extraFunds[key]) || 0;
     const extraExpenseToday = parseFloat(extraExpenses[key]) || 0;
-    const billsToday = billsByDate[key] || [];
+    const billsToday = billsMap[key] || [];
     const billsTotal = billsToday.reduce((s, b) => s + b.amount, 0);
 
     const regHoursToday = parseFloat(dailyHours[key]?.reg ?? recurringHours[dow]?.reg ?? "") || 0;
@@ -1063,18 +1067,45 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
     return { label: "Comfortable", color: "var(--green-dark)", bg: "var(--sage-light)" };
   }
 
+  // Safe-to-spend looks this many days ahead for the lowest point your
+  // balance will hit. It's deliberately longer than "bills in the next few
+  // days" so rent a week out is already reflected today.
+  const SAFE_TO_SPEND_LOOKAHEAD_DAYS = 10;
+
+  // The month view stops at the last day of the month, which made the card
+  // blind to anything due after it (e.g. on Sep 30, October's rent was
+  // invisible). For the current month, project past month-end for the
+  // lookahead window using the same row logic + the same bills.
+  const safeProjection = useMemo(() => {
+    if (!isCalendarCurrentMonth || calendarDays.length === 0) return moneyCalendarResult;
+    const days = [...calendarDays];
+    const last = days[days.length - 1];
+    for (let i = 1; i <= SAFE_TO_SPEND_LOOKAHEAD_DAYS; i++) {
+      const next = new Date(last);
+      next.setDate(next.getDate() + i);
+      days.push(next);
+    }
+    return buildMoneyCalendarRows(days, calendarStartingBalance, buildBillsByDate(days));
+  }, [moneyCalendarResult, calendarDays, isCalendarCurrentMonth, calendarStartingBalance, bills, payments]);
+
   const heatStripDays = useMemo(() => {
-    const rows = moneyCalendarResult.rows;
-    return rows.map((row, idx) => {
-      // Look at bills landing in the next 4 days after this one (today's own bills
-      // are already reflected in row.balance) so a day right before a bill hits
-      // shows as tighter than the raw end-of-day balance alone would suggest.
-      const lookahead = rows.slice(idx + 1, idx + 5);
-      const upcomingBills = lookahead.reduce((s, r) => s + r.billsTotal, 0);
-      const daySafe = row.balance - upcomingBills - SAFE_TO_SPEND_BUFFER;
-      return { key: row.key, date: row.date, daySafe };
+    const rows = safeProjection.rows;
+    const visibleCount = moneyCalendarResult.rows.length;
+    return rows.slice(0, visibleCount).map((row, idx) => {
+      // Lowest projected end-of-day balance from this day through the lookahead
+      // window. Bills AND projected income are both in row.balance, so a
+      // payday before the bill is credited and a bill before payday is not.
+      const span = rows.slice(idx, idx + SAFE_TO_SPEND_LOOKAHEAD_DAYS + 1);
+      const low = span.reduce((m, r) => (r.balance < m.balance ? r : m), span[0]);
+      return {
+        key: row.key,
+        date: row.date,
+        daySafe: low.balance - SAFE_TO_SPEND_BUFFER,
+        lowBalance: low.balance,
+        lowDate: low.date,
+      };
     });
-  }, [moneyCalendarResult]);
+  }, [safeProjection, moneyCalendarResult]);
 
   // Today's safe-to-spend number, shown above the heat strip. Reads directly
   // from heatStripDays — the same array the strip itself renders — so this
@@ -1948,10 +1979,12 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                           <div className="card-body">
                             <div className="section-label">Safe to Spend Today</div>
                             <div style={{ fontSize: 32, fontWeight: 800, color: todayTier.color, marginTop: 4 }}>
-                              {fmt(Math.max(0, todayHeatEntry.daySafe))}
+                              {todayHeatEntry.daySafe < 0
+                                ? `Short ${fmt(Math.abs(todayHeatEntry.daySafe))}`
+                                : fmt(todayHeatEntry.daySafe)}
                             </div>
                             <div style={{ fontSize: 11, color: "var(--ink-muted)" }}>
-                              projected balance minus bills landing in the next few days and a {fmt(SAFE_TO_SPEND_BUFFER)} buffer
+                              your lowest projected balance in the next {SAFE_TO_SPEND_LOOKAHEAD_DAYS} days is {fmt(todayHeatEntry.lowBalance)} on {todayHeatEntry.lowDate.toLocaleDateString(undefined, { month: "short", day: "numeric" })}, minus a {fmt(SAFE_TO_SPEND_BUFFER)} buffer
                             </div>
                           </div>
                         </div>
