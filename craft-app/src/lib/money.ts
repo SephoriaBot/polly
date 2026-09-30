@@ -611,41 +611,102 @@ export function pickNextBill(
    SAFE TO SPEND
    ============================================================ */
 
+/**
+ * Must stay in sync with SAFE_TO_SPEND_LOOKAHEAD_DAYS and
+ * SAFE_TO_SPEND_BUFFER in pages/Wallet.tsx so the Wallet card and
+ * "Can I afford this?" agree.
+ */
+export const SAFE_TO_SPEND_LOOKAHEAD_DAYS = 10;
+export const SAFE_TO_SPEND_BUFFER = 50;
+
 export interface SafeToSpendResult {
   currentBalance: number;
-  near5Total: number;
+  /** Total of unpaid bills (overdue + due within the lookahead window). */
+  upcomingTotal: number;
   buffer: number;
+  /** Lowest projected balance in the window, minus the buffer (never below 0). */
   safeToSpend: number;
+  /** How far below zero (after buffer) you'd land. 0 when not short. */
+  shortfall: number;
+  lookaheadDays: number;
+  lowestBalance: number;
+  lowestBalanceDate: string;
 
-  near5Bills: {
+  upcomingBills: {
     name: string;
     amount: number;
     daysUntilDue: number;
   }[];
 }
 
+async function getLoggedExtras(
+  from: string,
+  to: string
+): Promise<{
+  funds: Record<string, number>;
+  expenses: Record<string, number>;
+}> {
+  const [fundsRes, expensesRes] = await Promise.all([
+    supabase
+      .from('extra_funds_log')
+      .select('date, amount')
+      .gte('date', from)
+      .lte('date', to),
+    supabase
+      .from('extra_expenses_log')
+      .select('date, amount')
+      .gte('date', from)
+      .lte('date', to),
+  ]);
+
+  if (fundsRes.error) {
+    console.error('money.ts extra_funds_log query failed:', fundsRes.error);
+  }
+  if (expensesRes.error) {
+    console.error('money.ts extra_expenses_log query failed:', expensesRes.error);
+  }
+
+  const toMap = (rows: { date: string; amount: string | number | null }[] | null) => {
+    const map: Record<string, number> = {};
+    (rows ?? []).forEach(r => {
+      map[r.date] = (map[r.date] ?? 0) + (parseFloat(String(r.amount ?? '')) || 0);
+    });
+    return map;
+  };
+
+  return {
+    funds: toMap(fundsRes.data as any),
+    expenses: toMap(expensesRes.data as any),
+  };
+}
+
 /**
- * Uses the SAME actual bill occurrences as Next Bill.
+ * Same idea as the Safe to Spend card in Wallet: find the LOWEST balance
+ * you're projected to hit over the next SAFE_TO_SPEND_LOOKAHEAD_DAYS days
+ * (crossing month boundaries), then subtract the buffer.
  *
- * Bills are included when they are:
+ * Uses the same actual bill occurrences as Next Bill, plus anything logged
+ * in extra_funds_log / extra_expenses_log.
  *
- *   • overdue
- *   • due today
- *   • due within the next 5 days
- *
- * Because due_date is the actual occurrence date, a September 28 bill
- * cannot accidentally be interpreted as an August 28 bill.
+ * NOTE: unlike the Wallet card, this does NOT project paycheck / Anytime
+ * Pay income (that engine lives in Wallet). So it can only be equal to or
+ * more cautious than the card, never more optimistic.
  */
 export async function getSafeToSpend(): Promise<
   SafeToSpendResult
 > {
   const now = new Date();
-  const today =
-    startOfDay(now);
+  const today = startOfDay(now);
+
+  const windowEnd = new Date(today);
+  windowEnd.setDate(
+    windowEnd.getDate() + SAFE_TO_SPEND_LOOKAHEAD_DAYS
+  );
 
   const [
     budgetRes,
     unpaidBills,
+    extras,
   ] = await Promise.all([
     supabase
       .from('budget')
@@ -654,6 +715,8 @@ export async function getSafeToSpend(): Promise<
       .maybeSingle(),
 
     getBillOccurrences(),
+
+    getLoggedExtras(isoDate(today), isoDate(windowEnd)),
   ]);
 
   if (budgetRes.error) {
@@ -664,58 +727,79 @@ export async function getSafeToSpend(): Promise<
   }
 
   const currentBalance =
-    Number(
-      budgetRes.data?.current_balance
-    ) || 0;
+    Number(budgetRes.data?.current_balance) || 0;
 
-  const buffer = 50;
+  const buffer = SAFE_TO_SPEND_BUFFER;
 
-  const near5Bills =
-    unpaidBills
-      .map(bill => {
-        const dueDate =
-          parseLocalDate(
-            bill.due_date
-          );
+  const upcomingBills = unpaidBills
+    .map(bill => {
+      const dueDate = parseLocalDate(bill.due_date);
 
-        const daysUntilDue =
-          daysBetween(
-            today,
-            dueDate
-          );
-
-        return {
-          name: bill.name,
-          amount:
-            bill.amount ?? 0,
-          daysUntilDue,
-        };
-      })
-      .filter(
-        bill =>
-          bill.daysUntilDue <= 5
-      );
-
-  const near5Total =
-    near5Bills.reduce(
-      (sum, bill) =>
-        sum + bill.amount,
-      0
+      return {
+        name: bill.name,
+        amount: bill.amount ?? 0,
+        daysUntilDue: daysBetween(today, dueDate),
+        dueKey: bill.due_date,
+      };
+    })
+    .filter(
+      bill => bill.daysUntilDue <= SAFE_TO_SPEND_LOOKAHEAD_DAYS
     );
 
-  const safeToSpend =
-    Math.max(
-      0,
-      currentBalance -
-        near5Total -
-        buffer
-    );
+  const upcomingTotal = upcomingBills.reduce(
+    (sum, bill) => sum + bill.amount,
+    0
+  );
+
+  /*
+   * Walk day by day. Overdue bills hit today (day 0). Start at the
+   * current balance, same as the Wallet calendar's first row.
+   */
+  let running = currentBalance;
+  let lowestBalance = Infinity;
+  let lowestBalanceDate = isoDate(today);
+
+  for (let i = 0; i <= SAFE_TO_SPEND_LOOKAHEAD_DAYS; i++) {
+    const day = new Date(today);
+    day.setDate(day.getDate() + i);
+    const key = isoDate(day);
+
+    const billsToday = upcomingBills
+      .filter(b =>
+        i === 0
+          ? b.daysUntilDue <= 0
+          : b.daysUntilDue === i
+      )
+      .reduce((sum, b) => sum + b.amount, 0);
+
+    running +=
+      (extras.funds[key] ?? 0) -
+      (extras.expenses[key] ?? 0) -
+      billsToday;
+
+    if (running < lowestBalance) {
+      lowestBalance = running;
+      lowestBalanceDate = key;
+    }
+  }
+
+  const raw = lowestBalance - buffer;
 
   return {
     currentBalance,
-    near5Total,
+    upcomingTotal,
     buffer,
-    safeToSpend,
-    near5Bills,
+    safeToSpend: Math.max(0, raw),
+    shortfall: raw < 0 ? Math.abs(raw) : 0,
+    lookaheadDays: SAFE_TO_SPEND_LOOKAHEAD_DAYS,
+    lowestBalance,
+    lowestBalanceDate,
+    upcomingBills: upcomingBills.map(
+      ({ name, amount, daysUntilDue }) => ({
+        name,
+        amount,
+        daysUntilDue,
+      })
+    ),
   };
 }
