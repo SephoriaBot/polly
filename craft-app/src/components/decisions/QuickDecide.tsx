@@ -361,7 +361,7 @@ function CanIAffordThis({ onBack }: { onBack: () => void }) {
     if (!amount || amount <= 0) return;
     setLoading(true);
     setLogged(false);
-    const { currentBalance, near5Total, buffer, safeToSpend, near5Bills } = await getSafeToSpend();
+    const { currentBalance, upcomingTotal, buffer, safeToSpend, shortfall, lookaheadDays, upcomingBills } = await getSafeToSpend();
     const reasons: string[] = [];
     let verdict: AffordVerdict;
 
@@ -371,11 +371,13 @@ function CanIAffordThis({ onBack }: { onBack: () => void }) {
       reasons.push(`This is $${amount.toFixed(2)}, leaving you $${(safeToSpend - amount).toFixed(2)} with upcoming bills and your $${buffer} buffer still covered.`);
     } else if (amount <= currentBalance) {
       verdict = 'careful';
-      reasons.push(`Your balance covers it ($${currentBalance.toFixed(2)}), but $${near5Total.toFixed(2)} of that is earmarked for bills due in the next 5 days.`);
-      if (near5Bills.length > 0) {
-        reasons.push(`Coming up: ${near5Bills.slice(0, 2).map(b => `${b.name} ($${b.amount.toFixed(2)})`).join(', ')}${near5Bills.length > 2 ? `, +${near5Bills.length - 2} more` : ''}.`);
+      reasons.push(`Your balance covers it ($${currentBalance.toFixed(2)}), but $${upcomingTotal.toFixed(2)} of that is earmarked for bills due in the next ${lookaheadDays} days.`);
+      if (upcomingBills.length > 0) {
+        reasons.push(`Coming up: ${upcomingBills.slice(0, 2).map(b => `${b.name} ($${b.amount.toFixed(2)})`).join(', ')}${upcomingBills.length > 2 ? `, +${upcomingBills.length - 2} more` : ''}.`);
       }
-      reasons.push(`This would eat into that — Safe to Spend right now is really $${safeToSpend.toFixed(2)}.`);
+      reasons.push(shortfall > 0
+        ? `You're actually short $${shortfall.toFixed(2)} once those bills land — Safe to Spend right now is $0.`
+        : `This would eat into that — Safe to Spend right now is really $${safeToSpend.toFixed(2)}.`);
     } else {
       verdict = 'no';
       reasons.push(`Your current balance is $${currentBalance.toFixed(2)} — this is $${(amount - currentBalance).toFixed(2)} more than you have.`);
