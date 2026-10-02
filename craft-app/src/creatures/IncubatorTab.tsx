@@ -7,6 +7,13 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { collectEgg } from '../lib/questSystem';
+import { SPECIES_LABELS, type Species } from './creatures';
+
+// There's no dedicated "ready" egg art yet, so both states use the same egg
+// and the ready state is distinguished with a wobble + glow in CSS. Drop an
+// egg-ready.png into public/icons and point EGG_READY_SRC at it to swap in.
+const EGG_SRC = '/icons/egg.png';
+const EGG_READY_SRC = '/icons/egg.png';
 
 interface IncubatorTabProps {
   userId: string;
@@ -31,7 +38,7 @@ export default function IncubatorTab({ userId }: IncubatorTabProps) {
   const [egg, setEgg] = useState<EggState>({ status: 'loading' });
   const [now, setNow] = useState(Date.now());
   const [hatching, setHatching] = useState(false);
-  const [justHatched, setJustHatched] = useState<{ species: string } | null>(null);
+  const [justHatched, setJustHatched] = useState<{ species: Species; image: string } | null>(null);
 
   // Load current egg state
   useEffect(() => {
@@ -79,55 +86,68 @@ export default function IncubatorTab({ userId }: IncubatorTabProps) {
     setHatching(false);
 
     if (result.ok) {
-      setJustHatched({ species: result.creature.species });
+      setJustHatched({ species: result.creature.species, image: result.creature.image });
       setEgg({ status: 'empty' });
     }
   }
 
   return (
-    <div className="incubator-tab">
-      <h2 className="incubator-tab__title">Incubator</h2>
+    <div className="card incubator-tab">
+      <div className="card-body">
+        <h2 className="incubator-tab__title">Incubator</h2>
 
-      {egg.status === 'loading' && (
-        <p className="incubator-tab__hint">Checking the nest...</p>
-      )}
+        {egg.status === 'loading' && (
+          <p className="incubator-tab__hint">Checking the nest...</p>
+        )}
 
-      {egg.status === 'empty' && !justHatched && (
-        <p className="incubator-tab__hint">
-          No egg right now. Rare quest rewards will show up here when you find one.
-        </p>
-      )}
-
-      {egg.status === 'incubating' && (
-        <div className="incubator-tab__egg incubator-tab__egg--warming">
-          <img src="/icons/egg.png" alt="An egg, slowly warming" className="incubator-tab__egg-icon" />
-          <p className="incubator-tab__countdown">
-            {formatCountdown(egg.hatchAt.getTime() - now)}
+        {egg.status === 'empty' && !justHatched && (
+          <p className="incubator-tab__hint">
+            No egg right now. Rare quest rewards will show up here when you find one.
           </p>
-        </div>
-      )}
+        )}
 
-      {egg.status === 'ready' && (
-        <div className="incubator-tab__egg incubator-tab__egg--ready">
-          <img src="/icons/egg-ready.png" alt="An egg about to hatch" className="incubator-tab__egg-icon" />
-          <button
-            className="incubator-tab__collect-btn"
-            onClick={handleCollect}
-            disabled={hatching}
-          >
-            {hatching ? 'Hatching...' : 'Collect Egg'}
-          </button>
-        </div>
-      )}
+        {egg.status === 'incubating' && (
+          <div className="incubator-tab__egg incubator-tab__egg--warming">
+            <div className="incubator-tab__egg-stage">
+              <img src={EGG_SRC} alt="An egg, slowly warming" className="incubator-tab__egg-icon" />
+            </div>
+            <p className="incubator-tab__countdown">
+              {formatCountdown(egg.hatchAt.getTime() - now)}
+            </p>
+          </div>
+        )}
 
-      {justHatched && (
-        <div className="incubator-tab__reveal">
-          <p>
-            A new friend hatched! Say hello to your new <strong>{justHatched.species}</strong> in
-            the collection.
-          </p>
-        </div>
-      )}
+        {egg.status === 'ready' && (
+          <div className="incubator-tab__egg incubator-tab__egg--ready">
+            <div className="incubator-tab__egg-stage">
+              <img src={EGG_READY_SRC} alt="An egg about to hatch" className="incubator-tab__egg-icon" />
+            </div>
+            <button
+              className="btn btn-primary incubator-tab__collect-btn"
+              onClick={handleCollect}
+              disabled={hatching}
+            >
+              {hatching ? 'Hatching...' : 'Collect Egg'}
+            </button>
+          </div>
+        )}
+
+        {justHatched && (
+          <div className="incubator-tab__reveal">
+            <div className="incubator-tab__egg-stage incubator-tab__egg-stage--reveal">
+              <img
+                src={justHatched.image}
+                alt={`A baby ${SPECIES_LABELS[justHatched.species]}`}
+                className="incubator-tab__baby"
+              />
+            </div>
+            <p>
+              A new friend hatched! Say hello to your new{' '}
+              <strong>{SPECIES_LABELS[justHatched.species]}</strong> in the collection.
+            </p>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
