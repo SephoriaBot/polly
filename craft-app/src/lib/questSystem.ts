@@ -23,8 +23,8 @@ import { publishQuestChanged } from './questBus';
 import { HABITAT_ITEMS } from './habitatItems';
 import { localDateKey } from './dateKey';
 
-const SPECIES = ['wereham', 'noodle', 'dragon', 'bunt', 'wrendel'] as const;
-type Species = (typeof SPECIES)[number];
+import { rollRandomSpecies, rollRandomCreature } from '../creatures/creatures';
+import { rollPersonality, rollAbilities, abilityPoolFor } from '../creatures/personalities';
 
 // How long a hatching egg takes to be ready. Tune as you like.
 const EGG_HATCH_HOURS = 24;
@@ -458,18 +458,29 @@ export async function collectEgg(userId: string) {
     return { ok: false as const, reason: 'not_ready' as const };
   }
 
-  const species: Species = SPECIES[Math.floor(Math.random() * SPECIES.length)];
+  // Pick a species, then a real roster baby of that species. The collection
+  // looks up its art by hamster_id against the roster, so the id must be a
+  // roster id (a random UUID matches nothing and renders no image).
+  const species = rollRandomSpecies();
+  const baby = rollRandomCreature(species);
 
-  const { data: newCreature, error } = await supabase
+  const { error } = await supabase
     .from('hamster_collection')
     .insert({
-      hamster_id: crypto.randomUUID(),
+      hamster_id: baby.id,
       species,
-      stage: 'baby',
       source: 'egg',
-    })
-    .select()
-    .single();
+      personality: rollPersonality(),
+      stage: 'baby',
+      evolution_points: 0,
+      abilities: rollAbilities(abilityPoolFor(species, 'baby'), 2),
+      hatched_at: new Date().toISOString(),
+      training_points: 0,
+      trained_hp: 0,
+      trained_attack: 0,
+      trained_defense: 0,
+      trained_speed: 0,
+    });
 
   if (error) {
     console.error('collectEgg: failed to insert new creature', error);
@@ -481,7 +492,7 @@ export async function collectEgg(userId: string) {
     .update({ active_egg_acquired_at: null, active_egg_hatch_at: null })
     .eq('user_id', userId);
 
-  return { ok: true as const, creature: newCreature };
+  return { ok: true as const, creature: { species, image: baby.image } };
 }
 
 // ---------------------------------------------------------------------------
