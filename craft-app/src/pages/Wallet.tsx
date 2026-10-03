@@ -113,13 +113,14 @@ const MONTH_NAMES = ["January","February","March","April","May","June","July","A
 // One-tap fixes for a day's hours. Each chip starts from the day's current
 // effective hours (explicit entry, else the weekday's recurring value), so
 // nobody has to type a number just to say "left 2 hours early".
-const HOUR_CHIPS: { id: "off" | "minus1" | "minus2" | "ot1" | "ot2"; label: string }[] = [
+const HOUR_CHIPS: { id: "off" | "minus05" | "minus1" | "ot05" | "ot1"; label: string }[] = [
   { id: "off", label: "Off" },
+  { id: "minus05", label: "−0.5h" },
   { id: "minus1", label: "−1h" },
-  { id: "minus2", label: "−2h" },
+  { id: "ot05", label: "+0.5h OT" },
   { id: "ot1", label: "+1h OT" },
-  { id: "ot2", label: "+2h OT" },
 ];
+
 
 function runDebtPlan(
   debts: Debt[],
@@ -687,10 +688,11 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
       reg = Math.max(0, reg - (n - fromOt));
     };
     if (chip === "off") { reg = 0; ot = 0; }
+    else if (chip === "minus05") take(0.5);
     else if (chip === "minus1") take(1);
-    else if (chip === "minus2") take(2);
+    else if (chip === "ot05") ot += 0.5;
     else if (chip === "ot1") ot += 1;
-    else if (chip === "ot2") ot += 2;
+
     const s = (n: number) => String(Math.round(n * 100) / 100);
     setDailyHours(prev => ({ ...prev, [key]: { reg: s(reg), ot: s(ot) } }));
   }
