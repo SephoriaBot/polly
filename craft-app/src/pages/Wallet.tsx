@@ -846,8 +846,13 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
       const total = (parseFloat(w.reg) || 0) + (parseFloat(w.ot) || 0);
       if (w.weekStart && total > 0) offsets[w.weekStart] = (offsets[w.weekStart] || 0) + total;
     };
-    addOffset(priorWeekHours);
-    addOffset(closedWeekHours);
+    // Hours worked before the calendar's first day come from exactly one box:
+    // the "already worked this week" card in the current month, or the
+    // "hours before this calendar starts" card in any other month. Counting
+    // both would double count (and a stale saved entry from the other card
+    // can push a day into OT that isn't).
+    const viewingCurrentMonth = selectedYear === today.getFullYear() && selectedMonth === today.getMonth() + 1;
+    addOffset(viewingCurrentMonth ? priorWeekHours : closedWeekHours);
     projectionDays.forEach(d => {
       const key = dateKey(d);
       const dow = d.getDay();
@@ -861,7 +866,7 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
       otByDay[key] = otPart;
     });
     return { split, otByDay };
-  }, [projectionDays, dailyHours, recurringHours, priorWeekHours, closedWeekHours]);
+  }, [projectionDays, dailyHours, recurringHours, priorWeekHours, closedWeekHours, selectedMonth, selectedYear]);
 
   const effectiveOtWage = parseFloat(otWageOverride) > 0 ? parseFloat(otWageOverride) : budget.hourly_wage * 1.5;
   const netHourlyWage = budget.hourly_wage > 0 ? budget.hourly_wage * (1 - taxRate / 100) : 0;
