@@ -113,14 +113,39 @@ const MONTH_NAMES = ["January","February","March","April","May","June","July","A
 // One-tap fixes for a day's hours. Each chip starts from the day's current
 // effective hours (explicit entry, else the weekday's recurring value), so
 // nobody has to type a number just to say "left 2 hours early".
-const HOUR_CHIPS: { id: "off" | "minus05" | "minus1" | "ot05" | "ot1"; label: string }[] = [
+const HOUR_CHIPS: { id: "off" | "minus05" | "minus1" | "plus05" | "plus1"; label: string }[] = [
   { id: "off", label: "Off" },
   { id: "minus05", label: "−0.5h" },
   { id: "minus1", label: "−1h" },
-  { id: "ot05", label: "+0.5h OT" },
-  { id: "ot1", label: "+1h OT" },
+  { id: "plus05", label: "+0.5h" },
+  { id: "plus1", label: "+1h" },
 ];
 
+// Hours past this many in a Sunday–Saturday week are paid at the OT wage.
+// You only log total hours per day; the reg/OT split is worked out for you.
+const OT_WEEKLY_THRESHOLD = 40;
+
+function round2(n: number) {
+  return Math.round(n * 100) / 100;
+}
+
+// Older saves stored regular and OT hours separately. Merge them into one
+// total ("" stays "" so a blank day still counts as an explicit zero).
+function joinHours(reg?: string | null, ot?: string | null): string {
+  const r = parseFloat(reg || "");
+  const o = parseFloat(ot || "");
+  if (isNaN(r) && isNaN(o)) return "";
+  return String(round2((r || 0) + (o || 0)));
+}
+
+// The shared pay projection still wants reg and OT hours for a week, so a
+// single "hours worked" total is split at the weekly OT threshold.
+function splitWeekForPay(w: { weekStart: string; reg: string; ot: string }) {
+  const total = (parseFloat(w.reg) || 0) + (parseFloat(w.ot) || 0);
+  if (total <= 0) return { weekStart: w.weekStart, reg: "", ot: "" };
+  const reg = Math.min(total, OT_WEEKLY_THRESHOLD);
+  return { weekStart: w.weekStart, reg: String(round2(reg)), ot: String(round2(total - reg)) };
+}
 
 function runDebtPlan(
   debts: Debt[],
@@ -437,9 +462,9 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
         setWalletSettingsLoaded(true);
 
         if (dailyHoursData && dailyHoursData.length > 0) {
-          const map: Record<string, { reg: string; ot: string }> = {};
+          const map: Record<string, string> = {};
           dailyHoursData.forEach((row: { date: string; reg: string; ot: string }) => {
-            map[row.date] = { reg: row.reg || "", ot: row.ot || "" };
+            map[row.date] = joinHours(row.reg, row.ot);
           });
           setDailyHours(map);
         }
@@ -464,23 +489,23 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
           if (payPeriodData.prior_week_start === currentWeekStartKey()) {
             setPriorWeekHours({
               weekStart: payPeriodData.prior_week_start,
-              reg: payPeriodData.prior_week_reg || "",
-              ot: payPeriodData.prior_week_ot || "",
+              reg: joinHours(payPeriodData.prior_week_reg, payPeriodData.prior_week_ot),
+              ot: "",
             });
           }
           if (payPeriodData.closed_week_start) {
             setClosedWeekHours({
               weekStart: payPeriodData.closed_week_start,
-              reg: payPeriodData.closed_week_reg || "",
-              ot: payPeriodData.closed_week_ot || "",
+              reg: joinHours(payPeriodData.closed_week_reg, payPeriodData.closed_week_ot),
+              ot: "",
             });
           }
         }
 
         if (recurringHoursData && recurringHoursData.length > 0) {
-          const map: Record<number, { reg: string; ot: string }> = {};
+          const map: Record<number, string> = {};
           recurringHoursData.forEach((row: { weekday: number; reg: string; ot: string }) => {
-            map[row.weekday] = { reg: row.reg || "", ot: row.ot || "" };
+            map[row.weekday] = joinHours(row.reg, row.ot);
           });
           setRecurringHours(map);
         }
@@ -607,13 +632,13 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
     [bills, payments, calendarDays]
   );
 
-  const [dailyHours, setDailyHours] = useState<Record<string, { reg: string; ot: string }>>({});
+  const [dailyHours, setDailyHours] = useState<Record<string, string>>({});
   const dailyHoursSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
     if (!walletSettingsLoaded) return;
     if (dailyHoursSaveTimer.current) clearTimeout(dailyHoursSaveTimer.current);
     dailyHoursSaveTimer.current = setTimeout(() => {
-      const rows = Object.entries(dailyHours).map(([date, v]) => ({ date, reg: v.reg || "", ot: v.ot || "" }));
+      const rows = Object.entries(dailyHours).map(([date, v]) => ({ date, reg: v || "", ot: "" }));
       if (rows.length === 0) return;
       supabase.from("daily_hours_log").upsert(rows, { onConflict: "date" }).then(({ error }) => {
         if (error) console.error("daily_hours_log save failed:", error);
@@ -622,21 +647,21 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
     return () => { if (dailyHoursSaveTimer.current) clearTimeout(dailyHoursSaveTimer.current); };
   }, [dailyHours, walletSettingsLoaded]);
 
-  function setDailyHourField(key: string, field: "reg" | "ot", value: string) {
-    setDailyHours(prev => ({ ...prev, [key]: { reg: prev[key]?.reg || "", ot: prev[key]?.ot || "", [field]: value } }));
+  function setDayHours(key: string, value: string) {
+    setDailyHours(prev => ({ ...prev, [key]: value }));
   }
 
   // Weekly recurring hours template (0=Sun..6=Sat). A day with no explicit
   // dailyHours entry falls back to its weekday's recurring value, so
   // future months don't sit blank unless you want them to. An explicit
   // dailyHours entry for a specific date always wins over the template.
-  const [recurringHours, setRecurringHours] = useState<Record<number, { reg: string; ot: string }>>({});
+  const [recurringHours, setRecurringHours] = useState<Record<number, string>>({});
   const recurringHoursSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
     if (!walletSettingsLoaded) return;
     if (recurringHoursSaveTimer.current) clearTimeout(recurringHoursSaveTimer.current);
     recurringHoursSaveTimer.current = setTimeout(() => {
-      const rows = Object.entries(recurringHours).map(([weekday, v]) => ({ weekday: Number(weekday), reg: v.reg || "", ot: v.ot || "" }));
+      const rows = Object.entries(recurringHours).map(([weekday, v]) => ({ weekday: Number(weekday), reg: v || "", ot: "" }));
       if (rows.length === 0) return;
       supabase.from("recurring_hours").upsert(rows, { onConflict: "weekday" }).then(({ error }) => {
         if (error) console.error("recurring_hours save failed:", error);
@@ -647,8 +672,8 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
 
   async function toggleRecurringWeekday(dow: number, key: string, on: boolean) {
     if (on) {
-      const current = dailyHours[key] || recurringHours[dow] || { reg: "", ot: "" };
-      setRecurringHours(prev => ({ ...prev, [dow]: { reg: current.reg || "", ot: current.ot || "" } }));
+      const current = dailyHours[key] ?? recurringHours[dow] ?? "";
+      setRecurringHours(prev => ({ ...prev, [dow]: current }));
     } else {
       setRecurringHours(prev => {
         const next = { ...prev };
@@ -661,40 +686,25 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
   }
 
   // What a day's hours really are right now: its own entry if it has one,
-  // otherwise the weekday's recurring value. Mirrors what the Reg/OT inputs show.
+  // otherwise the weekday's recurring value. Mirrors what the Hours input shows.
   function effectiveHours(key: string, dow: number) {
-    const d = dailyHours[key];
-    const t = recurringHours[dow];
-    return {
-      reg: parseFloat(d?.reg ?? t?.reg ?? "") || 0,
-      ot: parseFloat(d?.ot ?? t?.ot ?? "") || 0,
-    };
+    return parseFloat(dailyHours[key] ?? recurringHours[dow] ?? "") || 0;
   }
 
   function plannedHours(dow: number) {
-    const t = recurringHours[dow];
-    return { reg: parseFloat(t?.reg ?? "") || 0, ot: parseFloat(t?.ot ?? "") || 0 };
+    return parseFloat(recurringHours[dow] ?? "") || 0;
   }
 
-  // One-tap hour fixes. "Minus" chips take hours off the end of the day, so
-  // OT goes first and regular hours only after OT is used up.
+  // One-tap hour fixes in half-hour and one-hour steps.
   function applyHourChip(key: string, dow: number, chip: typeof HOUR_CHIPS[number]["id"]) {
-    const eff = effectiveHours(key, dow);
-    let reg = eff.reg;
-    let ot = eff.ot;
-    const take = (n: number) => {
-      const fromOt = Math.min(ot, n);
-      ot -= fromOt;
-      reg = Math.max(0, reg - (n - fromOt));
-    };
-    if (chip === "off") { reg = 0; ot = 0; }
-    else if (chip === "minus05") take(0.5);
-    else if (chip === "minus1") take(1);
-    else if (chip === "ot05") ot += 0.5;
-    else if (chip === "ot1") ot += 1;
-
-    const s = (n: number) => String(Math.round(n * 100) / 100);
-    setDailyHours(prev => ({ ...prev, [key]: { reg: s(reg), ot: s(ot) } }));
+    const current = effectiveHours(key, dow);
+    let next = current;
+    if (chip === "off") next = 0;
+    else if (chip === "minus05") next = Math.max(0, current - 0.5);
+    else if (chip === "minus1") next = Math.max(0, current - 1);
+    else if (chip === "plus05") next = current + 0.5;
+    else if (chip === "plus1") next = current + 1;
+    setDailyHours(prev => ({ ...prev, [key]: String(round2(next)) }));
   }
 
   // Drop a day's own entry so it goes back to following the weekly template.
@@ -747,8 +757,8 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
     weekStart: currentWeekStartKey(), reg: "", ot: "",
   });
 
-  function setPriorWeekHourField(field: "reg" | "ot", value: string) {
-    setPriorWeekHours(prev => ({ ...prev, weekStart: currentWeekStartKey(), [field]: value }));
+  function setPriorWeekHoursValue(value: string) {
+    setPriorWeekHours({ weekStart: currentWeekStartKey(), reg: value, ot: "" });
   }
 
   const [closedWeekHours, setClosedWeekHours] = useState<{ weekStart: string; reg: string; ot: string }>({
@@ -775,12 +785,8 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
     return () => { if (payPeriodSaveTimer.current) clearTimeout(payPeriodSaveTimer.current); };
   }, [priorWeekHours, closedWeekHours, walletSettingsLoaded]);
 
-  function setClosedWeekHourField(weekStart: string, field: "reg" | "ot", value: string) {
-    setClosedWeekHours(prev => ({
-      weekStart,
-      reg: prev.weekStart === weekStart ? (field === "reg" ? value : prev.reg) : (field === "reg" ? value : ""),
-      ot: prev.weekStart === weekStart ? (field === "ot" ? value : prev.ot) : (field === "ot" ? value : ""),
-    }));
+  function setClosedWeekHoursValue(weekStart: string, value: string) {
+    setClosedWeekHours({ weekStart, reg: value, ot: "" });
   }
 
   const [extraFunds, setExtraFunds] = useState<Record<string, string>>({});
@@ -813,6 +819,50 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
     return () => { if (extraExpensesSaveTimer.current) clearTimeout(extraExpensesSaveTimer.current); };
   }, [extraExpenses, walletSettingsLoaded]);
 
+  // Days the pay projection looks at: the visible calendar plus the safe-to-spend
+  // lookahead past month end (and a little extra), so every day it reads has hours.
+  const projectionDays = useMemo(() => {
+    if (calendarDays.length === 0) return calendarDays;
+    const days = [...calendarDays];
+    const last = calendarDays[calendarDays.length - 1];
+    for (let i = 1; i <= SAFE_TO_SPEND_LOOKAHEAD_DAYS + 7; i++) {
+      const next = new Date(last);
+      next.setDate(next.getDate() + i);
+      days.push(next);
+    }
+    return days;
+  }, [calendarDays]);
+
+  // You log total hours per day. Walking each Sunday–Saturday week in order,
+  // the first 40 hours (counting any hours already worked before the calendar
+  // starts) are regular and everything after is OT. `split` is the reg/OT shape
+  // the shared pay projection expects; `otByDay` drives the on-screen OT notes.
+  const payHours = useMemo(() => {
+    const split: Record<string, { reg: string; ot: string }> = {};
+    const otByDay: Record<string, number> = {};
+    const weekRunning: Record<string, number> = {};
+    const offsets: Record<string, number> = {};
+    const addOffset = (w: { weekStart: string; reg: string; ot: string }) => {
+      const total = (parseFloat(w.reg) || 0) + (parseFloat(w.ot) || 0);
+      if (w.weekStart && total > 0) offsets[w.weekStart] = (offsets[w.weekStart] || 0) + total;
+    };
+    addOffset(priorWeekHours);
+    addOffset(closedWeekHours);
+    projectionDays.forEach(d => {
+      const key = dateKey(d);
+      const dow = d.getDay();
+      const weekKey = dateKey(new Date(d.getFullYear(), d.getMonth(), d.getDate() - dow));
+      const worked = weekRunning[weekKey] ?? offsets[weekKey] ?? 0;
+      const hours = parseFloat(dailyHours[key] ?? recurringHours[dow] ?? "") || 0;
+      const regPart = Math.min(hours, Math.max(0, OT_WEEKLY_THRESHOLD - worked));
+      const otPart = hours - regPart;
+      weekRunning[weekKey] = worked + hours;
+      split[key] = { reg: String(round2(regPart)), ot: String(round2(otPart)) };
+      otByDay[key] = otPart;
+    });
+    return { split, otByDay };
+  }, [projectionDays, dailyHours, recurringHours, priorWeekHours, closedWeekHours]);
+
   const effectiveOtWage = parseFloat(otWageOverride) > 0 ? parseFloat(otWageOverride) : budget.hourly_wage * 1.5;
   const netHourlyWage = budget.hourly_wage > 0 ? budget.hourly_wage * (1 - taxRate / 100) : 0;
   const netOtWage = effectiveOtWage > 0 ? effectiveOtWage * (1 - taxRate / 100) : 0;
@@ -825,10 +875,10 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
     flatDeductionsPrev: budget.flat_deductions_prev,
     taxRate,
     earlyPayPreset,
-    priorWeekHours,
-    closedWeekHours,
-    dailyHours,
-    recurringHours,
+    priorWeekHours: splitWeekForPay(priorWeekHours),
+    closedWeekHours: splitWeekForPay(closedWeekHours),
+    dailyHours: payHours.split,
+    recurringHours: {},
     extraFunds,
     extraExpenses,
   };
@@ -846,7 +896,7 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
 
   const moneyCalendarResult = useMemo(
     () => buildMoneyCalendarRows(calendarDays, calendarStartingBalance),
-    [calendarDays, billsByDate, dailyHours, recurringHours, extraFunds, extraExpenses, netHourlyWage, netOtWage, calendarStartingBalance, budget.hourly_wage, budget.net_to_gross_ratio, budget.flat_deductions_prev, taxRate, earlyPayPreset, effectiveOtWage, priorWeekHours, closedWeekHours]
+    [calendarDays, billsByDate, dailyHours, recurringHours, payHours, extraFunds, extraExpenses, netHourlyWage, netOtWage, calendarStartingBalance, budget.hourly_wage, budget.net_to_gross_ratio, budget.flat_deductions_prev, taxRate, earlyPayPreset, effectiveOtWage, priorWeekHours, closedWeekHours]
   );
 
   const moneyCalendarWeekChunks = useMemo(() => {
@@ -1533,7 +1583,7 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                 <div style={{ fontSize: 24, lineHeight: 1 }}><Icon name="calendar" size={24} /></div>
                 <div style={{ fontSize: 14, fontWeight: 800, color: "var(--ink)" }}>Money Calendar</div>
                 <div style={{ fontSize: 11, color: "var(--pink-dark)", marginBottom: 14 }}>
-                  Runs from today through the end of the selected month (or the 1st through the end for a future month). Log the hours you're working (or plan to work) each day. Your early-pay eligible percentage comes from your last paycheck's net-to-gross ratio (post-tax ÷ pre-tax), applied against your cumulative pool for the week, minus that check's flat deductions and a growing safety buffer — whatever's unclaimed by Saturday night lands as a lump catch-up the following Wednesday.
+                  Runs from today through the end of the selected month (or the 1st through the end for a future month). Log the hours you're working (or plan to work) each day — anything past 40 in a Sunday–Saturday week is paid at your OT wage automatically. Your early-pay eligible percentage comes from your last paycheck's net-to-gross ratio (post-tax ÷ pre-tax), applied against your cumulative pool for the week, minus that check's flat deductions and a growing safety buffer — whatever's unclaimed by Saturday night lands as a lump catch-up the following Wednesday.
                 </div>
 
                 <div style={{ display: "flex", gap: 6, overflowX: "auto", paddingBottom: 4, marginBottom: 14 }}>
@@ -1614,22 +1664,15 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                     <div style={{ fontSize: 11, color: "var(--info-card-text)", marginBottom: 8 }}>
                       The calendar below only starts from today, so this fills in the rest of the pool it can't see — otherwise this week's ramp % gets applied to a smaller pool than you've actually earned.
                     </div>
-                    <div style={{ display: "flex", gap: 8 }}>
-                      <div style={{ flex: 1 }}>
-                        <div className="form-label" style={{ fontSize: 10 }}>Regular hrs</div>
-                        <input
-                          type="number" className="form-input" placeholder="0"
-                          value={priorWeekHours.reg}
-                          onChange={e => setPriorWeekHourField("reg", e.target.value)}
-                        />
-                      </div>
-                      <div style={{ flex: 1 }}>
-                        <div className="form-label" style={{ fontSize: 10 }}>OT hrs</div>
-                        <input
-                          type="number" className="form-input" placeholder="0"
-                          value={priorWeekHours.ot}
-                          onChange={e => setPriorWeekHourField("ot", e.target.value)}
-                        />
+                    <div>
+                      <div className="form-label" style={{ fontSize: 10 }}>Hours worked</div>
+                      <input
+                        type="number" inputMode="decimal" step="0.5" className="form-input" placeholder="0"
+                        value={priorWeekHours.reg}
+                        onChange={e => setPriorWeekHoursValue(e.target.value)}
+                      />
+                      <div style={{ fontSize: 10, color: "var(--info-card-text)", marginTop: 4 }}>
+                        Past 40 hours for the week counts as OT automatically.
                       </div>
                     </div>
                   </div>
@@ -1713,51 +1756,27 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
             same math as everywhere else.</>}
       </div>
 
-      <div style={{ display: "flex", gap: 8 }}>
-        <div style={{ flex: 1 }}>
-          <div className="form-label" style={{ fontSize: 10 }}>
-            Regular hrs
-          </div>
-          <input
-            type="number"
-            className="form-input"
-            placeholder="0"
-            value={
-              closedWeekHours.weekStart === periodStartKey
-                ? closedWeekHours.reg
-                : ""
-            }
-            onChange={e =>
-              setClosedWeekHourField(
-                periodStartKey,
-                "reg",
-                e.target.value
-              )
-            }
-          />
+      <div>
+        <div className="form-label" style={{ fontSize: 10 }}>
+          Hours worked
         </div>
-
-        <div style={{ flex: 1 }}>
-          <div className="form-label" style={{ fontSize: 10 }}>
-            OT hrs
-          </div>
-          <input
-            type="number"
-            className="form-input"
-            placeholder="0"
-            value={
-              closedWeekHours.weekStart === periodStartKey
-                ? closedWeekHours.ot
-                : ""
-            }
-            onChange={e =>
-              setClosedWeekHourField(
-                periodStartKey,
-                "ot",
-                e.target.value
-              )
-            }
-          />
+        <input
+          type="number"
+          inputMode="decimal"
+          step="0.5"
+          className="form-input"
+          placeholder="0"
+          value={
+            closedWeekHours.weekStart === periodStartKey
+              ? closedWeekHours.reg
+              : ""
+          }
+          onChange={e =>
+            setClosedWeekHoursValue(periodStartKey, e.target.value)
+          }
+        />
+        <div style={{ fontSize: 10, color: "var(--info-card-text)", marginTop: 4 }}>
+          Past 40 hours for the week counts as OT automatically.
         </div>
       </div>
     </div>
@@ -1917,16 +1936,12 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                     // Week roll-up for the collapsed header. "vs plan" only counts days
                     // you edited that also have a weekly template to compare against.
                     const round1 = (n: number) => Math.round(n * 10) / 10;
-                    const weekHours = rows.reduce((s, r) => {
-                      const h = effectiveHours(r.key, r.date.getDay());
-                      return s + h.reg + h.ot;
-                    }, 0);
+                    const weekHours = rows.reduce((s, r) => s + effectiveHours(r.key, r.date.getDay()), 0);
+                    const weekOt = rows.reduce((s, r) => s + (payHours.otByDay[r.key] || 0), 0);
                     const hourDelta = rows.reduce((s, r) => {
                       const dow = r.date.getDay();
-                      if (!dailyHours[r.key] || !recurringHours[dow]) return s;
-                      const eff = effectiveHours(r.key, dow);
-                      const plan = plannedHours(dow);
-                      return s + (eff.reg + eff.ot) - (plan.reg + plan.ot);
+                      if (dailyHours[r.key] === undefined || recurringHours[dow] === undefined) return s;
+                      return s + effectiveHours(r.key, dow) - plannedHours(dow);
                     }, 0);
                     const weekBills = rows.reduce((s, r) => s + r.billsToday.reduce((a, b) => a + b.amount, 0), 0);
                     const hasPayday = rows.some(r => r.releasedToday > 0.005);
@@ -1934,6 +1949,7 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                     const lowBal = Math.min(...rows.map(r => r.balance));
 
                     const summaryParts: string[] = [`${round1(weekHours)}h`];
+                    if (weekOt > 0.05) summaryParts.push(`${round1(weekOt)}h OT`);
                     if (Math.abs(hourDelta) >= 0.05) summaryParts.push(`${hourDelta > 0 ? "+" : "−"}${round1(Math.abs(hourDelta))}h vs plan`);
                     if (weekBills > 0) summaryParts.push(`${fmt(weekBills)} bills`);
                     if (hasPayday) summaryParts.push("payday catch-up");
@@ -1973,9 +1989,9 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                           const textColor = isToday ? "var(--accent-text)" : "var(--ink)";
                           const mutedColor = isToday ? "var(--accent-text-muted)" : "var(--ink-muted)";
                           const dow = row.date.getDay();
-                          const isEdited = !!dailyHours[row.key];
-                          const plan = plannedHours(dow);
-                          const planTotal = plan.reg + plan.ot;
+                          const isEdited = dailyHours[row.key] !== undefined;
+                          const dayOt = payHours.otByDay[row.key] || 0;
+                          const planTotal = plannedHours(dow);
                           const chipStyle: CSSProperties = {
                             padding: "3px 10px", fontSize: 11, fontWeight: 600, borderRadius: 99,
                             border: `1px solid ${isToday ? "var(--accent-text-muted)" : "var(--border)"}`,
@@ -2005,24 +2021,21 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                               )}
 
                               <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                                <span style={{ fontSize: 10, color: mutedColor, whiteSpace: "nowrap" }}>Reg</span>
+                                <span style={{ fontSize: 10, color: mutedColor, whiteSpace: "nowrap" }}>Hours</span>
                                 <input
                                   type="number"
+                                  inputMode="decimal"
+                                  step="0.5"
                                   className="form-input"
                                   placeholder="0"
-                                  value={dailyHours[row.key]?.reg ?? recurringHours[dow]?.reg ?? ""}
-                                  onChange={e => setDailyHourField(row.key, "reg", e.target.value)}
+                                  value={dailyHours[row.key] ?? recurringHours[dow] ?? ""}
+                                  onChange={e => setDayHours(row.key, e.target.value)}
                                   style={{ flex: 1, fontSize: 12, padding: "4px 8px" }}
                                 />
-                                <span style={{ fontSize: 10, color: mutedColor, whiteSpace: "nowrap" }}>OT</span>
-                                <input
-                                  type="number"
-                                  className="form-input"
-                                  placeholder="0"
-                                  value={dailyHours[row.key]?.ot ?? recurringHours[dow]?.ot ?? ""}
-                                  onChange={e => setDailyHourField(row.key, "ot", e.target.value)}
-                                  style={{ flex: 1, fontSize: 12, padding: "4px 8px" }}
-                                />
+
+                                {dayOt > 0.004 && (
+                                  <span style={{ fontSize: 10, color: isToday ? "var(--accent-text)" : "var(--gold-dark)", fontWeight: 700, whiteSpace: "nowrap" }}>{round2(dayOt)}h OT</span>
+                                )}
 
                                 {row.hoursToday > 0 && (
                                   <span style={{ fontSize: 11, color: isToday ? "var(--accent-text)" : "var(--green-dark)", fontWeight: 700, whiteSpace: "nowrap" }}>+{fmt(row.availableToday)}</span>
@@ -2058,7 +2071,7 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                               <label style={{ display: "flex", alignItems: "center", gap: 4, marginTop: 6, cursor: "pointer" }}>
                                 <input
                                   type="checkbox"
-                                  checked={!!recurringHours[dow]}
+                                  checked={recurringHours[dow] !== undefined}
                                   onChange={e => toggleRecurringWeekday(dow, row.key, e.target.checked)}
                                 />
                                 <span style={{ fontSize: 9, color: mutedColor }}>
