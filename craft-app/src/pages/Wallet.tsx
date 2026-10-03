@@ -110,6 +110,17 @@ interface SavingsGoal {
 
 const MONTH_NAMES = ["January","February","March","April","May","June","July","August","September","October","November","December"];
 
+// One-tap fixes for a day's hours. Each chip starts from the day's current
+// effective hours (explicit entry, else the weekday's recurring value), so
+// nobody has to type a number just to say "left 2 hours early".
+const HOUR_CHIPS: { id: "off" | "minus1" | "minus2" | "ot1" | "ot2"; label: string }[] = [
+  { id: "off", label: "Off" },
+  { id: "minus1", label: "−1h" },
+  { id: "minus2", label: "−2h" },
+  { id: "ot1", label: "+1h OT" },
+  { id: "ot2", label: "+2h OT" },
+];
+
 function runDebtPlan(
   debts: Debt[],
   takeHome: number,
@@ -648,6 +659,53 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
     }
   }
 
+  // What a day's hours really are right now: its own entry if it has one,
+  // otherwise the weekday's recurring value. Mirrors what the Reg/OT inputs show.
+  function effectiveHours(key: string, dow: number) {
+    const d = dailyHours[key];
+    const t = recurringHours[dow];
+    return {
+      reg: parseFloat(d?.reg ?? t?.reg ?? "") || 0,
+      ot: parseFloat(d?.ot ?? t?.ot ?? "") || 0,
+    };
+  }
+
+  function plannedHours(dow: number) {
+    const t = recurringHours[dow];
+    return { reg: parseFloat(t?.reg ?? "") || 0, ot: parseFloat(t?.ot ?? "") || 0 };
+  }
+
+  // One-tap hour fixes. "Minus" chips take hours off the end of the day, so
+  // OT goes first and regular hours only after OT is used up.
+  function applyHourChip(key: string, dow: number, chip: typeof HOUR_CHIPS[number]["id"]) {
+    const eff = effectiveHours(key, dow);
+    let reg = eff.reg;
+    let ot = eff.ot;
+    const take = (n: number) => {
+      const fromOt = Math.min(ot, n);
+      ot -= fromOt;
+      reg = Math.max(0, reg - (n - fromOt));
+    };
+    if (chip === "off") { reg = 0; ot = 0; }
+    else if (chip === "minus1") take(1);
+    else if (chip === "minus2") take(2);
+    else if (chip === "ot1") ot += 1;
+    else if (chip === "ot2") ot += 2;
+    const s = (n: number) => String(Math.round(n * 100) / 100);
+    setDailyHours(prev => ({ ...prev, [key]: { reg: s(reg), ot: s(ot) } }));
+  }
+
+  // Drop a day's own entry so it goes back to following the weekly template.
+  async function resetDayHours(key: string) {
+    setDailyHours(prev => {
+      const next = { ...prev };
+      delete next[key];
+      return next;
+    });
+    const { error } = await supabase.from("daily_hours_log").delete().eq("date", key);
+    if (error) console.error("daily_hours_log delete failed:", error);
+  }
+
   // Per-month starting balance for the Money Calendar, keyed "YYYY-M".
   // Only the current month uses budget.current_balance (today's real
   // balance) — every other month starts blank until set here, so future
@@ -803,6 +861,21 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
     }
     return chunks;
   }, [moneyCalendarResult]);
+
+  // Which week blocks are open, keyed by the week's first day. A week with no
+  // entry here defaults to open only if it's the first one on screen (the
+  // week containing today, or the first week of a future month).
+  const [weekOpen, setWeekOpen] = useState<Record<string, boolean>>({});
+
+  // Opens whichever week holds a day, then scrolls to it. Needed because a
+  // collapsed week has no day cards in the DOM to scroll to.
+  function jumpToDay(key: string) {
+    const chunk = moneyCalendarWeekChunks.find(c => c.rows.some(r => r.key === key));
+    if (chunk) setWeekOpen(prev => ({ ...prev, [chunk.rows[0].key]: true }));
+    setTimeout(() => {
+      document.getElementById(`money-day-${key}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 60);
+  }
 
   const monthBills = useMemo(() => {
     const rows: (Bill & { name: string; amount: number; due_day: number; paid: boolean; late: boolean; days: number; paymentId?: number })[] = [];
@@ -1803,9 +1876,7 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                         return (
                           <div
                             key={d.key}
-                            onClick={() => {
-                              document.getElementById(`money-day-${d.key}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
-                            }}
+                            onClick={() => jumpToDay(d.key)}
                             title={`${d.date.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })} · ${tier.label}`}
                             style={{
                               aspectRatio: "1",
@@ -1837,14 +1908,77 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                 {budget.hourly_wage <= 0 ? (
                   <div style={{ fontSize: 12, color: "var(--ink-muted)" }}>Enter your hourly wage above to see your calendar.</div>
                 ) : (
-                  moneyCalendarWeekChunks.map(({ title, rows }) => (
-                    <div key={title} style={{ marginBottom: 18 }}>
-                      <div style={{ fontSize: 12, fontWeight: 700, color: "var(--ink)", marginBottom: 8 }}>{title}</div>
-                                            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                  moneyCalendarWeekChunks.map(({ title, rows }, chunkIdx) => {
+                    const weekKey = rows[0].key;
+                    const isOpen = weekOpen[weekKey] ?? chunkIdx === 0;
+
+                    // Week roll-up for the collapsed header. "vs plan" only counts days
+                    // you edited that also have a weekly template to compare against.
+                    const round1 = (n: number) => Math.round(n * 10) / 10;
+                    const weekHours = rows.reduce((s, r) => {
+                      const h = effectiveHours(r.key, r.date.getDay());
+                      return s + h.reg + h.ot;
+                    }, 0);
+                    const hourDelta = rows.reduce((s, r) => {
+                      const dow = r.date.getDay();
+                      if (!dailyHours[r.key] || !recurringHours[dow]) return s;
+                      const eff = effectiveHours(r.key, dow);
+                      const plan = plannedHours(dow);
+                      return s + (eff.reg + eff.ot) - (plan.reg + plan.ot);
+                    }, 0);
+                    const weekBills = rows.reduce((s, r) => s + r.billsToday.reduce((a, b) => a + b.amount, 0), 0);
+                    const hasPayday = rows.some(r => r.releasedToday > 0.005);
+                    const endBal = rows[rows.length - 1].balance;
+                    const lowBal = Math.min(...rows.map(r => r.balance));
+
+                    const summaryParts: string[] = [`${round1(weekHours)}h`];
+                    if (Math.abs(hourDelta) >= 0.05) summaryParts.push(`${hourDelta > 0 ? "+" : "−"}${round1(Math.abs(hourDelta))}h vs plan`);
+                    if (weekBills > 0) summaryParts.push(`${fmt(weekBills)} bills`);
+                    if (hasPayday) summaryParts.push("payday catch-up");
+
+                    return (
+                    <div key={weekKey} style={{ marginBottom: 12 }}>
+                      <button
+                        type="button"
+                        aria-expanded={isOpen}
+                        onClick={() => setWeekOpen(prev => ({ ...prev, [weekKey]: !isOpen }))}
+                        style={{
+                          width: "100%", display: "flex", alignItems: "center", gap: 8, textAlign: "left",
+                          background: "transparent", border: "1.5px solid var(--border)", borderRadius: 14,
+                          padding: "10px 12px", cursor: "pointer", fontFamily: "inherit",
+                          marginBottom: isOpen ? 8 : 0,
+                        }}
+                      >
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontSize: 12, fontWeight: 700, color: "var(--ink)" }}>{title}</div>
+                          <div style={{ fontSize: 10, color: "var(--ink-muted)", marginTop: 2 }}>{summaryParts.join(" · ")}</div>
+                        </div>
+                        <div style={{ textAlign: "right", flexShrink: 0 }}>
+                          <div style={{ fontSize: 13, fontWeight: 800, color: endBal < 0 ? "var(--danger)" : "var(--green-dark)" }}>{fmt(endBal)}</div>
+                          {lowBal < 0 && (
+                            <div style={{ fontSize: 10, color: "var(--danger)", fontWeight: 700 }}>
+                              <Icon name="lightning" size={11} /> low {fmt(lowBal)}
+                            </div>
+                          )}
+                        </div>
+                        <Icon name={isOpen ? "icon-chevronup" : "icon-chevrondown"} size={18} />
+                      </button>
+
+                      {isOpen && (
+                      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                         {rows.map(row => {
                           const isToday = row.key === dateKey(new Date());
                           const textColor = isToday ? "var(--accent-text)" : "var(--ink)";
                           const mutedColor = isToday ? "var(--accent-text-muted)" : "var(--ink-muted)";
+                          const dow = row.date.getDay();
+                          const isEdited = !!dailyHours[row.key];
+                          const plan = plannedHours(dow);
+                          const planTotal = plan.reg + plan.ot;
+                          const chipStyle: CSSProperties = {
+                            padding: "3px 10px", fontSize: 11, fontWeight: 600, borderRadius: 99,
+                            border: `1px solid ${isToday ? "var(--accent-text-muted)" : "var(--border)"}`,
+                            background: "transparent", color: textColor, cursor: "pointer", fontFamily: "inherit",
+                          };
                           return (
                             <div key={row.key} id={`money-day-${row.key}`} style={{ border: `1.5px solid ${isToday ? "var(--pink-dark)" : "var(--border)"}`, borderRadius: 14, padding: "10px 12px", background: isToday ? "var(--accent)" : "transparent" }}>
                               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
@@ -1874,7 +2008,7 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                                   type="number"
                                   className="form-input"
                                   placeholder="0"
-                                  value={dailyHours[row.key]?.reg ?? recurringHours[row.date.getDay()]?.reg ?? ""}
+                                  value={dailyHours[row.key]?.reg ?? recurringHours[dow]?.reg ?? ""}
                                   onChange={e => setDailyHourField(row.key, "reg", e.target.value)}
                                   style={{ flex: 1, fontSize: 12, padding: "4px 8px" }}
                                 />
@@ -1883,7 +2017,7 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                                   type="number"
                                   className="form-input"
                                   placeholder="0"
-                                  value={dailyHours[row.key]?.ot ?? recurringHours[row.date.getDay()]?.ot ?? ""}
+                                  value={dailyHours[row.key]?.ot ?? recurringHours[dow]?.ot ?? ""}
                                   onChange={e => setDailyHourField(row.key, "ot", e.target.value)}
                                   style={{ flex: 1, fontSize: 12, padding: "4px 8px" }}
                                 />
@@ -1893,11 +2027,37 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                                 )}
                               </div>
 
-                              <label style={{ display: "flex", alignItems: "center", gap: 4, marginTop: 4, cursor: "pointer" }}>
+                              {/* One-tap hour fixes — no typing needed for a day that ran short or long */}
+                              <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center", marginTop: 6 }}>
+                                {isEdited && (
+                                  <button
+                                    type="button"
+                                    onClick={() => resetDayHours(row.key)}
+                                    style={{ ...chipStyle, borderColor: "var(--pink-dark)", color: isToday ? "var(--accent-text)" : "var(--pink-dark)" }}
+                                  >
+                                    As planned
+                                  </button>
+                                )}
+                                {HOUR_CHIPS.map(c => (
+                                  <button
+                                    key={c.id}
+                                    type="button"
+                                    onClick={() => applyHourChip(row.key, dow, c.id)}
+                                    style={chipStyle}
+                                  >
+                                    {c.label}
+                                  </button>
+                                ))}
+                                {isEdited && planTotal > 0 && (
+                                  <span style={{ fontSize: 9, color: mutedColor }}>plan was {Math.round(planTotal * 10) / 10}h</span>
+                                )}
+                              </div>
+
+                              <label style={{ display: "flex", alignItems: "center", gap: 4, marginTop: 6, cursor: "pointer" }}>
                                 <input
                                   type="checkbox"
-                                  checked={!!recurringHours[row.date.getDay()]}
-                                  onChange={e => toggleRecurringWeekday(row.date.getDay(), row.key, e.target.checked)}
+                                  checked={!!recurringHours[dow]}
+                                  onChange={e => toggleRecurringWeekday(dow, row.key, e.target.checked)}
                                 />
                                 <span style={{ fontSize: 9, color: mutedColor }}>
                                   Recurring every {row.date.toLocaleDateString(undefined, { weekday: "long" })}
@@ -1923,24 +2083,50 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                                 </div>
                               )}
 
-                              <div style={{ marginTop: 8 }}>
-                                <span style={{ fontSize: 10, color: mutedColor }}>
-                                  Expected Extra Funds
-                                </span>
+                              {/* Extra funds / expenses tucked away so each day reads shorter */}
+                              <details style={{ marginTop: 8 }}>
+                                <summary style={{ fontSize: 10, color: mutedColor, cursor: "pointer" }}>
+                                  Extra funds / expenses
+                                </summary>
 
-                                <input
-                                  type="number"
-                                  className="form-input"
-                                  placeholder="0"
-                                  value={extraFunds[row.key] || ""}
-                                  onChange={e =>
-                                    setExtraFunds(prev => ({
-                                      ...prev,
-                                      [row.key]: e.target.value,
-                                    }))
-                                  }
-                                />
-                              </div>
+                                <div style={{ marginTop: 6 }}>
+                                  <span style={{ fontSize: 10, color: mutedColor }}>
+                                    Expected Extra Funds
+                                  </span>
+
+                                  <input
+                                    type="number"
+                                    className="form-input"
+                                    placeholder="0"
+                                    value={extraFunds[row.key] || ""}
+                                    onChange={e =>
+                                      setExtraFunds(prev => ({
+                                        ...prev,
+                                        [row.key]: e.target.value,
+                                      }))
+                                    }
+                                  />
+                                </div>
+
+                                <div style={{ marginTop: 8 }}>
+                                  <span style={{ fontSize: 10, color: mutedColor }}>
+                                    Expected Purchase / Expense
+                                  </span>
+
+                                  <input
+                                    type="number"
+                                    className="form-input"
+                                    placeholder="0"
+                                    value={extraExpenses[row.key] || ""}
+                                    onChange={e =>
+                                      setExtraExpenses(prev => ({
+                                        ...prev,
+                                        [row.key]: e.target.value,
+                                      }))
+                                    }
+                                  />
+                                </div>
+                              </details>
 
                               {row.extraToday > 0 && (
                                 <div
@@ -1954,25 +2140,6 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                                   +{fmt(row.extraToday)} expected
                                 </div>
                               )}
-
-                              <div style={{ marginTop: 8 }}>
-                                <span style={{ fontSize: 10, color: mutedColor }}>
-                                  Expected Purchase / Expense
-                                </span>
-
-                                <input
-                                  type="number"
-                                  className="form-input"
-                                  placeholder="0"
-                                  value={extraExpenses[row.key] || ""}
-                                  onChange={e =>
-                                    setExtraExpenses(prev => ({
-                                      ...prev,
-                                      [row.key]: e.target.value,
-                                    }))
-                                  }
-                                />
-                              </div>
 
                               {row.extraExpenseToday > 0 && (
                                 <div
@@ -1991,8 +2158,10 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                           );
                         })}
                       </div>
+                      )}
                     </div>
-                  ))
+                    );
+                  })
                 )}
               </div>
             </div>
