@@ -1,3 +1,4 @@
+import { authedFetch } from '../../lib/apiClient';
 import React, { useState, useEffect } from 'react';
 import { Salad } from 'lucide-react';
 import Icon from '../Icon';
@@ -288,7 +289,6 @@ function DiscoverTab({ onOpenRecipe, onSaved }: { onOpenRecipe: (id: number) => 
       number: '6',
       addRecipeInformation: 'true',
       fillIngredients: 'false',
-      apiKey: import.meta.env.VITE_SPOONACULAR_API_KEY,
     })
 
     if (mode === 'search') params.set('query', query.trim())
@@ -300,7 +300,7 @@ function DiscoverTab({ onOpenRecipe, onSaved }: { onOpenRecipe: (id: number) => 
     if (mealType) params.set('type', mealType)
 
     try {
-      const res = await fetch(`https://api.spoonacular.com/recipes/complexSearch?${params}`)
+      const res = await authedFetch(`/api/recipes?kind=search&${params}`)
       const data = await res.json()
       if (data.code === 402) { setError('Spoonacular daily limit reached — try again tomorrow'); setLoading(false); return }
 
@@ -332,8 +332,7 @@ function DiscoverTab({ onOpenRecipe, onSaved }: { onOpenRecipe: (id: number) => 
 
     let ingredients: string[] = []
     try {
-      const params = new URLSearchParams({ apiKey: import.meta.env.VITE_SPOONACULAR_API_KEY })
-      const res = await fetch(`https://api.spoonacular.com/recipes/${m.id}/information?${params}`)
+      const res = await authedFetch(`/api/recipes?kind=info&id=${m.id}`)
       const data = await res.json()
       ingredients = (data.extendedIngredients || []).map((ing: any) => {
         const name = ing.name || ing.originalName || ing.original || ''

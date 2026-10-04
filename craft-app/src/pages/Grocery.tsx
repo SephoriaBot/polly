@@ -1,3 +1,4 @@
+import { authedFetch } from '../lib/apiClient';
 import { useState, useEffect, useRef } from 'react';
 import type { GroceryItem } from '../types/legacy';
 import { supabase } from '../lib/supabase';
@@ -608,7 +609,7 @@ export default function Grocery({ initialTab }: { initialTab?: 'list' | 'recipes
       const timeout = setTimeout(() => controller.abort(), 15000)
 
       try {
-        const res = await fetch(
+        const res = await authedFetch(
           `/api/product-search?q=${encodeURIComponent(query)}${zip ? `&zip=${encodeURIComponent(zip)}` : ''}`,
           { signal: controller.signal }
         )
@@ -736,7 +737,7 @@ export default function Grocery({ initialTab }: { initialTab?: 'list' | 'recipes
                                 const controller = new AbortController()
                 const timeout = setTimeout(() => controller.abort(), 15000)
                 try {
-                  const res = await fetch(
+                  const res = await authedFetch(
                     `/api/product-search?q=${encodeURIComponent(`${item.name} ${store}`)}${location ? `&zip=${encodeURIComponent(location)}` : ''}`,
                     { signal: controller.signal }
                   )

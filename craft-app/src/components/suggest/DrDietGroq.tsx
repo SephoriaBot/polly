@@ -1,3 +1,4 @@
+import { groqFetch } from '../../lib/apiClient';
 import { useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import Icon from '../Icon'
@@ -194,19 +195,11 @@ Respond ONLY with a valid JSON object, no markdown, no backticks, no explanation
 Never mention calories, macros, or specific weight numbers. If the goal involves managing a health condition, keep foodsToEmphasize/foodsToLimit general and gently note in the summary that a doctor or registered dietitian should guide anything condition-specific. Keep the tone encouraging, never restrictive or shame-based.`
 
     try {
-      const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${import.meta.env.VITE_GROQ_API_KEY}`,
-        },
-        body: JSON.stringify({
-          model: 'openai/gpt-oss-120b',
+      const response = await groqFetch({
           max_tokens: 1800,
           temperature: isRegenerate ? 1.05 : 0.7,
           messages: [{ role: 'user', content: prompt }],
-        }),
-      })
+        })
 
       if (!response.ok) {
         const errText = await response.text()

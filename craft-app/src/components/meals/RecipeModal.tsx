@@ -1,3 +1,4 @@
+import { authedFetch } from '../../lib/apiClient';
 import { useState, useEffect } from 'react'
 import { ArrowRight } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
@@ -123,9 +124,7 @@ export default function RecipeModal({ mealId, onClose }: RecipeModalProps) {
     setStep(0)
 
     try {
-      const res = await fetch(
-        `https://api.spoonacular.com/recipes/${id}/information?apiKey=${import.meta.env.VITE_SPOONACULAR_API_KEY}`
-      )
+      const res = await authedFetch(`/api/recipes?kind=info&id=${id}`)
       const data = await res.json()
 
       setMeal({

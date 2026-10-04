@@ -1,4 +1,5 @@
 // craft-app/api/generate-cleaning-plan.ts
+import { getUserId, throttled } from './_lib/auth.js'
 const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions'
 const GROQ_MODEL =
   process.env.GROQ_MODEL || 'openai/gpt-oss-120b'
@@ -8,9 +9,17 @@ export default async function handler(req: any, res: any) {
       error: 'Method not allowed',
     })
   }
-  const apiKey = process.env.VITE_GROQ_API_KEY
+  res.setHeader('Cache-Control', 'no-store')
+  const userId = await getUserId(req)
+  if (!userId) {
+    return res.status(401).json({ error: 'Please sign in' })
+  }
+  if (throttled(`cleaning-plan:${userId}`, 10, 60_000)) {
+    return res.status(429).json({ error: 'Too many requests. Please wait a minute.' })
+  }
+  const apiKey = process.env.GROQ_API_KEY
   if (!apiKey) {
-    console.error('VITE_GROQ_API_KEY is not configured')
+    console.error('GROQ_API_KEY is not configured')
     return res.status(500).json({
       error: 'AI cleaning plans are not configured',
     })
@@ -60,7 +69,7 @@ Example:
           },
         ],
         temperature: 0.4,
-        max_tokens: 500,
+        max_tokens: 1100, // reasoning tokens count too, so leave room
       }),
     })
     const groqData = await groqResponse.json()

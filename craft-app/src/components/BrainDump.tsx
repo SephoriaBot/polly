@@ -8,6 +8,7 @@
 // contain an amount or due date, those fields are left null for the user
 // to fill in later from Wallet.
 
+import { groqFetch } from '../lib/apiClient';
 import { useEffect, useRef, useState } from 'react';
 import { Mic, Square } from 'lucide-react';
 import { supabase } from '../lib/supabase';
@@ -57,18 +58,10 @@ async function categorize(dump: string): Promise<{
   dueDay: number | null;
   recurring: boolean | null;
 }[]> {
-  const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${import.meta.env.VITE_GROQ_API_KEY}`,
-    },
-    body: JSON.stringify({
-      model: 'llama-3.3-70b-versatile',
+  const response = await groqFetch({
       max_tokens: 600,
       messages: [{ role: 'user', content: buildPrompt(dump) }],
-    }),
-  });
+    });
 
   const data = await response.json();
   const raw = data.choices?.[0]?.message?.content ?? '';

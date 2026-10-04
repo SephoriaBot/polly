@@ -1,12 +1,24 @@
 /// <reference types="node" />
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { getUserId, throttled } from './_lib/auth.js';
 
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+  res.setHeader('Cache-Control', 'no-store')
+
+  const userId = await getUserId(req)
+  if (!userId) return res.status(401).json({ error: 'Please sign in', results: [] })
+  if (throttled(`product-search:${userId}`, 30, 60_000)) {
+    return res.status(429).json({ error: 'Too many searches. Please wait a minute.', results: [] })
+  }
+
   const q = (req.query.q || "").toString().trim()
   const location = (req.query.zip || "").toString().trim()
 
   if (!q) return res.status(400).json({ error: 'Missing search query', results: [] })
+  if (q.length > 120 || location.length > 20) {
+    return res.status(400).json({ error: 'Search is too long', results: [] })
+  }
 
   if (!process.env.SERPAPI_KEY) {
     console.error('product-search: SERPAPI_KEY is not set')
@@ -21,7 +33,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const start = Date.now()
     const r = await fetch(url)
     const data = await r.json()
-    console.log(`product-search: SerpAPI responded in ${Date.now() - start}ms for q="${q}"`)
+    console.log(`product-search: SerpAPI responded in ${Date.now() - start}ms`)
 
     // SerpAPI returns 200 with an `error` field (bad/expired key, exhausted
     // account searches, rate limited, etc.) rather than an HTTP error status,

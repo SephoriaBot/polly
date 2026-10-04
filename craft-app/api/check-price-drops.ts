@@ -12,14 +12,15 @@ import { createClient } from '@supabase/supabase-js';
 const MAX_WATCHES_PER_RUN = 40
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  // Vercel Cron sends `Authorization: Bearer $CRON_SECRET` automatically
-  // when CRON_SECRET is set as an env var — this just makes sure nobody
-  // else can hit the endpoint and burn through the SerpAPI quota.
-  if (process.env.CRON_SECRET) {
-    const auth = req.headers['authorization']
-    if (auth !== `Bearer ${process.env.CRON_SECRET}`) {
-      return res.status(401).json({ error: 'Unauthorized' })
-    }
+  // Vercel Cron sends `Authorization: Bearer $CRON_SECRET` automatically when
+  // CRON_SECRET is set. Without a secret this endpoint refuses everyone, so it
+  // can never be triggered by a stranger and burn through the SerpAPI quota.
+  if (!process.env.CRON_SECRET) {
+    console.error('check-price-drops: CRON_SECRET is not set; refusing to run')
+    return res.status(503).json({ error: 'Not configured' })
+  }
+  if (req.headers['authorization'] !== `Bearer ${process.env.CRON_SECRET}`) {
+    return res.status(401).json({ error: 'Unauthorized' })
   }
 
   if (!process.env.SERPAPI_KEY) {
@@ -27,8 +28,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(500).json({ error: 'Price search is not configured (missing API key)' })
   }
 
-  const supabaseUrl = process.env.VITE_SUPABASE_URL as string
-  const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY as string
+  const supabaseUrl = (process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL) as string
+  const supabaseKey = (process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY) as string
   if (!supabaseUrl || !supabaseKey) {
     console.error('check-price-drops: Supabase env vars are not set')
     return res.status(500).json({ error: 'Database is not configured' })

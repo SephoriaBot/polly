@@ -2,6 +2,7 @@
 // Inline, expandable AI-generated cleaning checklist for a single chore.
 // Rendered under a chore row in Chores.tsx when that chore is the "open" one.
 
+import { authedFetch } from '../../lib/apiClient';
 import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '../../lib/supabase';
 import { useToast } from '../../hooks/useToast';
@@ -125,7 +126,7 @@ export default function ChoreCleaningPlan({
     setGenerating(true);
 
     try {
-      const response = await fetch('/api/generate-cleaning-plan', {
+      const response = await authedFetch('/api/generate-cleaning-plan', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

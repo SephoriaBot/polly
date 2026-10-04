@@ -6,6 +6,7 @@
 // Generated once; after that it's a normal editable/checkable list like
 // everything else, no regeneration in v1.
 
+import { groqFetch } from '../../lib/apiClient';
 import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { useToast } from '../../hooks/useToast';
@@ -72,18 +73,10 @@ Respond ONLY with a valid JSON object, no markdown, no backticks, no explanation
 }
 
 async function callGroqForSteps(prompt: string, safetyCap: number): Promise<string[]> {
-  const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${import.meta.env.VITE_GROQ_API_KEY}`,
-    },
-    body: JSON.stringify({
-      model: 'openai/gpt-oss-120b',
+  const response = await groqFetch({
       max_tokens: 800,
       messages: [{ role: 'user', content: prompt }],
-    }),
-  });
+    });
 
   const data = await response.json();
   const raw = data.choices?.[0]?.message?.content ?? '';
