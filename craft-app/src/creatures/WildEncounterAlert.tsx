@@ -1,5 +1,5 @@
 // WildEncounterAlert.tsx
-// Floating popup that lets you know a wild hamster has appeared, no matter
+// Floating popup that lets you know a tournament match is open, no matter
 // what page you're on. Tapping it jumps to the Habitat page, where
 // WildEncounter.tsx already auto-skips to the "Face it!" step for
 // auto-spawned encounters (see isAutoSpawned in WildEncounter.tsx).
@@ -69,9 +69,9 @@ export default function WildEncounterAlert({ currentPage, onNavigate }: Props) {
       <Icon name="hamster-wild" size={30} />
       <div style={{ flex: 1 }}>
         <div style={{ fontSize: 12, fontWeight: 800, color: "var(--pink-dark)" }}>
-          A wild creature appeared!
+          A tournament match is open!
         </div>
-        <div style={{ fontSize: 10, color: "var(--ink-muted)" }}>Tap to go fight it</div>
+        <div style={{ fontSize: 10, color: "var(--ink-muted)" }}>Tap to enter</div>
       </div>
       <button
         onClick={(e) => {

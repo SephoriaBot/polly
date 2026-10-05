@@ -6,48 +6,52 @@ export interface PollyTourStep {
 export const POLLY_TOUR_CONTENT: Record<string, PollyTourStep[]> = {
   dashboard: [
     {
-      title: "This is your Dashboard",
-      body: "Your focuses for today, a quick weather and moon phase check, and anything else on your radar all live here.",
+      title: "Welcome home! This is your Dashboard",
+      body: "Your focuses, a weather widget, and an at-a-glance summary of your space can be found here.",
     },
     {
-      title: "You've got a few things always at the top of the page, too",
-      body: "Here you have Brain Dump, where you can give me your run-on thought blurb and I will sort it for you. You can also change your theme, including day and night modes.",
+      title: "One more thing!",
+      body: "At the top of the page you have Brain Dump, where you can give me your run-on thoughts and I will sort them into tasks for you. You can also change your theme here!",
     },
   ],
   grocery: [
     {
-    title: "Grocery",
-    body: "Build your shopping list, explore recipes, and let Smart Cart compare prices for you.",
+    title: "This is your Grocery page",
+    body: "Here you can build your shopping list, explore recipes, and let Smart Cart compare prices for you to find the cheapest trip.",
   },
 ],
   dailyplanner: [
     {
-    title: "Daily Planner",
-    body: "Daily tasks, appointments, scheduled chores, event planning, goals, and appointment notes — all your schedule stuff lives here.",
+    title: "This is your Daily Planner",
+    body: "Daily tasks, appointments, chores, event planning, goals, and appointment notes — if you can plan it or turn it into a checklist, it lives here.",
   },
 ],
   wallet: [
     {
-    title: "Wallet",
-    body: "Bills, your money calendar, and a debt payoff plan, all in one place.",
+    title: "Here is your Wallet",
+    body: "Your bills, a personalized money calendar for planning with your projected income, and a customized debt payoff plan can all be found here.",
   },
 ],
   trackers: [
     {
-    title: "Trackers",
-    body: "Keep tabs on habits and anything else you want to track over time.",
+    title: "This page is for your Trackers",
+    body: "Keep tabs on habits and anything else you want to track over time. There are presets for sleep, cycle and weight- or make your own!",
   },
 ],
   decisions: [
     {
-    title: "Decision Tree",
-    body: "Stuck on a choice? Work through it step by step here, or choose a simple battle for polly to make it for you.",
+    title: "This page is for tough Decisions",
+    body: "Work through it step by step here in a decision tree and weigh the best choice, or choose a simple battle for polly to make it for you.",
   },
 ],
   habitat: [
     {
-    title: "Habitat",
-    body: "This is my home! Decorate my shelf with items you collect on your journey and make yourself comfortable. As you complete your tasks, you'll earn points to spend at the breeder, where you can adopt hamsters, noodles, and dragons to fill this space with. Be careful though, there are wild ones out there too!",
+    title: "This is my favorite part- the Habitat",
+    body: "This is my home! Decorate my shelf with items you collect on your journey, visit the breeder, train your creatures in tournaments and watch them evolve with training points.",
+  },
+  {
+    title: "Hmmm..",
+    body: "The breeder said they just got a surprise litter, we should go check it out!",
   },
 ],
 };

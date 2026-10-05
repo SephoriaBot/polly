@@ -1,5 +1,5 @@
 // battle.ts
-// Wild creature encounters + turn-based battle resolution, now
+// Tournament opponents + turn-based battle resolution, now
 // species-aware. Growth math, stat caps, and battle resolution are
 // identical across wereham/noodle/dragon — only which abilities get
 // rolled differs, via abilityPoolFor(species, stage) from personalities.ts.
@@ -88,7 +88,7 @@ export function canBattle(_stage: EvolutionStage): boolean {
   return true;
 }
 
-// Stat points and shop currency awarded for winning a wild encounter,
+// Stat points and shop currency awarded for winning a tournament match,
 // scaled by how tough the opponent was. Shared across species.
 export const BATTLE_REWARDS: Record<EvolutionStage, { statPoints: number; shopPoints: number }> = {
   baby: { statPoints: 2, shopPoints: 2 },
@@ -160,12 +160,43 @@ export interface WildCreature {
 // Backward-compatible alias for old imports.
 export type WildWereham = WildCreature;
 
-// Odds shift toward "final" as the player's own furthest-evolved creature
-// climbs, so wild encounters get a little tougher over time without a
-// separate leveling system to maintain. Species defaults to a uniform
-// random pick across all three when not specified, so wild encounters draw
+// Tournament opponents train alongside your creature. Their trained stats
+// are a share of the stage's stat caps, matched to how far along your
+// fighter's own training is (plus a little random wobble), so a baby that's
+// nearly ready to evolve meets a well-trained baby, never a fresh one.
+// Floor keeps the early matches from being a total walkover; ceiling is the
+// stage cap, so opponents never out-train what a creature of that stage can.
+const OPPONENT_MIN_TRAINING = 0.1;
+const OPPONENT_TRAINING_WOBBLE = 0.1;
+
+export function opponentTrainingFor(stage: EvolutionStage, playerTrained: TrainedStats): TrainedStats {
+  const cap = STAT_CAPS[stage];
+  const capTotal = cap.hp + cap.attack + cap.defense + cap.speed;
+  const playerTotal =
+    Math.min(playerTrained.hp, cap.hp) +
+    Math.min(playerTrained.attack, cap.attack) +
+    Math.min(playerTrained.defense, cap.defense) +
+    Math.min(playerTrained.speed, cap.speed);
+  const wobble = (Math.random() * 2 - 1) * OPPONENT_TRAINING_WOBBLE;
+  const share = Math.min(1, Math.max(OPPONENT_MIN_TRAINING, playerTotal / capTotal + wobble));
+  return {
+    hp: Math.round(cap.hp * share),
+    attack: Math.round(cap.attack * share),
+    defense: Math.round(cap.defense * share),
+    speed: Math.round(cap.speed * share),
+  };
+}
+
+// Opponent stage follows the player's furthest-evolved creature (or the
+// selected fighter's stage). When playerTrained is passed, the opponent's
+// trained stats scale with it (see opponentTrainingFor above). Species
+// defaults to a uniform random pick across all three, so opponents draw
 // from the whole roster rather than always being werehams.
-export function rollWildCreature(stage: EvolutionStage, species?: Species): WildCreature {
+export function rollWildCreature(
+  stage: EvolutionStage,
+  species?: Species,
+  playerTrained?: TrainedStats
+): WildCreature {
   const chosenSpecies: Species = species ?? SPECIES[Math.floor(Math.random() * SPECIES.length)];
   const roster = ROSTER_BY_SPECIES[chosenSpecies];
   const base = roster[Math.floor(Math.random() * roster.length)];
@@ -195,7 +226,7 @@ export function rollWildCreature(stage: EvolutionStage, species?: Species): Wild
     image: form.image,
     personality,
     abilities,
-    stats: deriveBattleStats(stage, abilities),
+    stats: deriveBattleStats(stage, abilities, playerTrained ? opponentTrainingFor(stage, playerTrained) : EMPTY_TRAINED_STATS),
   };
 }
 

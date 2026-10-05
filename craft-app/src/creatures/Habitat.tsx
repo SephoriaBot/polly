@@ -19,7 +19,7 @@ const HABITAT_TABS: PageTab<HabitatTab>[] = [
   { key: 'shelf', label: 'Shelf', icon: 'tab-shelf' },
   { key: 'breeder', label: 'Breeder', icon: 'tab-breeder' },
   { key: 'incubator', label: 'Incubator', icon: 'tab-breeder' }, // swap in a dedicated egg icon when you have one
-  { key: 'wild', label: 'Wild Encounter', icon: 'tab-encounter' },
+  { key: 'wild', label: 'Tournaments', icon: 'tab-encounter' },
   { key: 'collection', label: 'Collection', icon: 'trophy' },
   { key: 'closet', label: 'Closet', icon: 'sparkle-single' }, // swap in a dedicated hat icon when you have one
 ];
@@ -61,7 +61,7 @@ export default function Habitat({ initialTab }: { initialTab?: HabitatTab }) {
 
       {activeTab === 'wild' && (
         <section>
-          <div className="section-label">Wild Encounter</div>
+          <div className="section-label">Tournaments</div>
           <WildEncounter />
         </section>
       )}

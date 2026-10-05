@@ -1,7 +1,8 @@
 // WildEncounter.tsx
-// Phase 1 of creature combat: fight procedurally-rolled wild creatures
-// (hamster, noodle, or dragon — species rolls independently of your own
-// fighter's species) using your own teen/final creatures. Fully
+// Tournaments tab (file name kept so imports don't change). Phase 1 of
+// creature combat: enter a tournament match against a procedurally-rolled
+// opponent (wereham, noodle, or dragon — species rolls independently of your
+// own fighter's species) whose training scales with your fighter's. Fully
 // self-contained — does its own Supabase reads/writes, doesn't touch
 // useCreatureGrowth.ts or any other file. Requires the hamster_battle_log
 // table (see migration) — table name kept as-is, now with an
@@ -142,10 +143,11 @@ const goScout = () => {
   setPhase("scouting");
 
   setTimeout(() => {
-    // Wild creature is always exactly the same evolution stage as the
-    // creature selected for battle, but its species rolls independently —
-    // any of the three can show up regardless of who you're fighting with.
-    setWild(rollWildCreature(selected.stage));
+    // Opponent is always exactly the same evolution stage as the creature
+    // selected for battle, and its trained stats scale with how far along
+    // your fighter's own training is, so matches stay competitive. Its
+    // species rolls independently of your fighter's.
+    setWild(rollWildCreature(selected.stage, undefined, selected.trainedStats));
     setIsAutoSpawned(false);
     setPhase("found");
   }, 900);
@@ -282,7 +284,7 @@ const goScout = () => {
     return (
       <div className="card">
         <div className="card-body" style={{ textAlign: "center", fontSize: 12, color: "var(--ink-muted)" }}>
-          scouting the tall grass...
+          checking the tournament board...
         </div>
       </div>
     );
@@ -295,7 +297,7 @@ const goScout = () => {
     <div className="card">
       <div className="card-body">
         <div className="section-label" style={{ marginBottom: 10 }}>
-          <Icon name="map-pin" size={16} /> Wild Encounter
+          <Icon name="map-pin" size={16} /> Tournaments
         </div>
 
         {fighters.length === 0 ? (
@@ -341,7 +343,7 @@ const goScout = () => {
                 }}
               >
                 <Icon name="hamster-wild" size={18} />
-                A wild creature appeared while you were busy!
+                A tournament match is open for entry!
               </div>
             )}
 
@@ -353,13 +355,13 @@ const goScout = () => {
                 style={{ width: "100%", opacity: selected ? 1 : 0.5 }}
               >
                 <Icon name="lightning" size={14} />{" "}
-                {isAutoSpawned ? "Face it!" : "Go find a wild creature"}
+                {isAutoSpawned ? "Enter the match!" : "Enter a tournament"}
               </button>
             )}
 
             {phase === "scouting" && (
               <div style={{ textAlign: "center", fontSize: 12, color: "var(--ink-muted)", padding: "16px 0" }}>
-                rustling in the bushes...
+                finding you a matchup...
               </div>
             )}
 
@@ -380,9 +382,9 @@ const goScout = () => {
                   </div>
                   <div style={{ fontSize: 16, fontWeight: 800, color: "var(--ink-muted)" }}>vs</div>
                   <div style={{ flex: 1, textAlign: "center" }}>
-                    <img src={wild.image} alt="wild creature" style={{ width: 64, height: 64, objectFit: "contain" }} />
+                    <img src={wild.image} alt="opponent" style={{ width: 64, height: 64, objectFit: "contain" }} />
                     <div style={{ fontSize: 11, fontWeight: 700, color: "var(--pink-dark)" }}>
-                      Wild {wild.stage} {SPECIES_LABELS[wild.species].toLowerCase()}
+                      Opponent: {wild.stage} {SPECIES_LABELS[wild.species].toLowerCase()}
                     </div>
                     <HpBar
                       current={phase === "found" ? wild.stats.hp : opponentHp}
@@ -418,12 +420,12 @@ const goScout = () => {
                       <div style={{ fontSize: 12, textAlign: "center", marginTop: 12, minHeight: 18 }}>
                         {lastEntry.hit ? (
                           <span style={{ color: "var(--ink)" }}>
-                            {lastEntry.side === "player" ? "Yours" : "Wild creature"} used{" "}
+                            {lastEntry.side === "player" ? "Yours" : "Opponent"} used{" "}
                             <strong>{lastEntry.move}</strong> — {lastEntry.damage} dmg
                           </span>
                         ) : (
                           <span style={{ color: "var(--ink-muted)" }}>
-                            {lastEntry.side === "player" ? "Yours" : "Wild creature"} used{" "}
+                            {lastEntry.side === "player" ? "Yours" : "Opponent"} used{" "}
                             <strong>{lastEntry.move}</strong> — missed!
                           </span>
                         )}
@@ -445,7 +447,7 @@ const goScout = () => {
                       >
                         {log.slice(0, -1).map((t, i) => (
                           <div key={i}>
-                            {t.side === "player" ? "Yours" : "Wild creature"} used {t.move}
+                            {t.side === "player" ? "Yours" : "Opponent"} used {t.move}
                             {t.hit ? ` — ${t.damage} dmg` : " — missed"}
                           </div>
                         ))}
@@ -506,16 +508,16 @@ const goScout = () => {
                           </div>
                         )}
                         <button className="btn-primary" onClick={reset} style={{ width: "100%", marginTop: 10 }}>
-                          Find another
+                          Next match
                         </button>
                       </>
                     ) : (
                       <>
                         <div style={{ fontSize: 14, fontWeight: 800, color: "#B85C5C" }}>
-                          <Icon name="mood-sad" size={16} /> It got away with the win...
+                          <Icon name="mood-sad" size={16} /> Not this time — the opponent took the match...
                         </div>
                         <button className="btn-primary" onClick={reset} style={{ width: "100%", marginTop: 10 }}>
-                          Try again
+                          Rematch
                         </button>
                       </>
                     )}
