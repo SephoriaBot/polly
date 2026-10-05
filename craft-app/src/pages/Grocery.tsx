@@ -16,7 +16,15 @@ import CheckMark from '../components/CheckMark';
 import PageTitleLogo from "../components/PageTitleLogo";
 import { localDateKey } from '../lib/dateKey';
 
-interface GroceryList { id: string; name: string; created_at: string }
+// Every list has a type. "groceries" lists price against grocery chains and
+// feed the dashboard's smart-cart total; "home" lists price against
+// general-merchandise / hardware retailers and stay out of the dashboard
+// grocery total.
+type ListKind = 'groceries' | 'home'
+
+interface GroceryList { id: string; name: string; created_at: string; kind: ListKind }
+
+type StoreMap = Record<string, string[]>
 
 interface PriceEntry {
   id: string
@@ -203,7 +211,7 @@ const BASICS_PRESETS: Record<string, BasicsPreset> = {
 // This is only the *default* seed list — every user's actual whitelist is
 // stored in grocery_settings and editable from Settings, since which chains
 // exist near you depends entirely on where you live.
-const DEFAULT_ALLOWED_STORES: Record<string, string[]> = {
+const DEFAULT_ALLOWED_STORES: StoreMap = {
   'Walmart': ['walmart'],
   'Kroger': ['kroger'],
   'Target': ['target'],
@@ -215,12 +223,26 @@ const DEFAULT_ALLOWED_STORES: Record<string, string[]> = {
   'Aldi': ['aldi'],
 }
 
+// Separate default whitelist for "home goods" lists — general merchandise,
+// hardware, and household retailers instead of grocery chains. Stored in
+// grocery_settings.allowed_stores_home and editable from the Stores panel
+// whenever a home goods list is active.
+const DEFAULT_ALLOWED_STORES_HOME: StoreMap = {
+  'Walmart': ['walmart'],
+  'Target': ['target'],
+  'Amazon': ['amazon'],
+  'Home Depot': ['home depot'],
+  "Lowe's": ["lowe's", 'lowes'],
+  'Costco': ['costco'],
+  'Dollar Tree': ['dollar tree'],
+}
+
 // Matches a raw seller/store string against the user's store whitelist and
 // returns the canonical chain name, or null if it's not on the whitelist.
 // Normalizing to the canonical name (rather than just filtering) means
 // "Walmart" and "Walmart.com" get grouped together in the tally instead of
 // counted as two different stores.
-function normalizeStoreName(raw: string | undefined | null, allowedStores: Record<string, string[]>): string | null {
+function normalizeStoreName(raw: string | undefined | null, allowedStores: StoreMap): string | null {
   if (!raw) return null
   const lower = raw.toLowerCase()
   for (const [canonical, aliases] of Object.entries(allowedStores)) {
@@ -233,7 +255,7 @@ function normalizeStoreName(raw: string | undefined | null, allowedStores: Recor
 // (or from cache). Anything that doesn't match a known chain is dropped
 // entirely rather than shown under its raw name — this is what keeps
 // random marketplace sellers / instacart-only listings out of the cart.
-function filterToAllowedStores(results: any[], allowedStores: Record<string, string[]>): any[] {
+function filterToAllowedStores(results: any[], allowedStores: StoreMap): any[] {
   if (!Array.isArray(results)) return []
   return results
     .map(r => ({ ...r, store: normalizeStoreName(r.store, allowedStores) }))
@@ -263,6 +285,7 @@ export default function Grocery({ initialTab }: { initialTab?: 'list' | 'recipes
   const [lists, setLists] = useState<GroceryList[]>([])
   const [listsLoading, setListsLoading] = useState(true)
   const [newListName, setNewListName] = useState('')
+  const [newListKind, setNewListKind] = useState<ListKind>('groceries')
   const [newItem, setNewItem] = useState('')
   const [newQty, setNewQty] = useState('')
   const [loading, setLoading] = useState(true)
@@ -290,19 +313,33 @@ export default function Grocery({ initialTab }: { initialTab?: 'list' | 'recipes
   const [basicsChecked, setBasicsChecked] = useState<Set<string>>(new Set())
   const [addingBasics, setAddingBasics] = useState(false)
 
-  const [allowedStores, setAllowedStores] = useState<Record<string, string[]>>(DEFAULT_ALLOWED_STORES)
+  const [allowedStores, setAllowedStores] = useState<StoreMap>(DEFAULT_ALLOWED_STORES)
+  const [allowedStoresHome, setAllowedStoresHome] = useState<StoreMap>(DEFAULT_ALLOWED_STORES_HOME)
   const [showStoreSettings, setShowStoreSettings] = useState(false)
   const [newStoreName, setNewStoreName] = useState('')
   const [newStoreAliases, setNewStoreAliases] = useState('')
   const [storeSettingsLoaded, setStoreSettingsLoaded] = useState(false)
   const [activeTab, setActiveTab] = useState<'list' | 'recipes' | 'smart-cart' | 'price-watch'>(initialTab ?? 'list');
 
+  // The active list's type decides which store whitelist Smart Cart prices
+  // against, and whether grocery-only extras (Basics presets, DoorDash,
+  // dashboard total) are shown/updated.
+  const currentKind: ListKind = lists.find(l => l.name === currentList)?.kind ?? 'groceries'
+  const isHome = currentKind === 'home'
+  const activeStores: StoreMap = isHome ? allowedStoresHome : allowedStores
 
+  function setActiveStores(updater: (prev: StoreMap) => StoreMap) {
+    if (isHome) setAllowedStoresHome(updater)
+    else setAllowedStores(updater)
+  }
 
   useEffect(() => {
     supabase.from('grocery_settings').select('*').eq('id', 1).maybeSingle().then(({ data }) => {
       if (data?.allowed_stores && Object.keys(data.allowed_stores).length > 0) {
         setAllowedStores(data.allowed_stores)
+      }
+      if (data?.allowed_stores_home && Object.keys(data.allowed_stores_home).length > 0) {
+        setAllowedStoresHome(data.allowed_stores_home)
       }
       setStoreSettingsLoaded(true)
     })
@@ -311,24 +348,26 @@ export default function Grocery({ initialTab }: { initialTab?: 'list' | 'recipes
   useEffect(() => {
     if (!storeSettingsLoaded) return // don't overwrite DB with the default seed before initial load completes
     const timer = setTimeout(() => {
-      supabase.from('grocery_settings').upsert({ id: 1, allowed_stores: allowedStores }).then(({ error }) => {
-        if (error) console.error('grocery_settings save failed:', error)
-      })
+      supabase.from('grocery_settings')
+        .upsert({ id: 1, allowed_stores: allowedStores, allowed_stores_home: allowedStoresHome })
+        .then(({ error }) => {
+          if (error) console.error('grocery_settings save failed:', error)
+        })
     }, 800)
     return () => clearTimeout(timer)
-  }, [allowedStores, storeSettingsLoaded])
+  }, [allowedStores, allowedStoresHome, storeSettingsLoaded])
 
   function addAllowedStore() {
     const name = newStoreName.trim()
     const aliases = newStoreAliases.trim().toLowerCase()
     if (!name || !aliases) return
-    setAllowedStores(prev => ({ ...prev, [name]: aliases.split(',').map(a => a.trim()).filter(Boolean) }))
+    setActiveStores(prev => ({ ...prev, [name]: aliases.split(',').map(a => a.trim()).filter(Boolean) }))
     setNewStoreName('')
     setNewStoreAliases('')
   }
 
   function removeAllowedStore(name: string) {
-    setAllowedStores(prev => {
+    setActiveStores(prev => {
       const next = { ...prev }
       delete next[name]
       return next
@@ -351,6 +390,17 @@ export default function Grocery({ initialTab }: { initialTab?: 'list' | 'recipes
     fetchPrices()
   }, [currentList])
 
+  // Switching lists (or changing a list's type) throws away the current
+  // Smart Cart — its prices were built against the previous list's items and
+  // store whitelist, so showing them under a different list would be wrong.
+  // Bumping the run id also cancels any build still in flight.
+  useEffect(() => {
+    cartRunRef.current++
+    setCart([])
+    setCartError(null)
+    setLoadingCart(false)
+  }, [currentList, currentKind])
+
   async function fetchItems() {
     setLoading(true)
     const { data } = await supabase
@@ -372,7 +422,7 @@ export default function Grocery({ initialTab }: { initialTab?: 'list' | 'recipes
       .from('grocery_lists')
       .select('*')
       .order('created_at', { ascending: true })
-    let rows = data ?? []
+    let rows: GroceryList[] = (data ?? []).map((r: any) => ({ ...r, kind: r.kind === 'home' ? 'home' : 'groceries' }))
 
     if (rows.length === 0) {
       // First run (or table just created) — seed a Default list so there's
@@ -380,9 +430,9 @@ export default function Grocery({ initialTab }: { initialTab?: 'list' | 'recipes
       // already exist with list_name = 'Default' from before this table existed.
       const { data: seeded } = await supabase
         .from('grocery_lists')
-        .insert({ name: 'Default' })
+        .insert({ name: 'Default', kind: 'groceries' })
         .select().single()
-      if (seeded) rows = [seeded]
+      if (seeded) rows = [{ ...seeded, kind: 'groceries' }]
     }
 
     setLists(rows)
@@ -403,13 +453,27 @@ export default function Grocery({ initialTab }: { initialTab?: 'list' | 'recipes
 
     const { data } = await supabase
       .from('grocery_lists')
-      .insert({ name })
+      .insert({ name, kind: newListKind })
       .select().single()
     if (data) {
-      setLists(prev => [...prev, data])
-      setCurrentList(data.name)
+      const row: GroceryList = { ...data, kind: data.kind === 'home' ? 'home' : 'groceries' }
+      setLists(prev => [...prev, row])
+      setCurrentList(row.name)
     }
     setNewListName('')
+  }
+
+  // Lets an existing list be flipped between Groceries and Home goods, so
+  // lists you already made for household items can start pricing correctly
+  // without being recreated.
+  async function updateListKind(list: GroceryList, kind: ListKind) {
+    if (list.kind === kind) return
+    setLists(prev => prev.map(l => (l.id === list.id ? { ...l, kind } : l)))
+    const { error } = await supabase.from('grocery_lists').update({ kind }).eq('id', list.id)
+    if (error) {
+      console.error('grocery_lists kind update failed:', error)
+      setLists(prev => prev.map(l => (l.id === list.id ? { ...l, kind: list.kind } : l)))
+    }
   }
 
   async function deleteList(list: GroceryList) {
@@ -597,9 +661,14 @@ export default function Grocery({ initialTab }: { initialTab?: 'list' | 'recipes
   // A genuine config problem (missing/invalid API key) is NOT transient, so
   // it skips retries and surfaces immediately instead of burning 3 attempts
   // on something that will never succeed.
+  //
+  // `kind` is passed along as a hint so the server route can tailor the
+  // search for grocery vs. home goods; a route that ignores it just behaves
+  // as before.
   async function fetchProductSearchWithRetry(
     query: string,
     zip: string,
+    kind: ListKind,
     maxAttempts = 3
   ): Promise<{ results: any[]; error?: string }> {
     let lastError: string | undefined
@@ -610,7 +679,7 @@ export default function Grocery({ initialTab }: { initialTab?: 'list' | 'recipes
 
       try {
         const res = await authedFetch(
-          `/api/product-search?q=${encodeURIComponent(query)}${zip ? `&zip=${encodeURIComponent(zip)}` : ''}`,
+          `/api/product-search?q=${encodeURIComponent(query)}&kind=${kind}${zip ? `&zip=${encodeURIComponent(zip)}` : ''}`,
           { signal: controller.signal }
         )
         const data = await res.json()
@@ -637,6 +706,15 @@ export default function Grocery({ initialTab }: { initialTab?: 'list' | 'recipes
     const runId = ++cartRunRef.current
     const needItems = items.filter(i => !i.checked)
 
+    // Snapshot the list's type + store whitelist for this whole run, so a
+    // mid-run state change can't mix two different whitelists together.
+    const runKind: ListKind = currentKind
+    const runIsHome = runKind === 'home'
+    const runStores: StoreMap = activeStores
+    // Home goods get their own cache namespace so their results never mix
+    // with grocery results for an item with the same name.
+    const keyPrefix = runIsHome ? 'home:' : ''
+
     setLoadingCart(true)
     setCartError(null)
     setCart([])
@@ -653,7 +731,7 @@ export default function Grocery({ initialTab }: { initialTab?: 'list' | 'recipes
     // don't go stale.
     const CACHE_TTL_HOURS = 24
     const cacheCutoff = new Date(Date.now() - CACHE_TTL_HOURS * 60 * 60 * 1000).toISOString()
-    const normalizedNames = Array.from(new Set(needItems.map(i => i.name.toLowerCase().trim())))
+    const normalizedNames = Array.from(new Set(needItems.map(i => keyPrefix + i.name.toLowerCase().trim())))
     const persistedCache = new Map<string, any[]>()
 
     if (normalizedNames.length) {
@@ -677,7 +755,7 @@ export default function Grocery({ initialTab }: { initialTab?: 'list' | 'recipes
               return cache.get(item.name)
             }
 
-            const key = item.name.toLowerCase().trim()
+            const key = keyPrefix + item.name.toLowerCase().trim()
             let resultsArr: any[] = []
             let apiError: string | undefined
 
@@ -688,7 +766,7 @@ export default function Grocery({ initialTab }: { initialTab?: 'list' | 'recipes
               // time instead of before caching.
               resultsArr = cachedResults
             } else {
-              const { results: fetchedResults, error: fetchError } = await fetchProductSearchWithRetry(item.name, location)
+              const { results: fetchedResults, error: fetchError } = await fetchProductSearchWithRetry(item.name, location, runKind)
               resultsArr = fetchedResults
               apiError = fetchError
               if (apiError && !firstError) firstError = apiError
@@ -713,8 +791,8 @@ export default function Grocery({ initialTab }: { initialTab?: 'list' | 'recipes
             // build — this is opt-in specifically because it multiplies
             // SerpAPI calls.
             if (deepSearch && !apiError && backfillBudget.remaining > 0) {
-              const covered = new Set(filterToAllowedStores(resultsArr, allowedStores).map((r: any) => r.store))
-              const missingStores = Object.keys(allowedStores).filter(s => !covered.has(s))
+              const covered = new Set(filterToAllowedStores(resultsArr, runStores).map((r: any) => r.store))
+              const missingStores = Object.keys(runStores).filter(s => !covered.has(s))
 
               for (const store of missingStores.slice(0, MAX_BACKFILL_STORES_PER_ITEM)) {
                 if (backfillBudget.remaining <= 0) break
@@ -734,11 +812,11 @@ export default function Grocery({ initialTab }: { initialTab?: 'list' | 'recipes
                   continue
                 }
 
-                                const controller = new AbortController()
+                const controller = new AbortController()
                 const timeout = setTimeout(() => controller.abort(), 15000)
                 try {
                   const res = await authedFetch(
-                    `/api/product-search?q=${encodeURIComponent(`${item.name} ${store}`)}${location ? `&zip=${encodeURIComponent(location)}` : ''}`,
+                    `/api/product-search?q=${encodeURIComponent(`${item.name} ${store}`)}&kind=${runKind}${location ? `&zip=${encodeURIComponent(location)}` : ''}`,
                     { signal: controller.signal }
                   )
 
@@ -747,7 +825,7 @@ export default function Grocery({ initialTab }: { initialTab?: 'list' | 'recipes
                   // targeted — a "{item} {store}" query can still return
                   // sellers other than the one we asked about.
                   const storeResults = (Array.isArray(data.results) ? data.results : [])
-                    .filter((r: any) => normalizeStoreName(r.store, allowedStores) === store)
+                    .filter((r: any) => normalizeStoreName(r.store, runStores) === store)
 
                   if (storeResults.length) {
                     resultsArr = resultsArr.concat(storeResults)
@@ -805,20 +883,25 @@ export default function Grocery({ initialTab }: { initialTab?: 'list' | 'recipes
         // sync — see the note above buildPriceMaps), we just persist the
         // result of the same function this page already uses. An empty
         // needed-list clears the summary instead of leaving a stale total.
-        if (needItems.length === 0) {
-          supabase.from('grocery_settings')
-            .upsert({ id: 1, smart_cart_total: null, smart_cart_item_count: 0, smart_cart_updated_at: new Date().toISOString() })
-            .then(() => {})
-        } else if (!allFailed) {
-          const cheapest = computeTally(results)[0]
-          // computeTally can come back empty if no single store covers every
-          // item (missingCount > 0 everywhere) — in that case there's no
-          // trustworthy total to show, so leave the last known-good summary
-          // in place rather than overwrite it with nothing.
-          if (cheapest) {
+        //
+        // Home goods lists never touch this summary — the dashboard line is
+        // specifically the grocery total.
+        if (!runIsHome) {
+          if (needItems.length === 0) {
             supabase.from('grocery_settings')
-              .upsert({ id: 1, smart_cart_total: cheapest.total, smart_cart_item_count: results.length, smart_cart_updated_at: new Date().toISOString() })
+              .upsert({ id: 1, smart_cart_total: null, smart_cart_item_count: 0, smart_cart_updated_at: new Date().toISOString() })
               .then(() => {})
+          } else if (!allFailed) {
+            const cheapest = computeTally(results)[0]
+            // computeTally can come back empty if no single store covers every
+            // item (missingCount > 0 everywhere) — in that case there's no
+            // trustworthy total to show, so leave the last known-good summary
+            // in place rather than overwrite it with nothing.
+            if (cheapest) {
+              supabase.from('grocery_settings')
+                .upsert({ id: 1, smart_cart_total: cheapest.total, smart_cart_item_count: results.length, smart_cart_updated_at: new Date().toISOString() })
+                .then(() => {})
+            }
           }
         }
       }
@@ -832,6 +915,7 @@ export default function Grocery({ initialTab }: { initialTab?: 'list' | 'recipes
   function clearSmartCart() {
     setCart([])
     setCartError(null)
+    if (isHome) return // home lists don't own the dashboard grocery total
     supabase.from('grocery_settings')
       .upsert({ id: 1, smart_cart_total: null, smart_cart_item_count: 0, smart_cart_updated_at: new Date().toISOString() })
       .then(() => {})
@@ -858,26 +942,26 @@ export default function Grocery({ initialTab }: { initialTab?: 'list' | 'recipes
   }
 
   function openDoorDashList() {
-  const needItems = items.filter(i => !i.checked)
-  if (!needItems.length) return
+    const needItems = items.filter(i => !i.checked)
+    if (!needItems.length) return
 
-  const listText = needItems
-    .map(i => `${i.qty ? i.qty + ' ' : ''}${i.name}`)
-    .join('\n')
+    const listText = needItems
+      .map(i => `${i.qty ? i.qty + ' ' : ''}${i.name}`)
+      .join('\n')
 
-  navigator.clipboard?.writeText(listText).then(() => {
-    // Open the DoorDash app if installed
-    window.location.href = 'doordash://'
+    navigator.clipboard?.writeText(listText).then(() => {
+      // Open the DoorDash app if installed
+      window.location.href = 'doordash://'
 
-    setTimeout(() => {
-      alert(
-        'Your grocery list has been copied!\n\nOpen DoorDash and paste it into the search or shopping list.'
-      )
-    }, 500)
-  }).catch(() => {
-    alert(`Copy failed — here's your list:\n\n${listText}`)
-  })
-}
+      setTimeout(() => {
+        alert(
+          'Your grocery list has been copied!\n\nOpen DoorDash and paste it into the search or shopping list.'
+        )
+      }, 500)
+    }).catch(() => {
+      alert(`Copy failed — here's your list:\n\n${listText}`)
+    })
+  }
 
   function saveLocation(val: string) {
     setLocation(val)
@@ -937,8 +1021,8 @@ export default function Grocery({ initialTab }: { initialTab?: 'list' | 'recipes
   //
   // Two different pools are used on purpose:
   // - "allStores" (what gets ranked/shown) comes from the WHITELISTED
-  //   results only — only ALLOWED_STORES chains ever appear in the
-  //   leaderboard.
+  //   results only — only the active list's whitelisted chains ever appear
+  //   in the leaderboard.
   // - "perItemMedian" (what fills gaps) is computed from the RAW/unfiltered
   //   results — every seller SerpAPI returned, whitelisted or not. This is
   //   what keeps the estimator working even when a whitelisted store has no
@@ -952,7 +1036,7 @@ export default function Grocery({ initialTab }: { initialTab?: 'list' | 'recipes
   function buildPriceMaps(cartData: any[]) {
     const allStores = new Set<string>()
     cartData.forEach(c => {
-      filterToAllowedStores(c.results ?? [], allowedStores).forEach((r: any) => {
+      filterToAllowedStores(c.results ?? [], activeStores).forEach((r: any) => {
         if (r.store && r.price != null) allStores.add(r.store)
       })
     })
@@ -964,7 +1048,7 @@ export default function Grocery({ initialTab }: { initialTab?: 'list' | 'recipes
 
     cartData.forEach(c => {
       // Real prices: only from whitelisted stores, since that's all we rank
-      const whitelisted = filterToAllowedStores(c.results ?? [], allowedStores)
+      const whitelisted = filterToAllowedStores(c.results ?? [], activeStores)
       const byStore = new Map<string, number>()
       whitelisted.forEach((r: any) => {
         if (!r.store || r.price == null) return
@@ -1095,6 +1179,7 @@ export default function Grocery({ initialTab }: { initialTab?: 'list' | 'recipes
 
   const needs = items.filter(i => !i.checked)
   const have  = items.filter(i =>  i.checked)
+  const activeListRow = lists.find(l => l.name === currentList) ?? null
 
   // Shared row treatment for grocery items — matches the token-based
   // list-row pattern used on DailyPlanner (white/blush background,
@@ -1118,6 +1203,28 @@ export default function Grocery({ initialTab }: { initialTab?: 'list' | 'recipes
     }
   }
 
+  // Small two-option toggle used for picking a list's type.
+  function KindToggle({ value, onChange }: { value: ListKind; onChange: (k: ListKind) => void }) {
+    const options: { key: ListKind; label: string; icon: IconName }[] = [
+      { key: 'groceries', label: 'Groceries', icon: 'apple-carrot' },
+      { key: 'home', label: 'Home goods', icon: 'basket' },
+    ]
+    return (
+      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+        {options.map(o => (
+          <button
+            key={o.key}
+            className={value === o.key ? 'btn btn-primary' : 'btn btn-ghost'}
+            style={{ fontSize: '0.72rem', padding: '4px 10px', display: 'flex', alignItems: 'center', gap: 6 }}
+            onClick={() => onChange(o.key)}
+          >
+            <Icon name={o.icon} size={14} /> {o.label}
+          </button>
+        ))}
+      </div>
+    )
+  }
+
   return (
     <div>
       <div className="page-header">
@@ -1135,11 +1242,13 @@ export default function Grocery({ initialTab }: { initialTab?: 'list' | 'recipes
 
         {activeTab === 'list' && (
           <>
-            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}>
-              <button className="btn btn-primary" onClick={openBasicsModal}>
-                <Icon name="icon-listchecks" size={20} /> Build Basics List
-              </button>
-            </div>
+            {!isHome && (
+              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}>
+                <button className="btn btn-primary" onClick={openBasicsModal}>
+                  <Icon name="icon-listchecks" size={20} /> Build Basics List
+                </button>
+              </div>
+            )}
 
             {/* my lists — every list here is a real, live list you can switch
                  to, add/check off items on, and come back to later. nothing is
@@ -1167,8 +1276,10 @@ export default function Grocery({ initialTab }: { initialTab?: 'list' | 'recipes
                             background: active ? 'var(--pink)' : 'var(--white)',
                             color: active ? 'var(--white)' : 'var(--ink)',
                             fontWeight: 600, fontSize: '0.8rem', cursor: 'pointer',
+                            display: 'flex', alignItems: 'center', gap: 6,
                           }}
                         >
+                          <Icon name={list.kind === 'home' ? 'basket' : 'apple-carrot'} size={14} />
                           {list.name}
                         </button>
                         {lists.length > 1 && (
@@ -1194,11 +1305,26 @@ export default function Grocery({ initialTab }: { initialTab?: 'list' | 'recipes
                 </div>
               )}
 
+              {/* type of the list you're currently on */}
+              {activeListRow && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 12 }}>
+                  <span style={{ fontSize: '0.74rem', color: 'var(--ink-muted)' }}>
+                    “{activeListRow.name}” is a:
+                  </span>
+                  <KindToggle value={activeListRow.kind} onChange={k => updateListKind(activeListRow, k)} />
+                </div>
+              )}
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 8 }}>
+                <span style={{ fontSize: '0.74rem', color: 'var(--ink-muted)' }}>New list type:</span>
+                <KindToggle value={newListKind} onChange={setNewListKind} />
+              </div>
+
               <div style={{ display: 'flex', gap: 6 }}>
                 <input
                   className="form-input"
                   type="text"
-                  placeholder="New list name (e.g. Costco Run)…"
+                  placeholder={newListKind === 'home' ? 'New list name (e.g. Target Run)…' : 'New list name (e.g. Costco Run)…'}
                   value={newListName}
                   onChange={e => setNewListName(e.target.value)}
                   onKeyDown={e => e.key === 'Enter' && createList()}
@@ -1464,7 +1590,9 @@ export default function Grocery({ initialTab }: { initialTab?: 'list' | 'recipes
               color: 'var(--ink)',
             }}>
               <Icon name="icon-listchecks" size={14} style={{ flexShrink: 0, color: 'var(--gold-dark)' }} />
-              <span>Prices are pulled for the items on your <strong>{currentList}</strong> list — switch lists on the My List tab to price a different one.</span>
+              <span>
+                Prices are pulled for the items on your <strong>{currentList}</strong> {isHome ? 'home goods' : 'grocery'} list — switch lists on the My List tab to price a different one.
+              </span>
             </div>
 
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
@@ -1477,9 +1605,11 @@ export default function Grocery({ initialTab }: { initialTab?: 'list' | 'recipes
               <button className="btn btn-ghost" onClick={clearSmartCart} disabled={loadingCart}>
                 <Icon name="icon-clear" size={24} /> Clear
               </button>
-              <button className="btn btn-primary" onClick={openDoorDashList} disabled={!needs.length}>
-                <Icon name="icon-externallink" size={24} /> Copy List &amp; Open DoorDash
-              </button>
+              {!isHome && (
+                <button className="btn btn-primary" onClick={openDoorDashList} disabled={!needs.length}>
+                  <Icon name="icon-externallink" size={24} /> Copy List &amp; Open DoorDash
+                </button>
+              )}
             </div>
 
             {/* location input */}
@@ -1498,7 +1628,7 @@ export default function Grocery({ initialTab }: { initialTab?: 'list' | 'recipes
                 Build Smart Cart for {location}
               </button>
               <button className="btn btn-ghost" onClick={() => setShowStoreSettings(s => !s)}>
-                <Icon name="icon-slidershorizontal" size={24} /> Stores ({Object.keys(allowedStores).length})
+                <Icon name="icon-slidershorizontal" size={24} /> Stores ({Object.keys(activeStores).length})
               </button>
               <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.74rem', color: 'var(--ink-muted)', cursor: 'pointer' }}>
                 <input type="checkbox" checked={deepSearch} onChange={toggleDeepSearch} />
@@ -1513,12 +1643,14 @@ export default function Grocery({ initialTab }: { initialTab?: 'list' | 'recipes
 
             {showStoreSettings && (
               <div className="card" style={{ marginTop: 8 }}>
-                <div className="section-label">Stores Smart Cart Will Search</div>
+                <div className="section-label">
+                  {isHome ? 'Home Goods Stores Smart Cart Will Search' : 'Stores Smart Cart Will Search'}
+                </div>
                 <div style={{ fontSize: 11, color: 'var(--ink-muted)', marginBottom: 10 }}>
-                  Only chains on this list are matched against search results — everything else gets filtered out. Add whatever's actually near you; remove ones that aren't.
+                  Only chains on this list are matched against search results — everything else gets filtered out. Add whatever's actually near you; remove ones that aren't. {isHome ? 'This set is used only for home goods lists.' : 'This set is used only for grocery lists.'}
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 12 }}>
-                  {Object.entries(allowedStores).map(([name, aliases]) => (
+                  {Object.entries(activeStores).map(([name, aliases]) => (
                     <div key={name} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
                       <div>
                         <div style={{ fontSize: 13, fontWeight: 600 }}>{name}</div>
@@ -1678,8 +1810,8 @@ export default function Grocery({ initialTab }: { initialTab?: 'list' | 'recipes
                     // c.results is the raw/unfiltered seller list (kept that way
                     // for the median estimator) — filter to whitelisted stores
                     // here so the visible per-item list only shows chains from
-                    // ALLOWED_STORES, same as the leaderboard above.
-                    const sorted = filterToAllowedStores(c.results ?? [], allowedStores)
+                    // the active list's store set, same as the leaderboard above.
+                    const sorted = filterToAllowedStores(c.results ?? [], activeStores)
                       .sort((a: any, b: any) => Number(a.price ?? 9999) - Number(b.price ?? 9999))
                     const cheapest = sorted[0]
                     const priciest = sorted[sorted.length - 1]
