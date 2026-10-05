@@ -235,6 +235,8 @@ const DEFAULT_ALLOWED_STORES_HOME: StoreMap = {
   "Lowe's": ["lowe's", 'lowes'],
   'Costco': ['costco'],
   'Dollar Tree': ['dollar tree'],
+  'IKEA': ['ikea'],
+  'Ace Hardware': ['ace hardware'],
 }
 
 // Matches a raw seller/store string against the user's store whitelist and
@@ -955,7 +957,7 @@ export default function Grocery({ initialTab }: { initialTab?: 'list' | 'recipes
 
       setTimeout(() => {
         alert(
-          'Your grocery list has been copied!\n\nOpen DoorDash and paste it into the search or shopping list.'
+          'Your list has been copied!\n\nOpen DoorDash and paste it into the search or shopping list.'
         )
       }, 500)
     }).catch(() => {
@@ -1605,11 +1607,9 @@ export default function Grocery({ initialTab }: { initialTab?: 'list' | 'recipes
               <button className="btn btn-ghost" onClick={clearSmartCart} disabled={loadingCart}>
                 <Icon name="icon-clear" size={24} /> Clear
               </button>
-              {!isHome && (
-                <button className="btn btn-primary" onClick={openDoorDashList} disabled={!needs.length}>
-                  <Icon name="icon-externallink" size={24} /> Copy List &amp; Open DoorDash
-                </button>
-              )}
+              <button className="btn btn-primary" onClick={openDoorDashList} disabled={!needs.length}>
+                <Icon name="icon-externallink" size={24} /> Copy List &amp; Open DoorDash
+              </button>
             </div>
 
             {/* location input */}
