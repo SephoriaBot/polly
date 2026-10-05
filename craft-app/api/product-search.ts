@@ -2,6 +2,28 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { getUserId, throttled } from './_lib/auth.js';
 
+type ProductResult = { name: string; price: number | null; store: string; image: string | null }
+
+// Keep only the cheapest few results per store, then cap the total. A flat
+// "cheapest 20 overall" cut let a few low-priced sellers crowd every other
+// store out of the list, so stores with higher prices never made it to the
+// app even when they carried the item.
+const MAX_PER_STORE = 3
+const MAX_TOTAL = 40
+
+function limitPerStore(results: ProductResult[]): ProductResult[] {
+  const sorted = [...results].sort((a, b) => Number(a.price) - Number(b.price))
+  const counts = new Map<string, number>()
+  const kept: ProductResult[] = []
+  for (const r of sorted) {
+    const key = r.store.toLowerCase()
+    const n = counts.get(key) ?? 0
+    if (n >= MAX_PER_STORE) continue
+    counts.set(key, n + 1)
+    kept.push(r)
+  }
+  return kept.slice(0, MAX_TOTAL)
+}
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader('Cache-Control', 'no-store')
@@ -33,8 +55,24 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     if (location) url += `&location=${encodeURIComponent(location)}`
 
+    // Home goods lists also run SerpAPI's dedicated Amazon search, since
+    // Google Shopping rarely returns Amazon listings. It runs alongside the
+    // Google Shopping request, and a failure here is non-fatal — the Google
+    // Shopping results still come back on their own.
+    const amazonUrl = `https://serpapi.com/search.json?engine=amazon&k=${encodeURIComponent(q)}&amazon_domain=amazon.com&api_key=${process.env.SERPAPI_KEY}`
+
     const start = Date.now()
-    const r = await fetch(url)
+    const [r, amazonData] = await Promise.all([
+      fetch(url),
+      isHome
+        ? fetch(amazonUrl)
+            .then(ar => ar.json())
+            .catch((e: unknown) => {
+              console.error('product-search: Amazon search failed:', e)
+              return null
+            })
+        : Promise.resolve(null),
+    ])
     const data = await r.json()
     console.log(`product-search: SerpAPI responded in ${Date.now() - start}ms`)
 
@@ -46,7 +84,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(502).json({ error: data.error || 'Price search service returned an error', results: [] })
     }
 
-    const results = (data.shopping_results || [])
+    const googleResults: ProductResult[] = (data.shopping_results || [])
       .filter((item: any) => {
         const source = (item.source || '').toLowerCase()
 
@@ -70,10 +108,33 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }))
       .filter((item: any) => item.store !== 'unknown' && item.price != null)
 
-    results.sort((a: any, b: any) => Number(a.price) - Number(b.price))
+    // Amazon's own search results, labeled as plain "Amazon" so they match
+    // the Amazon entry in the home goods store list.
+    let amazonResults: ProductResult[] = []
+    if (isHome && amazonData) {
+      if (amazonData.error) {
+        console.error('product-search: Amazon search error:', amazonData.error)
+      } else {
+        amazonResults = (amazonData.organic_results || [])
+          .map((item: any) => ({
+            name: item.title,
+            price: item.extracted_price ?? null,
+            store: 'Amazon',
+            image: item.thumbnail ?? null
+          }))
+          .filter((item: any) => item.name && item.price != null)
+      }
+    }
+
+    // Drop any Amazon rows that came through Google Shopping on home lists
+    // so Amazon's price comes from its own search, not a mix of both.
+    const merged = isHome
+      ? [...googleResults.filter(g => !g.store.toLowerCase().includes('amazon')), ...amazonResults]
+      : googleResults
+
     // No `error` field here — this is a legitimate "nothing matched this
     // particular search" result, distinct from the service failing outright.
-    return res.status(200).json({ results: results.slice(0, 20) })
+    return res.status(200).json({ results: limitPerStore(merged) })
   } catch (e) {
     console.error('product-search: handler error:', e)
     return res.status(502).json({ error: 'Could not reach the price search service', results: [] })
