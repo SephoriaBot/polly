@@ -10,6 +10,7 @@ import EmptyState from '../components/EmptyState';
 import StitchDivider from '../components/StitchDivider';
 import CheckMark from '../components/CheckMark';
 import { useCreatureGrowth } from '../creatures/CreatureGrowthContext';
+import { triggerActionEvent } from '../lib/questSystem';
 import PageTitleLogo from "../components/PageTitleLogo";
 import { localDateKey } from "../lib/dateKey";
 import {
@@ -23,6 +24,12 @@ import {
   SAFE_TO_SPEND_BUFFER,
   SAFE_TO_SPEND_LOOKAHEAD_DAYS,
 } from "../lib/payProjection";
+
+// Fires a quest event for the signed-in user (no-op if signed out).
+async function fireQuestEvent(eventKey: string) {
+  const { data } = await supabase.auth.getSession();
+  if (data.session?.user) triggerActionEvent(data.session.user.id, eventKey);
+}
 
 interface Debt {
   id: number;
@@ -649,6 +656,7 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
 
   function setDayHours(key: string, value: string) {
     setDailyHours(prev => ({ ...prev, [key]: value }));
+    if (value !== "") fireQuestEvent("money_hours_logged");
   }
 
   // Weekly recurring hours template (0=Sun..6=Sat). A day with no explicit
@@ -705,6 +713,7 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
     else if (chip === "plus05") next = current + 0.5;
     else if (chip === "plus1") next = current + 1;
     setDailyHours(prev => ({ ...prev, [key]: String(round2(next)) }));
+    fireQuestEvent("money_hours_logged");
   }
 
   // Drop a day's own entry so it goes back to following the weekly template.
@@ -1233,6 +1242,7 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
       .select()
       .single();
     if (error) { console.error("addGoal failed:", error); return; }
+    fireQuestEvent("savings_goal_added");
     if (data) setGoals(prev => [...prev, { ...data, target: Number(data.target) || 0, saved: Number(data.saved) || 0 }]);
     setNewGoalName("");
     setNewGoalTarget("");
@@ -1242,6 +1252,11 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
     setGoals(prev => prev.map(g => (g.id === id ? { ...g, ...patch } : g)));
     const { error } = await supabase.from("savings_goals").update(patch).eq("id", id);
     if (error) { console.error("updateGoal failed:", error); return; }
+    const before = goals.find(g => g.id === id);
+    if (before) {
+      const after = { ...before, ...patch };
+      if (after.target > 0 && after.saved >= after.target) fireQuestEvent("savings_goal_completed");
+    }
     // Only a saved/target edit can complete a goal. The growth check's own
     // hamster_credited flag is what actually prevents double-awarding.
     if (patch.saved !== undefined || patch.target !== undefined) notifyGrowth();
