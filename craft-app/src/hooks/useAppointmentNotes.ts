@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase'; // NOTE: adjust path to your actual client
+import { triggerActionEvent } from '../lib/questSystem';
 import type {
   AppointmentNoteItem,
   AppointmentNoteType,
@@ -116,6 +117,10 @@ export function useAppointmentNotes(
       }
 
       setItems((prev) => [...prev, data]);
+
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (sessionData.session?.user) triggerActionEvent(sessionData.session.user.id, 'appointment_note_added');
+
       onChange?.();
     },
     [appointmentId, noteType, onChange]
