@@ -184,13 +184,29 @@ async function rollReward(
     };
   }
 
-  // cosmetic
-  const { data: cosmetics } = await supabase.from('cosmetics').select('id');
-  const pool = cosmetics ?? [];
+  // cosmetic — only ones the player doesn't already own
+  const [{ data: cosmetics }, { data: ownedRows }] = await Promise.all([
+    supabase.from('cosmetics').select('id'),
+    supabase.from('user_cosmetics').select('cosmetic_id').eq('user_id', userId),
+  ]);
+  const ownedCosmeticIds = new Set((ownedRows ?? []).map((r) => r.cosmetic_id));
+  const pool = (cosmetics ?? []).filter((c) => !ownedCosmeticIds.has(c.id));
+
+  if (pool.length === 0) {
+    // Every cosmetic is already owned — fall back to points instead of
+    // handing out a duplicate.
+    return {
+      reward_type: 'points',
+      reward_cosmetic_id: null,
+      reward_points: pointsForDifficulty(sourceType, difficulty),
+      reward_shelf_item_key: null,
+    };
+  }
+
   const picked = pool[Math.floor(Math.random() * pool.length)];
   return {
     reward_type: 'cosmetic',
-    reward_cosmetic_id: picked?.id ?? null,
+    reward_cosmetic_id: picked.id,
     reward_points: null,
     reward_shelf_item_key: null,
   };
