@@ -36,6 +36,7 @@ import { rollPersonality, rollAbilities, abilityPoolFor } from "./personalities"
 import type { Personality } from "./personalities";
 import { rollWildCreature, capFor, isMaxedOut, BATTLE_REWARDS } from "./battle";
 import type { WildCreature, TrainedStats } from "./battle";
+import { triggerActionEvent } from "../lib/questSystem";
 
 // NOTE: this hook does real Supabase reads/writes and hatches/evolves
 // hamsters as a side effect. It must only ever be instantiated ONCE in the
@@ -618,6 +619,10 @@ const [claimingFirstCreature, setClaimingFirstCreature] = useState(false);
         formId: newStage === "teen" ? teenFormId! : finalFormId!,
         newAbilities,
       });
+
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (sessionData.session?.user) triggerActionEvent(sessionData.session.user.id, "creature_evolved");
+
       await refreshCollection();
       return { ok: true };
     },
@@ -1129,6 +1134,9 @@ const [claimingFirstCreature, setClaimingFirstCreature] = useState(false);
         .eq("id", entryId);
 
       if (error) return { ok: false, reason: error.message || "Save failed" };
+
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (sessionData.session?.user) triggerActionEvent(sessionData.session.user.id, "stat_trained");
 
       await refreshCollection();
       return { ok: true, spent: spend };
