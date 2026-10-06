@@ -76,10 +76,28 @@ export default function Chores() {
   }
 
   async function removeChore(id: string) {
-    setChores(prev => prev.filter(c => c.id !== id));
-    if (openChoreId === id) setOpenChoreId(null);
-    await supabase.from('chores').delete().eq('id', id);
+  const previous = chores;
+  setChores(prev => prev.filter(c => c.id !== id));
+  if (openChoreId === id) setOpenChoreId(null);
+
+  const { data, error } = await supabase
+    .from('chores')
+    .delete()
+    .eq('id', id)
+    .select();
+
+  if (error) {
+    console.error('Delete chore failed:', error);
+    showToast("Couldn't delete that chore — try again?", 'error');
+    setChores(previous);
+    return;
   }
+  if (!data || data.length === 0) {
+    console.error('Delete chore matched 0 rows (likely RLS)');
+    showToast("Couldn't delete that chore — try again?", 'error');
+    setChores(previous);
+  }
+}
 
   function toggleOpen(id: string) {
     setOpenChoreId(prev => (prev === id ? null : id));
