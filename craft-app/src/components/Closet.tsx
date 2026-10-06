@@ -13,6 +13,7 @@ import { usePollyCompanion } from '../context/PollyCompanionContext';
 import { useToast } from '../hooks/useToast';
 import { outfitIconPath, hatIdFromAssetKey } from '../creatures/equipRender';
 import Polly from './Polly';
+import { triggerActionEvent } from '../lib/questSystem';
 
 type CosmeticSlot = 'headwear' | 'outfits';
 
@@ -83,6 +84,9 @@ export default function Closet() {
       showToast(`Couldn't equip ${item.name}: ${error}`, 'error');
     } else {
       showToast(alreadyEquipped ? `${item.name} removed` : `${item.name} equipped!`, 'success');
+      if (!alreadyEquipped && item.slot === 'headwear' && user) {
+        triggerActionEvent(user.id, 'cosmetic_equipped');
+      }
     }
   }
 
