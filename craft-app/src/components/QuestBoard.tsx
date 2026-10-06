@@ -89,7 +89,53 @@ export default function QuestBoard({ userId }: { userId: string }) {
   if (loading) return null;
 
   return (
-    <section className="quest-board card">
+    <section className="quest-board card" style={{ position: 'relative' }}>
+      <style>{`
+        @keyframes quest-badge-pop {
+          0% { transform: scale(0.4); opacity: 0; }
+          60% { transform: scale(1.25); opacity: 1; }
+          100% { transform: scale(1); opacity: 1; }
+        }
+        @keyframes quest-badge-pulse {
+          0%, 100% { box-shadow: 0 0 0 0 var(--danger); }
+          50% { box-shadow: 0 0 0 6px transparent; }
+        }
+        .quest-board__badge {
+          position: absolute;
+          top: 10px;
+          right: 12px;
+          min-width: 22px;
+          height: 22px;
+          padding: 0 6px;
+          box-sizing: border-box;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          border-radius: 999px;
+          background: var(--danger);
+          color: var(--accent-text);
+          font-size: 0.75rem;
+          font-weight: 800;
+          line-height: 1;
+          animation:
+            quest-badge-pop 0.45s ease-out,
+            quest-badge-pulse 2s ease-in-out 0.45s infinite;
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .quest-board__badge { animation: none; }
+        }
+      `}</style>
+
+      {quest && (
+        <span
+          className="quest-board__badge"
+          role="status"
+          aria-label="1 new quest"
+        >
+          1
+        </span>
+      )}
+
       <div className="section-label">
         <Icon name="clipboard-list" size={18} /> Quests
       </div>
