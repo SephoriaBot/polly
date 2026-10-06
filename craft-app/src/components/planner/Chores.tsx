@@ -87,14 +87,12 @@ export default function Chores() {
     .select();
 
   if (error) {
-    console.error('Delete chore failed:', error);
-    showToast("Couldn't delete that chore — try again?", 'error');
+    showToast(`Delete error: ${error.message}`, 'error');
     setChores(previous);
     return;
   }
   if (!data || data.length === 0) {
-    console.error('Delete chore matched 0 rows (likely RLS)');
-    showToast("Couldn't delete that chore — try again?", 'error');
+    showToast('Delete matched 0 rows', 'error');
     setChores(previous);
   }
 }
