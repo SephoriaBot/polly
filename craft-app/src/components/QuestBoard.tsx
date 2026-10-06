@@ -89,7 +89,7 @@ export default function QuestBoard({ userId }: { userId: string }) {
   if (loading) return null;
 
   return (
-    <section className="quest-board card" style={{ position: 'relative' }}>
+    <section className="quest-board card" style={{ position: 'relative', overflow: 'visible' }}>
       <style>{`
         @keyframes quest-badge-pop {
           0% { transform: scale(0.4); opacity: 0; }
@@ -102,10 +102,12 @@ export default function QuestBoard({ userId }: { userId: string }) {
         }
         .quest-board__badge {
           position: absolute;
-          top: 10px;
-          right: 12px;
-          min-width: 22px;
-          height: 22px;
+          top: -9px;
+          right: -9px;
+          z-index: 2;
+          min-width: 24px;
+          height: 24px;
+          border: 2px solid var(--surface);
           padding: 0 6px;
           box-sizing: border-box;
           display: inline-flex;
@@ -170,11 +172,6 @@ export default function QuestBoard({ userId }: { userId: string }) {
           />
 
           <span className="quest-board__title">{quest.title}</span>
-
-          <span className="quest-board__reward--mystery">
-            <Icon name="help-circle" size={16} />
-            ???
-          </span>
         </div>
       )}
     </section>
