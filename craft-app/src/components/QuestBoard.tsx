@@ -102,11 +102,11 @@ export default function QuestBoard({ userId }: { userId: string }) {
         }
         .quest-board__badge {
           position: absolute;
-          top: -15px;
-          right: -15px;
+          top: -13px;
+          right: -13px;
           z-index: 2;
-          min-width: 30px;
-          height: 30px;
+          min-width: 24px;
+          height: 24px;
           border: 2px solid var(--surface);
           padding: 0 6px;
           box-sizing: border-box;
@@ -116,7 +116,7 @@ export default function QuestBoard({ userId }: { userId: string }) {
           border-radius: 999px;
           background: var(--accent);
           color: var(--accent-text);
-          font-size: 0.95rem;
+          font-size: 0.75rem;
           font-weight: 800;
           line-height: 1;
           animation:
