@@ -1,6 +1,7 @@
 // LowEnergyChecklist.tsx
-// No Energy Mode. Reduce the day down to priority tasks plus a few gentle basics.
-// Includes a bite-sized 15-minute work / 5-minute rest timer that can repeat.
+// No Energy Mode.
+// Keeps the day small: priority tasks, a bite-sized work/rest timer,
+// and a gentle dopamine menu of little things that may help.
 
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
@@ -9,6 +10,7 @@ import { useTheme } from '../context/ThemeContext';
 import CheckMark from './CheckMark';
 
 const CHECKLIST_KEY = 'polly-no-energy-checklist';
+const DOPAMINE_KEY = 'polly-no-energy-dopamine';
 
 interface BasicsState {
   date: string;
@@ -23,21 +25,170 @@ interface PriorityTask {
   done: boolean;
 }
 
-type TimerMode = 'work' | 'rest';
+interface DopamineState {
+  date: string;
+  completed: string[];
+}
 
-const WORK_SECONDS = 15 * 60;
-const REST_SECONDS = 5 * 60;
+interface DopamineItem {
+  id: string;
+  label: string;
+  amount: number;
+  emoji: string;
+  tier: 'little' | 'medium' | 'big';
+}
+
+const DOPAMINE_ITEMS: DopamineItem[] = [
+  // Little boosts
+  {
+    id: 'water',
+    label: 'Drink a glass of water',
+    amount: 5,
+    emoji: '💧',
+    tier: 'little',
+  },
+  {
+    id: 'curtains',
+    label: 'Open the curtains',
+    amount: 5,
+    emoji: '☀️',
+    tier: 'little',
+  },
+  {
+    id: 'comfy-clothes',
+    label: 'Put on comfy clothes',
+    amount: 5,
+    emoji: '🧸',
+    tier: 'little',
+  },
+  {
+    id: 'teeth',
+    label: 'Brush your teeth',
+    amount: 5,
+    emoji: '🪥',
+    tier: 'little',
+  },
+  {
+    id: 'face',
+    label: 'Wash your face',
+    amount: 5,
+    emoji: '🫧',
+    tier: 'little',
+  },
+  {
+    id: 'song',
+    label: 'Put on a favorite song',
+    amount: 5,
+    emoji: '🎧',
+    tier: 'little',
+  },
+
+  // Medium boosts
+  {
+    id: 'get-dressed',
+    label: 'Get dressed',
+    amount: 10,
+    emoji: '👗',
+    tier: 'medium',
+  },
+  {
+    id: 'snack',
+    label: 'Make a snack',
+    amount: 10,
+    emoji: '🍓',
+    tier: 'medium',
+  },
+  {
+    id: 'tiny-tidy',
+    label: 'Tidy one tiny area',
+    amount: 10,
+    emoji: '🧺',
+    tier: 'medium',
+  },
+  {
+    id: 'bed',
+    label: 'Make your bed',
+    amount: 10,
+    emoji: '🛏️',
+    tier: 'medium',
+  },
+  {
+    id: 'tea',
+    label: 'Make tea or coffee',
+    amount: 10,
+    emoji: '☕',
+    tier: 'medium',
+  },
+  {
+    id: 'stretch',
+    label: 'Do a 5-minute stretch',
+    amount: 10,
+    emoji: '🌷',
+    tier: 'medium',
+  },
+
+  // Bigger boosts
+  {
+    id: 'meal',
+    label: 'Eat a real meal',
+    amount: 20,
+    emoji: '🍲',
+    tier: 'big',
+  },
+  {
+    id: 'shower',
+    label: 'Take a shower',
+    amount: 20,
+    emoji: '🚿',
+    tier: 'big',
+  },
+  {
+    id: 'walk',
+    label: 'Go for a little walk',
+    amount: 20,
+    emoji: '🌿',
+    tier: 'big',
+  },
+  {
+    id: 'hair',
+    label: 'Wash your hair',
+    amount: 20,
+    emoji: '🧴',
+    tier: 'big',
+  },
+  {
+    id: 'creative',
+    label: 'Do something creative',
+    amount: 20,
+    emoji: '🎨',
+    tier: 'big',
+  },
+  {
+    id: 'outside',
+    label: 'Leave the house for a little while',
+    amount: 20,
+    emoji: '🌸',
+    tier: 'big',
+  },
+];
 
 function todayISO(): string {
   const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(
+    2,
+    '0'
+  )}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
 function loadBasics(): BasicsState {
   const today = todayISO();
 
   try {
-    const stored = JSON.parse(localStorage.getItem(CHECKLIST_KEY) || 'null');
+    const stored = JSON.parse(
+      localStorage.getItem(CHECKLIST_KEY) || 'null'
+    );
+
     if (stored && stored.date === today) return stored;
   } catch {
     /* ignore */
@@ -51,17 +202,49 @@ function loadBasics(): BasicsState {
   };
 }
 
+function loadDopamine(): DopamineState {
+  const today = todayISO();
+
+  try {
+    const stored = JSON.parse(
+      localStorage.getItem(DOPAMINE_KEY) || 'null'
+    );
+
+    if (stored && stored.date === today) return stored;
+  } catch {
+    /* ignore */
+  }
+
+  return {
+    date: today,
+    completed: [],
+  };
+}
+
 export default function LowEnergyChecklist({
   onNavigate,
 }: {
   onNavigate?: (page: string) => void;
 }) {
   const [basics, setBasics] = useState<BasicsState>(loadBasics);
-  const [priorityTasks, setPriorityTasks] = useState<PriorityTask[] | null>(null);
+  const [priorityTasks, setPriorityTasks] =
+    useState<PriorityTask[] | null>(null);
+  const [dopamine, setDopamine] =
+    useState<DopamineState>(loadDopamine);
 
   useEffect(() => {
-    localStorage.setItem(CHECKLIST_KEY, JSON.stringify(basics));
+    localStorage.setItem(
+      CHECKLIST_KEY,
+      JSON.stringify(basics)
+    );
   }, [basics]);
+
+  useEffect(() => {
+    localStorage.setItem(
+      DOPAMINE_KEY,
+      JSON.stringify(dopamine)
+    );
+  }, [dopamine]);
 
   useEffect(() => {
     (async () => {
@@ -82,7 +265,9 @@ export default function LowEnergyChecklist({
     setPriorityTasks(prev =>
       prev
         ? prev.map(t =>
-            t.id === task.id ? { ...t, done: newDone } : t
+            t.id === task.id
+              ? { ...t, done: newDone }
+              : t
           )
         : prev
     );
@@ -94,13 +279,32 @@ export default function LowEnergyChecklist({
   }
 
   function toggleBasic(key: 'ate' | 'water' | 'reset') {
-    setBasics(prev => ({ ...prev, [key]: !prev[key] }));
+    setBasics(prev => ({
+      ...prev,
+      [key]: !prev[key],
+    }));
+  }
+
+  function toggleDopamine(id: string) {
+    setDopamine(prev => {
+      const completed = prev.completed.includes(id)
+        ? prev.completed.filter(item => item !== id)
+        : [...prev.completed, id];
+
+      return {
+        ...prev,
+        completed,
+      };
+    });
   }
 
   return (
     <div className="card">
       <div className="card-body">
-        <div className="section-label" style={{ marginBottom: 4 }}>
+        <div
+          className="section-label"
+          style={{ marginBottom: 4 }}
+        >
           <Icon name="sparkle-single" size={16} /> Today, just this
         </div>
 
@@ -115,13 +319,13 @@ export default function LowEnergyChecklist({
           Everything else can wait. This is the whole list.
         </p>
 
+        {/* Priority tasks */}
         <div
           style={{
             display: 'flex',
             flexDirection: 'column',
             gap: 8,
-            marginBottom:
-              priorityTasks && priorityTasks.length > 0 ? 12 : 6,
+            marginBottom: 14,
           }}
         >
           {priorityTasks === null ? (
@@ -139,7 +343,9 @@ export default function LowEnergyChecklist({
                 key={task.id}
                 label={task.label}
                 done={task.done}
-                onToggle={() => togglePriorityTask(task)}
+                onToggle={() =>
+                  togglePriorityTask(task)
+                }
               />
             ))
           ) : (
@@ -154,7 +360,9 @@ export default function LowEnergyChecklist({
                 padding: '12px 14px',
               }}
             >
-              <span style={{ fontSize: '1.2rem' }}>★</span>
+              <span style={{ fontSize: '1.2rem' }}>
+                ★
+              </span>
 
               <div style={{ flex: 1 }}>
                 <div
@@ -168,7 +376,9 @@ export default function LowEnergyChecklist({
                 </div>
 
                 <button
-                  onClick={() => onNavigate?.('dailyplanner')}
+                  onClick={() =>
+                    onNavigate?.('dailyplanner')
+                  }
                   style={{
                     background: 'none',
                     border: 'none',
@@ -187,7 +397,14 @@ export default function LowEnergyChecklist({
           )}
         </div>
 
+        {/* Bite-sized timer */}
         <BiteSizedTimer />
+
+        {/* Dopamine menu */}
+        <DopamineMenu
+          completed={dopamine.completed}
+          onToggle={toggleDopamine}
+        />
       </div>
     </div>
   );
@@ -212,9 +429,13 @@ function ChecklistRow({
         alignItems: 'center',
         gap: 12,
         cursor: 'pointer',
-        background: done ? 'var(--blush)' : 'var(--white)',
+        background: done
+          ? 'var(--blush)'
+          : 'var(--white)',
         border: `1.5px solid ${
-          done ? 'var(--pink-light)' : 'var(--border)'
+          done
+            ? 'var(--pink-light)'
+            : 'var(--border)'
         }`,
         borderRadius: 18,
         padding: '12px 14px',
@@ -227,8 +448,12 @@ function ChecklistRow({
           flex: 1,
           fontSize: '0.88rem',
           fontWeight: 600,
-          color: done ? 'var(--ink-muted)' : 'var(--ink)',
-          textDecoration: done ? 'line-through' : 'none',
+          color: done
+            ? 'var(--ink-muted)'
+            : 'var(--ink)',
+          textDecoration: done
+            ? 'line-through'
+            : 'none',
         }}
       >
         {label}
@@ -238,13 +463,15 @@ function ChecklistRow({
 }
 
 function BiteSizedTimer() {
-  const [mode, setMode] = useState<TimerMode>('work');
-  const [secondsLeft, setSecondsLeft] = useState(WORK_SECONDS);
+  const [mode, setMode] =
+    useState<'work' | 'rest'>('work');
+  const [secondsLeft, setSecondsLeft] =
+    useState(15 * 60);
   const [running, setRunning] = useState(false);
   const [repeating, setRepeating] = useState(true);
 
-  const totalSeconds =
-    mode === 'work' ? WORK_SECONDS : REST_SECONDS;
+  const WORK_SECONDS = 15 * 60;
+  const REST_SECONDS = 5 * 60;
 
   useEffect(() => {
     if (!running) return;
@@ -270,7 +497,8 @@ function BiteSizedTimer() {
       });
     }, 1000);
 
-    return () => window.clearInterval(interval);
+    return () =>
+      window.clearInterval(interval);
   }, [running, mode, repeating]);
 
   function toggleRunning() {
@@ -288,20 +516,26 @@ function BiteSizedTimer() {
     setSecondsLeft(WORK_SECONDS);
   }
 
-  function toggleRepeating() {
-    setRepeating(current => !current);
-  }
+  const totalSeconds =
+    mode === 'work'
+      ? WORK_SECONDS
+      : REST_SECONDS;
 
-  const minutes = Math.floor(secondsLeft / 60);
+  const minutes = Math.floor(
+    secondsLeft / 60
+  );
   const seconds = secondsLeft % 60;
 
-  const timeDisplay = `${String(minutes).padStart(2, '0')}:${String(
-    seconds
-  ).padStart(2, '0')}`;
+  const timeDisplay = `${String(minutes).padStart(
+    2,
+    '0'
+  )}:${String(seconds).padStart(2, '0')}`;
 
   const progress =
     totalSeconds > 0
-      ? ((totalSeconds - secondsLeft) / totalSeconds) * 100
+      ? ((totalSeconds - secondsLeft) /
+          totalSeconds) *
+        100
       : 0;
 
   const isWork = mode === 'work';
@@ -309,7 +543,7 @@ function BiteSizedTimer() {
   return (
     <div
       style={{
-        marginTop: 14,
+        marginTop: 4,
         padding: '16px',
         borderRadius: 22,
         background: 'var(--cream)',
@@ -340,7 +574,9 @@ function BiteSizedTimer() {
               {isWork ? '🌷' : '☕'}
             </span>
 
-            {isWork ? 'Tiny focus time' : 'Tiny rest time'}
+            {isWork
+              ? 'Tiny focus time'
+              : 'Tiny rest time'}
           </div>
 
           <div
@@ -357,11 +593,8 @@ function BiteSizedTimer() {
         </div>
 
         <button
-          onClick={toggleRepeating}
-          aria-label={
-            repeating
-              ? 'Turn repeating timer off'
-              : 'Turn repeating timer on'
+          onClick={() =>
+            setRepeating(current => !current)
           }
           style={{
             border: '1px solid var(--border)',
@@ -383,32 +616,32 @@ function BiteSizedTimer() {
 
       <div
         style={{
+          width: '100%',
+          height: 7,
+          background: 'var(--white)',
+          borderRadius: 999,
+          overflow: 'hidden',
+          marginBottom: 10,
+        }}
+      >
+        <div
+          style={{
+            width: `${progress}%`,
+            height: '100%',
+            background: 'var(--pink)',
+            borderRadius: 999,
+            transition: 'width 0.4s ease',
+          }}
+        />
+      </div>
+
+      <div
+        style={{
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
         }}
       >
-        <div
-          style={{
-            width: '100%',
-            height: 7,
-            background: 'var(--white)',
-            borderRadius: 999,
-            overflow: 'hidden',
-            marginBottom: 10,
-          }}
-        >
-          <div
-            style={{
-              width: `${progress}%`,
-              height: '100%',
-              background: 'var(--pink)',
-              borderRadius: 999,
-              transition: 'width 0.4s ease',
-            }}
-          />
-        </div>
-
         <div
           style={{
             fontSize: '2rem',
@@ -448,8 +681,8 @@ function BiteSizedTimer() {
             {running
               ? 'Pause'
               : secondsLeft === 0
-                ? 'Start again'
-                : 'Start'}
+              ? 'Start again'
+              : 'Start'}
           </button>
 
           <button
@@ -481,6 +714,264 @@ function BiteSizedTimer() {
             ? '15 min work → 5 min rest → repeat'
             : '15 min work → 5 min rest → done'}
         </div>
+      </div>
+    </div>
+  );
+}
+
+function DopamineMenu({
+  completed,
+  onToggle,
+}: {
+  completed: string[];
+  onToggle: (id: string) => void;
+}) {
+  const little = DOPAMINE_ITEMS.filter(
+    item => item.tier === 'little'
+  );
+
+  const medium = DOPAMINE_ITEMS.filter(
+    item => item.tier === 'medium'
+  );
+
+  const big = DOPAMINE_ITEMS.filter(
+    item => item.tier === 'big'
+  );
+
+  const completedCount = completed.length;
+
+  return (
+    <div
+      style={{
+        marginTop: 16,
+        padding: '16px',
+        borderRadius: 22,
+        background: 'var(--white)',
+        border: '1.5px solid var(--border)',
+      }}
+    >
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'flex-start',
+          justifyContent: 'space-between',
+          gap: 12,
+          marginBottom: 4,
+        }}
+      >
+        <div>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 7,
+              fontSize: '0.9rem',
+              fontWeight: 700,
+              color: 'var(--ink)',
+            }}
+          >
+            <span style={{ fontSize: '1.05rem' }}>
+              ✨
+            </span>
+            Dopamine menu
+          </div>
+
+          <p
+            style={{
+              fontSize: '0.7rem',
+              lineHeight: 1.4,
+              color: 'var(--ink-muted)',
+              margin: '4px 0 0',
+            }}
+          >
+            Pick something that sounds nice. Tiny things count.
+          </p>
+        </div>
+
+        {completedCount > 0 && (
+          <div
+            style={{
+              flexShrink: 0,
+              background: 'var(--blush)',
+              color: 'var(--pink-dark)',
+              borderRadius: 999,
+              padding: '5px 9px',
+              fontSize: '0.65rem',
+              fontWeight: 700,
+            }}
+          >
+            {completedCount} little win
+            {completedCount === 1 ? '' : 's'}
+          </div>
+        )}
+      </div>
+
+      <DopamineSection
+        title="♡ Tiny boost"
+        subtitle="For when you have almost no energy"
+        items={little}
+        completed={completed}
+        onToggle={onToggle}
+      />
+
+      <DopamineSection
+        title="♡ A little more"
+        subtitle="For when you have some energy to spare"
+        items={medium}
+        completed={completed}
+        onToggle={onToggle}
+      />
+
+      <DopamineSection
+        title="♡ Bigger boost"
+        subtitle="Only if it feels doable today"
+        items={big}
+        completed={completed}
+        onToggle={onToggle}
+      />
+
+      <div
+        style={{
+          marginTop: 12,
+          paddingTop: 10,
+          borderTop: '1px solid var(--border)',
+          textAlign: 'center',
+          fontSize: '0.64rem',
+          color: 'var(--ink-muted)',
+          lineHeight: 1.4,
+        }}
+      >
+        You don't have to earn anything.
+        <br />
+        These are just little suggestions for feeling a bit better. ♡
+      </div>
+    </div>
+  );
+}
+
+function DopamineSection({
+  title,
+  subtitle,
+  items,
+  completed,
+  onToggle,
+}: {
+  title: string;
+  subtitle: string;
+  items: DopamineItem[];
+  completed: string[];
+  onToggle: (id: string) => void;
+}) {
+  return (
+    <div style={{ marginTop: 14 }}>
+      <div style={{ marginBottom: 7 }}>
+        <div
+          style={{
+            fontSize: '0.73rem',
+            fontWeight: 700,
+            color: 'var(--ink)',
+          }}
+        >
+          {title}
+        </div>
+
+        <div
+          style={{
+            fontSize: '0.61rem',
+            color: 'var(--ink-muted)',
+            marginTop: 1,
+          }}
+        >
+          {subtitle}
+        </div>
+      </div>
+
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns:
+            'repeat(2, minmax(0, 1fr))',
+          gap: 7,
+        }}
+      >
+        {items.map(item => {
+          const isDone = completed.includes(item.id);
+
+          return (
+            <button
+              key={item.id}
+              onClick={() => onToggle(item.id)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                minWidth: 0,
+                textAlign: 'left',
+                border: `1.5px solid ${
+                  isDone
+                    ? 'var(--pink-light)'
+                    : 'var(--border)'
+                }`,
+                background: isDone
+                  ? 'var(--blush)'
+                  : 'var(--cream)',
+                borderRadius: 15,
+                padding: '9px 9px',
+                cursor: 'pointer',
+                opacity: isDone ? 0.72 : 1,
+              }}
+            >
+              <span
+                style={{
+                  fontSize: '1rem',
+                  flexShrink: 0,
+                  filter: isDone
+                    ? 'grayscale(0.3)'
+                    : 'none',
+                }}
+              >
+                {item.emoji}
+              </span>
+
+              <span
+                style={{
+                  minWidth: 0,
+                  flex: 1,
+                }}
+              >
+                <span
+                  style={{
+                    display: 'block',
+                    fontSize: '0.67rem',
+                    lineHeight: 1.25,
+                    fontWeight: 600,
+                    color: isDone
+                      ? 'var(--ink-muted)'
+                      : 'var(--ink)',
+                    textDecoration: isDone
+                      ? 'line-through'
+                      : 'none',
+                  }}
+                >
+                  {item.label}
+                </span>
+
+                <span
+                  style={{
+                    display: 'block',
+                    marginTop: 3,
+                    fontSize: '0.59rem',
+                    lineHeight: 1,
+                    fontWeight: 700,
+                    color: 'var(--pink-dark)',
+                  }}
+                >
+                  +{item.amount} dopamine
+                </span>
+              </span>
+            </button>
+          );
+        })}
       </div>
     </div>
   );
