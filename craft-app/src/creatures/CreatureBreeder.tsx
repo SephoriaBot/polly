@@ -311,6 +311,8 @@ export default function CreatureBreeder() {
       setSellError(
         result.reason || "Couldn't sell that one"
       );
+    } else if (user) {
+      triggerActionEvent(user.id, "creature_sold");
     }
 
     setSellingId(null);
