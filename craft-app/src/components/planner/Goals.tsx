@@ -158,6 +158,7 @@ export default function Goals() {
       .select()
       .single();
     if (error || !goal) { showToast("Couldn't start that — try again?", 'error'); throw new Error('insert failed'); }
+    triggerActionEvent(user.id, 'goal_created');
 
     const { data: stepRows, error: stepsError } = await supabase
       .from('goal_steps')
