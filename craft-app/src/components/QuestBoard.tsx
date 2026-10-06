@@ -97,7 +97,7 @@ export default function QuestBoard({ userId }: { userId: string }) {
           100% { transform: scale(1); opacity: 1; }
         }
         @keyframes quest-badge-pulse {
-          0%, 100% { box-shadow: 0 0 0 0 var(--danger); }
+          0%, 100% { box-shadow: 0 0 0 0 var(--accent); }
           50% { box-shadow: 0 0 0 6px transparent; }
         }
         .quest-board__badge {
@@ -112,7 +112,7 @@ export default function QuestBoard({ userId }: { userId: string }) {
           align-items: center;
           justify-content: center;
           border-radius: 999px;
-          background: var(--danger);
+          background: var(--accent);
           color: var(--accent-text);
           font-size: 0.75rem;
           font-weight: 800;
