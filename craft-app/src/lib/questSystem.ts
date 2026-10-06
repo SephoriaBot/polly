@@ -508,6 +508,8 @@ export async function collectEgg(userId: string) {
     .update({ active_egg_acquired_at: null, active_egg_hatch_at: null })
     .eq('user_id', userId);
 
+  triggerActionEvent(userId, 'egg_collected');
+
   return { ok: true as const, creature: { species, image: baby.image } };
 }
 
