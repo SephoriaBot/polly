@@ -19,7 +19,7 @@ export type Expression = "happy" | "sad" | "thinking";
 export type CreatureSpecies = "wereham" | "noodle" | "dragon" | "bunt" | "wrendel";
 
 interface SpeciesAssetConfig {
-  /** Folder name under /assets/headwear/ */
+  /** Folder name under /assets/cosmetics/ */
   folder: string;
   /** Prefix baked into each filename (may differ from the species/folder name) */
   filePrefix: string;
@@ -50,8 +50,69 @@ interface EquipRenderResult {
 
 const BASE_PATH = "/assets/cosmetics";
 
-function buildSpritePath(config: SpeciesAssetConfig, hatId: string, expression: Expression): string {
-  return `${BASE_PATH}/${config.folder}/${config.filePrefix}_${hatId}_${expression}.png`;
+/**
+ * The original 7 cosmetics (bow, flower_crown, headband, party_hat, top_hat,
+ * wizard_hat, innertube) use the standard name on every species:
+ *   {prefix}_{id}_{expression}.png
+ *
+ * The 14 quest cosmetics were uploaded per species with different naming, so
+ * each species gets its own filename rule below. Ids match the asset_key in
+ * Supabase with the headwear_/outfit_ prefix stripped.
+ */
+const QUEST_COSMETIC_IDS = [
+  // headwear
+  "mushroomcap", "strawberryhat", "acorncap", "beehat", "teacuphat", "bunnyears", "witchhat",
+  // outfits
+  "frogcoat", "ladybugwings", "sweater", "picniccape", "berrybag", "bellcollar", "glasses",
+] as const;
+
+// Dragon art was uploaded as numbered files (dragon_01.png ... dragon_42.png),
+// 3 per item in this order, each triple being happy / sad / thinking.
+const DRAGON_NUMBERED_ORDER: readonly string[] = QUEST_COSMETIC_IDS;
+const DRAGON_EXPRESSION_OFFSET: Record<Expression, number> = { happy: 0, sad: 1, thinking: 2 };
+// Per-item overrides where a triple isn't in happy/sad/thinking order.
+const DRAGON_EXPRESSION_OFFSET_OVERRIDES: Record<string, Partial<Record<Expression, number>>> = {
+  glasses: { thinking: 0, happy: 1, sad: 2 },
+};
+
+// Noodle quest files are {id}_noodle_{expression}.png, with a few quirks in
+// what was uploaded. Remove an entry once its file is renamed to the standard form.
+const NOODLE_FILE_OVERRIDES: Record<string, string> = {
+  "ladybugwings_happy": "ladybug_noodle_happy.png",
+  "ladybugwings_sad": "ladybug_noodle_sad.png",
+  "ladybugwings_thinking": "ladybug_noodle_thinking.png",
+  "strawberryhat_happy": "strawberryhat_nodle_happy.png", // "nodle" typo in the uploaded filename
+  "frogcoat_thinking": "frogcoat_noodle_thinking.PNG", // uppercase extension in the uploaded filename
+};
+
+// Species that have quest-cosmetic art. Legacy bunt/wrendel companions fall
+// back to the flat icon for quest cosmetics instead of a missing sprite.
+const QUEST_ART_SPECIES: CreatureSpecies[] = ["wereham", "noodle", "dragon"];
+
+function isQuestCosmetic(hatId: string): boolean {
+  return (QUEST_COSMETIC_IDS as readonly string[]).includes(hatId);
+}
+
+function spriteFileName(species: CreatureSpecies, config: SpeciesAssetConfig, hatId: string, expression: Expression): string {
+  if (isQuestCosmetic(hatId)) {
+    if (species === "wereham") {
+      return `${config.filePrefix}-${hatId}-${expression}.png`;
+    }
+    if (species === "noodle") {
+      return NOODLE_FILE_OVERRIDES[`${hatId}_${expression}`] ?? `${hatId}_${config.filePrefix}_${expression}.png`;
+    }
+    if (species === "dragon") {
+      const index = DRAGON_NUMBERED_ORDER.indexOf(hatId);
+      const offset = DRAGON_EXPRESSION_OFFSET_OVERRIDES[hatId]?.[expression] ?? DRAGON_EXPRESSION_OFFSET[expression];
+      const n = index * 3 + 1 + offset;
+      return `${config.filePrefix}_${String(n).padStart(2, "0")}.png`;
+    }
+  }
+  return `${config.filePrefix}_${hatId}_${expression}.png`;
+}
+
+function buildSpritePath(species: CreatureSpecies, config: SpeciesAssetConfig, hatId: string, expression: Expression): string {
+  return `${BASE_PATH}/${config.folder}/${spriteFileName(species, config, hatId, expression)}`;
 }
 
 function buildFlatIconPath(hatId: string): string {
@@ -107,7 +168,7 @@ export function resolveOutfitRender({ species, hatId, expression }: EquipRenderI
   if (OUTFIT_SPECIES_WITH_ART.includes(species)) {
     const config = SPECIES_CONFIG[species]!;
     return {
-      imagePath: buildSpritePath(config, hatId, expression),
+      imagePath: buildSpritePath(species, config, hatId, expression),
       isFallback: false,
     };
   }
@@ -133,9 +194,10 @@ export function resolveEquipRender({ species, hatId, expression }: EquipRenderIn
   }
 
   const config = SPECIES_CONFIG[species];
-  if (config) {
+  const hasArt = isQuestCosmetic(hatId) ? QUEST_ART_SPECIES.includes(species) : !!config;
+  if (config && hasArt) {
     return {
-      imagePath: buildSpritePath(config, hatId, expression),
+      imagePath: buildSpritePath(species, config, hatId, expression),
       isFallback: false,
     };
   }
