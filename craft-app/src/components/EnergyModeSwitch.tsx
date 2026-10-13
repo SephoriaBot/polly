@@ -1,8 +1,8 @@
 import { useEnergy, type EnergyMode } from '../context/EnergyContext';
 
-const OPTIONS: { mode: EnergyMode; label: string }[] = [
+const OPTIONS: { mode: EnergyMode; label: string; icon?: string }[] = [
   { mode: 'normal', label: 'Normal' },
-  { mode: 'noEnergy', label: '🫠 No Energy' },
+  { mode: 'noEnergy', label: 'No Energy', icon: '/icons/lowenergy.png' },
 ];
 
 export default function EnergyModeSwitch() {
@@ -23,8 +23,16 @@ export default function EnergyModeSwitch() {
               color: active ? 'var(--pink-dark)' : 'var(--ink-muted)',
               fontSize: '0.68rem', fontWeight: 700, cursor: 'pointer',
               fontFamily: 'IBM Plex Mono, monospace',
+              display: 'inline-flex', alignItems: 'center', gap: 5,
             }}
           >
+            {opt.icon && (
+              <img
+                src={opt.icon}
+                alt=""
+                style={{ width: 14, height: 14, objectFit: 'contain' }}
+              />
+            )}
             {opt.label}
           </button>
         );
