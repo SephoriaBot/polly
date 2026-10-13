@@ -17,6 +17,7 @@ import CheckMark from '../components/CheckMark';
 import { triggerActionEvent } from '../lib/questSystem';
 import QuestBoard from '../components/QuestBoard';
 import { useAuth } from '../context/AuthContext';
+import PageTabs, { type PageTab } from '../components/PageTabs';
 
 
 interface Focus {
@@ -28,6 +29,13 @@ interface Focus {
   carried_over: boolean;
   priority: boolean;
 }
+
+type DashTab = 'main' | 'radar';
+
+const DASH_TABS: PageTab<DashTab>[] = [
+  { key: 'main', label: 'Main', icon: 'icon-home' },
+  { key: 'radar', label: 'Radar', icon: 'sparkle-single' },
+];
 
 const DAY_NAMES = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 
@@ -58,6 +66,7 @@ export default function Dashboard({ onNavigate }: { onNavigate?: (page: string, 
   const [newFocus, setNewFocus] = useState('');
   const [newFocusMins, setNewFocusMins] = useState('');
   const [addingFocus, setAddingFocus] = useState(false);
+  const [tab, setTab] = useState<DashTab>('main');
 
   const now = new Date();
   const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
@@ -145,8 +154,17 @@ export default function Dashboard({ onNavigate }: { onNavigate?: (page: string, 
           <EnergyModeSwitch />
         </div>
       </div>
+      <PageTabs tabs={DASH_TABS} active={tab} onChange={setTab} />
+
       <div className="page-body">
-        {mode !== 'normal' ? (
+        {tab === 'radar' ? (
+          <section>
+            <div className="section-label" style={{ marginBottom: 10 }}>
+              Also on your radar
+            </div>
+            <TodaySnapshot onNavigate={onNavigate} />
+          </section>
+        ) : mode !== 'normal' ? (
           <>
             {/* ── NO ENERGY MODE ── reduced to starred priority tasks + basics */}
             <section>
@@ -157,14 +175,6 @@ export default function Dashboard({ onNavigate }: { onNavigate?: (page: string, 
   {yawningMessage && <PollyBubble message={yawningMessage} size="medium" />}
   <Polly mood="yawning" size="medium" />
 </div>
-
-          {/* ── RADAR ── */}
-            <section style={{ marginTop: 4 }}>
-              <div style={{ fontSize: '0.68rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--ink-muted)', marginBottom: 8 }}>
-                Also on your radar
-              </div>
-              <TodaySnapshot onNavigate={onNavigate} />
-            </section>
 
             {user && (
               <section style={{ marginTop: 4 }}>
@@ -309,14 +319,6 @@ export default function Dashboard({ onNavigate }: { onNavigate?: (page: string, 
                   ))}
                 </div>
               )}
-            </section>
-
-            {/* ── TODAY SNAPSHOT ── pulls live from chores, appointments, and money */}
-            <section style={{ marginTop: 4 }}>
-              <div style={{ fontSize: '0.68rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--ink-muted)', marginBottom: 8 }}>
-                Also on your radar
-              </div>
-              <TodaySnapshot onNavigate={onNavigate} />
             </section>
 
             {user && (
