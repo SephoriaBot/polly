@@ -49,6 +49,11 @@ function todayISO(): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
+// Bills badge only counts what actually needs attention soon: overdue plus
+// due within this many days. The shared bill list spans several months, so
+// counting all of it would badge every future occurrence.
+const BILL_BADGE_WINDOW_DAYS = 7;
+
 function daysAgoISO(days: number): string {
   const d = new Date();
   d.setDate(d.getDate() - days);
@@ -99,6 +104,8 @@ export default function TodaySnapshot({ onNavigate }: { onNavigate?: (page: stri
       });
 
       const nextBill = pickNextBill(unpaidBills, now);
+      const billCutoff = daysAgoISO(-BILL_BADGE_WINDOW_DAYS);
+      const billsNeedingAttention = unpaidBills.filter(b => b.due_date <= billCutoff).length;
 
       const cartSettings = cartSettingsRes.data;
       const cartTotal = cartSettings?.smart_cart_total != null ? Number(cartSettings.smart_cart_total) : null;
@@ -144,7 +151,7 @@ export default function TodaySnapshot({ onNavigate }: { onNavigate?: (page: stri
           : { key: 'appointments', icon: 'calendar', label: 'Nothing on the calendar', detail: 'Today or tomorrow is clear', page: 'dailyplanner', tab: 'appointments', empty: true },
 
         nextBill
-          ? { key: 'money', icon: 'money-bag', label: `${nextBill.name} due ${nextBill.due_day ? `on the ${nextBill.due_day}${daySuffix(nextBill.due_day)}` : 'soon'}`, detail: nextBill.amount != null ? `$${Number(nextBill.amount).toFixed(2)}` : '', page: 'wallet', tab: 'bills', count: unpaidBills.length }
+          ? { key: 'money', icon: 'money-bag', label: `${nextBill.name} due ${nextBill.due_day ? `on the ${nextBill.due_day}${daySuffix(nextBill.due_day)}` : 'soon'}`, detail: nextBill.amount != null ? `$${Number(nextBill.amount).toFixed(2)}` : '', page: 'wallet', tab: 'bills', count: billsNeedingAttention }
           : { key: 'money', icon: 'money-bag', label: 'No bills waiting', detail: 'Nothing due this month', page: 'wallet', tab: 'bills', empty: true },
 
         cartTotal != null && cartItemCount > 0
