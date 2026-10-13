@@ -33,6 +33,7 @@ interface SnapshotRow {
   page: string;
   tab?: string;
   empty?: boolean;
+  count?: number; // items still needing action; drives the pulsing badge
 }
 
 interface GoalStepJoinRow {
@@ -131,19 +132,19 @@ export default function TodaySnapshot({ onNavigate }: { onNavigate?: (page: stri
 
       const next: SnapshotRow[] = [
         tasks.length > 0
-          ? { key: 'tasks', icon: 'clipboard-check', label: `${tasks.length} quick task${tasks.length === 1 ? '' : 's'}`, detail: tasks.slice(0, 2).map(t => t.label).join(', '), page: 'dailyplanner', tab: 'tasks' }
+          ? { key: 'tasks', icon: 'clipboard-check', label: `${tasks.length} quick task${tasks.length === 1 ? '' : 's'}`, detail: tasks.slice(0, 2).map(t => t.label).join(', '), page: 'dailyplanner', tab: 'tasks', count: tasks.length }
           : { key: 'tasks', icon: 'clipboard-check', label: 'No tasks left today', detail: 'All caught up', page: 'dailyplanner', tab: 'tasks', empty: true },
 
         dueChores.length > 0
-          ? { key: 'chores', icon: 'cleaning-spray', label: `${dueChores.length} chore${dueChores.length === 1 ? '' : 's'} due`, detail: dueChores.slice(0, 2).map(x => x.chore.name).join(', '), page: 'dailyplanner', tab: 'chores' }
+          ? { key: 'chores', icon: 'cleaning-spray', label: `${dueChores.length} chore${dueChores.length === 1 ? '' : 's'} due`, detail: dueChores.slice(0, 2).map(x => x.chore.name).join(', '), page: 'dailyplanner', tab: 'chores', count: dueChores.length }
           : { key: 'chores', icon: 'cleaning-spray', label: 'Chores are caught up', detail: 'Nothing due yet', page: 'dailyplanner', tab: 'chores', empty: true },
 
         appointments.length > 0
-          ? { key: 'appointments', icon: 'calendar', label: `${appointments.length} appointment${appointments.length === 1 ? '' : 's'} coming up`, detail: appointments.slice(0, 2).map(a => `${a.title} (${apptWhen(a.date_time, startOfTomorrow)})`).join(', '), page: 'dailyplanner', tab: 'appointments' }
+          ? { key: 'appointments', icon: 'calendar', label: `${appointments.length} appointment${appointments.length === 1 ? '' : 's'} coming up`, detail: appointments.slice(0, 2).map(a => `${a.title} (${apptWhen(a.date_time, startOfTomorrow)})`).join(', '), page: 'dailyplanner', tab: 'appointments', count: appointments.length }
           : { key: 'appointments', icon: 'calendar', label: 'Nothing on the calendar', detail: 'Today or tomorrow is clear', page: 'dailyplanner', tab: 'appointments', empty: true },
 
         nextBill
-          ? { key: 'money', icon: 'money-bag', label: `${nextBill.name} due ${nextBill.due_day ? `on the ${nextBill.due_day}${daySuffix(nextBill.due_day)}` : 'soon'}`, detail: nextBill.amount != null ? `$${Number(nextBill.amount).toFixed(2)}` : '', page: 'wallet', tab: 'bills' }
+          ? { key: 'money', icon: 'money-bag', label: `${nextBill.name} due ${nextBill.due_day ? `on the ${nextBill.due_day}${daySuffix(nextBill.due_day)}` : 'soon'}`, detail: nextBill.amount != null ? `$${Number(nextBill.amount).toFixed(2)}` : '', page: 'wallet', tab: 'bills', count: unpaidBills.length }
           : { key: 'money', icon: 'money-bag', label: 'No bills waiting', detail: 'Nothing due this month', page: 'wallet', tab: 'bills', empty: true },
 
         cartTotal != null && cartItemCount > 0
@@ -158,7 +159,7 @@ export default function TodaySnapshot({ onNavigate }: { onNavigate?: (page: stri
       if (activeTypes.length > 0) {
         next.push(
           dueTypes.length > 0
-            ? { key: 'trackers', icon: 'icon-trackers', label: `${dueTypes.length} tracker${dueTypes.length === 1 ? '' : 's'} to log`, detail: dueTypes.slice(0, 3).map(trackerLabel).join(', '), page: 'trackers', tab: dueTypes[0] }
+            ? { key: 'trackers', icon: 'icon-trackers', label: `${dueTypes.length} tracker${dueTypes.length === 1 ? '' : 's'} to log`, detail: dueTypes.slice(0, 3).map(trackerLabel).join(', '), page: 'trackers', tab: dueTypes[0], count: dueTypes.length }
             : { key: 'trackers', icon: 'icon-trackers', label: 'Trackers logged today', detail: 'All caught up', page: 'trackers', tab: activeTypes[0], empty: true }
         );
       }
@@ -185,6 +186,7 @@ export default function TodaySnapshot({ onNavigate }: { onNavigate?: (page: stri
         gap: 10,
       }}
     >
+      <style>{BADGE_CSS}</style>
       {rows.map(row => (
         <button
           key={row.key}
@@ -197,10 +199,16 @@ export default function TodaySnapshot({ onNavigate }: { onNavigate?: (page: stri
             background: row.empty ? 'var(--blush)' : 'var(--white)',
             border: `1.5px solid ${row.empty ? 'var(--pink-light)' : 'var(--border)'}`,
             borderRadius: 22, padding: 12, cursor: onNavigate ? 'pointer' : 'default',
-            width: '100%', fontFamily: 'inherit', overflow: 'hidden',
+            width: '100%', fontFamily: 'inherit', position: 'relative',
             transition: 'transform 0.15s ease',
           }}
         >
+          {!row.empty && row.count != null && row.count > 0 && (
+            <span className="snapshot-badge" aria-label={`${row.count} to do`}>
+              <span className="snapshot-badge-ring" />
+              <span className="snapshot-badge-num">{row.count > 99 ? '99+' : row.count}</span>
+            </span>
+          )}
           <Icon name={row.icon} size={46} style={{ opacity: row.empty ? 0.55 : 1, flexShrink: 0 }} />
           <div style={{
             fontSize: '0.8rem', fontWeight: 700, lineHeight: 1.25,
@@ -223,6 +231,37 @@ export default function TodaySnapshot({ onNavigate }: { onNavigate?: (page: stri
     </div>
   );
 }
+
+const BADGE_CSS = `
+.snapshot-badge {
+  position: absolute; top: -7px; right: -7px;
+  min-width: 24px; height: 24px;
+  display: flex; align-items: center; justify-content: center;
+}
+.snapshot-badge-ring {
+  position: absolute; inset: 0; border-radius: 999px;
+  background: var(--primary);
+  animation: snapshot-pulse 1.8s ease-out infinite;
+}
+.snapshot-badge-num {
+  position: relative; box-sizing: border-box;
+  min-width: 24px; height: 24px; padding: 0 6px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 999px;
+  background: var(--primary); color: var(--btn-ink);
+  border: 2px solid var(--white);
+  font-size: 0.68rem; font-weight: 800; line-height: 1;
+  font-family: 'IBM Plex Mono', monospace;
+}
+@keyframes snapshot-pulse {
+  0%   { transform: scale(1);   opacity: 0.55; }
+  70%  { transform: scale(1.9); opacity: 0; }
+  100% { transform: scale(1.9); opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .snapshot-badge-ring { animation: none; opacity: 0; }
+}
+`;
 
 function apptWhen(dateTime: string, startOfTomorrow: Date): string {
   const t = new Date(dateTime);
