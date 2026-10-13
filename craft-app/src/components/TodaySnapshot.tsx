@@ -178,29 +178,46 @@ export default function TodaySnapshot({ onNavigate }: { onNavigate?: (page: stri
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+    <div
+      style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+        gap: 10,
+      }}
+    >
       {rows.map(row => (
         <button
           key={row.key}
           onClick={() => onNavigate?.(row.page, row.tab)}
           style={{
-            display: 'flex', alignItems: 'center', gap: 12, textAlign: 'left',
-            background: 'var(--white)', border: '1.5px solid var(--border)',
-            borderRadius: 18, padding: '12px 14px', cursor: onNavigate ? 'pointer' : 'default',
-            width: '100%', fontFamily: 'inherit',
+            aspectRatio: '1 / 1',
+            display: 'flex', flexDirection: 'column',
+            alignItems: 'center', justifyContent: 'center',
+            gap: 8, textAlign: 'center',
+            background: row.empty ? 'var(--blush)' : 'var(--white)',
+            border: `1.5px solid ${row.empty ? 'var(--pink-light)' : 'var(--border)'}`,
+            borderRadius: 22, padding: 12, cursor: onNavigate ? 'pointer' : 'default',
+            width: '100%', fontFamily: 'inherit', overflow: 'hidden',
+            transition: 'transform 0.15s ease',
           }}
         >
-          <Icon name={row.icon} size={28} style={{ opacity: row.empty ? 0.55 : 1, flexShrink: 0 }} />
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: '0.85rem', fontWeight: 700, color: row.empty ? 'var(--ink-muted)' : 'var(--ink)' }}>
-              {row.label}
-            </div>
-            {row.detail && (
-              <div style={{ fontSize: '0.75rem', color: 'var(--ink-muted)', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {row.detail}
-              </div>
-            )}
+          <Icon name={row.icon} size={46} style={{ opacity: row.empty ? 0.55 : 1, flexShrink: 0 }} />
+          <div style={{
+            fontSize: '0.8rem', fontWeight: 700, lineHeight: 1.25,
+            color: row.empty ? 'var(--ink-muted)' : 'var(--ink)',
+            display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden',
+          }}>
+            {row.label}
           </div>
+          {row.detail && (
+            <div style={{
+              fontSize: '0.7rem', lineHeight: 1.25, color: 'var(--ink-muted)',
+              display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden',
+              maxWidth: '100%',
+            }}>
+              {row.detail}
+            </div>
+          )}
         </button>
       ))}
     </div>
