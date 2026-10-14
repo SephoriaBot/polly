@@ -41,62 +41,104 @@ const TIMEFRAME_GUIDANCE: Record<Timeframe, string> = {
   months: 'There\'s a month or more. Feel free to include longer-term stages, buffer or rest periods, and steps that build on each other over time rather than everything at once.',
 };
 
+const SYSTEM_PROMPT = `You are a practical planning coach inside a personal life-management app. You turn a goal into a checklist a real person can follow without having to think about what to do next.
+
+How good steps look:
+- Each step is ONE concrete action that starts with a verb and names the specific thing being acted on. "Compare three bakeries' prices for the cake" beats "Research options". Never use vague steps like "Get started", "Do research", "Stay motivated", or "Celebrate" unless they are genuinely required.
+- Order steps by dependency and lead time: decisions and prerequisites first (budget, supplies, permission, a date), then anything that involves waiting, booking, ordering, or being approved, then the actual doing, then wrapping up. If a step can't happen until an earlier one is done, it must come after it.
+- Make the first step small and easy (a few minutes) so starting feels effortless.
+- If something has a waiting period (shipping, appointments, curing, approvals), put the step that starts the wait early and include a step for the thing that happens after the wait.
+- Finish with a clear "done" step that confirms the goal is actually achieved, not a vague wrap-up.
+- Don't invent personal details (names, amounts, brands, places). If the goal is ambiguous, pick the most common reasonable interpretation.
+- Labels are short checklist text, about 4 to 10 words, no numbering, no trailing punctuation.
+
+Respond ONLY with a valid JSON object, no markdown, no backticks, no commentary.`;
+
 function buildPrompt(goal: string, timeframe: Timeframe): string {
-  return `Break this goal down into sequential, actionable steps a person could actually follow, from getting started to done. Keep each step short and plain — a checklist label, not a sentence.
+  return `Goal: "${goal.trim()}"
 
-Goal: "${goal.trim()}"
+Time available: ${TIMEFRAME_GUIDANCE[timeframe]}
 
-${TIMEFRAME_GUIDANCE[timeframe]}
+Decide how many steps this specific goal needs and pace them to the time available. A simple goal usually needs 4 to 7 steps, a more involved one 8 to 14, and never more than 16. Don't pad, and don't cram multiple actions into one step.
 
-Decide for yourself how many steps this specific goal actually needs, and size/pace them to fit the timeframe above — don't pad it out or force it to hit a number. A simple goal should get a short list; a complex one should get a longer list.
-
-Respond ONLY with a valid JSON object, no markdown, no backticks, no explanation. Use this exact shape:
+Use this exact shape:
 {
-  "steps": ["first step", "second step", "..."]
+  "steps": ["first step", "second step"]
 }`;
 }
 
 // A single step can turn out to be a whole task on its own ("Book flights" during
 // a bigger "Plan the trip" goal). This breaks just that one step into its own
 // sub-checklist, one level deep — sub-steps don't get a further breakdown option.
-function buildSubstepPrompt(goalTitle: string, stepLabel: string, stepCount: number): string {
-  return `A person is working toward this overall goal: "${goalTitle.trim()}"
+// The other top-level steps are passed along so sub-steps don't repeat them.
+function buildSubstepPrompt(goalTitle: string, stepLabel: string, stepCount: number, otherSteps: string[]): string {
+  const others = otherSteps.length
+    ? `\nThe other steps in the overall plan (do NOT repeat or overlap with these):\n${otherSteps.map(l => `- ${l}`).join('\n')}\n`
+    : '';
+  return `Overall goal: "${goalTitle.trim()}"
+${others}
+This step turned out to be a task of its own: "${stepLabel.trim()}"
 
-One of the steps toward that goal is: "${stepLabel.trim()}"
+Break ONLY that step into exactly ${stepCount} sub-steps. Same rules as before: each is one concrete action starting with a verb, ordered by dependency, the first one small and easy, and the last one confirming the step is truly finished.
 
-That step turned out to be a task of its own. Break ONLY that step down into exactly ${stepCount} smaller, sequential, actionable sub-steps. Keep each short and plain — a checklist label, not a sentence.
-
-Respond ONLY with a valid JSON object, no markdown, no backticks, no explanation. Use this exact shape:
+Use this exact shape:
 {
-  "steps": ["first sub-step", "second sub-step", "..."]
+  "steps": ["first sub-step", "second sub-step"]
 }`;
+}
+
+// Pulls a JSON object (or bare array) out of a model reply even if it wrapped
+// it in fences or added a stray sentence around it.
+function extractSteps(raw: string): unknown[] {
+  const clean = raw.replace(/```json|```/gi, '').trim();
+  const objStart = clean.indexOf('{');
+  const objEnd = clean.lastIndexOf('}');
+  if (objStart !== -1 && objEnd > objStart) {
+    const parsed = JSON.parse(clean.slice(objStart, objEnd + 1));
+    if (Array.isArray(parsed.steps)) return parsed.steps;
+  }
+  const arrStart = clean.indexOf('[');
+  const arrEnd = clean.lastIndexOf(']');
+  if (arrStart !== -1 && arrEnd > arrStart) {
+    const parsed = JSON.parse(clean.slice(arrStart, arrEnd + 1));
+    if (Array.isArray(parsed)) return parsed;
+  }
+  throw new Error('bad shape');
 }
 
 async function callGroqForSteps(prompt: string, safetyCap: number): Promise<string[]> {
   const response = await groqFetch({
-      max_tokens: 800,
-      messages: [{ role: 'user', content: prompt }],
-    });
+    temperature: 0.4,
+    max_tokens: 900,
+    messages: [
+      { role: 'system', content: SYSTEM_PROMPT },
+      { role: 'user', content: prompt },
+    ],
+  });
 
+  if (!response.ok) throw new Error('groq request failed');
   const data = await response.json();
   const raw = data.choices?.[0]?.message?.content ?? '';
-  const clean = raw.replace(/```json|```/g, '').trim();
-  const parsed = JSON.parse(clean);
 
-  if (!Array.isArray(parsed.steps)) throw new Error('bad shape');
-
-  return parsed.steps
-    .filter((s: any) => typeof s === 'string' && s.trim())
-    .map((s: string) => s.trim())
+  const seen = new Set<string>();
+  return extractSteps(raw)
+    .filter((s): s is string => typeof s === 'string')
+    .map(s => s.replace(/^\s*(?:\d+[.)]|[-*•])\s*/, '').replace(/[.]+$/, '').trim().slice(0, 140))
+    .filter(s => {
+      const key = s.toLowerCase();
+      if (!s || seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    })
     .slice(0, safetyCap); // guards against a runaway response, not a target
 }
 
 async function generateSteps(goal: string, timeframe: Timeframe): Promise<string[]> {
-  return callGroqForSteps(buildPrompt(goal, timeframe), 20);
+  return callGroqForSteps(buildPrompt(goal, timeframe), 16);
 }
 
-async function generateSubsteps(goalTitle: string, stepLabel: string, stepCount: number): Promise<string[]> {
-  return callGroqForSteps(buildSubstepPrompt(goalTitle, stepLabel, stepCount), stepCount);
+async function generateSubsteps(goalTitle: string, stepLabel: string, stepCount: number, otherSteps: string[]): Promise<string[]> {
+  return callGroqForSteps(buildSubstepPrompt(goalTitle, stepLabel, stepCount, otherSteps), stepCount);
 }
 
 export default function Goals() {
@@ -201,7 +243,11 @@ export default function Goals() {
     setBreakdownLoading(step.id);
     let substeps: string[];
     try {
-      substeps = await generateSubsteps(goalTitle, step.label, subCount);
+      const otherSteps = (stepsByGoal[step.goal_id] ?? [])
+        .filter(s => !s.parent_step_id && s.id !== step.id)
+        .sort((a, b) => a.step_order - b.step_order)
+        .map(s => s.label);
+      substeps = await generateSubsteps(goalTitle, step.label, subCount, otherSteps);
     } catch {
       showToast("Couldn't break that step down — try again?", 'error');
       setBreakdownLoading(null);
