@@ -120,6 +120,7 @@ const MONTH_NAMES = ["January","February","March","April","May","June","July","A
 // Shift times replace typed hours. Paid hours = shift length minus an unpaid
 // break. An end at or before the start means an overnight shift.
 const UNPAID_BREAK_MIN = 30;
+const MAX_SHIFT_MIN = 16 * 60;
 
 type Shift = { start: string; end: string };
 
@@ -152,6 +153,9 @@ function shiftHours(sh?: Shift | null): string {
   if (a === null || b === null) return "";
   let len = b - a;
   if (len <= 0) len += 1440;
+  // A "shift" over 16h is almost always a half-typed time (start edited past
+  // the end), so it counts as nothing instead of inflating the week's hours.
+  if (len > MAX_SHIFT_MIN) return "";
   return String(round2(Math.max(0, len - UNPAID_BREAK_MIN) / 60));
 }
 
@@ -165,6 +169,7 @@ function shiftEndsAt(dayKey: string, sh?: Shift | null): Date | null {
   const end = new Date(y, m - 1, d, 0, 0, 0);
   end.setMinutes(b);
   if (b <= a) end.setDate(end.getDate() + 1);
+  if (shiftHours(sh) === "") return null;
   return end;
 }
 
@@ -705,6 +710,11 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
     setRegEnd(first.end);
     setRegDays(days);
   }, [recurringShifts, regStart, regEnd]);
+
+  // Today's card stays put while you're editing it, and a slim "Edit" link
+  // brings it back after its shift ends.
+  const [editingDay, setEditingDay] = useState<string | null>(null);
+  const [revealedDay, setRevealedDay] = useState<string | null>(null);
 
   // Ticks once a minute so today's card can disappear the moment its shift ends.
   const [nowTick, setNowTick] = useState(() => Date.now());
@@ -2210,7 +2220,14 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                           const dayOt = payHours.otByDay[row.key] || 0;
                           const planTotal = plannedHours(dow);
                           // Today's card goes away once its shift is over.
-                          if (isToday && isShiftOver(row.key, dow)) return null;
+                          if (isToday && isShiftOver(row.key, dow) && editingDay !== row.key && revealedDay !== row.key) {
+                            return (
+                              <div key={row.key} id={`money-day-${row.key}`} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 11, color: "var(--ink-muted)", padding: "2px 4px" }}>
+                                <span>Today's shift is done</span>
+                                <button type="button" onClick={() => setRevealedDay(row.key)} style={{ padding: "3px 10px", fontSize: 11, fontWeight: 600, borderRadius: 99, border: "1px solid var(--border)", background: "transparent", color: "var(--ink)", cursor: "pointer", fontFamily: "inherit" }}>Edit</button>
+                              </div>
+                            );
+                          }
                           const shift: Shift = dailyShifts[row.key] ?? recurringShifts[dow] ?? { start: "", end: "" };
                           const dayHrs = effectiveHours(row.key, dow);
                           const chipStyle: CSSProperties = {
@@ -2219,7 +2236,12 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                             background: "transparent", color: textColor, cursor: "pointer", fontFamily: "inherit",
                           };
                           return (
-                            <div key={row.key} id={`money-day-${row.key}`} style={{ border: `1.5px solid ${isToday ? "var(--pink-dark)" : "var(--border)"}`, borderRadius: 14, padding: "10px 12px", background: isToday ? "var(--accent)" : "transparent" }}>
+                            <div
+                              key={row.key}
+                              id={`money-day-${row.key}`}
+                              onFocus={() => setEditingDay(row.key)}
+                              onBlur={e => { if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setEditingDay(null); }}
+                              style={{ border: `1.5px solid ${isToday ? "var(--pink-dark)" : "var(--border)"}`, borderRadius: 14, padding: "10px 12px", background: isToday ? "var(--accent)" : "transparent" }}>
                               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
                                 <div style={{ fontSize: 12, fontWeight: 700, color: textColor }}>
                                   {row.date.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })}
