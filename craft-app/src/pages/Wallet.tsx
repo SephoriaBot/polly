@@ -117,16 +117,56 @@ interface SavingsGoal {
 
 const MONTH_NAMES = ["January","February","March","April","May","June","July","August","September","October","November","December"];
 
-// One-tap fixes for a day's hours. Each chip starts from the day's current
-// effective hours (explicit entry, else the weekday's recurring value), so
-// nobody has to type a number just to say "left 2 hours early".
-const HOUR_CHIPS: { id: "off" | "minus05" | "minus1" | "plus05" | "plus1"; label: string }[] = [
-  { id: "off", label: "Off" },
-  { id: "minus05", label: "−0.5h" },
-  { id: "minus1", label: "−1h" },
-  { id: "plus05", label: "+0.5h" },
-  { id: "plus1", label: "+1h" },
+// Shift times replace typed hours. Paid hours = shift length minus an unpaid
+// break. An end at or before the start means an overnight shift.
+const UNPAID_BREAK_MIN = 30;
+
+type Shift = { start: string; end: string };
+
+// One-tap fixes for a day's shift. Each chip moves the shift's end time, so
+// "left an hour early" is one tap. "Off" clears the day's shift.
+const SHIFT_CHIPS: { id: "off" | "minus1" | "minus30" | "plus30" | "plus1"; label: string; delta: number }[] = [
+  { id: "off", label: "Off", delta: 0 },
+  { id: "minus1", label: "End −1h", delta: -60 },
+  { id: "minus30", label: "End −30m", delta: -30 },
+  { id: "plus30", label: "End +30m", delta: 30 },
+  { id: "plus1", label: "End +1h", delta: 60 },
 ];
+
+function timeToMin(t?: string | null): number | null {
+  const m = /^(\d{1,2}):(\d{2})/.exec(t || "");
+  if (!m) return null;
+  return Number(m[1]) * 60 + Number(m[2]);
+}
+
+function minToTime(n: number): string {
+  const m = ((n % 1440) + 1440) % 1440;
+  return `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
+}
+
+// Paid hours for a shift ("" until both times are filled in).
+function shiftHours(sh?: Shift | null): string {
+  if (!sh) return "";
+  const a = timeToMin(sh.start);
+  const b = timeToMin(sh.end);
+  if (a === null || b === null) return "";
+  let len = b - a;
+  if (len <= 0) len += 1440;
+  return String(round2(Math.max(0, len - UNPAID_BREAK_MIN) / 60));
+}
+
+// The moment a day's shift ends (the next morning for an overnight shift).
+function shiftEndsAt(dayKey: string, sh?: Shift | null): Date | null {
+  if (!sh) return null;
+  const a = timeToMin(sh.start);
+  const b = timeToMin(sh.end);
+  if (a === null || b === null) return null;
+  const [y, m, d] = dayKey.split("-").map(Number);
+  const end = new Date(y, m - 1, d, 0, 0, 0);
+  end.setMinutes(b);
+  if (b <= a) end.setDate(end.getDate() + 1);
+  return end;
+}
 
 // Hours past this many in a Sunday–Saturday week are paid at the OT wage.
 // You only log total hours per day; the reg/OT split is worked out for you.
@@ -470,10 +510,14 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
 
         if (dailyHoursData && dailyHoursData.length > 0) {
           const map: Record<string, string> = {};
-          dailyHoursData.forEach((row: { date: string; reg: string; ot: string }) => {
+          const shiftMap: Record<string, Shift> = {};
+          dailyHoursData.forEach((row: { date: string; reg: string; ot: string; shift_start?: string | null; shift_end?: string | null }) => {
             map[row.date] = joinHours(row.reg, row.ot);
+            // Every saved day has its own shift entry (blank = off / legacy hours only).
+            shiftMap[row.date] = { start: (row.shift_start || "").slice(0, 5), end: (row.shift_end || "").slice(0, 5) };
           });
           setDailyHours(map);
+          setDailyShifts(shiftMap);
         }
 
         if (extraFundsData && extraFundsData.length > 0) {
@@ -511,10 +555,15 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
 
         if (recurringHoursData && recurringHoursData.length > 0) {
           const map: Record<number, string> = {};
-          recurringHoursData.forEach((row: { weekday: number; reg: string; ot: string }) => {
+          const shiftMap: Record<number, Shift> = {};
+          recurringHoursData.forEach((row: { weekday: number; reg: string; ot: string; shift_start?: string | null; shift_end?: string | null }) => {
             map[row.weekday] = joinHours(row.reg, row.ot);
+            if (row.shift_start && row.shift_end) {
+              shiftMap[row.weekday] = { start: row.shift_start.slice(0, 5), end: row.shift_end.slice(0, 5) };
+            }
           });
           setRecurringHours(map);
+          setRecurringShifts(shiftMap);
         }
 
         if (monthBalancesData && monthBalancesData.length > 0) {
@@ -640,23 +689,45 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
   );
 
   const [dailyHours, setDailyHours] = useState<Record<string, string>>({});
+  const [dailyShifts, setDailyShifts] = useState<Record<string, Shift>>({});
+  const [recurringShifts, setRecurringShifts] = useState<Record<number, Shift>>({});
+
+  // Ticks once a minute so today's card can disappear the moment its shift ends.
+  const [nowTick, setNowTick] = useState(() => Date.now());
+  useEffect(() => {
+    const id = setInterval(() => setNowTick(Date.now()), 60000);
+    return () => clearInterval(id);
+  }, []);
   const dailyHoursSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
     if (!walletSettingsLoaded) return;
     if (dailyHoursSaveTimer.current) clearTimeout(dailyHoursSaveTimer.current);
     dailyHoursSaveTimer.current = setTimeout(() => {
-      const rows = Object.entries(dailyHours).map(([date, v]) => ({ date, reg: v || "", ot: "" }));
+      const dates = Array.from(new Set([...Object.keys(dailyHours), ...Object.keys(dailyShifts)]));
+      const rows = dates.map(date => ({
+        date,
+        reg: dailyHours[date] || "",
+        ot: "",
+        shift_start: dailyShifts[date]?.start || null,
+        shift_end: dailyShifts[date]?.end || null,
+      }));
       if (rows.length === 0) return;
       supabase.from("daily_hours_log").upsert(rows, { onConflict: "date" }).then(({ error }) => {
         if (error) console.error("daily_hours_log save failed:", error);
       });
     }, 800);
     return () => { if (dailyHoursSaveTimer.current) clearTimeout(dailyHoursSaveTimer.current); };
-  }, [dailyHours, walletSettingsLoaded]);
+  }, [dailyHours, dailyShifts, walletSettingsLoaded]);
 
-  function setDayHours(key: string, value: string) {
-    setDailyHours(prev => ({ ...prev, [key]: value }));
-    if (value !== "") fireQuestEvent("money_hours_logged");
+  // Editing a shift time also stores the paid hours it works out to, so the
+  // pay projection keeps reading plain hours.
+  function setDayShift(key: string, dow: number, field: "start" | "end", value: string) {
+    const cur = dailyShifts[key] ?? recurringShifts[dow] ?? { start: "", end: "" };
+    const next: Shift = { ...cur, [field]: value };
+    const hrs = shiftHours(next);
+    setDailyShifts(prev => ({ ...prev, [key]: next }));
+    setDailyHours(prev => ({ ...prev, [key]: hrs }));
+    if (hrs !== "") fireQuestEvent("money_hours_logged");
   }
 
   // Weekly recurring hours template (0=Sun..6=Sat). A day with no explicit
@@ -669,21 +740,34 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
     if (!walletSettingsLoaded) return;
     if (recurringHoursSaveTimer.current) clearTimeout(recurringHoursSaveTimer.current);
     recurringHoursSaveTimer.current = setTimeout(() => {
-      const rows = Object.entries(recurringHours).map(([weekday, v]) => ({ weekday: Number(weekday), reg: v || "", ot: "" }));
+      const rows = Object.entries(recurringHours).map(([weekday, v]) => ({
+        weekday: Number(weekday),
+        reg: v || "",
+        ot: "",
+        shift_start: recurringShifts[Number(weekday)]?.start || null,
+        shift_end: recurringShifts[Number(weekday)]?.end || null,
+      }));
       if (rows.length === 0) return;
       supabase.from("recurring_hours").upsert(rows, { onConflict: "weekday" }).then(({ error }) => {
         if (error) console.error("recurring_hours save failed:", error);
       });
     }, 800);
     return () => { if (recurringHoursSaveTimer.current) clearTimeout(recurringHoursSaveTimer.current); };
-  }, [recurringHours, walletSettingsLoaded]);
+  }, [recurringHours, recurringShifts, walletSettingsLoaded]);
 
   async function toggleRecurringWeekday(dow: number, key: string, on: boolean) {
     if (on) {
       const current = dailyHours[key] ?? recurringHours[dow] ?? "";
       setRecurringHours(prev => ({ ...prev, [dow]: current }));
+      const shift = dailyShifts[key] ?? recurringShifts[dow];
+      if (shift && shift.start && shift.end) setRecurringShifts(prev => ({ ...prev, [dow]: shift }));
     } else {
       setRecurringHours(prev => {
+        const next = { ...prev };
+        delete next[dow];
+        return next;
+      });
+      setRecurringShifts(prev => {
         const next = { ...prev };
         delete next[dow];
         return next;
@@ -703,22 +787,42 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
     return parseFloat(recurringHours[dow] ?? "") || 0;
   }
 
-  // One-tap hour fixes in half-hour and one-hour steps.
-  function applyHourChip(key: string, dow: number, chip: typeof HOUR_CHIPS[number]["id"]) {
-    const current = effectiveHours(key, dow);
-    let next = current;
-    if (chip === "off") next = 0;
-    else if (chip === "minus05") next = Math.max(0, current - 0.5);
-    else if (chip === "minus1") next = Math.max(0, current - 1);
-    else if (chip === "plus05") next = current + 0.5;
-    else if (chip === "plus1") next = current + 1;
-    setDailyHours(prev => ({ ...prev, [key]: String(round2(next)) }));
+  // One-tap shift fixes: move the end time, or mark the day off.
+  function applyShiftChip(key: string, dow: number, chip: typeof SHIFT_CHIPS[number]["id"]) {
+    if (chip === "off") {
+      setDailyShifts(prev => ({ ...prev, [key]: { start: "", end: "" } }));
+      setDailyHours(prev => ({ ...prev, [key]: "0" }));
+      fireQuestEvent("money_hours_logged");
+      return;
+    }
+    const cur = dailyShifts[key] ?? recurringShifts[dow];
+    const startMin = timeToMin(cur?.start);
+    const endMin = timeToMin(cur?.end);
+    if (!cur || startMin === null || endMin === null) return;
+    const delta = SHIFT_CHIPS.find(c => c.id === chip)?.delta ?? 0;
+    let newEnd = endMin + delta;
+    // Don't let a same-day shift slide back past its own start.
+    if (endMin > startMin && newEnd <= startMin) newEnd = startMin + 1;
+    const next: Shift = { ...cur, end: minToTime(newEnd) };
+    setDailyShifts(prev => ({ ...prev, [key]: next }));
+    setDailyHours(prev => ({ ...prev, [key]: shiftHours(next) }));
     fireQuestEvent("money_hours_logged");
+  }
+
+  // True once today's shift has ended (never for days with no shift times).
+  function isShiftOver(key: string, dow: number) {
+    const end = shiftEndsAt(key, dailyShifts[key] ?? recurringShifts[dow]);
+    return !!end && nowTick >= end.getTime();
   }
 
   // Drop a day's own entry so it goes back to following the weekly template.
   async function resetDayHours(key: string) {
     setDailyHours(prev => {
+      const next = { ...prev };
+      delete next[key];
+      return next;
+    });
+    setDailyShifts(prev => {
       const next = { ...prev };
       delete next[key];
       return next;
@@ -1603,7 +1707,7 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                 <div style={{ fontSize: 24, lineHeight: 1 }}><Icon name="calendar" size={24} /></div>
                 <div style={{ fontSize: 14, fontWeight: 800, color: "var(--ink)" }}>Money Calendar</div>
                 <div style={{ fontSize: 11, color: "var(--pink-dark)", marginBottom: 14 }}>
-                  Runs from today through the end of the selected month (or the 1st through the end for a future month). Log the hours you're working (or plan to work) each day — anything past 40 in a Sunday–Saturday week is paid at your OT wage automatically. Your early-pay eligible percentage comes from your last paycheck's net-to-gross ratio (post-tax ÷ pre-tax), applied against your cumulative pool for the week, minus that check's flat deductions and a growing safety buffer — whatever's unclaimed by Saturday night lands as a lump catch-up the following Wednesday.
+                  Runs from today through the end of the selected month (or the 1st through the end for a future month). Log your shift times (or planned shift times) each day — anything past 40 in a Sunday–Saturday week is paid at your OT wage automatically. Your early-pay eligible percentage comes from your last paycheck's net-to-gross ratio (post-tax ÷ pre-tax), applied against your cumulative pool for the week, minus that check's flat deductions and a growing safety buffer — whatever's unclaimed by Saturday night lands as a lump catch-up the following Wednesday.
                 </div>
 
                 <div style={{ display: "flex", gap: 6, overflowX: "auto", paddingBottom: 4, marginBottom: 14 }}>
@@ -2012,6 +2116,10 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                           const isEdited = dailyHours[row.key] !== undefined;
                           const dayOt = payHours.otByDay[row.key] || 0;
                           const planTotal = plannedHours(dow);
+                          // Today's card goes away once its shift is over.
+                          if (isToday && isShiftOver(row.key, dow)) return null;
+                          const shift: Shift = dailyShifts[row.key] ?? recurringShifts[dow] ?? { start: "", end: "" };
+                          const dayHrs = effectiveHours(row.key, dow);
                           const chipStyle: CSSProperties = {
                             padding: "3px 10px", fontSize: 11, fontWeight: 600, borderRadius: 99,
                             border: `1px solid ${isToday ? "var(--accent-text-muted)" : "var(--border)"}`,
@@ -2041,17 +2149,27 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                               )}
 
                               <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                                <span style={{ fontSize: 10, color: mutedColor, whiteSpace: "nowrap" }}>Hours</span>
+                                <span style={{ fontSize: 10, color: mutedColor, whiteSpace: "nowrap" }}>Shift</span>
                                 <input
-                                  type="number"
-                                  inputMode="decimal"
-                                  step="0.5"
+                                  type="time"
                                   className="form-input"
-                                  placeholder="0"
-                                  value={dailyHours[row.key] ?? recurringHours[dow] ?? ""}
-                                  onChange={e => setDayHours(row.key, e.target.value)}
-                                  style={{ flex: 1, fontSize: 12, padding: "4px 8px" }}
+                                  aria-label="Shift start"
+                                  value={shift.start}
+                                  onChange={e => setDayShift(row.key, dow, "start", e.target.value)}
+                                  style={{ flex: 1, minWidth: 0, fontSize: 12, padding: "4px 8px" }}
                                 />
+                                <span style={{ fontSize: 10, color: mutedColor }}>to</span>
+                                <input
+                                  type="time"
+                                  className="form-input"
+                                  aria-label="Shift end"
+                                  value={shift.end}
+                                  onChange={e => setDayShift(row.key, dow, "end", e.target.value)}
+                                  style={{ flex: 1, minWidth: 0, fontSize: 12, padding: "4px 8px" }}
+                                />
+                                {dayHrs > 0 && (
+                                  <span style={{ fontSize: 10, color: mutedColor, whiteSpace: "nowrap" }}>{round2(dayHrs)}h</span>
+                                )}
 
                                 {dayOt > 0.004 && (
                                   <span style={{ fontSize: 10, color: isToday ? "var(--accent-text)" : "var(--gold-dark)", fontWeight: 700, whiteSpace: "nowrap" }}>{round2(dayOt)}h OT</span>
@@ -2062,7 +2180,7 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                                 )}
                               </div>
 
-                              {/* One-tap hour fixes — no typing needed for a day that ran short or long */}
+                              {/* One-tap shift fixes — no typing needed for a shift that ran short or long */}
                               <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center", marginTop: 6 }}>
                                 {isEdited && (
                                   <button
@@ -2073,11 +2191,11 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                                     As planned
                                   </button>
                                 )}
-                                {HOUR_CHIPS.map(c => (
+                                {SHIFT_CHIPS.map(c => (
                                   <button
                                     key={c.id}
                                     type="button"
-                                    onClick={() => applyHourChip(row.key, dow, c.id)}
+                                    onClick={() => applyShiftChip(row.key, dow, c.id)}
                                     style={chipStyle}
                                   >
                                     {c.label}
