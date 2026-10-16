@@ -548,6 +548,7 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
               reg: joinHours(payPeriodData.prior_week_reg, payPeriodData.prior_week_ot),
               ot: "",
             });
+            setPriorAnchor(payPeriodData.prior_week_anchor || "");
           }
           if (payPeriodData.closed_week_start) {
             setClosedWeekHours({
@@ -682,7 +683,7 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
       d.setDate(d.getDate() + 1);
     }
     return days;
-  }, [selectedMonth, selectedYear]);
+  }, [selectedMonth, selectedYear, dateKey(new Date())]);
 
   function buildBillsByDate(allDays: Date[]) {
     return buildBillsByDateShared(bills, payments, allDays);
@@ -914,9 +915,58 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
     weekStart: currentWeekStartKey(), reg: "", ot: "",
   });
 
+  // The day the typed "worked this week" number runs up to (it covers Sunday
+  // through the day before this date). Finished days from here on are added
+  // automatically from what's on their day cards.
+  const [priorAnchor, setPriorAnchor] = useState("");
+
   function setPriorWeekHoursValue(value: string) {
     setPriorWeekHours({ weekStart: currentWeekStartKey(), reg: value, ot: "" });
+    setPriorAnchor(dateKey(new Date()));
   }
+
+  // An older typed number has no anchor yet: treat it as covering through
+  // yesterday, so nothing already in it gets counted twice.
+  useEffect(() => {
+    if (!walletSettingsLoaded || priorAnchor) return;
+    if (priorWeekHours.weekStart === currentWeekStartKey() && priorWeekHours.reg !== "") {
+      setPriorAnchor(dateKey(new Date()));
+    }
+  }, [walletSettingsLoaded, priorAnchor, priorWeekHours]);
+
+  // Hours worked Sunday through yesterday that the pay projection uses: the
+  // typed number (if any) plus every finished day since its anchor, read from
+  // the day's own entry or the weekly template. A new week starts from zero
+  // and fills itself in as each day ends.
+  // Once today's shift has ended its hours move into this total (and out of the
+  // calendar's own count) right then, not at midnight.
+  const todayKeyNow = dateKey(new Date());
+  const todayDone = isShiftOver(todayKeyNow, new Date().getDay());
+
+  const priorWeekEffective = (() => {
+    const now = new Date();
+    const todayD = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const sundayD = new Date(todayD.getFullYear(), todayD.getMonth(), todayD.getDate() - todayD.getDay());
+    const sundayKey = dateKey(sundayD);
+    const sameWeek = priorWeekHours.weekStart === sundayKey;
+    const base = sameWeek ? parseFloat(priorWeekHours.reg) || 0 : 0;
+    let anchorKey = sameWeek && priorAnchor ? priorAnchor : sundayKey;
+    if (anchorKey < sundayKey) anchorKey = sundayKey;
+    const [ay, am, ad] = anchorKey.split("-").map(Number);
+    let auto = 0;
+    const endD = todayDone ? new Date(todayD.getFullYear(), todayD.getMonth(), todayD.getDate() + 1) : todayD;
+    for (let day = new Date(ay, am - 1, ad); day < endD; day.setDate(day.getDate() + 1)) {
+      auto += parseFloat(dailyHours[dateKey(day)] ?? recurringHours[day.getDay()] ?? "") || 0;
+    }
+    const raw = sameWeek ? priorWeekHours.reg : "";
+    const total = round2(base + auto);
+    return {
+      weekStart: sundayKey,
+      // Show exactly what was typed until a finished day gets added on top.
+      reg: auto === 0 ? raw : String(total),
+      ot: "",
+    };
+  })();
 
   const [closedWeekHours, setClosedWeekHours] = useState<{ weekStart: string; reg: string; ot: string }>({
     weekStart: "", reg: "", ot: "",
@@ -932,6 +982,7 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
         prior_week_start: priorWeekHours.weekStart,
         prior_week_reg: priorWeekHours.reg,
         prior_week_ot: priorWeekHours.ot,
+        prior_week_anchor: priorAnchor || null,
         closed_week_start: closedWeekHours.weekStart,
         closed_week_reg: closedWeekHours.reg,
         closed_week_ot: closedWeekHours.ot,
@@ -940,7 +991,7 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
       });
     }, 800);
     return () => { if (payPeriodSaveTimer.current) clearTimeout(payPeriodSaveTimer.current); };
-  }, [priorWeekHours, closedWeekHours, walletSettingsLoaded]);
+  }, [priorWeekHours, priorAnchor, closedWeekHours, walletSettingsLoaded]);
 
   function setClosedWeekHoursValue(weekStart: string, value: string) {
     setClosedWeekHours({ weekStart, reg: value, ot: "" });
@@ -1009,13 +1060,14 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
     // both would double count (and a stale saved entry from the other card
     // can push a day into OT that isn't).
     const viewingCurrentMonth = selectedYear === today.getFullYear() && selectedMonth === today.getMonth() + 1;
-    addOffset(viewingCurrentMonth ? priorWeekHours : closedWeekHours);
+    addOffset(viewingCurrentMonth ? priorWeekEffective : closedWeekHours);
     projectionDays.forEach(d => {
       const key = dateKey(d);
       const dow = d.getDay();
       const weekKey = dateKey(new Date(d.getFullYear(), d.getMonth(), d.getDate() - dow));
       const worked = weekRunning[weekKey] ?? offsets[weekKey] ?? 0;
-      const hours = parseFloat(dailyHours[key] ?? recurringHours[dow] ?? "") || 0;
+      // A finished shift today is already inside the "worked this week" total.
+      const hours = key === todayKeyNow && todayDone ? 0 : parseFloat(dailyHours[key] ?? recurringHours[dow] ?? "") || 0;
       const regPart = Math.min(hours, Math.max(0, OT_WEEKLY_THRESHOLD - worked));
       const otPart = hours - regPart;
       weekRunning[weekKey] = worked + hours;
@@ -1023,7 +1075,7 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
       otByDay[key] = otPart;
     });
     return { split, otByDay };
-  }, [projectionDays, dailyHours, recurringHours, priorWeekHours, closedWeekHours, selectedMonth, selectedYear]);
+  }, [projectionDays, dailyHours, recurringHours, priorWeekEffective.reg, priorWeekEffective.weekStart, todayDone, closedWeekHours, selectedMonth, selectedYear]);
 
   const effectiveOtWage = parseFloat(otWageOverride) > 0 ? parseFloat(otWageOverride) : budget.hourly_wage * 1.5;
   const netHourlyWage = budget.hourly_wage > 0 ? budget.hourly_wage * (1 - taxRate / 100) : 0;
@@ -1037,7 +1089,7 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
     flatDeductionsPrev: budget.flat_deductions_prev,
     taxRate,
     earlyPayPreset,
-    priorWeekHours: splitWeekForPay(priorWeekHours),
+    priorWeekHours: splitWeekForPay(priorWeekEffective),
     closedWeekHours: splitWeekForPay(closedWeekHours),
     dailyHours: payHours.split,
     recurringHours: {},
@@ -1058,7 +1110,7 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
 
   const moneyCalendarResult = useMemo(
     () => buildMoneyCalendarRows(calendarDays, calendarStartingBalance),
-    [calendarDays, billsByDate, dailyHours, recurringHours, payHours, extraFunds, extraExpenses, netHourlyWage, netOtWage, calendarStartingBalance, budget.hourly_wage, budget.net_to_gross_ratio, budget.flat_deductions_prev, taxRate, earlyPayPreset, effectiveOtWage, priorWeekHours, closedWeekHours]
+    [calendarDays, billsByDate, dailyHours, recurringHours, payHours, extraFunds, extraExpenses, netHourlyWage, netOtWage, calendarStartingBalance, budget.hourly_wage, budget.net_to_gross_ratio, budget.flat_deductions_prev, taxRate, earlyPayPreset, effectiveOtWage, priorWeekEffective.reg, priorWeekEffective.weekStart, closedWeekHours]
   );
 
   const moneyCalendarWeekChunks = useMemo(() => {
@@ -1830,13 +1882,13 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                       Hours already worked this week (Sun–yesterday)
                     </div>
                     <div style={{ fontSize: 11, color: "var(--info-card-text)", marginBottom: 8 }}>
-                      The calendar below only starts from today, so this fills in the rest of the pool it can't see — otherwise this week's ramp % gets applied to a smaller pool than you've actually earned.
+                      The calendar below only starts from today, so this covers the part it can't see. It adds each finished day from your day cards on its own. If it's off, type the right number and it keeps adding from there.
                     </div>
                     <div>
                       <div className="form-label" style={{ fontSize: 10 }}>Hours worked</div>
                       <input
                         type="number" inputMode="decimal" step="0.5" className="form-input" placeholder="0"
-                        value={priorWeekHours.reg}
+                        value={priorWeekEffective.reg}
                         onChange={e => setPriorWeekHoursValue(e.target.value)}
                       />
                       <div style={{ fontSize: 10, color: "var(--info-card-text)", marginTop: 4 }}>
