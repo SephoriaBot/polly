@@ -692,6 +692,20 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
   const [dailyShifts, setDailyShifts] = useState<Record<string, Shift>>({});
   const [recurringShifts, setRecurringShifts] = useState<Record<number, Shift>>({});
 
+  // "Regular shift": enter it once, pick the days, and it fills the weekly template.
+  const [regStart, setRegStart] = useState("");
+  const [regEnd, setRegEnd] = useState("");
+  const [regDays, setRegDays] = useState<number[]>([]);
+  useEffect(() => {
+    if (regStart || regEnd) return;
+    const days = Object.keys(recurringShifts).map(Number);
+    if (days.length === 0) return;
+    const first = recurringShifts[days[0]];
+    setRegStart(first.start);
+    setRegEnd(first.end);
+    setRegDays(days);
+  }, [recurringShifts, regStart, regEnd]);
+
   // Ticks once a minute so today's card can disappear the moment its shift ends.
   const [nowTick, setNowTick] = useState(() => Date.now());
   useEffect(() => {
@@ -785,6 +799,26 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
 
   function plannedHours(dow: number) {
     return parseFloat(recurringHours[dow] ?? "") || 0;
+  }
+
+  // Writes the regular shift onto the weekly template for the chosen days and
+  // clears the template on the rest. Days you've edited by hand keep their own
+  // entry; "As planned" on a day sends it back to the template.
+  async function applyRegularShift() {
+    if (timeToMin(regStart) === null || timeToMin(regEnd) === null || regDays.length === 0) return;
+    const shift: Shift = { start: regStart, end: regEnd };
+    const hrs = shiftHours(shift);
+    const nextShifts: Record<number, Shift> = {};
+    const nextHours: Record<number, string> = {};
+    regDays.forEach(d => { nextShifts[d] = shift; nextHours[d] = hrs; });
+    const removed = [0, 1, 2, 3, 4, 5, 6].filter(d => recurringHours[d] !== undefined && !regDays.includes(d));
+    setRecurringShifts(nextShifts);
+    setRecurringHours(nextHours);
+    if (removed.length > 0) {
+      const { error } = await supabase.from("recurring_hours").delete().in("weekday", removed);
+      if (error) console.error("recurring_hours delete failed:", error);
+    }
+    fireQuestEvent("money_hours_logged");
   }
 
   // One-tap shift fixes: move the end time, or mark the day off.
@@ -2047,6 +2081,65 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                       <span style={{ color: "var(--gold-dark)" }}>■ OK</span>
                       <span style={{ color: "var(--green-dark)" }}>■ Comfortable</span>
                     </div>
+                  </div>
+                )}
+
+                {budget.hourly_wage > 0 && (
+                  <div style={{ border: "1.5px solid var(--border)", borderRadius: 14, padding: "10px 12px", marginBottom: 12 }}>
+                    <div className="section-label" style={{ marginBottom: 6 }}>My Regular Shift</div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}>
+                      <input
+                        type="time"
+                        className="form-input"
+                        aria-label="Regular shift start"
+                        value={regStart}
+                        onChange={e => setRegStart(e.target.value)}
+                        style={{ flex: 1, minWidth: 0, fontSize: 12, padding: "4px 8px" }}
+                      />
+                      <span style={{ fontSize: 10, color: "var(--ink-muted)" }}>to</span>
+                      <input
+                        type="time"
+                        className="form-input"
+                        aria-label="Regular shift end"
+                        value={regEnd}
+                        onChange={e => setRegEnd(e.target.value)}
+                        style={{ flex: 1, minWidth: 0, fontSize: 12, padding: "4px 8px" }}
+                      />
+                    </div>
+                    <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 8 }}>
+                      {["S", "M", "T", "W", "T", "F", "S"].map((label, d) => {
+                        const on = regDays.includes(d);
+                        return (
+                          <button
+                            key={d}
+                            type="button"
+                            aria-pressed={on}
+                            onClick={() => setRegDays(prev => on ? prev.filter(x => x !== d) : [...prev, d])}
+                            style={{
+                              width: 32, height: 32, borderRadius: 99, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit",
+                              border: `1.5px solid ${on ? "var(--pink-dark)" : "var(--border)"}`,
+                              background: on ? "var(--accent)" : "transparent",
+                              color: on ? "var(--accent-text)" : "var(--ink-muted)",
+                            }}
+                          >
+                            {label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <button
+                      type="button"
+                      className="btn btn-primary btn-sm"
+                      onClick={applyRegularShift}
+                      disabled={timeToMin(regStart) === null || timeToMin(regEnd) === null || regDays.length === 0}
+                    >
+                      Fill my calendar
+                    </button>
+                    {shiftHours({ start: regStart, end: regEnd }) !== "" && (
+                      <span style={{ fontSize: 10, color: "var(--ink-muted)", marginLeft: 8 }}>
+                        {shiftHours({ start: regStart, end: regEnd })}h paid per shift
+                      </span>
+                    )}
                   </div>
                 )}
 
