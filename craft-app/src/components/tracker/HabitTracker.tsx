@@ -224,7 +224,13 @@ export function useHabitTracker() {
   const ratios = useMemo(() => {
     const map: Record<
       string,
-      { goodRatio: number; streak: number; todayLogged: boolean; todayOccurred: boolean }
+      {
+        yesCount: number;
+        noCount: number;
+        streak: number;
+        todayLogged: boolean;
+        todayOccurred: boolean;
+      }
     > = {};
 
     const today = todayISO();
@@ -237,8 +243,8 @@ export function useHabitTracker() {
         (log) => log.habit_id === habit.id && log.log_date >= cutoff && log.log_date <= today
       );
 
-      const goodDays = windowLogs.filter((log) => isGoodDay(habit, log)).length;
-      const goodRatio = goodDays / windowDays;
+      const yesCount = windowLogs.filter((log) => log.occurred).length;
+      const noCount = windowLogs.filter((log) => !log.occurred).length;
 
       let streak = 0;
 
@@ -256,7 +262,8 @@ export function useHabitTracker() {
       const todayEntry = logs.find((log) => log.habit_id === habit.id && log.log_date === today);
 
       map[habit.id] = {
-        goodRatio,
+        yesCount,
+        noCount,
         streak,
         todayLogged: Boolean(todayEntry),
         todayOccurred: todayEntry?.occurred ?? false,
@@ -318,7 +325,8 @@ export default function HabitTracker() {
               <HabitCard
                 key={habit.id}
                 habit={habit}
-                goodRatio={stat.goodRatio}
+                yesCount={stat.yesCount}
+                noCount={stat.noCount}
                 streak={stat.streak}
                 todayLogged={stat.todayLogged}
                 todayOccurred={stat.todayOccurred}
@@ -478,7 +486,8 @@ function AddHabitForm({
 
 function HabitCard({
   habit,
-  goodRatio,
+  yesCount,
+  noCount,
   streak,
   todayLogged,
   todayOccurred,
@@ -486,7 +495,8 @@ function HabitCard({
   onDelete,
 }: {
   habit: Habit;
-  goodRatio: number;
+  yesCount: number;
+  noCount: number;
   streak: number;
   todayLogged: boolean;
   todayOccurred: boolean;
@@ -494,12 +504,30 @@ function HabitCard({
   onDelete: () => void;
 }) {
   const colors = PALETTE[habit.color_key] ?? PALETTE.lavender;
-  const pct = Math.round(Math.max(0, Math.min(1, goodRatio)) * 100);
+  const finish = Math.max(1, habit.window_days || 1);
+  const yesPct = Math.min(100, (yesCount / finish) * 100);
+  const noPct = Math.min(100, (noCount / finish) * 100);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
 
   // for an "increase" habit, answering Yes is the good choice;
   // for a "decrease" habit, answering No is the good choice
   const goodChoiceIsYes = habit.target === 'increase';
+
+  // the race: whichever answer has more check-ins in the window is leading
+  const leader: 'yes' | 'no' | 'tie' =
+    yesCount > noCount ? 'yes' : noCount > yesCount ? 'no' : 'tie';
+
+  const yesColor = goodChoiceIsYes ? colors.thriving : colors.struggling;
+  const noColor = goodChoiceIsYes ? colors.struggling : colors.thriving;
+
+  const raceSummary =
+    yesCount === 0 && noCount === 0
+      ? 'No check-ins yet'
+      : leader === 'tie'
+        ? `Yes and No are tied at ${yesCount}`
+        : leader === 'yes'
+          ? `Yes is winning, ${yesCount} to ${noCount}`
+          : `No is winning, ${noCount} to ${yesCount}`;
 
   return (
     <div className="habit-card">
@@ -538,18 +566,43 @@ function HabitCard({
       </div>
 
       <div
-        className="habit-bar"
+        className="habit-race"
         role="img"
-        aria-label={`${pct}% good days over the last ${habit.window_days} days`}
+        aria-label={`${raceSummary} over the last ${habit.window_days} days`}
       >
-        <div
-          className="habit-bar__fill"
-          style={{
-            width: `${pct}%`,
-            background: `linear-gradient(90deg, ${colors.struggling}, ${colors.thriving})`,
-          }}
-        />
-        <span className="habit-bar__label">{pct}%</span>
+        {(
+          [
+            { key: 'yes', label: 'Yes', count: yesCount, pct: yesPct, color: yesColor },
+            { key: 'no', label: 'No', count: noCount, pct: noPct, color: noColor },
+          ] as const
+        ).map((lane) => (
+          <div key={lane.key} className="habit-race__lane">
+            <span className="habit-race__name">{lane.label}</span>
+
+            <div className="habit-race__track">
+              <div
+                className="habit-race__fill"
+                style={{
+                  width: `${lane.pct}%`,
+                  background: `linear-gradient(90deg, ${colors.struggling}, ${lane.color})`,
+                }}
+              />
+              <span className="habit-race__flag" aria-hidden="true">
+                ⚑
+              </span>
+            </div>
+
+            <span
+              className={`habit-race__count ${leader === lane.key ? 'is-leading' : ''}`}
+            >
+              {lane.count}
+            </span>
+          </div>
+        ))}
+
+        <div className="habit-race__summary">
+          {raceSummary} · first to {finish} wins
+        </div>
       </div>
 
       <div className="habit-card__checkin">
