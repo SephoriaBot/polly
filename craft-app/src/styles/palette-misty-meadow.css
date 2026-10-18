@@ -178,3 +178,28 @@
 [data-palette='misty-meadow'] .stitch-divider .mark::after {
   content: none !important;
 }
+
+/* ---------- page background: soft pink and blue haze ---------- */
+[data-palette='misty-meadow'][data-theme='light'] body {
+  background-color: #EEF5FC;
+  background-image:
+    radial-gradient(circle at 12% 8%, rgba(246, 193, 211, .55) 0%, transparent 48%),
+    radial-gradient(circle at 92% 28%, rgba(127, 176, 218, .32) 0%, transparent 52%),
+    radial-gradient(circle at 20% 92%, rgba(191, 227, 216, .38) 0%, transparent 50%),
+    linear-gradient(180deg, #FDF1F6 0%, #EEF5FC 55%, #E4F0FA 100%);
+  background-size: auto;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+}
+
+[data-palette='misty-meadow'][data-theme='dark'] body {
+  background-color: #232A3D;
+  background-image:
+    radial-gradient(circle at 12% 8%, rgba(230, 179, 199, .20) 0%, transparent 48%),
+    radial-gradient(circle at 92% 28%, rgba(156, 196, 232, .20) 0%, transparent 52%),
+    radial-gradient(circle at 20% 92%, rgba(156, 201, 188, .14) 0%, transparent 50%),
+    linear-gradient(180deg, #292F46 0%, #232A3D 60%, #1F2536 100%);
+  background-size: auto;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+}
