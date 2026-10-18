@@ -460,7 +460,6 @@ export default function App() {
                               | 'chores'
                               | 'events'
                               | 'goals'
-                              | 'notes'
                               | undefined
                           }
                         />

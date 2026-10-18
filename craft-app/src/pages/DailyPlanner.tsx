@@ -1,11 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type CSSProperties } from 'react';
 import { supabase } from '../lib/supabase';
-import AppointmentNotesPanel from '../components/planner/AppointmentNotesPanel';
-import type { AppointmentNoteSelection } from '../components/planner/AppointmentNotesPanel';
 import Chores from '../components/planner/Chores';
 import LifeEvents from '../components/planner/LifeEvents';
 import Goals from '../components/planner/Goals';
-import { useAppointmentNoteMap } from '../hooks/useAppointmentNoteMap';
 import EmptyState from '../components/EmptyState';
 import checklistImg from '../assets/illustrations/checklist.png';
 import hamsterAmImg from '../assets/illustrations/hamster-am.png';
@@ -70,7 +67,15 @@ interface Appointment {
   date_time: string;
   created_at: string;
   attended: boolean | null; // null = not yet marked, true = attended, false = cancelled
+  notes: string | null;
 }
+
+const apptBtnStyle: CSSProperties = {
+  background: 'none', border: '1.5px solid var(--border)', borderRadius: 'var(--radius-sm)',
+  cursor: 'pointer', color: 'var(--ink-muted)', padding: '6px 12px',
+  display: 'flex', alignItems: 'center', fontSize: '0.74rem', fontWeight: 600,
+  whiteSpace: 'nowrap',
+};
 
 
 interface Spark {
@@ -92,13 +97,12 @@ const SPARK_COLORS = [
   'var(--gold-light-solid)',
 ];
 
-const PLANNER_TABS: PageTab<'tasks' | 'appointments' | 'chores' | 'events' | 'goals' | 'notes'>[] = [
+const PLANNER_TABS: PageTab<'tasks' | 'appointments' | 'chores' | 'events' | 'goals'>[] = [
   { key: 'tasks', label: 'Tasks', icon: 'icon-listchecks' },
   { key: 'appointments', label: 'Appointments', icon: 'icon-calendar' },
   { key: 'chores', label: 'Chores', icon: 'cleaning-spray' },
   { key: 'events', label: 'Life Events', icon: 'icon-heart' },
   { key: 'goals', label: 'Goals', icon: 'trophy' },
-  { key: 'notes', label: 'Notes', icon: 'icon-notebook' },
 ];
 
 function StitchDivider() {
@@ -120,7 +124,7 @@ function todayISO() {
   return `${year}-${month}-${day}`;
 }
 
-export default function DailyPlanner({ initialTab }: { initialTab?: 'tasks' | 'appointments' | 'chores' | 'events' | 'goals' | 'notes' } = {}) {
+export default function DailyPlanner({ initialTab }: { initialTab?: 'tasks' | 'appointments' | 'chores' | 'events' | 'goals' } = {}) {
   const { theme } = useTheme();
   const [tasks, setTasks] = useState<DailyTask[]>([]);
   const [templates, setTemplates] = useState<DailyTaskTemplate[]>([]);
@@ -131,19 +135,22 @@ export default function DailyPlanner({ initialTab }: { initialTab?: 'tasks' | 'a
   const [upcomingTasks, setUpcomingTasks] = useState<DailyTask[]>([]);
   const [newApptTitle, setNewApptTitle] = useState('');
   const [newApptDate, setNewApptDate] = useState('');
+  const [editingApptId, setEditingApptId] = useState<string | null>(null);
+  const [editApptTitle, setEditApptTitle] = useState('');
+  const [editApptDate, setEditApptDate] = useState('');
   const [sparks, setSparks] = useState<Spark[]>([]);
-  const [focusNote, setFocusNote] = useState<AppointmentNoteSelection | null>(null);
+  const [noteApptId, setNoteApptId] = useState<string | null>(null);
+  const [noteDraft, setNoteDraft] = useState('');
   const { showToast } = useToast();
   const [repeatMode, setRepeatMode] = useState(false); // false = one-off (date picker), true = recurring (day chips)
   const [newTaskDays, setNewTaskDays] = useState<number[]>([]);
   const [newTaskSlot, setNewTaskSlot] = useState<TimeSlot>('anytime');
   const [savingTemplate, setSavingTemplate] = useState(false);
   const [showAttended, setShowAttended] = useState(false); // collapsed by default so attended appts don't stack up
-  const [activeTab, setActiveTab] = useState<'tasks' | 'appointments' | 'chores' | 'events' | 'goals' | 'notes'>(initialTab ?? 'tasks');
+  const [activeTab, setActiveTab] = useState<'tasks' | 'appointments' | 'chores' | 'events' | 'goals'>(initialTab ?? 'tasks');
 
   const upcomingAppts = appointments.filter(a => !a.attended);
   const attendedAppts = appointments.filter(a => a.attended);
-  const { map: noteMap, refresh: refreshNoteMap } = useAppointmentNoteMap(appointments.map(a => a.id));
 
   useEffect(() => {
     loadAll();
@@ -361,10 +368,49 @@ setNewTaskSlot('anytime');
   }
 
    async function deleteAppointment(id: string) {
-    // Notes survive this now — appointment_id is ON DELETE SET NULL, so
-    // attached notes just detach and stay available as carry-over material.
+    // The note lives on the appointment row itself, so it goes with it.
     await supabase.from('appointments').delete().eq('id', id);
     setAppointments(prev => prev.filter(a => a.id !== id));
+  }
+
+  // ISO timestamp -> value a datetime-local input accepts (local time, no seconds)
+  function toLocalInput(iso: string) {
+    const d = new Date(iso);
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  }
+
+  function startEditAppointment(appt: Appointment) {
+    setEditingApptId(appt.id);
+    setEditApptTitle(appt.title);
+    setEditApptDate(toLocalInput(appt.date_time));
+  }
+
+  function cancelEditAppointment() {
+    setEditingApptId(null);
+    setEditApptTitle('');
+    setEditApptDate('');
+  }
+
+  async function saveAppointmentEdit() {
+    if (!editingApptId) return;
+    const title = editApptTitle.trim();
+    if (!title || !editApptDate) return;
+    const isoDateTime = new Date(editApptDate).toISOString();
+    const { error } = await supabase
+      .from('appointments')
+      .update({ title, date_time: isoDateTime })
+      .eq('id', editingApptId);
+    if (error) {
+      showToast('Could not save changes — try again');
+      return;
+    }
+    setAppointments(prev =>
+      prev
+        .map(a => (a.id === editingApptId ? { ...a, title, date_time: isoDateTime } : a))
+        .sort((x, y) => x.date_time.localeCompare(y.date_time))
+    );
+    cancelEditAppointment();
   }
 
   // Marks an appointment attended instead of deleting it, so useCreatureGrowth's
@@ -384,11 +430,34 @@ setNewTaskSlot('anytime');
     });
   }
 
-  function openNoteFor(appt: Appointment) {
-    const noteType = noteMap[appt.id];
-    if (!noteType) return;
-    setFocusNote({ appointmentId: appt.id, noteType, label: appt.title });
-    setActiveTab('notes');
+  function startNote(appt: Appointment) {
+    setNoteApptId(appt.id);
+    setNoteDraft(appt.notes ?? '');
+  }
+
+  function cancelNote() {
+    setNoteApptId(null);
+    setNoteDraft('');
+  }
+
+  async function saveNote() {
+    if (!noteApptId) return;
+    const text = noteDraft.trim();
+    const hadNote = Boolean(appointments.find(a => a.id === noteApptId)?.notes);
+    const { error } = await supabase
+      .from('appointments')
+      .update({ notes: text || null })
+      .eq('id', noteApptId);
+    if (error) {
+      showToast('Could not save note — try again');
+      return;
+    }
+    setAppointments(prev => prev.map(a => (a.id === noteApptId ? { ...a, notes: text || null } : a)));
+    if (text && !hadNote) {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) triggerActionEvent(user.id, 'appointment_note_added');
+    }
+    cancelNote();
   }
 
   const doneCount = tasks.filter(t => t.done).length;
@@ -685,61 +754,123 @@ setNewTaskSlot('anytime');
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16 }}>
                   {upcomingAppts.map(appt => {
-                    const hasNote = Boolean(noteMap[appt.id]);
+                    if (editingApptId === appt.id) {
+                      return (
+                        <div key={appt.id} style={{
+                          display: 'flex', flexDirection: 'column', gap: 8,
+                          padding: '12px 14px', borderRadius: 18,
+                          background: 'var(--white)',
+                          border: '1.5px solid var(--pink-dark)',
+                        }}>
+                          <input
+                            className="form-input"
+                            placeholder="Appointment title…"
+                            value={editApptTitle}
+                            onChange={e => setEditApptTitle(e.target.value)}
+                          />
+                          <input
+                            className="form-input"
+                            type="datetime-local"
+                            value={editApptDate}
+                            onChange={e => setEditApptDate(e.target.value)}
+                          />
+                          <div style={{ display: 'flex', gap: 8 }}>
+                            <button
+                              className="btn btn-primary"
+                              style={{ padding: '8px 14px', flex: 1 }}
+                              onClick={saveAppointmentEdit}
+                            >
+                              Save
+                            </button>
+                            <button
+                              onClick={cancelEditAppointment}
+                              style={{
+                                background: 'none', border: '1.5px solid var(--border)', borderRadius: 'var(--radius-sm)',
+                                cursor: 'pointer', color: 'var(--ink-muted)', padding: '8px 14px',
+                                fontSize: '0.74rem', fontWeight: 600,
+                              }}
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    }
+                    const isNoting = noteApptId === appt.id;
                     return (
                       <div key={appt.id} style={{
-                        display: 'flex', alignItems: 'center', gap: 10,
+                        display: 'flex', flexDirection: 'column', gap: 10,
                         padding: '12px 14px', borderRadius: 18,
                         background: 'var(--white)',
                         border: '1.5px solid var(--border)',
                       }}>
-                        <div style={{
-                          width: 30, height: 30, borderRadius: 'var(--radius-sm)', flexShrink: 0,
-                          background: 'var(--blush)',
-                          display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        }}>
-                          <Icon name="icon-calendar" size={13} style={{ color: 'var(--pink-dark)' }} />
-                        </div>
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ fontWeight: 600, fontSize: '0.88rem', color: 'var(--ink)' }}>{appt.title}</div>
-                          <div style={{ fontSize: '0.74rem', color: 'var(--ink-muted)', marginTop: 2, fontFamily: "'IBM Plex Mono', monospace" }}>
-                            {formatApptDate(appt.date_time)}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                          <div style={{
+                            width: 30, height: 30, borderRadius: 'var(--radius-sm)', flexShrink: 0,
+                            background: 'var(--blush)',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          }}>
+                            <Icon name="icon-calendar" size={13} style={{ color: 'var(--pink-dark)' }} />
                           </div>
-                        </div>
-                        {hasNote && (
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontWeight: 600, fontSize: '0.88rem', color: 'var(--ink)' }}>{appt.title}</div>
+                            <div style={{ fontSize: '0.74rem', color: 'var(--ink-muted)', marginTop: 2, fontFamily: "'IBM Plex Mono', monospace" }}>
+                              {formatApptDate(appt.date_time)}
+                            </div>
+                          </div>
                           <button
-                            onClick={() => openNoteFor(appt)}
-                            title="View attached note"
-                            style={{
-                              background: 'var(--blush)',
-                              border: '1.5px solid var(--border)', borderRadius: 'var(--radius-sm)', cursor: 'pointer',
-                              padding: '6px 10px', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                              flexShrink: 0, fontSize: '0.74rem', fontWeight: 600, color: 'var(--pink-dark)',
-                              whiteSpace: 'nowrap',
-                            }}
+                            onClick={() => deleteAppointment(appt.id)}
+                            title="Delete"
+                            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-muted)', padding: 0, display: 'flex', alignItems: 'center', opacity: 0.4 }}
                           >
-                            Notes
+                            <Icon name="icon-clear" size={24} />
                           </button>
+                        </div>
+
+                        {appt.notes && !isNoting && (
+                          <div style={{
+                            fontSize: '0.8rem', color: 'var(--ink)', whiteSpace: 'pre-wrap',
+                            background: 'var(--cream)', borderRadius: 12, padding: '8px 10px',
+                          }}>
+                            {appt.notes}
+                          </div>
                         )}
-                        <button
-                          onClick={() => markAttended(appt.id)}
-                          title="Mark attended (+10 points)"
-                          style={{
-                            background: 'none', border: '1.5px solid var(--border)', borderRadius: 'var(--radius-sm)',
-                            cursor: 'pointer', color: 'var(--ink-muted)', padding: '6px 10px',
-                            display: 'flex', alignItems: 'center', fontSize: '0.74rem', fontWeight: 600,
-                            whiteSpace: 'nowrap',
-                          }}
-                        >
-                          Attended
-                        </button>
-                        <button
-                          onClick={() => deleteAppointment(appt.id)}
-                          title="Cancel"
-                          style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-muted)', padding: 0, display: 'flex', alignItems: 'center', opacity: 0.4 }}
-                        >
-                          <Icon name="icon-clear" size={24} />
-                        </button>
+
+                        {isNoting ? (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                            <textarea
+                              className="form-input"
+                              rows={3}
+                              placeholder="Things to bring up, questions, reminders…"
+                              value={noteDraft}
+                              onChange={e => setNoteDraft(e.target.value)}
+                              style={{ resize: 'vertical' }}
+                              autoFocus
+                            />
+                            <div style={{ display: 'flex', gap: 8 }}>
+                              <button
+                                className="btn btn-primary"
+                                style={{ padding: '8px 14px', flex: 1 }}
+                                onClick={saveNote}
+                              >
+                                Save note
+                              </button>
+                              <button onClick={cancelNote} style={apptBtnStyle}>Cancel</button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                            <button onClick={() => startNote(appt)} title="Add or edit a note" style={apptBtnStyle}>
+                              {appt.notes ? 'Edit note' : 'Add note'}
+                            </button>
+                            <button onClick={() => startEditAppointment(appt)} title="Edit title or date/time" style={apptBtnStyle}>
+                              Edit
+                            </button>
+                            <button onClick={() => markAttended(appt.id)} title="Mark attended (+10 points)" style={apptBtnStyle}>
+                              Attended
+                            </button>
+                          </div>
+                        )}
                       </div>
                     );
                   })}
@@ -780,6 +911,11 @@ setNewTaskSlot('anytime');
                             <div style={{ fontSize: '0.7rem', color: 'var(--ink-muted)', marginTop: 1, fontFamily: "'IBM Plex Mono', monospace" }}>
                               {formatApptDate(appt.date_time)}
                             </div>
+                            {appt.notes && (
+                              <div style={{ fontSize: '0.72rem', color: 'var(--ink-muted)', marginTop: 4, whiteSpace: 'pre-wrap' }}>
+                                {appt.notes}
+                              </div>
+                            )}
                           </div>
                           <button
                             onClick={() => deleteAppointment(appt.id)}
@@ -845,17 +981,6 @@ setNewTaskSlot('anytime');
         {activeTab === 'goals' && (
         <section>
           <Goals />
-        </section>
-        )}
-
-        {/* APPOINTMENT NOTES PANEL */}
-        {activeTab === 'notes' && (
-        <section>
-          <AppointmentNotesPanel
-            externalSelection={focusNote}
-            onExternalSelectionConsumed={() => setFocusNote(null)}
-            onNotesChanged={refreshNoteMap}
-          />
         </section>
         )}
 

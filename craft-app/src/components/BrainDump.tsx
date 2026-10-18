@@ -1,12 +1,15 @@
 // BrainDump.tsx
 // Tier 1, item 2: "Get it out of my head." A global, always-available dump
 // box. Free text goes to Groq, comes back sorted into the four buckets Polly
-// actually has structured storage for — Tasks, Grocery, Bills, and Notes —
+// actually has structured storage for — Tasks, Grocery, Bills, and Appointments —
 // then the user reviews/edits before anything is saved.
 //
 // Bills are saved to the bills table. Since free-form brain dumps may not
 // contain an amount or due date, those fields are left null for the user
 // to fill in later from Wallet.
+//
+// Appointments are saved to the appointments table. A date and time are
+// required, so the review step makes the user fill in any the AI didn't find.
 
 import { groqFetch } from '../lib/apiClient';
 import { useEffect, useRef, useState } from 'react';
@@ -18,11 +21,13 @@ import Icon from './Icon';
 interface DraftItem {
   id: string;
   text: string;
-  category: 'task' | 'grocery' | 'bills' | 'notes';
+  category: 'task' | 'grocery' | 'bills' | 'appointments';
   include: boolean;
   amount?: number | null;
   dueDay?: number | null;
   recurring?: boolean | null;
+  apptDate?: string | null; // YYYY-MM-DD
+  apptTime?: string | null; // HH:mm (24-hour)
 }
 
 function todayISO(): string {
@@ -31,9 +36,14 @@ function todayISO(): string {
 }
 
 function buildPrompt(dump: string): string {
-  return `Sort this free-form brain dump into four buckets: "task" (chores, errands, calls, things to plan, anything action-shaped), "grocery" (specific items to buy at a store), "bills" (money owed, bills to pay, invoices, subscriptions, rent, utilities, credit card payments, debt payments, or other financial obligations), and "notes" (any messages that need to be relayed to another person/doctor).
+  const now = new Date();
+  const todayStr = `${todayISO()} (${now.toLocaleDateString('en-US', { weekday: 'long' })})`;
+
+  return `Sort this free-form brain dump into four buckets: "task" (chores, errands, calls, things to plan, anything action-shaped), "grocery" (specific items to buy at a store), "bills" (money owed, bills to pay, invoices, subscriptions, rent, utilities, credit card payments, debt payments, or other financial obligations), and "appointments" (scheduled visits or meetings the user has to show up to, like a dentist visit, vet check-up, or therapy session). Calling to book or schedule something is a "task", not an appointment.
 
 For bills, extract the amount, due day of the month, and whether it is recurring ONLY when the user explicitly provides that information. Never guess missing values. Use null for information that was not provided.
+
+For appointments, extract the date (YYYY-MM-DD) and the time (24-hour HH:mm) ONLY when the user explicitly provides them. Today is ${todayStr}; use that to resolve words like "tomorrow" or "next Tuesday". Never guess a missing date or time. Use null for information that was not provided.
 
 Split run-on sentences into separate short items. Keep each item's wording short and plain — a to-do label, not a sentence.
 
@@ -46,17 +56,19 @@ Respond ONLY with a valid JSON object, no markdown, no backticks, no explanation
     { "text": "short item label", "category": "task" },
     { "text": "short item label", "category": "grocery" },
     { "text": "short bill label", "category": "bills", "amount": null, "dueDay": null, "recurring": null },
-    { "text": "short item label", "category": "notes" }
+    { "text": "short appointment title", "category": "appointments", "apptDate": null, "apptTime": null }
   ]
 }`;
 }
 
 async function categorize(dump: string): Promise<{
   text: string;
-  category: 'task' | 'grocery' | 'bills' | 'notes';
+  category: 'task' | 'grocery' | 'bills' | 'appointments';
   amount: number | null;
   dueDay: number | null;
   recurring: boolean | null;
+  apptDate: string | null;
+  apptTime: string | null;
 }[]> {
   const response = await groqFetch({
       max_tokens: 600,
@@ -79,12 +91,14 @@ async function categorize(dump: string): Promise<{
       ? 'grocery'
       : i.category === 'bills'
         ? 'bills'
-        : i.category === 'notes'
-          ? 'notes'
+        : i.category === 'appointments'
+          ? 'appointments'
           : 'task',
   amount: typeof i.amount === 'number' ? i.amount : null,
   dueDay: typeof i.dueDay === 'number' ? i.dueDay : null,
   recurring: typeof i.recurring === 'boolean' ? i.recurring : null,
+  apptDate: typeof i.apptDate === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(i.apptDate) ? i.apptDate : null,
+  apptTime: typeof i.apptTime === 'string' && /^\d{2}:\d{2}$/.test(i.apptTime) ? i.apptTime : null,
 }));
 }
 
@@ -217,6 +231,8 @@ export default function BrainDump({ open, onClose }: { open: boolean; onClose: (
   amount: i.amount ?? null,
   dueDay: i.dueDay ?? null,
   recurring: i.recurring ?? null,
+  apptDate: i.apptDate ?? null,
+  apptTime: i.apptTime ?? null,
 })));
     } catch {
       setError('Something went wrong sorting that. Please try again.');
@@ -247,13 +263,22 @@ export default function BrainDump({ open, onClose }: { open: boolean; onClose: (
       return;
     }
 
+    const incompleteAppt = toSave.some(
+      d => d.category === 'appointments' && (!d.apptDate || !d.apptTime)
+    );
+    if (incompleteAppt) {
+      setError('Add a date and time for each appointment before saving.');
+      return;
+    }
+    setError('');
+
     setSaving(true);
 
     try {
       const tasks = toSave.filter(d => d.category === 'task');
       const groceries = toSave.filter(d => d.category === 'grocery');
       const bills = toSave.filter(d => d.category === 'bills');
-      const notes = toSave.filter(d => d.category === 'notes');
+      const appts = toSave.filter(d => d.category === 'appointments');
       const today = todayISO();
 
       const currentDate = new Date();
@@ -264,7 +289,7 @@ export default function BrainDump({ open, onClose }: { open: boolean; onClose: (
         { error: tasksError },
         { error: groceriesError },
         { error: billsError },
-        { error: notesError },
+        { error: apptsError },
       ] = await Promise.all([
         tasks.length > 0
           ? supabase.from('daily_tasks').insert(tasks.map(t => ({
@@ -295,22 +320,17 @@ export default function BrainDump({ open, onClose }: { open: boolean; onClose: (
     })))
   : Promise.resolve({ error: null }),
 
-        notes.length > 0
-          ? supabase.from('appointment_note_items').insert(
-              notes.map(n => ({
-                appointment_id: null,
-                note_type: 'general',
-                kind: 'bring_up',
-                content: n.text,
-                status: 'open',
-                resolution: null,
-                carried_from_id: null,
+        appts.length > 0
+          ? supabase.from('appointments').insert(
+              appts.map(a => ({
+                title: a.text.trim(),
+                date_time: new Date(`${a.apptDate}T${a.apptTime}`).toISOString(),
               }))
             )
           : Promise.resolve({ error: null }),
       ]);
 
-      if (tasksError || groceriesError || billsError || notesError) {
+      if (tasksError || groceriesError || billsError || apptsError) {
         throw new Error('One or more items failed to save.');
       }
 
@@ -326,7 +346,7 @@ export default function BrainDump({ open, onClose }: { open: boolean; onClose: (
   const taskCount = drafts?.filter(d => d.category === 'task').length ?? 0;
   const groceryCount = drafts?.filter(d => d.category === 'grocery').length ?? 0;
   const billsCount = drafts?.filter(d => d.category === 'bills').length ?? 0;
-  const notesCount = drafts?.filter(d => d.category === 'notes').length ?? 0;
+  const apptsCount = drafts?.filter(d => d.category === 'appointments').length ?? 0;
 
   return (
     <div
@@ -411,17 +431,17 @@ export default function BrainDump({ open, onClose }: { open: boolean; onClose: (
         ) : (
           <>
             <div style={{ fontSize: '0.75rem', color: 'var(--ink-muted)' }}>
-              {taskCount} task{taskCount === 1 ? '' : 's'} · {groceryCount} grocery item{groceryCount === 1 ? '' : 's'} · {billsCount} bill{billsCount === 1 ? '' : 's'} · {notesCount} note{notesCount === 1 ? '' : 's'}. Uncheck or edit anything before saving.
+              {taskCount} task{taskCount === 1 ? '' : 's'} · {groceryCount} grocery item{groceryCount === 1 ? '' : 's'} · {billsCount} bill{billsCount === 1 ? '' : 's'} · {apptsCount} appointment{apptsCount === 1 ? '' : 's'}. Uncheck or edit anything before saving.
             </div>
 
-            {(['task', 'grocery', 'bills', 'notes'] as const).map(cat => {
+            {(['task', 'grocery', 'bills', 'appointments'] as const).map(cat => {
               const items = drafts.filter(d => d.category === cat);
               if (items.length === 0) return null;
 
               return (
                 <div key={cat}>
                   <div style={{ fontSize: '0.68rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--ink-muted)', marginBottom: 6 }}>
-                    {cat === 'task' ? 'Tasks' : cat === 'grocery' ? 'Grocery' : cat === 'bills' ? 'Bills' : 'Notes'}
+                    {cat === 'task' ? 'Tasks' : cat === 'grocery' ? 'Grocery' : cat === 'bills' ? 'Bills' : 'Appointments'}
                   </div>
 
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
@@ -429,7 +449,7 @@ export default function BrainDump({ open, onClose }: { open: boolean; onClose: (
                       <div
                         key={d.id}
                         style={{
-                          display: 'flex', alignItems: 'center', gap: 8,
+                          display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap',
                           background: 'var(--white)', border: '1.5px solid var(--border)',
                           borderRadius: 14, padding: '8px 10px',
                         }}
@@ -455,7 +475,7 @@ export default function BrainDump({ open, onClose }: { open: boolean; onClose: (
                        <select
   value={d.category}
   onChange={e => updateDraft(d.id, {
-    category: e.target.value as 'task' | 'grocery' | 'bills' | 'notes'
+    category: e.target.value as 'task' | 'grocery' | 'bills' | 'appointments'
   })}
   style={{
     fontSize: '1rem',
@@ -468,7 +488,7 @@ export default function BrainDump({ open, onClose }: { open: boolean; onClose: (
   <option value="task">Task</option>
   <option value="grocery">Grocery</option>
   <option value="bills">Bill</option>
-  <option value="notes">Notes</option>
+  <option value="appointments">Appointment</option>
 </select>
 
 {d.category === 'bills' && (
@@ -537,6 +557,37 @@ export default function BrainDump({ open, onClose }: { open: boolean; onClose: (
     </select>
 </div>
   )}
+
+                        {d.category === 'appointments' && (
+                          <div style={{ display: 'flex', gap: 5, alignItems: 'center', flexShrink: 0 }}>
+                            <input
+                              type="date"
+                              value={d.apptDate ?? ''}
+                              onChange={e => updateDraft(d.id, { apptDate: e.target.value || null })}
+                              style={{
+                                fontSize: '1rem',
+                                border: '1px solid var(--border)',
+                                borderRadius: 8,
+                                background: 'var(--cream)',
+                                color: 'var(--ink)',
+                                padding: '5px 6px',
+                              }}
+                            />
+                            <input
+                              type="time"
+                              value={d.apptTime ?? ''}
+                              onChange={e => updateDraft(d.id, { apptTime: e.target.value || null })}
+                              style={{
+                                fontSize: '1rem',
+                                border: '1px solid var(--border)',
+                                borderRadius: 8,
+                                background: 'var(--cream)',
+                                color: 'var(--ink)',
+                                padding: '5px 6px',
+                              }}
+                            />
+                          </div>
+                        )}
 
                         <button
                           onClick={() => removeDraft(d.id)}

@@ -23,7 +23,7 @@ export const POLLY_TOUR_CONTENT: Record<string, PollyTourStep[]> = {
   dailyplanner: [
     {
     title: "This is your Daily Planner",
-    body: "Daily tasks, appointments, chores, event planning, goals, and appointment notes — if you can plan it or turn it into a checklist, it lives here.",
+    body: "Daily tasks, appointments, chores, event planning, and goals — if you can plan it or turn it into a checklist, it lives here.",
   },
 ],
   wallet: [
