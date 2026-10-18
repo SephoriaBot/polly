@@ -169,7 +169,16 @@
 .habit-race__track {
   position: relative;
   flex: 1;
-  height: 18px;
+  height: 42px;
+}
+
+/* the actual bar sits along the bottom; the racer rides on top of it */
+.habit-race__road {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 3px;
+  height: 14px;
   border-radius: 999px;
   background: #f2e9da;
   overflow: hidden;
@@ -190,11 +199,23 @@
   bottom: 0;
   display: flex;
   align-items: center;
-  padding: 0 8px 0 10px;
-  font-size: 0.75rem;
+  padding: 0 6px 0 8px;
+  font-size: 0.65rem;
   color: #8a7a68;
   border-left: 2px dashed #d9c9ae;
   background: #f2e9da;
+}
+
+/* the racing creature, already facing right */
+.habit-race__racer {
+  position: absolute;
+  bottom: 0;
+  width: 2.9rem;
+  height: auto;
+  transition: left 900ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  z-index: 1;
+  pointer-events: none;
+  user-select: none;
 }
 
 .habit-race__count {
