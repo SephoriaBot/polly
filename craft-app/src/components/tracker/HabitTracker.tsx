@@ -572,24 +572,49 @@ function HabitCard({
       >
         {(
           [
-            { key: 'yes', label: 'Yes', count: yesCount, pct: yesPct, color: yesColor },
-            { key: 'no', label: 'No', count: noCount, pct: noPct, color: noColor },
+            {
+              key: 'yes',
+              label: 'Yes',
+              count: yesCount,
+              pct: yesPct,
+              color: yesColor,
+              racer: '/assets/racingwereham.png',
+            },
+            {
+              key: 'no',
+              label: 'No',
+              count: noCount,
+              pct: noPct,
+              color: noColor,
+              racer: '/assets/racingnoodle.png',
+            },
           ] as const
         ).map((lane) => (
           <div key={lane.key} className="habit-race__lane">
             <span className="habit-race__name">{lane.label}</span>
 
             <div className="habit-race__track">
-              <div
-                className="habit-race__fill"
-                style={{
-                  width: `${lane.pct}%`,
-                  background: `linear-gradient(90deg, ${colors.struggling}, ${lane.color})`,
-                }}
+              <div className="habit-race__road">
+                <div
+                  className="habit-race__fill"
+                  style={{
+                    width: `${lane.pct}%`,
+                    background: `linear-gradient(90deg, ${colors.struggling}, ${lane.color})`,
+                  }}
+                />
+                <span className="habit-race__flag" aria-hidden="true">
+                  ⚑
+                </span>
+              </div>
+
+              <img
+                className="habit-race__racer"
+                src={lane.racer}
+                alt=""
+                aria-hidden="true"
+                draggable={false}
+                style={{ left: `calc(${lane.pct}% - ${lane.pct / 100} * 2.9rem)` }}
               />
-              <span className="habit-race__flag" aria-hidden="true">
-                ⚑
-              </span>
             </div>
 
             <span
