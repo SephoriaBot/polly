@@ -145,32 +145,75 @@
   color: #5c2028;
 }
 
-/* ---------- bar ---------- */
+/* ---------- race bars ---------- */
 
-.habit-bar {
-  position: relative;
-  height: 22px;
-  border-radius: 999px;
-  background: #f2e9da;
-  overflow: hidden;
+.habit-race {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
   margin-bottom: 0.75rem;
 }
 
-.habit-bar__fill {
+.habit-race__lane {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.habit-race__name {
+  width: 2rem;
+  font-size: 0.78rem;
+  color: #8a7a68;
+}
+
+.habit-race__track {
+  position: relative;
+  flex: 1;
+  height: 18px;
+  border-radius: 999px;
+  background: #f2e9da;
+  overflow: hidden;
+}
+
+.habit-race__fill {
   height: 100%;
   border-radius: 999px;
-  /* the satisfying part: fill glides to its new width instead of snapping */
+  /* fill glides to its new width instead of snapping */
   transition: width 900ms cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-.habit-bar__label {
+/* finish line at the far right end of each lane */
+.habit-race__flag {
   position: absolute;
-  right: 10px;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 0.72rem;
-  color: #5c4a3a;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  padding: 0 8px 0 10px;
+  font-size: 0.75rem;
+  color: #8a7a68;
+  border-left: 2px dashed #d9c9ae;
+  background: #f2e9da;
+}
+
+.habit-race__count {
+  width: 1.75rem;
+  text-align: right;
+  font-size: 0.8rem;
+  color: #8a7a68;
   font-variant-numeric: tabular-nums;
+}
+
+.habit-race__count.is-leading {
+  color: #5c4a3a;
+  font-weight: 700;
+}
+
+.habit-race__summary {
+  font-size: 0.75rem;
+  color: #8a7a68;
+  text-align: center;
 }
 
 /* ---------- check-in buttons ---------- */
