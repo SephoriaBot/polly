@@ -1,0 +1,180 @@
+/* ================================================================
+   PALETTE: MISTY MEADOW
+   data-palette="misty-meadow"
+   Baby pink, powder blue, and soft cream. Gentle, foggy, and calm.
+   ================================================================ */
+
+/* ---------- tokens: light ---------- */
+[data-palette='misty-meadow'][data-theme='light'] {
+  --bg: #F8F2F4;
+  --surface: #FFFBFC;
+  --text: #4A4458;
+
+  --primary: #5E87B0;
+  --secondary: #E8A9BC;
+  --accent: #D98AA3;
+  --mint: #A9CFC4;
+
+  --border: rgba(74, 68, 88, .14);
+  --shadow: 0 8px 24px rgba(94, 135, 176, .16);
+
+  --ink: #4A4458;
+  --ink-soft: #6E6880;
+  --ink-muted: #9A94AA;
+  --btn-ink: #FFFFFF;
+
+  --white: #FFFFFF;
+  --cream: #FBF6F5;
+  --blush: rgba(232, 169, 188, .18);
+
+  --green-dark: #5E8F85;
+  --citrus-blue: #7FA6C9;
+  --sage: #A9CFC4;
+  --sage-dark: #5E8F85;
+  --sage-light: rgba(169, 207, 196, .22);
+
+  --pink: #E8A9BC;
+  --pink-dark: #B8627E;
+  --pink-light: rgba(232, 169, 188, .20);
+  --pink-light-solid: #F9E3EA;
+
+  --sky: #CFE3F2;
+
+  --gold: #E6C77A;
+  --gold-dark: #A98A2E;
+  --gold-light: rgba(230, 199, 122, .20);
+  --gold-light-solid: #F8EDCB;
+
+  --danger: #C26A74;
+  --danger-bg: #F7E3E5;
+
+  --accent-text: #FFFFFF;
+  --accent-text-muted: rgba(255, 255, 255, .80);
+  --active-bg: #E3EEF8;
+  --active-text: #3F6A94;
+
+  --info-card-bg: #EAF2F9;
+  --info-card-border: rgba(94, 135, 176, 0.22);
+  --info-card-text: #3F6A94;
+}
+
+/* ---------- tokens: dark ---------- */
+[data-palette='misty-meadow'][data-theme='dark'] {
+  --bg: #1B1D2A;
+  --surface: #262A3B;
+  --text: #EDE9F2;
+
+  --primary: #8FB4DB;
+  --secondary: #D9A0B5;
+  --accent: #E7B3C6;
+  --mint: #8DB8AC;
+
+  --border: rgba(237, 233, 242, .12);
+  --shadow: 0 10px 28px rgba(0, 0, 0, .40);
+
+  --ink: #EDE9F2;
+  --ink-soft: #C3BED0;
+  --ink-muted: #8A869B;
+  --btn-ink: #1B1D2A;
+
+  --white: #30344A;
+  --cream: #20233A;
+  --blush: rgba(217, 160, 181, .16);
+
+  --green-dark: #9CC9BC;
+  --citrus-blue: #8FB4DB;
+  --sage: #6E9A8E;
+  --sage-dark: #9CC9BC;
+  --sage-light: rgba(156, 201, 188, .14);
+
+  --pink: #D9A0B5;
+  --pink-dark: #F0C2D2;
+  --pink-light: rgba(217, 160, 181, .16);
+  --pink-light-solid: #3D2D3A;
+
+  --sky: #3A4A66;
+
+  --gold: #E8CD8A;
+  --gold-dark: #F2DDA6;
+  --gold-light: rgba(232, 205, 138, .16);
+  --gold-light-solid: #3B3422;
+
+  --danger: #E08C96;
+  --danger-bg: #3A2529;
+
+  --accent-text: #1B1D2A;
+  --accent-text-muted: rgba(27, 29, 42, .78);
+  --active-bg: #2D3A55;
+  --active-text: #C7DDF2;
+
+  --info-card-bg: #232C42;
+  --info-card-border: rgba(143, 180, 219, 0.22);
+  --info-card-text: #C7DDF2;
+}
+
+/* ---------- cards: soft, rounded, pillowy ---------- */
+[data-palette='misty-meadow'][data-theme='light'] .card,
+[data-palette='misty-meadow'][data-theme='light'] .stat-card,
+[data-palette='misty-meadow'][data-theme='light'] .pet-card,
+[data-palette='misty-meadow'][data-theme='light'] .plant-card,
+[data-palette='misty-meadow'][data-theme='light'] .wizard-box,
+[data-palette='misty-meadow'][data-theme='light'] .list-item {
+  position: relative;
+  background: var(--surface);
+  border: 1px solid var(--border) !important;
+  border-radius: 22px !important;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, .8) inset,
+    0 8px 22px rgba(94, 135, 176, .14);
+  overflow: visible;
+}
+
+[data-palette='misty-meadow'][data-theme='dark'] .card,
+[data-palette='misty-meadow'][data-theme='dark'] .stat-card,
+[data-palette='misty-meadow'][data-theme='dark'] .pet-card,
+[data-palette='misty-meadow'][data-theme='dark'] .plant-card,
+[data-palette='misty-meadow'][data-theme='dark'] .wizard-box,
+[data-palette='misty-meadow'][data-theme='dark'] .list-item {
+  position: relative;
+  background: var(--surface);
+  border: 1px solid var(--border) !important;
+  border-radius: 22px !important;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, .05) inset,
+    0 10px 26px rgba(0, 0, 0, .38);
+  overflow: visible;
+}
+
+[data-palette='misty-meadow'] .card-body {
+  position: relative;
+  z-index: 1;
+  background: transparent;
+  border: none;
+}
+
+/* ---------- checkmarks: reuse circle icon, pink-tinted ---------- */
+[data-palette='misty-meadow'] .theme-check--full {
+  background-color: var(--pink-dark);
+  -webkit-mask-image: url('/circle-full.svg');
+  mask-image: url('/circle-full.svg');
+}
+
+[data-palette='misty-meadow'] .theme-check--empty {
+  background-color: var(--border);
+  -webkit-mask-image: url('/circle-empty.svg');
+  mask-image: url('/circle-empty.svg');
+}
+
+/* ---------- stitch divider: a pink dot with a blue ring ---------- */
+[data-palette='misty-meadow'] .stitch-divider .mark {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--secondary);
+  box-shadow: 0 0 0 3px var(--sky);
+}
+
+[data-palette='misty-meadow'] .stitch-divider .mark::before,
+[data-palette='misty-meadow'] .stitch-divider .mark::after {
+  content: none !important;
+}
