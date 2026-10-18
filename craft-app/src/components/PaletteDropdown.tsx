@@ -4,33 +4,65 @@ export default function PaletteDropdown() {
   const { palette, setPalette } = useTheme();
 
   return (
-    <select
-      value={palette}
-      onChange={(e) => setPalette(e.target.value as Palette)}
-      aria-label="Choose Polly's look"
+    <div
       style={{
-        appearance: 'none',
-        WebkitAppearance: 'none',
-        MozAppearance: 'none',
-        border: '1px solid var(--color-border)',
-        borderRadius: 999,
-        padding: '5px 26px 5px 10px',
-        fontSize: '0.78rem',
-        fontWeight: 700,
-        fontFamily: 'inherit',
-        color: 'var(--color-text)',
-        background:
-          "var(--color-surface-raised) url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23A0907C' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E\") no-repeat right 10px center",
-        cursor: 'pointer',
-        minHeight: 30,
-        WebkitTapHighlightColor: 'transparent',
+        position: 'relative',
+        display: 'inline-flex',
+        alignItems: 'center',
+        color: 'var(--ink)',
       }}
     >
-      {PALETTES.map((p) => (
-        <option key={p.id} value={p.id}>
-          {p.emoji} {p.label}
-        </option>
-      ))}
-    </select>
+      <select
+        value={palette}
+        onChange={(e) => setPalette(e.target.value as Palette)}
+        aria-label="Choose Polly's look"
+        style={{
+          appearance: 'none',
+          WebkitAppearance: 'none',
+          MozAppearance: 'none',
+          border: '1px solid var(--border)',
+          borderRadius: 999,
+          padding: '5px 30px 5px 12px',
+          fontSize: '0.78rem',
+          fontWeight: 700,
+          fontFamily: 'inherit',
+          color: 'inherit',
+          background: 'var(--surface)',
+          cursor: 'pointer',
+          minHeight: 30,
+          WebkitTapHighlightColor: 'transparent',
+        }}
+      >
+        {PALETTES.map((p) => (
+          <option key={p.id} value={p.id}>
+            {p.label}
+          </option>
+        ))}
+      </select>
+
+      {/* chevron drawn in the current text color so it shows in every palette */}
+      <svg
+        aria-hidden="true"
+        width="12"
+        height="8"
+        viewBox="0 0 10 6"
+        style={{
+          position: 'absolute',
+          right: 11,
+          top: '50%',
+          transform: 'translateY(-50%)',
+          pointerEvents: 'none',
+        }}
+      >
+        <path
+          d="M1 1l4 4 4-4"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          fill="none"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+    </div>
   );
 }
