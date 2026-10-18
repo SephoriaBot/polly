@@ -7,7 +7,8 @@ export type Palette =
   | 'lucky-stars'
   | 'pink'
   | 'tuxedo' 
-  | 'storm-clouds' ;
+  | 'storm-clouds'
+  | 'misty-meadow';
 
 export interface PaletteOption {
   id: Palette;
@@ -21,6 +22,7 @@ export const PALETTES: PaletteOption[] = [
   { id: 'pink', label: 'Pastel Goth'},
   { id: 'tuxedo', label: 'Tuxedo'},
   { id: 'storm-clouds', label: 'Storm'},
+  { id: 'misty-meadow', label: 'Misty Meadow'},
 ];
 
 interface ThemeContextValue {
@@ -42,7 +44,8 @@ function isPalette(value: string | null): value is Palette {
   value === 'lucky-stars' ||
   value === 'pink' ||
   value === 'tuxedo' ||
-  value === 'storm-clouds' 
+  value === 'storm-clouds' ||
+  value === 'misty-meadow'
 );
 }
 
