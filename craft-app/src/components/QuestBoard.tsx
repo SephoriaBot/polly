@@ -102,8 +102,8 @@ export default function QuestBoard({ userId }: { userId: string }) {
         }
         .quest-board__badge {
           position: absolute;
-          top: -13px;
-          right: -13px;
+          top: -11px;
+          right: -11px;
           z-index: 2;
           min-width: 24px;
           height: 24px;
