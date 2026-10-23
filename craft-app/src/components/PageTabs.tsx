@@ -1,7 +1,9 @@
 // Shared horizontally-scrollable pill tab bar, used to split up pages that
 // were getting long (Planner, Habitat, Wallet, Grocery) into focused
 // single-section views instead of one long stacked scroll.
+import { useEffect } from 'react';
 import Icon, { type IconName } from './Icon';
+import { loadSavedTab, saveTab } from '../lib/navMemory';
 
 export interface PageTab<T extends string> {
   key: T;
@@ -16,6 +18,23 @@ interface PageTabsProps<T extends string> {
 }
 
 export default function PageTabs<T extends string>({ tabs, active, onChange }: PageTabsProps<T>) {
+  const tabKeys = tabs.map(t => t.key as string);
+  const tabSetId = tabKeys.join('|');
+
+  // On first mount, jump back to the tab you were last on (only when
+  // the app is restoring after being minimized/reloaded).
+  useEffect(() => {
+    const saved = loadSavedTab(tabKeys);
+    if (saved && saved !== active) onChange(saved as T);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Remember the tab whenever it changes.
+  useEffect(() => {
+    saveTab(tabKeys, active);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [active, tabSetId]);
+
   return (
     <div
       style={{
