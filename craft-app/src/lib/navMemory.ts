@@ -1,5 +1,6 @@
 // Remembers which page and tab you were on, so returning to Polly from
-// another app (when the phone reloads it) puts you back where you were.
+// another app puts you back where you were, whether the phone reloaded
+// the whole app or just rebuilt the page.
 // Uses localStorage because iOS can clear sessionStorage when it
 // reloads a home-screen app. Memory expires after 30 minutes away,
 // so a fresh open later still starts on the dashboard.
@@ -12,11 +13,6 @@ interface NavState {
   tabs: Record<string, string>;
   ts: number;
 }
-
-// True only while the app is restoring a remembered spot on load.
-// Ends as soon as the user taps a nav link, so deep links like
-// "dashboard -> Money Calendar" are never overridden.
-let restoring = false;
 
 function read(): NavState | null {
   try {
@@ -42,13 +38,19 @@ function write(s: NavState) {
 export function loadSavedPage(validPages: string[]): string | null {
   const s = read();
   if (!s || !validPages.includes(s.page)) return null;
-  restoring = true;
   return s.page;
 }
 
-export function savePage(page: string, keepTabs: boolean) {
+export function savePage(page: string) {
   const s = read();
-  write({ page, tabs: keepTabs && s ? s.tabs : {}, ts: Date.now() });
+  write({ page, tabs: s ? s.tabs : {}, ts: Date.now() });
+}
+
+// Called when the user deliberately navigates to a page, so that page
+// starts on its first tab (or the tab a shortcut asked for).
+export function clearTabs() {
+  const s = read();
+  if (s) write({ ...s, tabs: {} });
 }
 
 export function touchNav() {
@@ -56,18 +58,9 @@ export function touchNav() {
   if (s) write(s);
 }
 
-export function endRestore() {
-  restoring = false;
-}
-
-export function isRestoring() {
-  return restoring;
-}
-
 // A tab bar is identified by its list of tab keys, so each page's
 // tabs are remembered separately without touching the pages.
 export function loadSavedTab(tabKeys: string[]): string | null {
-  if (!restoring) return null;
   const s = read();
   const saved = s?.tabs[tabKeys.join('|')];
   return saved && tabKeys.includes(saved) ? saved : null;
