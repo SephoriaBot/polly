@@ -21,8 +21,7 @@ export default function PageTabs<T extends string>({ tabs, active, onChange }: P
   const tabKeys = tabs.map(t => t.key as string);
   const tabSetId = tabKeys.join('|');
 
-  // On first mount, jump back to the tab you were last on (only when
-  // the app is restoring after being minimized/reloaded).
+  // On first mount, jump back to the tab you were last on.
   useEffect(() => {
     const saved = loadSavedTab(tabKeys);
     if (saved && saved !== active) onChange(saved as T);
