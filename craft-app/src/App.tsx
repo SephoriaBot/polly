@@ -33,8 +33,7 @@ import {
   loadSavedPage,
   savePage,
   touchNav,
-  endRestore,
-  isRestoring,
+  clearTabs,
 } from './lib/navMemory';
 
 const Dashboard = lazy(() => import('./pages/Dashboard'));
@@ -274,7 +273,7 @@ export default function App() {
   // Remember the current page, and refresh the "last seen" time whenever
   // the app is hidden so a quick trip to another app is always restored.
   useEffect(() => {
-    savePage(page, isRestoring());
+    savePage(page);
   }, [page]);
 
   useEffect(() => {
@@ -290,7 +289,7 @@ export default function App() {
   }, []);
 
   function navigate(p: string, tab?: string) {
-    endRestore();
+    clearTabs();
     setPage(p as Page);
     setInitialTab(tab);
     window.scrollTo(0, 0);
