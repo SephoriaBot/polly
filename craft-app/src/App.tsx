@@ -29,6 +29,13 @@ import PollyPageTour from './components/PollyPageTour';
 import PollyPopIn from './components/PollyPopIn';
 
 import PageTitleLogo from "./components/PageTitleLogo";
+import {
+  loadSavedPage,
+  savePage,
+  touchNav,
+  endRestore,
+  isRestoring,
+} from './lib/navMemory';
 
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const Grocery = lazy(() => import('./pages/Grocery'));
@@ -47,6 +54,17 @@ type Page =
   | 'trackers'
   | 'decisions'
   | 'habitat';
+
+const VALID_PAGES: string[] = [
+  'dashboard',
+  'grocery',
+  'dailyplanner',
+  'maidwizard',
+  'wallet',
+  'trackers',
+  'decisions',
+  'habitat',
+];
 
 /* =========================================================
    APP RECOVERY
@@ -246,12 +264,33 @@ function CompanionGate({ children }: { children: ReactNode }) {
 export default function App() {
   const { session, user, loading, signOut } = useAuth();
 
-  const [page, setPage] = useState<Page>('dashboard');
+  const [page, setPage] = useState<Page>(
+    () => (loadSavedPage(VALID_PAGES) as Page | null) ?? 'dashboard',
+  );
   const [initialTab, setInitialTab] = useState<string | undefined>(undefined);
   const [brainDumpOpen, setBrainDumpOpen] = useState(false);
 
 
+  // Remember the current page, and refresh the "last seen" time whenever
+  // the app is hidden so a quick trip to another app is always restored.
+  useEffect(() => {
+    savePage(page, isRestoring());
+  }, [page]);
+
+  useEffect(() => {
+    function onHide() {
+      if (document.visibilityState === 'hidden') touchNav();
+    }
+    document.addEventListener('visibilitychange', onHide);
+    window.addEventListener('pagehide', touchNav);
+    return () => {
+      document.removeEventListener('visibilitychange', onHide);
+      window.removeEventListener('pagehide', touchNav);
+    };
+  }, []);
+
   function navigate(p: string, tab?: string) {
+    endRestore();
     setPage(p as Page);
     setInitialTab(tab);
     window.scrollTo(0, 0);
