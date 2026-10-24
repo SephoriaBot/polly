@@ -9,15 +9,15 @@
 //   - you have an appointment today
 // If none of those is true, nothing is sent.
 //
-// Two cron entries (11:00 and 12:00 UTC) cover daylight saving; the code
-// only does its work when it is 7am Eastern.
+// Two cron entries (10:00 and 11:00 UTC) cover daylight saving; the code
+// only does its work when it is 6am Eastern.
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import webpush from 'web-push';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { HABITAT_ITEMS } from '../src/lib/habitatItems.js';
 
 const TZ = 'America/New_York';
-const SEND_HOUR = 7;
+const SEND_HOUR = 6;
 
 // Keep these in step with src/lib/questSystem.ts
 const DAILY_SPAWN_CHANCE = 0.4;
@@ -253,7 +253,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(500).json({ error: 'Not configured' });
   }
 
-  // Only act at 7am Eastern (?force=1 skips this, for testing).
+  // Only act at 6am Eastern (?force=1 skips this, for testing).
   const now = new Date();
   if (tzParts(now).h !== SEND_HOUR && req.query.force !== '1') {
     return res.status(200).json({ skipped: 'not send hour' });
