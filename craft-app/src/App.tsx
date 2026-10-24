@@ -10,6 +10,7 @@ import {
 
 import BottomNav from './components/BottomNav';
 import ThemeToggle from './components/ThemeToggle';
+import PushToggle from './components/PushToggle';
 import PaletteDropdown from './components/PaletteDropdown';
 import BrainDump from './components/BrainDump';
 
@@ -430,6 +431,29 @@ export default function App() {
       </span>
 
       <PaletteDropdown />
+    </div>
+
+    {/* NOTIFICATIONS */}
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 6,
+      }}
+    >
+      <span
+        className="topbar-label"
+        style={{
+          fontSize: '0.72rem',
+          fontWeight: 700,
+          color: 'var(--ink-muted)',
+          whiteSpace: 'nowrap',
+        }}
+      >
+        Alerts
+      </span>
+
+      <PushToggle />
     </div>
 
     {/* DAY / NIGHT */}

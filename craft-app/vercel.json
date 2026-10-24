@@ -2,6 +2,10 @@
   "rewrites": [
     { "source": "/((?!api/).*)", "destination": "/" }
   ],
+  "crons": [
+    { "path": "/api/daily-push", "schedule": "0 11 * * *" },
+    { "path": "/api/daily-push", "schedule": "0 12 * * *" }
+  ],
   "headers": [
     {
       "source": "/(.*)",
