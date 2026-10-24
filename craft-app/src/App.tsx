@@ -349,6 +349,9 @@ export default function App() {
         ↻
       </button>
 
+      {/* NOTIFICATIONS */}
+      <PushToggle />
+
       {/* SIGN OUT */}
       <button
         type="button"
@@ -431,29 +434,6 @@ export default function App() {
       </span>
 
       <PaletteDropdown />
-    </div>
-
-    {/* NOTIFICATIONS */}
-    <div
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: 6,
-      }}
-    >
-      <span
-        className="topbar-label"
-        style={{
-          fontSize: '0.72rem',
-          fontWeight: 700,
-          color: 'var(--ink-muted)',
-          whiteSpace: 'nowrap',
-        }}
-      >
-        Alerts
-      </span>
-
-      <PushToggle />
     </div>
 
     {/* DAY / NIGHT */}

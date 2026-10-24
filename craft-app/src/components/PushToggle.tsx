@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { getPushState, enablePush, disablePush, type PushState } from '../lib/push';
 
-// Small on/off switch for phone notifications, styled like ThemeToggle.
+// Round bell button for the top bar, styled like the refresh button.
+// activebell.png = notifications on, sleepingbell.png = off.
 export default function PushToggle() {
   const [state, setState] = useState<PushState | null>(null);
   const [busy, setBusy] = useState(false);
@@ -21,10 +22,11 @@ export default function PushToggle() {
         : '';
 
   async function toggle() {
-    if (busy || note) {
-      if (note) window.alert(note);
+    if (note) {
+      window.alert(note);
       return;
     }
+    if (busy) return;
     setBusy(true);
     try {
       setState(isOn ? await disablePush() : await enablePush());
@@ -37,42 +39,36 @@ export default function PushToggle() {
 
   return (
     <button
+      type="button"
       onClick={toggle}
-      role="switch"
-      aria-checked={isOn}
+      aria-pressed={isOn}
       aria-label={isOn ? 'Turn off notifications' : 'Turn on notifications'}
+      title={isOn ? 'Notifications on' : 'Notifications off'}
       style={{
-        position: 'relative',
-        width: 56,
-        height: 30,
-        borderRadius: 999,
-        border: '1px solid var(--color-border)',
-        background: isOn ? 'var(--gold-light)' : 'var(--color-surface-raised)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        width: 32,
+        height: 32,
+        borderRadius: '50%',
+        background: isOn ? 'var(--gold-light)' : 'var(--surface)',
+        border: '1.5px solid var(--border)',
         cursor: 'pointer',
-        transition: 'background-color 0.4s ease',
+        fontSize: '0.9rem',
+        lineHeight: 1,
         padding: 0,
+        flexShrink: 0,
         opacity: busy ? 0.6 : 1,
+        WebkitTapHighlightColor: 'transparent',
       }}
     >
-      <span
-        style={{
-          position: 'absolute',
-          top: 2,
-          left: isOn ? 28 : 2,
-          width: 24,
-          height: 24,
-          borderRadius: '50%',
-          background: 'var(--color-surface)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          transition: 'left 0.3s ease',
-          boxShadow: '0 1px 3px var(--color-shadow)',
-          fontSize: 13,
-        }}
-      >
-        {isOn ? '🔔' : '🔕'}
-      </span>
+      <img
+        src={isOn ? '/activebell.png' : '/sleepingbell.png'}
+        alt=""
+        width={22}
+        height={22}
+        style={{ display: 'block', objectFit: 'contain', pointerEvents: 'none' }}
+      />
     </button>
   );
 }

@@ -930,6 +930,10 @@ setNewTaskSlot('anytime');
                   )}
                 </div>
               )}
+
+              <div style={{ fontSize: 12, marginBottom: 4 }}>
+                    New Appointment Title
+                    </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 <input
                   className="form-input"
