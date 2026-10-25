@@ -19,7 +19,7 @@ const PRIMARY_TABS = [
   },
   {
     id: 'dailyplanner',
-    label: 'Planner',
+    label: 'Planning',
     icon: <NavIcon name="planner" size={35} />,
   },
   {
@@ -32,16 +32,6 @@ const PRIMARY_TABS = [
 // Items that live in the expandable row. No sections/labels here anymore —
 // just a flat row of icon tabs that slides open above the primary bar.
 const MORE_ITEMS = [
-  {
-    id: 'trackers',
-    label: 'Trackers',
-    icon: <NavIcon name="tracker" size={35} />,
-  },
-  {
-    id: 'decisions',
-    label: 'Decisions',
-    icon: <NavIcon name="decisions" size={35} />,
-  },
   {
     id: 'habitat',
     label: 'Habitat',
