@@ -7,7 +7,6 @@ export type NavIconName =
   | "dashboard"
   | "wallet"
   | "planner"
-  | "grocery"
   | "habitat";
 
 export default function NavIcon({ name, size = 35 }: { name: NavIconName; size?: number }) {
