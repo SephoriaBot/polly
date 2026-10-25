@@ -4,6 +4,7 @@ import Chores from '../components/planner/Chores';
 import LifeEvents from '../components/planner/LifeEvents';
 import Goals from '../components/planner/Goals';
 import TrackerPage from './TrackerPage';
+import DayPlanner from '../components/planner/DayPlanner';
 import EmptyState from '../components/EmptyState';
 import checklistImg from '../assets/illustrations/checklist.png';
 import hamsterAmImg from '../assets/illustrations/hamster-am.png';
@@ -98,9 +99,10 @@ const SPARK_COLORS = [
   'var(--gold-light-solid)',
 ];
 
-const PLANNER_TABS: PageTab<'tasks' | 'appointments' | 'chores' | 'events' | 'goals' | 'trackers'>[] = [
+const PLANNER_TABS: PageTab<'tasks' | 'appointments' | 'chores' | 'events' | 'goals' | 'trackers' | 'dayplan'>[] = [
   { key: 'tasks', label: 'Tasks', icon: 'icon-listchecks' },
   { key: 'appointments', label: 'Appointments', icon: 'icon-calendar' },
+  { key: 'dayplan', label: 'Plan a day', icon: 'clipboard-check' },
   { key: 'chores', label: 'Chores', icon: 'cleaning-spray' },
   { key: 'events', label: 'Life Events', icon: 'icon-heart' },
   { key: 'goals', label: 'Goals', icon: 'trophy' },
@@ -126,7 +128,7 @@ function todayISO() {
   return `${year}-${month}-${day}`;
 }
 
-export default function DailyPlanner({ initialTab }: { initialTab?: 'tasks' | 'appointments' | 'chores' | 'events' | 'goals' | 'trackers' } = {}) {
+export default function DailyPlanner({ initialTab }: { initialTab?: 'tasks' | 'appointments' | 'chores' | 'events' | 'goals' | 'trackers' | 'dayplan' } = {}) {
   const { theme } = useTheme();
   const [tasks, setTasks] = useState<DailyTask[]>([]);
   const [templates, setTemplates] = useState<DailyTaskTemplate[]>([]);
@@ -149,7 +151,7 @@ export default function DailyPlanner({ initialTab }: { initialTab?: 'tasks' | 'a
   const [newTaskSlot, setNewTaskSlot] = useState<TimeSlot>('anytime');
   const [savingTemplate, setSavingTemplate] = useState(false);
   const [showAttended, setShowAttended] = useState(false); // collapsed by default so attended appts don't stack up
-  const [activeTab, setActiveTab] = useState<'tasks' | 'appointments' | 'chores' | 'events' | 'goals' | 'trackers'>(initialTab ?? 'tasks');
+  const [activeTab, setActiveTab] = useState<'tasks' | 'appointments' | 'chores' | 'events' | 'goals' | 'trackers' | 'dayplan'>(initialTab ?? 'tasks');
 
   const upcomingAppts = appointments.filter(a => !a.attended);
   const attendedAppts = appointments.filter(a => a.attended);
@@ -987,6 +989,13 @@ setNewTaskSlot('anytime');
         {activeTab === 'goals' && (
         <section>
           <Goals />
+        </section>
+        )}
+
+        {/* PLAN A DAY — one-off schedule for a specific date */}
+        {activeTab === 'dayplan' && (
+        <section>
+          <DayPlanner />
         </section>
         )}
 
