@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase';
 import Chores from '../components/planner/Chores';
 import LifeEvents from '../components/planner/LifeEvents';
 import Goals from '../components/planner/Goals';
+import TrackerPage from './TrackerPage';
 import EmptyState from '../components/EmptyState';
 import checklistImg from '../assets/illustrations/checklist.png';
 import hamsterAmImg from '../assets/illustrations/hamster-am.png';
@@ -97,12 +98,13 @@ const SPARK_COLORS = [
   'var(--gold-light-solid)',
 ];
 
-const PLANNER_TABS: PageTab<'tasks' | 'appointments' | 'chores' | 'events' | 'goals'>[] = [
+const PLANNER_TABS: PageTab<'tasks' | 'appointments' | 'chores' | 'events' | 'goals' | 'trackers'>[] = [
   { key: 'tasks', label: 'Tasks', icon: 'icon-listchecks' },
   { key: 'appointments', label: 'Appointments', icon: 'icon-calendar' },
   { key: 'chores', label: 'Chores', icon: 'cleaning-spray' },
   { key: 'events', label: 'Life Events', icon: 'icon-heart' },
   { key: 'goals', label: 'Goals', icon: 'trophy' },
+  { key: 'trackers', label: 'Trackers', icon: 'icon-trackers' },
 ];
 
 function StitchDivider() {
@@ -124,7 +126,7 @@ function todayISO() {
   return `${year}-${month}-${day}`;
 }
 
-export default function DailyPlanner({ initialTab }: { initialTab?: 'tasks' | 'appointments' | 'chores' | 'events' | 'goals' } = {}) {
+export default function DailyPlanner({ initialTab }: { initialTab?: 'tasks' | 'appointments' | 'chores' | 'events' | 'goals' | 'trackers' } = {}) {
   const { theme } = useTheme();
   const [tasks, setTasks] = useState<DailyTask[]>([]);
   const [templates, setTemplates] = useState<DailyTaskTemplate[]>([]);
@@ -147,7 +149,7 @@ export default function DailyPlanner({ initialTab }: { initialTab?: 'tasks' | 'a
   const [newTaskSlot, setNewTaskSlot] = useState<TimeSlot>('anytime');
   const [savingTemplate, setSavingTemplate] = useState(false);
   const [showAttended, setShowAttended] = useState(false); // collapsed by default so attended appts don't stack up
-  const [activeTab, setActiveTab] = useState<'tasks' | 'appointments' | 'chores' | 'events' | 'goals'>(initialTab ?? 'tasks');
+  const [activeTab, setActiveTab] = useState<'tasks' | 'appointments' | 'chores' | 'events' | 'goals' | 'trackers'>(initialTab ?? 'tasks');
 
   const upcomingAppts = appointments.filter(a => !a.attended);
   const attendedAppts = appointments.filter(a => a.attended);
@@ -985,6 +987,13 @@ setNewTaskSlot('anytime');
         {activeTab === 'goals' && (
         <section>
           <Goals />
+        </section>
+        )}
+
+        {/* TRACKERS — habits, sleep, cycle, weight, custom */}
+        {activeTab === 'trackers' && (
+        <section>
+          <TrackerPage />
         </section>
         )}
 
