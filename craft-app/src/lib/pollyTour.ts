@@ -22,26 +22,14 @@ export const POLLY_TOUR_CONTENT: Record<string, PollyTourStep[]> = {
 ],
   dailyplanner: [
     {
-    title: "This is your Daily Planner",
-    body: "Daily tasks, appointments, chores, event planning, and goals — if you can plan it or turn it into a checklist, it lives here.",
+    title: "This is your Planning page",
+    body: "Daily tasks, appointments, chores, event planning, goals, and trackers for habits, sleep, cycle and weight — if you can plan it, check it off, or keep tabs on it, it lives here.",
   },
 ],
   wallet: [
     {
     title: "Here is your Wallet",
     body: "Your bills, a personalized money calendar for planning with your projected income, and a customized debt payoff plan can all be found here.",
-  },
-],
-  trackers: [
-    {
-    title: "This page is for your Trackers",
-    body: "Keep tabs on habits and anything else you want to track over time. There are presets for sleep, cycle and weight- or make your own!",
-  },
-],
-  decisions: [
-    {
-    title: "This page is for tough Decisions",
-    body: "Work through it step by step here in a decision tree and weigh the best choice, or choose a simple battle for polly to make it for you.",
   },
 ],
   habitat: [
