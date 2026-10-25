@@ -14,12 +14,6 @@ export const POLLY_TOUR_CONTENT: Record<string, PollyTourStep[]> = {
       body: "At the top of the page you have Brain Dump, where you can give me your run-on thoughts and I will sort them into tasks for you. You can also change your theme here!",
     },
   ],
-  grocery: [
-    {
-    title: "This is your Grocery page",
-    body: "Here you can build your shopping list, explore recipes, and let Smart Cart compare prices for you to find the cheapest trip.",
-  },
-],
   dailyplanner: [
     {
     title: "This is your Planning page",
