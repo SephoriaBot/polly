@@ -41,8 +41,6 @@ const Dashboard = lazy(() => import('./pages/Dashboard'));
 const Grocery = lazy(() => import('./pages/Grocery'));
 const DailyPlanner = lazy(() => import('./pages/DailyPlanner'));
 const Wallet = lazy(() => import('./pages/Wallet'));
-const TrackerPage = lazy(() => import('./pages/TrackerPage'));
-const DecisionTree = lazy(() => import('./pages/DecisionTree'));
 const Habitat = lazy(() => import('./creatures/Habitat'));
 
 type Page =
@@ -51,8 +49,6 @@ type Page =
   | 'dailyplanner'
   | 'maidwizard'
   | 'wallet'
-  | 'trackers'
-  | 'decisions'
   | 'habitat';
 
 const VALID_PAGES: string[] = [
@@ -61,8 +57,6 @@ const VALID_PAGES: string[] = [
   'dailyplanner',
   'maidwizard',
   'wallet',
-  'trackers',
-  'decisions',
   'habitat',
 ];
 
@@ -502,6 +496,7 @@ export default function App() {
                               | 'chores'
                               | 'events'
                               | 'goals'
+                              | 'trackers'
                               | undefined
                           }
                         />
@@ -519,12 +514,6 @@ export default function App() {
                           }
                         />
                       )}
-
-                      {page === 'trackers' && (
-                        <TrackerPage initialTab={initialTab as any} />
-                      )}
-
-                      {page === 'decisions' && <DecisionTree />}
 
                       {page === 'habitat' && (
                         <Habitat
