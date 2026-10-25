@@ -50,23 +50,14 @@ const POLLY_POPIN_MESSAGES_BY_PAGE: Partial<Record<string, string[]>> = {
     "Look at you, staying on top of it.",
     "Small steps count too.",
     "Don't forget anything!",
+    "The data doesn't lie.",
+    "Patterns are neat, huh?",
   ],
   wallet: [
     "Just peeking at the numbers.",
     "Looking good!",
     "Every little bit adds up.",
     "Budgets are just plans with math.",
-  ],
-  trackers: [
-    "The data doesn't lie.",
-    "Look at that progress!",
-    "Patterns are neat, huh?",
-    "I didn't notice that before!",
-  ],
-  decisions: [
-    "Tough call?",
-    "Trust your gut.",
-    "Weighing your options, I see.",
   ],
   habitat: [
     "The habitat critters say hi.",
