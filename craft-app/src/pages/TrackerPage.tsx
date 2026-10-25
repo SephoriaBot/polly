@@ -31,7 +31,6 @@ import {
 } from '../lib/almanac';
 
 import StitchDivider from '../components/StitchDivider';
-import PageTitleLogo from '../components/PageTitleLogo';
 import { localDateKey, localDaysAgoKey } from '../lib/dateKey';
 
 function todayISO() {
@@ -255,16 +254,6 @@ export default function TrackerPage({
 
   return (
     <div>
-      {/* PAGE HEADER */}
-      <div className="page-header">
-        <div className="title-row">
-          <h2>
-            <Icon name="title-tracker" size={22} />
-            <PageTitleLogo name="tracker" height={28} />
-          </h2>
-        </div>
-      </div>
-
       {/* HABIT TRACKER GETS ITS OWN PAGE/TAB */}
       {isHabits ? (
         <>
