@@ -16,6 +16,7 @@ import PollyBubble from '../components/PollyBubble';
 import CheckMark from '../components/CheckMark';
 import { triggerActionEvent } from '../lib/questSystem';
 import QuestBoard from '../components/QuestBoard';
+import DayPlanCard from '../components/DayPlanCard';
 import { useAuth } from '../context/AuthContext';
 import PageTabs, { type PageTab } from '../components/PageTabs';
 
@@ -320,6 +321,9 @@ export default function Dashboard({ onNavigate }: { onNavigate?: (page: string, 
                 </div>
               )}
             </section>
+
+            {/* ── TODAY'S PLAN — only shows when a day plan exists for today ── */}
+            <DayPlanCard onNavigate={onNavigate} />
 
             {user && (
               <section style={{ marginTop: 4 }}>
