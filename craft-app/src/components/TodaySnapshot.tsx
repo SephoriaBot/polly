@@ -166,8 +166,8 @@ export default function TodaySnapshot({ onNavigate }: { onNavigate?: (page: stri
       if (activeTypes.length > 0) {
         next.push(
           dueTypes.length > 0
-            ? { key: 'trackers', icon: 'icon-trackers', label: `${dueTypes.length} tracker${dueTypes.length === 1 ? '' : 's'} to log`, detail: dueTypes.slice(0, 3).map(trackerLabel).join(', '), page: 'trackers', tab: dueTypes[0], count: dueTypes.length }
-            : { key: 'trackers', icon: 'icon-trackers', label: 'Trackers logged today', detail: 'All caught up', page: 'trackers', tab: activeTypes[0], empty: true }
+            ? { key: 'trackers', icon: 'icon-trackers', label: `${dueTypes.length} tracker${dueTypes.length === 1 ? '' : 's'} to log`, detail: dueTypes.slice(0, 3).map(trackerLabel).join(', '), page: 'dailyplanner', tab: 'trackers', count: dueTypes.length }
+            : { key: 'trackers', icon: 'icon-trackers', label: 'Trackers logged today', detail: 'All caught up', page: 'dailyplanner', tab: 'trackers', empty: true }
         );
       }
 
