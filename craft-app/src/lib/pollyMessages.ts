@@ -39,12 +39,6 @@ const POLLY_POPIN_MESSAGES: string[] = [
 ];
 
 const POLLY_POPIN_MESSAGES_BY_PAGE: Partial<Record<string, string[]>> = {
-  grocery: [
-    "Get me one, too!",
-    "Don't forget the good stuff.",
-    "Smart cart, smart choices.",
-    "What's for dinner?",
-  ],
   dailyplanner: [
     "One thing at a time.",
     "Look at you, staying on top of it.",
