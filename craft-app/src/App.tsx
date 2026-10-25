@@ -38,14 +38,12 @@ import {
 } from './lib/navMemory';
 
 const Dashboard = lazy(() => import('./pages/Dashboard'));
-const Grocery = lazy(() => import('./pages/Grocery'));
 const DailyPlanner = lazy(() => import('./pages/DailyPlanner'));
 const Wallet = lazy(() => import('./pages/Wallet'));
 const Habitat = lazy(() => import('./creatures/Habitat'));
 
 type Page =
   | 'dashboard'
-  | 'grocery'
   | 'dailyplanner'
   | 'maidwizard'
   | 'wallet'
@@ -53,7 +51,6 @@ type Page =
 
 const VALID_PAGES: string[] = [
   'dashboard',
-  'grocery',
   'dailyplanner',
   'maidwizard',
   'wallet',
@@ -472,19 +469,6 @@ export default function App() {
                     >
                       {page === 'dashboard' && (
                         <Dashboard onNavigate={navigate} />
-                      )}
-
-                      {page === 'grocery' && (
-                        <Grocery
-                          initialTab={
-                            initialTab as
-                              | 'list'
-                              | 'recipes'
-                              | 'smart-cart'
-                              | 'price-watch'
-                              | undefined
-                          }
-                        />
                       )}
 
                       {page === 'dailyplanner' && (
