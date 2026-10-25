@@ -1,7 +1,9 @@
 // DayPlanCard.tsx
 // Dashboard "package" for a planned day. Only appears when today has a
 // plan; tap the closed package and it shakes, pops open, and the checklist
-// slides out beneath it. Tap the open package to close it again. Ticking a chore marks the real chore
+// slides out beneath it. It stays open (even if you leave the dashboard and
+// come back) until every item is done, then it closes itself. Tap the closed
+// package any time to look back over a finished plan. Ticking a chore marks the real chore
 // done, ticking an appointment marks it attended, custom lines are plain
 // checkboxes. Unticking only unticks the plan line.
 
@@ -24,11 +26,55 @@ export default function DayPlanCard({
   const { user } = useAuth();
   const { notifyGrowth } = useCreatureGrowth();
   const [items, setItems] = useState<DayPlanItem[] | null>(null);
-  const [open, setOpen] = useState(false);
+  const openKey = `polly:dayplan-open:${localDateKey()}`;
+  const [open, setOpen] = useState(() => {
+    try {
+      return localStorage.getItem(openKey) === '1';
+    } catch {
+      return false;
+    }
+  });
   const [shaking, setShaking] = useState(false);
   const shakeTimer = useRef<number | undefined>(undefined);
+  const closeTimer = useRef<number | undefined>(undefined);
+  const wasAllDone = useRef<boolean | null>(null);
 
-  useEffect(() => () => window.clearTimeout(shakeTimer.current), []);
+  function remember(isOpen: boolean) {
+    try {
+      if (isOpen) localStorage.setItem(openKey, '1');
+      else localStorage.removeItem(openKey);
+    } catch {
+      /* storage unavailable — it just won't persist */
+    }
+  }
+
+  useEffect(
+    () => () => {
+      window.clearTimeout(shakeTimer.current);
+      window.clearTimeout(closeTimer.current);
+    },
+    [],
+  );
+
+  // Close the package once the plan is finished. On first load a finished
+  // plan starts closed; after that, closing happens when the last item gets
+  // ticked (with a short pause so the checkmark lands first).
+  useEffect(() => {
+    if (!items || items.length === 0) return;
+    const nowAllDone = items.every(i => i.done);
+    if (wasAllDone.current === null && nowAllDone) {
+      setOpen(false);
+      remember(false);
+    } else if (wasAllDone.current === false && nowAllDone) {
+      window.clearTimeout(closeTimer.current);
+      closeTimer.current = window.setTimeout(() => {
+        setOpen(false);
+        remember(false);
+      }, 900);
+    }
+    wasAllDone.current = nowAllDone;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [items]);
 
   useEffect(() => {
     supabase
@@ -47,7 +93,11 @@ export default function DayPlanCard({
   function handlePackageTap() {
     if (shaking) return;
     if (open) {
-      setOpen(false);
+      // Stays open until the plan is finished; a finished plan can be closed by hand.
+      if (allDone) {
+        setOpen(false);
+        remember(false);
+      }
       return;
     }
     // Little wiggle first, then the box pops open.
@@ -55,6 +105,7 @@ export default function DayPlanCard({
     shakeTimer.current = window.setTimeout(() => {
       setShaking(false);
       setOpen(true);
+      remember(true);
     }, 420);
   }
 
@@ -116,7 +167,7 @@ export default function DayPlanCard({
       <button
         onClick={handlePackageTap}
         aria-expanded={open}
-        aria-label={open ? "Close today's plan" : "Open today's plan"}
+        aria-label={open && !allDone ? "Today's plan" : open ? "Close today's plan" : "Open today's plan"}
         style={{
           display: 'flex',
           flexDirection: 'column',
@@ -126,7 +177,7 @@ export default function DayPlanCard({
           background: 'none',
           border: 'none',
           padding: 0,
-          cursor: 'pointer',
+          cursor: open && !allDone ? 'default' : 'pointer',
           WebkitTapHighlightColor: 'transparent',
         }}
       >
@@ -175,7 +226,7 @@ export default function DayPlanCard({
 
         <div style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--ink)' }}>Today's plan</div>
         <div style={{ fontSize: '0.72rem', color: 'var(--ink-muted)' }}>
-          {allDone ? 'All done!' : open ? `${doneCount}/${items.length} done` : `${doneCount}/${items.length} done · tap to open`}
+          {allDone ? (open ? 'All done! · tap to close' : 'All done! · tap to look back') : open ? `${doneCount}/${items.length} done` : `${doneCount}/${items.length} done · tap to open`}
         </div>
       </button>
 
