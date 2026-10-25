@@ -1,7 +1,7 @@
 // BrainDump.tsx
 // Tier 1, item 2: "Get it out of my head." A global, always-available dump
-// box. Free text goes to Groq, comes back sorted into the four buckets Polly
-// actually has structured storage for — Tasks, Grocery, Bills, and Appointments —
+// box. Free text goes to Groq, comes back sorted into the three buckets Polly
+// actually has structured storage for — Tasks, Bills, and Appointments —
 // then the user reviews/edits before anything is saved.
 //
 // Bills are saved to the bills table. Since free-form brain dumps may not
@@ -21,7 +21,7 @@ import Icon from './Icon';
 interface DraftItem {
   id: string;
   text: string;
-  category: 'task' | 'grocery' | 'bills' | 'appointments';
+  category: 'task' | 'bills' | 'appointments';
   include: boolean;
   amount?: number | null;
   dueDay?: number | null;
@@ -39,7 +39,7 @@ function buildPrompt(dump: string): string {
   const now = new Date();
   const todayStr = `${todayISO()} (${now.toLocaleDateString('en-US', { weekday: 'long' })})`;
 
-  return `Sort this free-form brain dump into four buckets: "task" (chores, errands, calls, things to plan, anything action-shaped), "grocery" (specific items to buy at a store), "bills" (money owed, bills to pay, invoices, subscriptions, rent, utilities, credit card payments, debt payments, or other financial obligations), and "appointments" (scheduled visits or meetings the user has to show up to, like a dentist visit, vet check-up, or therapy session). Calling to book or schedule something is a "task", not an appointment.
+  return `Sort this free-form brain dump into three buckets: "task" (chores, errands, shopping or things to buy, calls, things to plan, anything action-shaped), "bills" (money owed, bills to pay, invoices, subscriptions, rent, utilities, credit card payments, debt payments, or other financial obligations), and "appointments" (scheduled visits or meetings the user has to show up to, like a dentist visit, vet check-up, or therapy session). Calling to book or schedule something is a "task", not an appointment.
 
 For bills, extract the amount, due day of the month, and whether it is recurring ONLY when the user explicitly provides that information. Never guess missing values. Use null for information that was not provided.
 
@@ -54,7 +54,6 @@ Respond ONLY with a valid JSON object, no markdown, no backticks, no explanation
 {
   "items": [
     { "text": "short item label", "category": "task" },
-    { "text": "short item label", "category": "grocery" },
     { "text": "short bill label", "category": "bills", "amount": null, "dueDay": null, "recurring": null },
     { "text": "short appointment title", "category": "appointments", "apptDate": null, "apptTime": null }
   ]
@@ -63,7 +62,7 @@ Respond ONLY with a valid JSON object, no markdown, no backticks, no explanation
 
 async function categorize(dump: string): Promise<{
   text: string;
-  category: 'task' | 'grocery' | 'bills' | 'appointments';
+  category: 'task' | 'bills' | 'appointments';
   amount: number | null;
   dueDay: number | null;
   recurring: boolean | null;
@@ -87,13 +86,11 @@ async function categorize(dump: string): Promise<{
     .map((i: any) => ({
   text: i.text.trim(),
   category:
-    i.category === 'grocery'
-      ? 'grocery'
-      : i.category === 'bills'
-        ? 'bills'
-        : i.category === 'appointments'
-          ? 'appointments'
-          : 'task',
+    i.category === 'bills'
+      ? 'bills'
+      : i.category === 'appointments'
+        ? 'appointments'
+        : 'task',
   amount: typeof i.amount === 'number' ? i.amount : null,
   dueDay: typeof i.dueDay === 'number' ? i.dueDay : null,
   recurring: typeof i.recurring === 'boolean' ? i.recurring : null,
@@ -276,7 +273,6 @@ export default function BrainDump({ open, onClose }: { open: boolean; onClose: (
 
     try {
       const tasks = toSave.filter(d => d.category === 'task');
-      const groceries = toSave.filter(d => d.category === 'grocery');
       const bills = toSave.filter(d => d.category === 'bills');
       const appts = toSave.filter(d => d.category === 'appointments');
       const today = todayISO();
@@ -287,7 +283,6 @@ export default function BrainDump({ open, onClose }: { open: boolean; onClose: (
 
       const [
         { error: tasksError },
-        { error: groceriesError },
         { error: billsError },
         { error: apptsError },
       ] = await Promise.all([
@@ -297,15 +292,6 @@ export default function BrainDump({ open, onClose }: { open: boolean; onClose: (
               done: false,
               task_date: today,
               template_id: null,
-            })))
-          : Promise.resolve({ error: null }),
-
-        groceries.length > 0
-          ? supabase.from('grocery_items').insert(groceries.map(g => ({
-              name: g.text,
-              qty: '',
-              checked: false,
-              list_name: 'Default',
             })))
           : Promise.resolve({ error: null }),
 
@@ -330,7 +316,7 @@ export default function BrainDump({ open, onClose }: { open: boolean; onClose: (
           : Promise.resolve({ error: null }),
       ]);
 
-      if (tasksError || groceriesError || billsError || apptsError) {
+      if (tasksError || billsError || apptsError) {
         throw new Error('One or more items failed to save.');
       }
 
@@ -344,7 +330,6 @@ export default function BrainDump({ open, onClose }: { open: boolean; onClose: (
   }
 
   const taskCount = drafts?.filter(d => d.category === 'task').length ?? 0;
-  const groceryCount = drafts?.filter(d => d.category === 'grocery').length ?? 0;
   const billsCount = drafts?.filter(d => d.category === 'bills').length ?? 0;
   const apptsCount = drafts?.filter(d => d.category === 'appointments').length ?? 0;
 
@@ -431,17 +416,17 @@ export default function BrainDump({ open, onClose }: { open: boolean; onClose: (
         ) : (
           <>
             <div style={{ fontSize: '0.75rem', color: 'var(--ink-muted)' }}>
-              {taskCount} task{taskCount === 1 ? '' : 's'} · {groceryCount} grocery item{groceryCount === 1 ? '' : 's'} · {billsCount} bill{billsCount === 1 ? '' : 's'} · {apptsCount} appointment{apptsCount === 1 ? '' : 's'}. Uncheck or edit anything before saving.
+              {taskCount} task{taskCount === 1 ? '' : 's'} · {billsCount} bill{billsCount === 1 ? '' : 's'} · {apptsCount} appointment{apptsCount === 1 ? '' : 's'}. Uncheck or edit anything before saving.
             </div>
 
-            {(['task', 'grocery', 'bills', 'appointments'] as const).map(cat => {
+            {(['task', 'bills', 'appointments'] as const).map(cat => {
               const items = drafts.filter(d => d.category === cat);
               if (items.length === 0) return null;
 
               return (
                 <div key={cat}>
                   <div style={{ fontSize: '0.68rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--ink-muted)', marginBottom: 6 }}>
-                    {cat === 'task' ? 'Tasks' : cat === 'grocery' ? 'Grocery' : cat === 'bills' ? 'Bills' : 'Appointments'}
+                    {cat === 'task' ? 'Tasks' : cat === 'bills' ? 'Bills' : 'Appointments'}
                   </div>
 
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
@@ -475,7 +460,7 @@ export default function BrainDump({ open, onClose }: { open: boolean; onClose: (
                        <select
   value={d.category}
   onChange={e => updateDraft(d.id, {
-    category: e.target.value as 'task' | 'grocery' | 'bills' | 'appointments'
+    category: e.target.value as 'task' | 'bills' | 'appointments'
   })}
   style={{
     fontSize: '1rem',
@@ -486,7 +471,6 @@ export default function BrainDump({ open, onClose }: { open: boolean; onClose: (
   }}
 >
   <option value="task">Task</option>
-  <option value="grocery">Grocery</option>
   <option value="bills">Bill</option>
   <option value="appointments">Appointment</option>
 </select>
