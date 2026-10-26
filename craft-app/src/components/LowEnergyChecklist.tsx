@@ -34,7 +34,7 @@ interface DopamineItem {
   id: string;
   label: string;
   amount: number;
-  emoji: string;
+  icon: string;
   tier: 'little' | 'medium' | 'big';
 }
 
@@ -44,42 +44,42 @@ const DOPAMINE_ITEMS: DopamineItem[] = [
     id: 'water',
     label: 'Drink a glass of water',
     amount: 5,
-    emoji: '💧',
+    icon: 'drinkwater',
     tier: 'little',
   },
   {
     id: 'curtains',
     label: 'Open the curtains',
     amount: 5,
-    emoji: '☀️',
+    icon: 'opencurtains',
     tier: 'little',
   },
   {
     id: 'comfy-clothes',
     label: 'Put on comfy clothes',
     amount: 5,
-    emoji: '🧸',
+    icon: 'comfyclothes',
     tier: 'little',
   },
   {
     id: 'teeth',
     label: 'Brush your teeth',
     amount: 5,
-    emoji: '🪥',
+    icon: 'brushteeth',
     tier: 'little',
   },
   {
     id: 'face',
     label: 'Wash your face',
     amount: 5,
-    emoji: '🫧',
+    icon: 'washface',
     tier: 'little',
   },
   {
     id: 'song',
     label: 'Put on a favorite song',
     amount: 5,
-    emoji: '🎧',
+    icon: 'favoritesong',
     tier: 'little',
   },
 
@@ -88,42 +88,42 @@ const DOPAMINE_ITEMS: DopamineItem[] = [
     id: 'get-dressed',
     label: 'Get dressed',
     amount: 10,
-    emoji: '👗',
+    icon: 'getdressed',
     tier: 'medium',
   },
   {
     id: 'snack',
     label: 'Make a snack',
     amount: 10,
-    emoji: '🍓',
+    icon: 'makesnack',
     tier: 'medium',
   },
   {
     id: 'tiny-tidy',
     label: 'Tidy one tiny area',
     amount: 10,
-    emoji: '🧺',
+    icon: 'tidyonearea',
     tier: 'medium',
   },
   {
     id: 'bed',
     label: 'Make your bed',
     amount: 10,
-    emoji: '🛏️',
+    icon: 'makeyourbed',
     tier: 'medium',
   },
   {
     id: 'tea',
     label: 'Make tea or coffee',
     amount: 10,
-    emoji: '☕',
+    icon: 'maketeaorcoffee',
     tier: 'medium',
   },
   {
     id: 'stretch',
     label: 'Do a 5-minute stretch',
     amount: 10,
-    emoji: '🌷',
+    icon: '5minstretch',
     tier: 'medium',
   },
 
@@ -132,42 +132,42 @@ const DOPAMINE_ITEMS: DopamineItem[] = [
     id: 'meal',
     label: 'Eat a real meal',
     amount: 20,
-    emoji: '🍲',
+    icon: 'realmeal',
     tier: 'big',
   },
   {
     id: 'shower',
     label: 'Take a shower',
     amount: 20,
-    emoji: '🚿',
+    icon: 'takeshower',
     tier: 'big',
   },
   {
     id: 'walk',
     label: 'Go for a little walk',
     amount: 20,
-    emoji: '🌿',
+    icon: 'goforwalk',
     tier: 'big',
   },
   {
     id: 'hair',
     label: 'Wash your hair',
     amount: 20,
-    emoji: '🧴',
+    icon: 'washhair',
     tier: 'big',
   },
   {
     id: 'creative',
     label: 'Do something creative',
     amount: 20,
-    emoji: '🎨',
+    icon: 'creative',
     tier: 'big',
   },
   {
     id: 'outside',
     label: 'Leave the house for a little while',
     amount: 20,
-    emoji: '🌸',
+    icon: 'leavethehouse',
     tier: 'big',
   },
 ];
@@ -570,9 +570,20 @@ function BiteSizedTimer() {
               color: 'var(--ink)',
             }}
           >
-            <span style={{ fontSize: '1rem' }}>
-              {isWork ? '🌷' : '☕'}
-            </span>
+            <img
+              src={
+                isWork
+                  ? '/lowenergy/tinyfocustime.png'
+                  : '/lowenergy/maketeaorcoffee.png'
+              }
+              alt=""
+              style={{
+                width: 26,
+                height: 26,
+                objectFit: 'contain',
+                flexShrink: 0,
+              }}
+            />
 
             {isWork
               ? 'Tiny focus time'
@@ -739,6 +750,54 @@ function DopamineMenu({
   );
 
   const completedCount = completed.length;
+  const [open, setOpen] = useState(false);
+
+  if (!open) {
+    return (
+      <button
+        onClick={() => setOpen(true)}
+        aria-label="Open the dopamine menu"
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: 6,
+          width: '100%',
+          marginTop: 16,
+          padding: 0,
+          background: 'none',
+          border: 'none',
+          cursor: 'pointer',
+        }}
+      >
+        <img
+          src="/lowenergy/dopamine.png"
+          alt="Dopamine menu"
+          style={{
+            width: 190,
+            maxWidth: '70%',
+            height: 'auto',
+            filter:
+              'drop-shadow(0 4px 8px rgba(0,0,0,0.12))',
+          }}
+        />
+
+        <span
+          style={{
+            fontSize: '0.68rem',
+            fontWeight: 700,
+            color: 'var(--ink-muted)',
+          }}
+        >
+          {completedCount > 0
+            ? `Tap to open · ${completedCount} little win${
+                completedCount === 1 ? '' : 's'
+              } today`
+            : 'Tap to open'}
+        </span>
+      </button>
+    );
+  }
 
   return (
     <div
@@ -770,9 +829,7 @@ function DopamineMenu({
               color: 'var(--ink)',
             }}
           >
-            <span style={{ fontSize: '1.05rem' }}>
-              ✨
-            </span>
+            <Icon name="sparkle-single" size={16} />
             Dopamine menu
           </div>
 
@@ -788,22 +845,47 @@ function DopamineMenu({
           </p>
         </div>
 
-        {completedCount > 0 && (
-          <div
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'flex-end',
+            gap: 6,
+            flexShrink: 0,
+          }}
+        >
+          <button
+            onClick={() => setOpen(false)}
             style={{
-              flexShrink: 0,
-              background: 'var(--blush)',
-              color: 'var(--pink-dark)',
-              borderRadius: 999,
-              padding: '5px 9px',
+              border: '1px solid var(--border)',
+              background: 'var(--white)',
+              color: 'var(--ink-muted)',
+              borderRadius: 14,
+              padding: '5px 10px',
               fontSize: '0.65rem',
               fontWeight: 700,
+              cursor: 'pointer',
             }}
           >
-            {completedCount} little win
-            {completedCount === 1 ? '' : 's'}
-          </div>
-        )}
+            Close
+          </button>
+
+          {completedCount > 0 && (
+            <div
+              style={{
+                background: 'var(--blush)',
+                color: 'var(--pink-dark)',
+                borderRadius: 999,
+                padding: '5px 9px',
+                fontSize: '0.65rem',
+                fontWeight: 700,
+              }}
+            >
+              {completedCount} little win
+              {completedCount === 1 ? '' : 's'}
+            </div>
+          )}
+        </div>
       </div>
 
       <DopamineSection
@@ -921,17 +1003,19 @@ function DopamineSection({
                 opacity: isDone ? 0.72 : 1,
               }}
             >
-              <span
+              <img
+                src={`/lowenergy/${item.icon}.png`}
+                alt=""
                 style={{
-                  fontSize: '1rem',
+                  width: 30,
+                  height: 30,
+                  objectFit: 'contain',
                   flexShrink: 0,
                   filter: isDone
                     ? 'grayscale(0.3)'
                     : 'none',
                 }}
-              >
-                {item.emoji}
-              </span>
+              />
 
               <span
                 style={{
