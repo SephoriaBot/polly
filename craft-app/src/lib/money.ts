@@ -676,7 +676,9 @@ export async function getSafeToSpend(): Promise<
   );
 
   const buffer = SAFE_TO_SPEND_BUFFER;
-  const raw = low.balance - buffer;
+  // Never offer more than the money actually in hand right now, even if
+  // projected pay later in the window makes the lowest point look higher.
+  const raw = Math.min(low.balance, currentBalance) - buffer;
 
   const upcomingBills = rows.flatMap(row =>
     row.billsToday.map(bill => ({
