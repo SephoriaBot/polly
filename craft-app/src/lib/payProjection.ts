@@ -51,7 +51,7 @@ export interface PayProjectionInputs {
 }
 
 // Safe-to-spend settings shared by the Wallet card and "Can I afford this?".
-export const SAFE_TO_SPEND_LOOKAHEAD_DAYS = 10;
+export const SAFE_TO_SPEND_LOOKAHEAD_DAYS = 30;
 export const SAFE_TO_SPEND_BUFFER = 50;
 
 export function dateKey(d: Date) {
