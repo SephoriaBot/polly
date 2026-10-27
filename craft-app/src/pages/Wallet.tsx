@@ -1234,15 +1234,20 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
       // payday before the bill is credited and a bill before payday is not.
       const span = rows.slice(idx, idx + SAFE_TO_SPEND_LOOKAHEAD_DAYS + 1);
       const low = span.reduce((m, r) => (r.balance < m.balance ? r : m), span[0]);
+      // Money actually in hand at the start of this day: your real balance
+      // for today, the prior day's projected end balance after that. Safe to
+      // spend can never exceed it, even when later projected pay lifts the
+      // lowest point.
+      const inHand = idx === 0 ? calendarStartingBalance : rows[idx - 1].balance;
       return {
         key: row.key,
         date: row.date,
-        daySafe: low.balance - SAFE_TO_SPEND_BUFFER,
+        daySafe: Math.min(low.balance, inHand) - SAFE_TO_SPEND_BUFFER,
         lowBalance: low.balance,
         lowDate: low.date,
       };
     });
-  }, [safeProjection, moneyCalendarResult]);
+  }, [safeProjection, moneyCalendarResult, calendarStartingBalance]);
 
   // Today's safe-to-spend number, shown above the heat strip. Reads directly
   // from heatStripDays — the same array the strip itself renders — so this
