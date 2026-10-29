@@ -1808,7 +1808,7 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                 <div style={{ fontSize: 24, lineHeight: 1 }}><Icon name="calendar" size={24} /></div>
                 <div style={{ fontSize: 14, fontWeight: 800, color: "var(--ink)" }}>Money Calendar</div>
                 <div style={{ fontSize: 11, color: "var(--pink-dark)", marginBottom: 14 }}>
-                  Runs from today through the end of the selected month (or the 1st through the end for a future month). Log your shift times (or planned shift times) each day — anything past 40 in a Sunday–Saturday week is paid at your OT wage automatically. Your early-pay eligible percentage comes from your last paycheck's net-to-gross ratio (post-tax ÷ pre-tax), applied against your cumulative pool for the week, minus that check's flat deductions and a growing safety buffer — whatever's unclaimed by Saturday night lands as a lump catch-up the following Wednesday.
+                  Log your shift times (or planned shift times) each day to see your projected pay through the end of the month. Hours past 40 in a Sunday–Saturday week are paid at your OT wage automatically.
                 </div>
 
                 <div style={{ display: "flex", gap: 6, overflowX: "auto", paddingBottom: 4, marginBottom: 14 }}>
@@ -1825,7 +1825,7 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                 </div>
 
                 <div style={{ marginBottom: 14 }}>
-                  <div className="form-label">Early Pay Formula</div>
+                  <div className="form-label">Early Pay Settings</div>
                   <select
                     className="form-input"
                     value={earlyPayPresetId}
@@ -1837,8 +1837,8 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                   </select>
                   <div style={{ fontSize: 10, color: "var(--ink-muted)", marginTop: 4 }}>
                     {earlyPayPresetId === "amazon"
-                      ? "Mirrors Amazon's Anytime Pay math: a 2% safety buffer that steps up to 8% once you've logged 55+ hours in the week."
-                      : "Set your own safety buffer and hours threshold below to match your employer's early-pay program."}
+                      ? "A 2% safety buffer that steps up to 8% once you've logged 55+ hours in the week."
+                      : "Set your own safety buffer and hours threshold below."}
                   </div>
                   {earlyPayPresetId === "custom" && (
                     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginTop: 8 }}>
@@ -2068,7 +2068,7 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                     <EditableCell type="number" className="form-input" value={budget.net_to_gross_ratio || ""} placeholder="e.g. 0.77" onChange={v => updateBudget("net_to_gross_ratio", parseFloat(v) || 0)} />
                     <div style={{ fontSize: 10, color: "var(--ink-muted)", marginTop: 4 }}>
                       {earlyPayPresetId === "amazon"
-                        ? "From payroll.amazon.work: previous paycheck's post-tax ÷ pre-tax earnings. Update it each payday."
+                        ? "Previous paycheck's post-tax ÷ pre-tax earnings, from your pay portal. Update it each payday."
                         : "Previous paycheck's post-tax ÷ pre-tax earnings, from your pay portal. Update it each payday."}
                     </div>
                   </div>
@@ -2077,7 +2077,7 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                     <EditableCell type="number" className="form-input" value={budget.flat_deductions_prev || ""} placeholder="e.g. 62.84" onChange={v => updateBudget("flat_deductions_prev", parseFloat(v) || 0)} />
                     <div style={{ fontSize: 10, color: "var(--ink-muted)", marginTop: 4 }}>
                       {earlyPayPresetId === "amazon"
-                        ? "Flat deductions from your previous paycheck (per the Amazon app) — for most people this is just the health premium."
+                        ? "Flat deductions from your previous paycheck — for most people this is just the health premium."
                         : "Flat deductions from your previous paycheck — for most people this is just the health premium."}
                     </div>
                   </div>
