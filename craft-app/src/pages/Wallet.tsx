@@ -920,9 +920,20 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
   // automatically from what's on their day cards.
   const [priorAnchor, setPriorAnchor] = useState("");
 
+  // The anchor for a typed number. If today's shift is already over, the
+  // number you see (and edit) already includes today's hours, so counting
+  // starts tomorrow. Otherwise the field would add today's hours on top of
+  // whatever you type and keep refilling itself while you backspace.
+  function typedAnchorKey() {
+    const now = new Date();
+    const d = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    if (isShiftOver(dateKey(d), d.getDay())) d.setDate(d.getDate() + 1);
+    return dateKey(d);
+  }
+
   function setPriorWeekHoursValue(value: string) {
     setPriorWeekHours({ weekStart: currentWeekStartKey(), reg: value, ot: "" });
-    setPriorAnchor(dateKey(new Date()));
+    setPriorAnchor(typedAnchorKey());
   }
 
   // An older typed number has no anchor yet: treat it as covering through
@@ -930,7 +941,7 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
   useEffect(() => {
     if (!walletSettingsLoaded || priorAnchor) return;
     if (priorWeekHours.weekStart === currentWeekStartKey() && priorWeekHours.reg !== "") {
-      setPriorAnchor(dateKey(new Date()));
+      setPriorAnchor(typedAnchorKey());
     }
   }, [walletSettingsLoaded, priorAnchor, priorWeekHours]);
 
