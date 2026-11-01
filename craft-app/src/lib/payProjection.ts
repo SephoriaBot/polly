@@ -83,7 +83,7 @@ export const EARLY_PAY_PRESETS: Record<EarlyPayPresetId, EarlyPayPreset> = {
     garnishments: 0,
     safetyBufferNormal: 0.02,
     safetyBufferHighHours: 0.08,
-    highHoursThreshold: 45,
+    highHoursThreshold: 55,
   },
   custom: {
     id: "custom",
