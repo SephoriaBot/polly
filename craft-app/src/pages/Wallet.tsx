@@ -1559,6 +1559,14 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
     await supabase.from("debts").update({ paid_off: false }).eq("id", id);
   }
 
+  async function activateDebt(id: number) {
+    const debt = debts.find(d => d.id === id);
+    if (!debt) return;
+    const original = debt.original_balance || debt.balance;
+    setDebts(prev => prev.map(d => d.id === id ? { ...d, deferred: false, original_balance: original } : d));
+    await supabase.from("debts").update({ deferred: false, original_balance: original }).eq("id", id);
+  }
+
   async function removeDebt(id: number) {
     setDebts(prev => prev.filter(d => d.id !== id));
     await supabase.from("debts").delete().eq("id", id);
@@ -2873,7 +2881,8 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                             <td style={{ padding: "9px 8px" }}><EditableCell value={d.balance} onChange={v => updateDebt(d.id, "balance", parseFloat(v) || 0)} /></td>
                             <td style={{ padding: "9px 8px" }}><EditableCell value={d.apr} onChange={v => updateDebt(d.id, "apr", parseFloat(v) || 0)} /></td>
                             <td style={{ padding: "9px 8px", color: "var(--ink-muted)", fontSize: 11 }}>Not targeted until active debts clear</td>
-                            <td style={{ padding: "9px 8px", textAlign: "center" }}>
+                            <td style={{ padding: "9px 8px", textAlign: "center", whiteSpace: "nowrap" }}>
+                              <button className="btn btn-primary btn-sm" style={{ marginRight: 6 }} onClick={() => activateDebt(d.id)}>Activate</button>
                               <button className="btn btn-ghost btn-sm" onClick={() => removeDebt(d.id)}><Icon name="icon-trash2" size={24} /></button>
                             </td>
                           </tr>
