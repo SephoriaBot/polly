@@ -1,6 +1,7 @@
-// Shared horizontally-scrollable pill tab bar, used to split up pages that
-// were getting long (Planner, Habitat, Wallet, Grocery) into focused
-// single-section views instead of one long stacked scroll.
+// Shared pill tab bar, used to split up pages that were getting long
+// (Planner, Habitat, Wallet, Dashboard) into focused single-section views
+// instead of one long stacked scroll. Tabs wrap onto extra rows so every
+// option is visible without horizontal scrolling.
 import { useEffect } from 'react';
 import Icon, { type IconName } from './Icon';
 import { loadSavedTab, saveTab } from '../lib/navMemory';
@@ -38,12 +39,9 @@ export default function PageTabs<T extends string>({ tabs, active, onChange }: P
     <div
       style={{
         display: 'flex',
+        flexWrap: 'wrap',
         gap: 6,
-        overflowX: 'auto',
-        paddingBottom: 4,
         marginBottom: 16,
-        WebkitOverflowScrolling: 'touch',
-        scrollbarWidth: 'none',
       }}
     >
       {tabs.map(tab => {
@@ -53,7 +51,7 @@ export default function PageTabs<T extends string>({ tabs, active, onChange }: P
             key={tab.key}
             onClick={() => onChange(tab.key)}
             style={{
-              display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0,
+              display: 'flex', alignItems: 'center', gap: 6,
               padding: '8px 14px', borderRadius: 999,
               border: `1.5px solid ${isActive ? 'var(--primary)' : 'var(--border)'}`,
               background: isActive ? 'var(--primary)' : 'var(--surface)',
