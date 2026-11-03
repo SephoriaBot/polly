@@ -3,6 +3,7 @@ import type { CSSProperties } from "react";
 import { supabase } from '../lib/supabase';
 import Icon from '../components/Icon';
 import PageTabs, { type PageTab } from '../components/PageTabs';
+import SuppliesTab from '../components/wallet/SuppliesTab';
 import { useTheme } from '../context/ThemeContext';
 import { Polly } from '../lib';
 import emptyWallet from '../assets/icons/empty-wallet.png';
@@ -356,7 +357,7 @@ function EditableCell({ value, onChange, type = "number", style, className, plac
   );
 }
 
-export default function Wallet({ initialView }: { initialView?: 'home' | 'calendar' | 'bills' | 'debts' } = {}) {
+export default function Wallet({ initialView }: { initialView?: 'home' | 'calendar' | 'bills' | 'debts' | 'supplies' } = {}) {
   const { theme } = useTheme();
   const { notifyGrowth } = useCreatureGrowth();
   const [debts, setDebts] = useState<Debt[]>([]);
@@ -367,7 +368,7 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
   const [payments, setPayments] = useState<BillPayment[]>([]);
   const [nextId, setNextId] = useState(20);
   const [nextBillId, setNextBillId] = useState(10);
-  const [view, setView] = useState<"home" | "calendar" | "bills" | "debts">(initialView ?? "home");  const [showDeferred, setShowDeferred] = useState(false);
+  const [view, setView] = useState<"home" | "calendar" | "bills" | "debts" | "supplies">(initialView ?? "home");  const [showDeferred, setShowDeferred] = useState(false);
   const [, setLoading] = useState(true);
   const [savedMsg, setSavedMsg] = useState(false);
   const [anytimePay, setAnytimePay] = useState("");
@@ -1612,6 +1613,7 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
     calendar: { text: "Money Calendar", icon: "calendar" },
     bills: { text: "Bills", icon: "house" },
     debts: { text: "Debts", icon: "calculator-hearts" },
+    supplies: { text: "Supplies", icon: "basket" },
   };
 
   const WALLET_TABS: PageTab<typeof view>[] = [
@@ -1619,6 +1621,7 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
     { key: "calendar", label: "Money Calendar", icon: "calendar" },
     { key: "bills", label: "Bills", icon: "house" },
     { key: "debts", label: "Debts", icon: "calculator-hearts" },
+    { key: "supplies", label: "Supplies", icon: "basket" },
   ];
 
   return (
@@ -2680,6 +2683,8 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
             </div>
           </>
         )}
+
+        {view === "supplies" && <SuppliesTab />}
 
         {view === "debts" && (
           <>
