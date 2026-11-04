@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase';
 import Icon from '../components/Icon';
 import PageTabs, { type PageTab } from '../components/PageTabs';
 import SuppliesTab from '../components/wallet/SuppliesTab';
+import PlanTab from '../components/wallet/PlanTab';
 import { useTheme } from '../context/ThemeContext';
 import { Polly } from '../lib';
 import emptyWallet from '../assets/icons/empty-wallet.png';
@@ -368,7 +369,7 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
   const [payments, setPayments] = useState<BillPayment[]>([]);
   const [nextId, setNextId] = useState(20);
   const [nextBillId, setNextBillId] = useState(10);
-  const [view, setView] = useState<"home" | "calendar" | "bills" | "debts" | "supplies">(initialView ?? "home");  const [showDeferred, setShowDeferred] = useState(false);
+  const [view, setView] = useState<"home" | "plan" | "calendar" | "bills" | "debts" | "supplies">(initialView ?? "home");  const [showDeferred, setShowDeferred] = useState(false);
   const [, setLoading] = useState(true);
   const [savedMsg, setSavedMsg] = useState(false);
   const [anytimePay, setAnytimePay] = useState("");
@@ -1610,6 +1611,7 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
 
     const VIEW_TITLES: Record<typeof view, { text: string; icon?: IconName }> = {
     home: { text: "Overview", icon: "title-wallet" },
+    plan: { text: "Plan", icon: "piggy-bank" },
     calendar: { text: "Money Calendar", icon: "calendar" },
     bills: { text: "Bills", icon: "house" },
     debts: { text: "Debts", icon: "calculator-hearts" },
@@ -1618,6 +1620,7 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
 
   const WALLET_TABS: PageTab<typeof view>[] = [
     { key: "home", label: "Overview", icon: "title-wallet" },
+    { key: "plan", label: "Plan", icon: "piggy-bank" },
     { key: "calendar", label: "Money Calendar", icon: "calendar" },
     { key: "bills", label: "Bills", icon: "house" },
     { key: "debts", label: "Debts", icon: "calculator-hearts" },
@@ -2684,6 +2687,7 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
           </>
         )}
 
+        {view === "plan" && <PlanTab />}
         {view === "supplies" && <SuppliesTab />}
 
         {view === "debts" && (
