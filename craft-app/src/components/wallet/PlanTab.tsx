@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { supabase } from '../../lib/supabase';
 import {
   buildBillsByDate,
   buildMoneyCalendarRows,
@@ -12,7 +11,7 @@ import {
 /* ------------------------------------------------------------------
    Plan tab: one calm page that answers
    1) How much can I safely set aside THIS WEEK?
-   2) Where does THIS MONTH land after pay, bills and debt minimums?
+   2) Where does THIS MONTH land after pay and bills?
    3) What does each week of the month look like?
 
    It runs the exact same projection as the Money Calendar and
@@ -21,15 +20,6 @@ import {
 
 type Loaded = Awaited<ReturnType<typeof loadPayProjectionData>>;
 type Row = ReturnType<typeof buildMoneyCalendarRows>['rows'][number];
-
-interface DebtLite {
-  id: number;
-  name: string;
-  min_payment: number;
-  balance: number;
-  deferred: boolean;
-  paid_off?: boolean;
-}
 
 interface SplitPreset {
   id: string;
@@ -46,7 +36,6 @@ const SPLITS: SplitPreset[] = [
 ];
 
 const LS_SPLIT = 'polly.plan.split';
-const LS_DEBT_MINS = 'polly.plan.reserveDebtMins';
 
 function readLS(key: string): string | null {
   try {
@@ -128,23 +117,16 @@ function Line({
 
 export default function PlanTab() {
   const [data, setData] = useState<Loaded | null>(null);
-  const [debts, setDebts] = useState<DebtLite[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [showMath, setShowMath] = useState(false);
   const [splitId, setSplitId] = useState<string>(() => readLS(LS_SPLIT) || 'balanced');
-  const [reserveDebtMins, setReserveDebtMins] = useState<boolean>(() => readLS(LS_DEBT_MINS) !== 'off');
 
   const load = useCallback(async () => {
     setLoading(true);
     setError('');
     try {
-      const [projection, debtRes] = await Promise.all([
-        loadPayProjectionData(),
-        supabase.from('debts').select('id,name,min_payment,balance,deferred,paid_off'),
-      ]);
-      setData(projection);
-      setDebts((debtRes.data ?? []) as DebtLite[]);
+      setData(await loadPayProjectionData());
     } catch (e) {
       console.error('PlanTab load failed:', e);
       setError('Could not load your numbers. Check your connection and try again.');
@@ -160,12 +142,6 @@ export default function PlanTab() {
   function pickSplit(id: string) {
     setSplitId(id);
     writeLS(LS_SPLIT, id);
-  }
-
-  function toggleDebtMins() {
-    const next = !reserveDebtMins;
-    setReserveDebtMins(next);
-    writeLS(LS_DEBT_MINS, next ? 'on' : 'off');
   }
 
   const plan = useMemo(() => {
@@ -204,18 +180,14 @@ export default function PlanTab() {
     const lookRows = rows.slice(0, SAFE_TO_SPEND_LOOKAHEAD_DAYS + 1);
     const low = lookRows.reduce((m, r) => (r.balance < m.balance ? r : m), lookRows[0]);
 
-    const activeDebts = debts.filter(d => !d.deferred && !d.paid_off && Number(d.balance) > 0);
-    const debtMinTotal = activeDebts.reduce((s, d) => s + (Number(d.min_payment) || 0), 0);
-    const debtReserve = reserveDebtMins ? debtMinTotal : 0;
-
     const inHand = data.currentBalance - overdueTotal;
-    const weekSafeRaw = Math.min(low.balance, inHand) - SAFE_TO_SPEND_BUFFER - debtReserve;
+    const weekSafeRaw = Math.min(low.balance, inHand) - SAFE_TO_SPEND_BUFFER;
 
     const payIn = monthRows.reduce((s, r) => s + incomeOf(r), 0);
     const billsOut = monthRows.reduce((s, r) => s + r.billsTotal, 0);
     const otherOut = monthRows.reduce((s, r) => s + r.extraExpenseToday, 0);
     const monthEndBalance = monthRows[monthRows.length - 1].balance;
-    const monthLanding = monthEndBalance - debtReserve - SAFE_TO_SPEND_BUFFER;
+    const monthLanding = monthEndBalance - SAFE_TO_SPEND_BUFFER;
 
     // Paid vs still-to-pay bills this month, for the progress bar.
     const paidThisMonth = data.payments
@@ -267,9 +239,6 @@ export default function PlanTab() {
       inHand,
       overdueBills,
       overdueTotal,
-      debtMinTotal,
-      debtReserve,
-      activeDebts,
       weekSafeRaw,
       payIn,
       billsOut,
@@ -282,7 +251,7 @@ export default function PlanTab() {
       weeks,
       upcomingBills,
     };
-  }, [data, debts, reserveDebtMins]);
+  }, [data]);
 
   if (loading && !data) {
     return (
@@ -399,7 +368,6 @@ export default function PlanTab() {
                 value={plan.low.balance}
               />
               <Line label="Safety buffer" value={SAFE_TO_SPEND_BUFFER} sign="-" />
-              {plan.debtReserve > 0 && <Line label="Debt minimums reserved" value={plan.debtReserve} sign="-" />}
               <Line label="Safe to set aside" value={plan.weekSafeRaw} bold />
               <div style={{ ...labelStyle, marginTop: 8 }}>
                 We use the lower of your balance today and your lowest balance in the next {SAFE_TO_SPEND_LOOKAHEAD_DAYS} days,
@@ -450,7 +418,6 @@ export default function PlanTab() {
             <Line label="Pay still coming" value={plan.payIn} sign="+" />
             <Line label="Bills still to pay" value={plan.billsOut + plan.overdueTotal} sign="-" />
             {plan.otherOut > 0 && <Line label="Other planned spending" value={plan.otherOut} sign="-" />}
-            {plan.debtReserve > 0 && <Line label="Debt minimums" value={plan.debtReserve} sign="-" />}
             <Line label="Safety buffer" value={SAFE_TO_SPEND_BUFFER} sign="-" />
             <Line label={`Left to plan by ${shortDate(plan.monthEnd)}`} value={plan.monthLanding} bold />
           </div>
@@ -475,15 +442,6 @@ export default function PlanTab() {
             </div>
           </div>
 
-          {plan.debtMinTotal > 0 && (
-            <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 12, fontSize: 12, cursor: 'pointer' }}>
-              <input type="checkbox" checked={reserveDebtMins} onChange={toggleDebtMins} />
-              <span>
-                Reserve my {fmt(plan.debtMinTotal)} in debt minimums
-                <span style={{ color: 'var(--ink-muted)' }}> (turn off if they're already in Bills)</span>
-              </span>
-            </label>
-          )}
         </div>
       </div>
 
@@ -533,7 +491,7 @@ export default function PlanTab() {
             })}
           </div>
           <div style={{ ...labelStyle, marginTop: 10 }}>
-            Week-by-week balances don't subtract debt minimums or the buffer; "Tight / OK / Comfortable" does include the buffer.
+            Week-by-week balances don't subtract the buffer; "Tight / OK / Comfortable" does include it.
           </div>
         </div>
       </div>
