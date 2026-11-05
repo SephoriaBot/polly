@@ -1265,28 +1265,86 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
     }
   }
 
-  async function updateMonthBill(bill: typeof monthBills[0], field: "name" | "amount" | "due_day", value: string | number) {
-    if (bill.recurring) {
-      if (bill.paymentId) {
-        const { error } = await supabase.from("bill_payments").update({ [field]: value }).eq("id", bill.paymentId);
-        if (error) { console.error("updateMonthBill failed:", error); return; }
-        setPayments(prev => prev.map(p => p.id === bill.paymentId ? { ...p, [field]: value } : p));
-      } else {
-        const newPayment: BillPayment = {
-          bill_id: bill.id, month: selectedMonth, year: selectedYear, paid: false,
-          name: bill.name, amount: bill.amount, due_day: bill.due_day,
-          [field]: value,
-        };
-        const { data, error } = await supabase.from("bill_payments").insert(newPayment).select().single();
-        if (error) { console.error("updateMonthBill insert failed:", error); return; }
-        if (data) setPayments(prev => [...prev, data]);
-      }
-    } else {
-      const { error } = await supabase.from("bills").update({ [field]: value }).eq("id", bill.id);
-      if (error) { console.error("updateMonthBill (bills) failed:", error); return; }
-      setBills(prev => prev.map(b => b.id === bill.id ? { ...b, [field]: value } : b));
+  
+async function updateMonthBill(
+  bill: typeof monthBills[0],
+  field: "name" | "amount" | "due_day",
+  value: string | number
+) {
+  if (bill.recurring) {
+    const updates: Record<string, any> = { [field]: value };
+
+    // Keep the canonical payment date synchronized with the edited day.
+    if (field === "due_day" && bill.frequency_unit !== "week") {
+      const day = Number(value);
+      const lastDay = new Date(selectedYear, selectedMonth, 0).getDate();
+      const safeDay = Math.min(Math.max(1, day), lastDay);
+
+      updates.due_date = isoDate(
+        new Date(selectedYear, selectedMonth - 1, safeDay)
+      );
     }
+
+    if (bill.paymentId) {
+      const { error } = await supabase
+        .from("bill_payments")
+        .update(updates)
+        .eq("id", bill.paymentId);
+
+      if (error) {
+        console.error("updateMonthBill failed:", error);
+        return;
+      }
+
+      setPayments(prev =>
+        prev.map(p =>
+          p.id === bill.paymentId ? { ...p, ...updates } : p
+        )
+      );
+    } else {
+      const newPayment: BillPayment = {
+        bill_id: bill.id,
+        month: selectedMonth,
+        year: selectedYear,
+        paid: false,
+        name: bill.name,
+        amount: bill.amount,
+        due_day: bill.due_day,
+        ...updates,
+      };
+
+      const { data, error } = await supabase
+        .from("bill_payments")
+        .insert(newPayment)
+        .select()
+        .single();
+
+      if (error) {
+        console.error("updateMonthBill insert failed:", error);
+        return;
+      }
+
+      if (data) setPayments(prev => [...prev, data]);
+    }
+  } else {
+    const { error } = await supabase
+      .from("bills")
+      .update({ [field]: value })
+      .eq("id", bill.id);
+
+    if (error) {
+      console.error("updateMonthBill (bills) failed:", error);
+      return;
+    }
+
+    setBills(prev =>
+      prev.map(b =>
+        b.id === bill.id ? { ...b, [field]: value } : b
+      )
+    );
   }
+}
+
 
   async function saveBudgetCalc() {
     if (!calcHasInput) return;
