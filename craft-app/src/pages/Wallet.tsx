@@ -657,8 +657,65 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
   }, [selectedMonth, selectedYear, dateKey(new Date())]);
 
   function buildBillsByDate(allDays: Date[]) {
-    return buildBillsByDateShared(bills, payments, allDays);
-  }
+  const result = buildBillsByDateShared(bills, payments, allDays);
+
+  const now = new Date();
+  const todayKey = dateKey(now);
+  const todayMonth = now.getMonth() + 1;
+  const todayYear = now.getFullYear();
+  const todayDay = now.getDate();
+
+  // Rebuild today's bill list using the current due_day,
+  // rather than an outdated stored due_date.
+  const todayBills: { id: number; name: string; amount: number }[] = [];
+
+  bills.forEach(bill => {
+    if (bill.recurring) {
+      if (bill.frequency_unit === "week") {
+        // Keep weekly bills on their canonical occurrence dates.
+        todayBills.push(
+          ...(result[todayKey] || []).filter(b => b.id === bill.id)
+        );
+        return;
+      }
+
+      const payment = payments.find(
+        p => p.bill_id === bill.id &&
+          p.month === todayMonth &&
+          p.year === todayYear
+      );
+
+      if (payment?.paid) return;
+
+      const dueDay = payment?.due_day ?? bill.due_day;
+
+      if (dueDay === todayDay) {
+        todayBills.push({
+          id: bill.id,
+          name: payment?.name ?? bill.name,
+          amount: payment?.amount ?? bill.amount,
+        });
+      }
+    } else if (
+      bill.bill_month === todayMonth &&
+      bill.bill_year === todayYear &&
+      bill.due_day === todayDay
+    ) {
+      const payment = payments.find(p => p.bill_id === bill.id);
+      if (!payment?.paid) {
+        todayBills.push({
+          id: bill.id,
+          name: bill.name,
+          amount: bill.amount,
+        });
+      }
+    }
+  });
+
+  result[todayKey] = todayBills;
+
+  return result;
+}
 
   const billsByDate = useMemo(
     () => buildBillsByDate(calendarDays),
