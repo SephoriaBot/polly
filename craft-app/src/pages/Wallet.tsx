@@ -14,7 +14,6 @@ import CheckMark from '../components/CheckMark';
 import { useCreatureGrowth } from '../creatures/CreatureGrowthContext';
 import { triggerActionEvent } from '../lib/questSystem';
 import PageTitleLogo from "../components/PageTitleLogo";
-import { localDateKey } from "../lib/dateKey";
 import {
   EARLY_PAY_PRESETS,
   buildBillsByDate as buildBillsByDateShared,
@@ -23,7 +22,6 @@ import {
   type EarlyPayPreset,
   type EarlyPayPresetId,
   type PayProjectionInputs,
-  SAFE_TO_SPEND_BUFFER,
   SAFE_TO_SPEND_LOOKAHEAD_DAYS,
 } from "../lib/payProjection";
 
@@ -82,18 +80,6 @@ interface BillPayment {
   amount?: number;
   due_day?: number;
   due_date?: string; // ISO date — canonical occurrence date, lets a bill have multiple entries within one calendar month
-}
-
-interface DailyLog {
-  id?: number;
-  date: string;
-  anytime_pay_amount: number;
-  bills_allocation: number;
-  buffer_allocation: number;
-  minimums_allocation: number;
-  spending_allocation: number;
-  snowball_allocation: number;
-  notes: string;
 }
 
 type DebtStrategy = "snowball" | "avalanche";
@@ -254,15 +240,6 @@ function fmt(n: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(n);
 }
 
-function pct(n: number, total: number) {
-  if (!total) return "0%";
-  return Math.round((n / total) * 100) + "%";
-}
-
-function todayStr() {
-  return localDateKey();
-}
-
 function isLate(dueDay: number, month: number, year: number, paid: boolean) {
   if (paid) return false;
   const today = new Date();
@@ -286,11 +263,6 @@ function frequencyLabel(unit: "month" | "week" | undefined, interval: number | u
   if (n === 1) return "Every week";
   if (n === 2) return "Every 2 weeks";
   return `Every ${n} weeks`;
-}
-
-function hoursOfWork(amount: number, wage: number) {
-  if (!wage || wage <= 0) return null;
-  return (amount / wage).toFixed(1);
 }
 
 // Early-pay presets + the eligiblePercent math now live in lib/payProjection.ts
@@ -371,9 +343,6 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
   const [nextBillId, setNextBillId] = useState(10);
   const [view, setView] = useState<"home" | "plan" | "calendar" | "bills" | "debts" | "supplies">(initialView ?? "home");  const [showDeferred, setShowDeferred] = useState(false);
   const [, setLoading] = useState(true);
-  const [savedMsg, setSavedMsg] = useState(false);
-  const [anytimePay, setAnytimePay] = useState("");
-  const [planNotes, setPlanNotes] = useState("");
   const [showBillForm, setShowBillForm] = useState(false);
   const [newBill, setNewBill] = useState({
     name: "", amount: "", due_day: "", recurring: true,
@@ -1146,16 +1115,6 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
   // week containing today, or the first week of a future month).
   const [weekOpen, setWeekOpen] = useState<Record<string, boolean>>({});
 
-  // Opens whichever week holds a day, then scrolls to it. Needed because a
-  // collapsed week has no day cards in the DOM to scroll to.
-  function jumpToDay(key: string) {
-    const chunk = moneyCalendarWeekChunks.find(c => c.rows.some(r => r.key === key));
-    if (chunk) setWeekOpen(prev => ({ ...prev, [chunk.rows[0].key]: true }));
-    setTimeout(() => {
-      document.getElementById(`money-day-${key}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
-    }, 60);
-  }
-
   const monthBills = useMemo(() => {
     const rows: (Bill & { name: string; amount: number; due_day: number; paid: boolean; late: boolean; days: number; paymentId?: number })[] = [];
 
@@ -1204,158 +1163,9 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
   }, [bills, payments, selectedMonth, selectedYear]);
 
   const urgentBills = monthBills.filter(b => !b.paid && b.days <= 7 && b.days >= 0);
-  const near3Bills = monthBills.filter(b => !b.paid && (b.late || (b.days <= 3 && b.days >= 0)));
-  const near5Bills = monthBills.filter(b => !b.paid && (b.late || (b.days <= 5 && b.days >= 0)));
   const totalMonthlyBills = monthBills.reduce((s, b) => s + b.amount, 0);
   const paidTotal = monthBills.filter(b => b.paid).reduce((s, b) => s + b.amount, 0);
   const unpaidTotal = monthBills.filter(b => !b.paid).reduce((s, b) => s + b.amount, 0);
-
-  const near5Total = near5Bills.reduce((s, b) => s + b.amount, 0);
-
-  function tierForDaySafe(amount: number): { label: string; color: string; bg: string } {
-    if (amount <= 0) return { label: "Tight", color: "var(--danger)", bg: "var(--danger-bg)" };
-    if (amount < SAFE_TO_SPEND_BUFFER) return { label: "OK", color: "var(--gold-dark)", bg: "var(--gold-light)" };
-    return { label: "Comfortable", color: "var(--green-dark)", bg: "var(--sage-light)" };
-  }
-
-  // Safe-to-spend looks this many days ahead for the lowest point your
-  // balance will hit. It's deliberately longer than "bills in the next few
-  // days" so rent a week out is already reflected today.
-
-  // The month view stops at the last day of the month, which made the card
-  // blind to anything due after it (e.g. on Sep 30, October's rent was
-  // invisible). For the current month, project past month-end for the
-  // lookahead window using the same row logic + the same bills.
-  const safeProjection = useMemo(() => {
-    if (!isCalendarCurrentMonth || calendarDays.length === 0) return moneyCalendarResult;
-    const days = [...calendarDays];
-    const last = days[days.length - 1];
-    for (let i = 1; i <= SAFE_TO_SPEND_LOOKAHEAD_DAYS; i++) {
-      const next = new Date(last);
-      next.setDate(next.getDate() + i);
-      days.push(next);
-    }
-    return buildMoneyCalendarRows(days, calendarStartingBalance, buildBillsByDate(days));
-  }, [moneyCalendarResult, calendarDays, isCalendarCurrentMonth, calendarStartingBalance, bills, payments]);
-
-  const heatStripDays = useMemo(() => {
-    const rows = safeProjection.rows;
-    const visibleCount = moneyCalendarResult.rows.length;
-    return rows.slice(0, visibleCount).map((row, idx) => {
-      // Lowest projected end-of-day balance from this day through the lookahead
-      // window. Bills AND projected income are both in row.balance, so a
-      // payday before the bill is credited and a bill before payday is not.
-      const span = rows.slice(idx, idx + SAFE_TO_SPEND_LOOKAHEAD_DAYS + 1);
-      const low = span.reduce((m, r) => (r.balance < m.balance ? r : m), span[0]);
-      // Money actually in hand at the start of this day: your real balance
-      // for today, the prior day's projected end balance after that. Safe to
-      // spend can never exceed it, even when later projected pay lifts the
-      // lowest point.
-      const inHand = idx === 0 ? calendarStartingBalance : rows[idx - 1].balance;
-      return {
-        key: row.key,
-        date: row.date,
-        daySafe: Math.min(low.balance, inHand) - SAFE_TO_SPEND_BUFFER,
-        lowBalance: low.balance,
-        lowDate: low.date,
-      };
-    });
-  }, [safeProjection, moneyCalendarResult, calendarStartingBalance]);
-
-  // Today's safe-to-spend number, shown above the heat strip. Reads directly
-  // from heatStripDays — the same array the strip itself renders — so this
-  // number and the strip's today-tile can never disagree. Only resolves when
-  // the Calendar tab is showing the current month (the only time "today" is
-  // actually one of the rendered rows).
-  const todayHeatEntry = isCalendarCurrentMonth
-    ? heatStripDays.find(d => d.key === dateKey(new Date()))
-    : undefined;
-
-  const pay = parseFloat(anytimePay) || 0;
-  const inputAmount = pay;
-
-  const urgentTotal = urgentBills.reduce((s, b) => s + b.amount, 0);
-  const near3Total = near3Bills.reduce((s, b) => s + b.amount, 0);
-  const isCrisis = near3Total >= 200 || near5Total >= 475;
-  // near5 is a superset of near3, so it always covers whichever threshold tripped
-  const crisisBills = near5Bills;
-  const crisisTotal = near5Total;
-  const billsRate = totalMonthlyBills / 30;
-
-  const NEEDS_FLOOR = 25;
-
-  let unifiedBills: number;
-  let unifiedSnowball: number;
-  let unifiedBuffer: number;
-  let unifiedNeeds: number;
-  let unifiedFun: number;
-
-  if (isCrisis) {
-    unifiedNeeds = Math.min(inputAmount, NEEDS_FLOOR);
-    const afterNeeds = Math.max(0, inputAmount - unifiedNeeds);
-    unifiedBills = Math.min(afterNeeds, crisisTotal);
-    const leftover = Math.max(0, afterNeeds - unifiedBills);
-    unifiedBills += leftover;
-    unifiedSnowball = 0;
-    unifiedBuffer = 0;
-    unifiedFun = 0;
-  } else {
-    unifiedBills = urgentBills.length > 0 ? Math.min(inputAmount * 0.45, urgentTotal) : Math.min(inputAmount * 0.40, billsRate * 1.2);
-    const afterBills = Math.max(0, inputAmount - unifiedBills);
-
-    const needsFloor = Math.min(afterBills, NEEDS_FLOOR);
-    const afterFloor = Math.max(0, afterBills - needsFloor);
-
-    unifiedSnowball = extraDebtPayment > 0 ? Math.min(afterFloor * 0.25, extraDebtPayment / 30) : 0;
-    const afterSnowball = Math.max(0, afterFloor - unifiedSnowball);
-    unifiedBuffer = Math.min(22, afterSnowball);
-    const afterBuffer = Math.max(0, afterSnowball - unifiedBuffer);
-
-    const extraNeeds = Math.min(afterBuffer, afterBuffer * 0.65);
-    unifiedNeeds = needsFloor + extraNeeds;
-    unifiedFun = Math.max(0, afterBuffer - extraNeeds);
-  }
-
-  const allocations: { label: string; icon: IconName; amount: number; color: string; note: string; noteIcon?: IconName }[] = [
-    {
-      label: "Bills",
-      icon: "house",
-      amount: unifiedBills,
-      color: "var(--pink-dark)",
-      noteIcon: (isCrisis || urgentBills.length > 0) ? "lightning" as IconName : undefined,
-      note: isCrisis
-        ? `${crisisBills.length} bill(s) due in ≤5 days -- covered first`
-        : urgentBills.length > 0 ? `${urgentBills.length} bill(s) due soon!` : "bills + debt minimums",
-    },
-    {
-      label: "Snowball Extra",
-      icon: "settings-gear",
-      amount: unifiedSnowball,
-      color: "var(--sky)",
-      note: isCrisis ? "paused -- bills come first" : "extra toward target debt",
-    },
-    {
-      label: "General Savings",
-      icon: "piggy-bank",
-      amount: unifiedBuffer,
-      color: "var(--gold)",
-      note: isCrisis ? "paused -- bills come first" : "$22/day until $650",
-    },
-    {
-      label: "Needs (gas, groceries, needs list)",
-      icon: "basket",
-      amount: unifiedNeeds,
-      color: "var(--green-dark)",
-      note: isCrisis ? "protected floor, even in crisis mode" : "groceries + gas, one combined category",
-    },
-    {
-      label: "Treats (wants list)",
-      icon: "trophy",
-      amount: unifiedFun,
-      color: "var(--ink-soft)",
-      note: isCrisis ? "zeroed until crisis bills are caught up" : "whimsy -- wants, not needs!",
-    },
-  ];
 
   const calcRegWageNum = parseFloat(calcRegWage) || 0;
   const calcOtWageNum = parseFloat(calcOtWage) || 0;
@@ -1419,26 +1229,6 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
       if (error) { console.error("updateMonthBill (bills) failed:", error); return; }
       setBills(prev => prev.map(b => b.id === bill.id ? { ...b, [field]: value } : b));
     }
-  }
-
-  async function saveLog() {
-    const amount = pay;
-    if (!amount) return;
-    const log: DailyLog = {
-      date: todayStr(),
-      anytime_pay_amount: amount,
-      bills_allocation: unifiedBills,
-      buffer_allocation: unifiedBuffer,
-      minimums_allocation: 0,
-      spending_allocation: unifiedNeeds + unifiedFun,
-      snowball_allocation: unifiedSnowball,
-      notes: planNotes,
-    };
-    await supabase.from("daily_log").insert(log).select().single();
-    setSavedMsg(true);
-    setTimeout(() => setSavedMsg(false), 2000);
-    setAnytimePay("");
-    setPlanNotes("");
   }
 
   async function saveBudgetCalc() {
@@ -1633,7 +1423,6 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
 
       <div className="page-header">
         <h1><PageTitleLogo name="wallet" height={28} /></h1>
-         {savedMsg && <span className="badge badge-green">Saved!</span>}
       </div>
 
    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -1653,67 +1442,11 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
         {view === "home" && (
           <>
 
-            {/* EQUITY MODE CHECK / TODAYS PAYCHECK CALCULATOR */}
-
-            {isCrisis && (
-              <div style={{ background: "var(--danger-bg)", border: "1.5px solid var(--danger)", borderRadius: 16, padding: "12px 16px", fontSize: 13, color: "var(--danger)", fontWeight: 700 }}>
-                Equity Mode Active — {near3Total >= 200 && `${fmt(near3Total)} due within 3 days`}{near3Total >= 200 && near5Total >= 475 && " and "}{near5Total >= 475 && `${fmt(near5Total)} due within 5 days`}. Fun money and general savings are zeroed until these are covered. Things you need are still protected.
-              </div>
-            )}
-            {!isCrisis && urgentBills.length > 0 && (
+            {urgentBills.length > 0 && (
               <div style={{ background: "var(--danger-bg)", border: "1.5px solid var(--danger)", borderRadius: 16, padding: "12px 16px", fontSize: 13, color: "var(--danger)", fontWeight: 600 }}>
                 Bills due within 7 days: {urgentBills.map(b => `${b.name} (${fmt(b.amount)}) in ${b.days}d`).join(" · ")}
               </div>
             )}
-
-            <div className="card">
-              <div className="card-body">
-                <div className="section-label">Today's Paycheck</div>
-                <input
-                  type="number"
-                  className="form-input"
-                  placeholder="e.g. 120"
-                  value={anytimePay}
-                  onChange={e => setAnytimePay(e.target.value)}
-                  style={{ fontSize: 22, fontWeight: 700, marginTop: 8, marginBottom: 6 }}
-                />
-                {inputAmount > 0 && hoursOfWork(inputAmount, budget.hourly_wage) && (
-                  <div style={{ fontSize: 11, color: "var(--ink-muted)", marginBottom: 14 }}>
-                    = {hoursOfWork(inputAmount, budget.hourly_wage)} hours of your life
-                  </div>
-                )}
-
-                {inputAmount > 0 && (
-                  <>
-                    <div style={{ display: "flex", height: 12, borderRadius: 99, overflow: "hidden", marginBottom: 16, gap: 2 }}>
-                      {allocations.map(a => (
-                        <div key={a.label} style={{ width: pct(a.amount, inputAmount), background: a.color, transition: "width 0.3s" }} />
-                      ))}
-                    </div>
-                    {allocations.map(a => (
-                      <div key={a.label} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "9px 0", borderBottom: "1px solid var(--border)" }}>
-                        <div>
-                          <div style={{ fontSize: 13, color: "var(--ink)", fontWeight: 600 }}><Icon name={a.icon} size={14} /> {a.label}</div>
-                          <div style={{ fontSize: 11, color: "var(--ink-muted)", marginTop: 2 }}>{a.noteIcon && <Icon name={a.noteIcon} size={12} />} {a.note}</div>
-                        </div>
-                        <div style={{ textAlign: "right" }}>
-                          <div style={{ fontSize: 15, fontWeight: 800, color: a.color }}>{fmt(a.amount)}</div>
-                          <div style={{ fontSize: 10, color: "var(--ink-muted)" }}>{pct(a.amount, inputAmount)}</div>
-                        </div>
-                      </div>
-                    ))}
-                    <div style={{ marginTop: 14, display: "flex", flexDirection: "column", gap: 8 }}>
-                      <input type="text" className="form-input" placeholder="Notes (optional)..." value={planNotes} onChange={e => setPlanNotes(e.target.value)} />
-                      <button className="btn btn-primary" style={{ width: "100%", justifyContent: "center" }} onClick={saveLog}>
-                        Save Plan
-                      </button>
-                    </div>
-                  </>
-                )}
-              </div>
-            </div>
-
-            <StitchDivider />
 
             {/* ── SAVINGS GOALS ── */}
             <div className="card">
@@ -2118,63 +1851,6 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
                     For a precise number, the IRS has a free calculator that walks you through it: <a href="https://www.irs.gov/individuals/tax-withholding-estimator" target="_blank" rel="noopener noreferrer" style={{ color: "var(--pink-dark)" }}>irs.gov/individuals/tax-withholding-estimator</a>
                   </div>
                 </details>
-
-                {budget.hourly_wage > 0 && heatStripDays.length > 0 && (
-                  <div style={{ marginBottom: 16 }}>
-                    {todayHeatEntry && (() => {
-                      const todayTier = tierForDaySafe(todayHeatEntry.daySafe);
-                      return (
-                        <div className="card" style={{ marginBottom: 12, borderColor: todayTier.color }}>
-                          <div className="card-body">
-                            <div className="section-label">Safe to Spend Today</div>
-                            <div style={{ fontSize: 32, fontWeight: 800, color: todayTier.color, marginTop: 4 }}>
-                              {todayHeatEntry.daySafe < 0
-                                ? `Short ${fmt(Math.abs(todayHeatEntry.daySafe))}`
-                                : fmt(todayHeatEntry.daySafe)}
-                            </div>
-                            <div style={{ fontSize: 11, color: "var(--ink-muted)" }}>
-                              your lowest projected balance in the next {SAFE_TO_SPEND_LOOKAHEAD_DAYS} days is {fmt(todayHeatEntry.lowBalance)} on {todayHeatEntry.lowDate.toLocaleDateString(undefined, { month: "short", day: "numeric" })}, minus a {fmt(SAFE_TO_SPEND_BUFFER)} buffer
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })()}
-                    <div className="form-label" style={{ marginBottom: 6 }}>Safe-to-Spend at a Glance</div>
-                    <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 4 }}>
-                      {heatStripDays.map(d => {
-                        const tier = tierForDaySafe(d.daySafe);
-                        const isToday = d.key === dateKey(new Date());
-                        return (
-                          <div
-                            key={d.key}
-                            onClick={() => jumpToDay(d.key)}
-                            title={`${d.date.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })} · ${tier.label}`}
-                            style={{
-                              aspectRatio: "1",
-                              borderRadius: 8,
-                              background: tier.bg,
-                              border: `1.5px solid ${isToday ? "var(--pink-dark)" : tier.color}`,
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              fontSize: 10,
-                              fontWeight: 700,
-                              color: tier.color,
-                              cursor: "pointer",
-                            }}
-                          >
-                            {d.date.getDate()}
-                          </div>
-                        );
-                      })}
-                    </div>
-                    <div style={{ display: "flex", gap: 10, marginTop: 6, fontSize: 9, color: "var(--ink-muted)" }}>
-                      <span style={{ color: "var(--danger)" }}>■ Tight</span>
-                      <span style={{ color: "var(--gold-dark)" }}>■ OK</span>
-                      <span style={{ color: "var(--green-dark)" }}>■ Comfortable</span>
-                    </div>
-                  </div>
-                )}
 
                 {budget.hourly_wage > 0 && (
                   <div style={{ border: "1.5px solid var(--border)", borderRadius: 14, padding: "10px 12px", marginBottom: 12 }}>
