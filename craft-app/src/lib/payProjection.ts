@@ -77,14 +77,15 @@ export interface EarlyPayPreset {
 }
 
 export const EARLY_PAY_PRESETS: Record<EarlyPayPresetId, EarlyPayPreset> = {
-  amazon: {
+    amazon: {
     id: "amazon",
     label: "Standard",
     garnishments: 0,
     safetyBufferNormal: 0.02,
-    safetyBufferHighHours: 0.08,
-    highHoursThreshold: 55,
+    safetyBufferHighHours: 0.07,
+    highHoursThreshold: 51,
   },
+
   custom: {
     id: "custom",
     label: "Custom",
