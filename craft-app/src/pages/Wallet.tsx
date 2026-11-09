@@ -344,6 +344,7 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
   const [view, setView] = useState<"home" | "plan" | "calendar" | "bills" | "debts" | "supplies">(initialView ?? "home");  const [showDeferred, setShowDeferred] = useState(false);
   const [, setLoading] = useState(true);
   const [showBillForm, setShowBillForm] = useState(false);
+  const [billsTab, setBillsTab] = useState<"month" | "recurring">("month");
   const [newBill, setNewBill] = useState({
     name: "", amount: "", due_day: "", recurring: true,
     frequency_unit: "month" as "month" | "week",
@@ -1431,14 +1432,136 @@ async function updateMonthBill(
     setBills(prev => [...prev, bill].sort((a, b) => a.due_day - b.due_day));
     setNextBillId(n => n + 1);
     await supabase.from("bills").insert(bill);
-    setNewBill({ name: "", amount: "", due_day: "", recurring: true, frequency_unit: "month", frequency_interval: "1", anchor_date: "" });
+    setNewBill({ name: "", amount: "", due_day: "", recurring: billsTab === "recurring", frequency_unit: "month", frequency_interval: "1", anchor_date: "" });
     setShowBillForm(false);
   }
 
   async function removeBill(id: number) {
     setBills(prev => prev.filter(b => b.id !== id));
     setPayments(prev => prev.filter(p => p.bill_id !== id));
+    await supabase.from("bill_payments").delete().eq("bill_id", id);
     await supabase.from("bills").delete().eq("id", id);
+  }
+
+  function openBillForm(recurring: boolean) {
+    setNewBill(p => ({ ...p, recurring }));
+    setShowBillForm(v => !v);
+  }
+
+  // Edit a recurring bill once and push the change to every unpaid month
+  // from the current month forward. Paid months keep what they were.
+  async function updateRecurringBill(
+    bill: Bill,
+    patch: Partial<Pick<Bill, "name" | "amount" | "due_day" | "frequency_interval" | "anchor_date">>
+  ) {
+    const isWeekly = bill.frequency_unit === "week";
+    const updated: Bill = { ...bill, ...patch };
+    if (isWeekly && patch.anchor_date) {
+      const day = parseInt(patch.anchor_date.split("-")[2], 10);
+      if (day) updated.due_day = day;
+    }
+    const dbPatch: Record<string, unknown> = { ...patch };
+    if (updated.due_day !== bill.due_day) dbPatch.due_day = updated.due_day;
+
+    const curIdx = today.getFullYear() * 12 + today.getMonth();
+    const isUpcomingUnpaid = (p: BillPayment) =>
+      p.bill_id === bill.id && !p.paid && p.year * 12 + (p.month - 1) >= curIdx;
+    const affected = payments.filter(isUpcomingUnpaid);
+    const scheduleChanged = isWeekly && (patch.anchor_date !== undefined || patch.frequency_interval !== undefined);
+
+    setBills(prev => prev.map(b => (b.id === bill.id ? updated : b)).sort((a, b) => a.due_day - b.due_day));
+    if (scheduleChanged) {
+      // The set of due dates changes, so drop the unpaid upcoming ones and
+      // let ensurePaymentsExist regenerate them from the new schedule.
+      setPayments(prev => prev.filter(p => !isUpcomingUnpaid(p)));
+    }
+
+    const { error } = await supabase.from("bills").update(dbPatch).eq("id", bill.id);
+    if (error) {
+      console.error("updateRecurringBill failed:", error);
+      setBills(prev => prev.map(b => (b.id === bill.id ? bill : b)));
+      if (scheduleChanged) setPayments(prev => [...prev, ...affected]);
+      return;
+    }
+
+    if (scheduleChanged) {
+      const ids = affected.map(p => p.id).filter((id): id is number => id !== undefined);
+      if (ids.length > 0) await supabase.from("bill_payments").delete().in("id", ids);
+      return;
+    }
+
+    const payUpdates: Record<string, unknown> = {};
+    if (patch.name !== undefined) payUpdates.name = patch.name;
+    if (patch.amount !== undefined) payUpdates.amount = patch.amount;
+    const dueChanged = !isWeekly && patch.due_day !== undefined;
+
+    const buildUpdate = (p: BillPayment) => {
+      const u: Record<string, unknown> = { ...payUpdates };
+      if (dueChanged) {
+        const lastDay = new Date(p.year, p.month, 0).getDate();
+        const day = Math.min(Math.max(1, Number(patch.due_day)), lastDay);
+        u.due_day = Number(patch.due_day);
+        u.due_date = isoDate(new Date(p.year, p.month - 1, day));
+      }
+      return u;
+    };
+
+    if (affected.length === 0 || (Object.keys(payUpdates).length === 0 && !dueChanged)) return;
+    setPayments(prev => prev.map(p => (isUpcomingUnpaid(p) ? { ...p, ...buildUpdate(p) } : p)));
+    await Promise.all(
+      affected.map(p => supabase.from("bill_payments").update(buildUpdate(p)).eq("id", p.id))
+    );
+  }
+
+  function renderBillForm() {
+    return (
+<div style={{ background: "var(--accent)", borderRadius: 16, padding: 14, marginBottom: 14, display: "flex", flexDirection: "column", gap: 10 }}>
+                    <div className="section-label" style={{ marginBottom: 0 }}>{newBill.recurring ? "New recurring bill" : `One-time bill for ${MONTH_NAMES[selectedMonth - 1]}`}</div>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                      <div>
+                        <div className="form-label">Bill Name</div>
+                        <input className="form-input" type="text" placeholder="e.g. Rent" value={newBill.name} onChange={e => setNewBill(p => ({ ...p, name: e.target.value }))} />
+                      </div>
+                      <div>
+                        <div className="form-label">Amount ($)</div>
+                        <input className="form-input" type="number" placeholder="e.g. 1375" value={newBill.amount} onChange={e => setNewBill(p => ({ ...p, amount: e.target.value }))} />
+                      </div>
+
+                      {newBill.recurring && (
+                        <div>
+                          <div className="form-label">Frequency</div>
+                          <select
+                            className="form-input"
+                            value={newBill.frequency_unit}
+                            onChange={e => setNewBill(p => ({ ...p, frequency_unit: e.target.value as "month" | "week" }))}
+                          >
+                            <option value="month">Once a month</option>
+                            <option value="week">Every N weeks</option>
+                          </select>
+                        </div>
+                      )}
+
+                      {newBill.recurring && newBill.frequency_unit === "week" ? (
+                        <>
+                          <div>
+                            <div className="form-label">First Due Date</div>
+                            <input className="form-input" type="date" value={newBill.anchor_date} onChange={e => setNewBill(p => ({ ...p, anchor_date: e.target.value }))} />
+                          </div>
+                          <div>
+                            <div className="form-label">Every how many weeks?</div>
+                            <input className="form-input" type="number" min="1" placeholder="e.g. 2" value={newBill.frequency_interval} onChange={e => setNewBill(p => ({ ...p, frequency_interval: e.target.value }))} />
+                          </div>
+                        </>
+                      ) : (
+                        <div>
+                          <div className="form-label">Due Day</div>
+                          <input className="form-input" type="number" placeholder="e.g. 1" value={newBill.due_day} onChange={e => setNewBill(p => ({ ...p, due_day: e.target.value }))} />
+                        </div>
+                      )}
+                    </div>
+                    <button className="btn btn-green" style={{ justifyContent: "center" }} onClick={addBill}>Save Bill</button>
+                  </div>
+    );
   }
 
   async function updateDebt(id: number, field: keyof Debt, val: string | number | boolean) {
@@ -2316,6 +2439,23 @@ async function updateMonthBill(
 
         {view === "bills" && (
           <>
+            <div style={{ display: "flex", gap: 6 }}>
+              <button
+                onClick={() => { setBillsTab("month"); setShowBillForm(false); }}
+                className={billsTab === "month" ? "btn btn-primary btn-sm" : "btn btn-ghost btn-sm"}
+              >
+                This Month
+              </button>
+              <button
+                onClick={() => { setBillsTab("recurring"); setShowBillForm(false); }}
+                className={billsTab === "recurring" ? "btn btn-primary btn-sm" : "btn btn-ghost btn-sm"}
+              >
+                Recurring
+              </button>
+            </div>
+
+            {billsTab === "month" && (
+              <>
             <div style={{ display: "flex", gap: 6, overflowX: "auto", paddingBottom: 4 }}>
               {availableMonths.map(({ month, year, label }) => (
                 <button
@@ -2348,63 +2488,14 @@ async function updateMonthBill(
               <div className="card-body">
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
                   <div className="section-label" style={{ marginBottom: 0 }}>{MONTH_NAMES[selectedMonth - 1]} {selectedYear}</div>
-                  <button className="btn btn-primary btn-sm" onClick={() => setShowBillForm(v => !v)}>+ Add Bill</button>
+                  <button className="btn btn-primary btn-sm" onClick={() => openBillForm(false)}>+ One-time Bill</button>
                 </div>
 
 
-                {showBillForm && (
-                  <div style={{ background: "var(--accent)", borderRadius: 16, padding: 14, marginBottom: 14, display: "flex", flexDirection: "column", gap: 10 }}>
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-                      <div>
-                        <div className="form-label">Bill Name</div>
-                        <input className="form-input" type="text" placeholder="e.g. Rent" value={newBill.name} onChange={e => setNewBill(p => ({ ...p, name: e.target.value }))} />
-                      </div>
-                      <div>
-                        <div className="form-label">Amount ($)</div>
-                        <input className="form-input" type="number" placeholder="e.g. 1375" value={newBill.amount} onChange={e => setNewBill(p => ({ ...p, amount: e.target.value }))} />
-                      </div>
-
-                      <div style={{ display: "flex", alignItems: "flex-end" }}>
-                        <label style={{ fontSize: 13, color: "var(--ink)", display: "flex", alignItems: "center", gap: 6, fontWeight: 600 }}>
-                          <input type="checkbox" checked={newBill.recurring} onChange={e => setNewBill(p => ({ ...p, recurring: e.target.checked }))} />
-                          Recurring
-                        </label>
-                      </div>
-                      {newBill.recurring && (
-                        <div>
-                          <div className="form-label">Frequency</div>
-                          <select
-                            className="form-input"
-                            value={newBill.frequency_unit}
-                            onChange={e => setNewBill(p => ({ ...p, frequency_unit: e.target.value as "month" | "week" }))}
-                          >
-                            <option value="month">Once a month</option>
-                            <option value="week">Every N weeks</option>
-                          </select>
-                        </div>
-                      )}
-
-                      {newBill.recurring && newBill.frequency_unit === "week" ? (
-                        <>
-                          <div>
-                            <div className="form-label">First Due Date</div>
-                            <input className="form-input" type="date" value={newBill.anchor_date} onChange={e => setNewBill(p => ({ ...p, anchor_date: e.target.value }))} />
-                          </div>
-                          <div>
-                            <div className="form-label">Every how many weeks?</div>
-                            <input className="form-input" type="number" min="1" placeholder="e.g. 2" value={newBill.frequency_interval} onChange={e => setNewBill(p => ({ ...p, frequency_interval: e.target.value }))} />
-                          </div>
-                        </>
-                      ) : (
-                        <div>
-                          <div className="form-label">Due Day</div>
-                          <input className="form-input" type="number" placeholder="e.g. 1" value={newBill.due_day} onChange={e => setNewBill(p => ({ ...p, due_day: e.target.value }))} />
-                        </div>
-                      )}
-                    </div>
-                    <button className="btn btn-green" style={{ justifyContent: "center" }} onClick={addBill}>Save Bill</button>
-                  </div>
-                )}
+                <div style={{ fontSize: 11, color: "var(--ink-muted)", marginBottom: 10 }}>
+                  Edits here only change this month. To change a bill for every month, use the Recurring tab.
+                </div>
+                {showBillForm && renderBillForm()}
                 <div style={{ overflowX: "auto" }}>
                 <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
                   <thead>
@@ -2419,7 +2510,7 @@ async function updateMonthBill(
                       <tr><td colSpan={6} style={{ padding: 24, textAlign: "center", color: "var(--ink-muted)" }}>
                         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
                           <img src={emptyWallet} alt="" style={{ width: 100 }} />
-                          No bills yet — click + Add Bill to get started.
+                          No bills this month — add one in the Recurring tab.
                         </div>
                       </td></tr>
                     ) : (
@@ -2463,7 +2554,7 @@ async function updateMonthBill(
                             : <span className="badge badge-pink">{b.days}d away</span>}
                             </td>
                         <td style={{ padding: "9px 8px", textAlign: "center" }}>
-                          <button className="btn btn-ghost btn-sm" onClick={() => removeBill(b.id)}><Icon name="icon-trash2" size={24} /></button>
+                          {!b.recurring && <button className="btn btn-ghost btn-sm" onClick={() => removeBill(b.id)}><Icon name="icon-trash2" size={24} /></button>}
                         </td>
                       </tr>
                       );
@@ -2475,6 +2566,91 @@ async function updateMonthBill(
                 </div>
               </div>
             </div>
+              </>
+            )}
+
+            {billsTab === "recurring" && (
+              <div className="card">
+                <div className="card-body">
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                    <div className="section-label" style={{ marginBottom: 0 }}>Recurring Bills</div>
+                    <button className="btn btn-primary btn-sm" onClick={() => openBillForm(true)}>+ Add Recurring Bill</button>
+                  </div>
+                  <div style={{ fontSize: 11, color: "var(--ink-muted)", marginBottom: 10 }}>
+                    Change a bill here and it updates every unpaid month from this month on. Months you already paid stay as they were.
+                  </div>
+                  {showBillForm && renderBillForm()}
+                  {bills.filter(b => b.recurring).length === 0 ? (
+                    <div style={{ padding: 24, textAlign: "center", color: "var(--ink-muted)" }}>
+                      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
+                        <img src={emptyWallet} alt="" style={{ width: 100 }} />
+                        No recurring bills yet.
+                      </div>
+                    </div>
+                  ) : (
+                    bills.filter(b => b.recurring).map(b => (
+                      <div key={b.id} style={{ padding: "12px 0", borderBottom: "1.5px solid var(--border)", display: "flex", flexDirection: "column", gap: 8 }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                          <div style={{ flex: 1 }}>
+                            <EditableCell
+                              value={b.name}
+                              type="text"
+                              onChange={v => { if (v.trim()) updateRecurringBill(b, { name: v.trim() }); }}
+                              style={{ fontWeight: 700, color: "var(--ink)" }}
+                            />
+                          </div>
+                          <button
+                            className="btn btn-ghost btn-sm"
+                            aria-label="Delete recurring bill"
+                            onClick={() => { if (window.confirm(`Delete "${b.name}" from all months?`)) removeBill(b.id); }}
+                          >
+                            <Icon name="icon-trash2" size={24} />
+                          </button>
+                        </div>
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                          <div>
+                            <div className="form-label">Amount ($)</div>
+                            <EditableCell
+                              value={b.amount}
+                              onChange={v => updateRecurringBill(b, { amount: parseFloat(v) || 0 })}
+                              style={{ color: "var(--pink-dark)", fontWeight: 700 }}
+                            />
+                          </div>
+                          {b.frequency_unit === "week" ? (
+                            <>
+                              <div>
+                                <div className="form-label">First due date</div>
+                                <EditableCell
+                                  value={b.anchor_date ?? ""}
+                                  type="date"
+                                  onChange={v => { if (v) updateRecurringBill(b, { anchor_date: v }); }}
+                                />
+                              </div>
+                              <div>
+                                <div className="form-label">Every how many weeks?</div>
+                                <EditableCell
+                                  value={b.frequency_interval ?? 1}
+                                  onChange={v => updateRecurringBill(b, { frequency_interval: Math.max(1, parseInt(v) || 1) })}
+                                />
+                              </div>
+                            </>
+                          ) : (
+                            <div>
+                              <div className="form-label">Due day</div>
+                              <EditableCell
+                                value={b.due_day}
+                                onChange={v => updateRecurringBill(b, { due_day: Math.min(31, Math.max(1, parseInt(v) || 1)) })}
+                              />
+                            </div>
+                          )}
+                        </div>
+                        <div style={{ fontSize: 10, color: "var(--ink-muted)" }}>{frequencyLabel(b.frequency_unit, b.frequency_interval)}</div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            )}
           </>
         )}
 
