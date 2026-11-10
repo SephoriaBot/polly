@@ -7,8 +7,6 @@ import EnergyModeSwitch from "../components/EnergyModeSwitch";
 import { useEnergy } from "../context/EnergyContext";
 import emptyDash from '../assets/icons/empty-dashboard.png';
 import WeatherBadge from '../components/WeatherBadge';
-import Icon, { type IconName } from '../components/Icon';
-import { useTheme } from '../context/ThemeContext';
 import EmptyState from '../components/EmptyState';
 import { Polly } from '../lib';
 import { getPollyMessage } from '../lib/pollyMessages';
@@ -19,6 +17,7 @@ import QuestBoard from '../components/QuestBoard';
 import DayPlanCard from '../components/DayPlanCard';
 import { useAuth } from '../context/AuthContext';
 import PageTabs, { type PageTab } from '../components/PageTabs';
+import './Dashboard.css';
 
 
 interface Focus {
@@ -49,18 +48,7 @@ function getGreeting() {
   return 'Winding down';
 }
 
-function StitchDivider() {
-  return (
-    <div className="stitch-divider">
-      <span className="line" />
-      <span className="mark" />
-      <span className="line" />
-    </div>
-  );
-}
-
 export default function Dashboard({ onNavigate }: { onNavigate?: (page: string, tab?: string) => void }) {
-  const { theme } = useTheme();
   const { mode } = useEnergy();
   const { user } = useAuth();
   const [focuses, setFocuses] = useState<Focus[]>([]);
@@ -135,186 +123,124 @@ export default function Dashboard({ onNavigate }: { onNavigate?: (page: string, 
   const completedFocuses = focuses.filter(f => f.completed).length;
   const sortedFocuses = [...focuses].sort((a, b) => Number(a.completed) - Number(b.completed) || Number(b.priority) - Number(a.priority));
 
-  return (
-    <div>
-      <div className="page-header dash-greeting">
-        <div>
-          <div className="title-row">
-            <h1>{getGreeting()}</h1>
-          </div>
-          <div className="dash-subdate">
-            {todayName}, {new Date().toLocaleDateString(undefined, { month: 'long', day: 'numeric' })}
-          </div>
-          {/* WEATHER BADGE & MOON MINI WIDGET */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-  <WeatherBadge />
-  <MoonWidget compact />
-</div>
 
-        {/* ── LOW ENERGY MODE ── */}
-          <EnergyModeSwitch />
+  return (
+    <div className="dash">
+      <header className="dash-hero">
+        <h1>{getGreeting()}</h1>
+        <div className="dash-subdate">
+          {todayName}, {new Date().toLocaleDateString(undefined, { month: 'long', day: 'numeric' })}
         </div>
-      </div>
+        <div className="dash-chips">
+          <WeatherBadge />
+          <MoonWidget compact />
+        </div>
+        <EnergyModeSwitch />
+      </header>
+
       <PageTabs tabs={DASH_TABS} active={tab} onChange={setTab} />
 
-      <div className="page-body">
+      <div className="dash-body">
         {tab === 'radar' ? (
           <section>
-            <div className="section-label" style={{ marginBottom: 10 }}>
-              Also on your radar
-            </div>
+            <div className="dash-label">Also on your radar</div>
             <TodaySnapshot onNavigate={onNavigate} />
           </section>
         ) : mode !== 'normal' ? (
           <>
-            {/* ── NO ENERGY MODE ── reduced to starred priority tasks + basics */}
             <section>
               <LowEnergyChecklist onNavigate={onNavigate} />
             </section>
 
-<div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', margin: '12px 0 4px' }}>
-  {yawningMessage && <PollyBubble message={yawningMessage} size="medium" />}
-  <Polly mood="yawning" size="medium" />
-</div>
+            <div className="dash-polly">
+              {yawningMessage && <PollyBubble message={yawningMessage} size="medium" />}
+              <Polly mood="yawning" size="medium" />
+            </div>
 
             {user && (
-              <section style={{ marginTop: 4 }}>
+              <section>
                 <QuestBoard userId={user.id} />
               </section>
             )}
           </>
         ) : (
           <>
-           
+            <div className="dash-polly">
+              {neutralMessage && <PollyBubble message={neutralMessage} size="medium" />}
+              <Polly mood="neutral" size="medium" />
+            </div>
 
-            {/* ── POLLY GREETING ── */}
-<div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', margin: '12px 0 4px' }}>
-  {neutralMessage && <PollyBubble message={neutralMessage} size="medium" />}
-  <Polly mood="neutral" size="medium" />
-</div>
-
-
-            {/* ── TODAY'S FOCUS ── */}
             <section>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-                <div className="section-label" style={{ marginBottom: 0 }}>
-                  Today's Focus
+              <div className="dash-section-head">
+                <div className="dash-label">
+                  Today&apos;s Focus
                   {focuses.length > 0 && (
-                    <span style={{ marginLeft: 8, fontWeight: 600, color: 'var(--pink-dark)', fontSize: '0.65rem' }}>
-                      {completedFocuses}/{focuses.length} done
-                    </span>
+                    <span className="dash-count">{completedFocuses}/{focuses.length} done</span>
                   )}
                 </div>
-                <button
-                  onClick={() => setAddingFocus(true)}
-                  style={{
-                    padding: '4px 10px', borderRadius: 12,
-                    background: 'var(--blush)', border: '1.5px solid var(--border)',
-                    color: 'var(--pink-dark)', fontSize: '0.7rem', fontWeight: 700,
-                    cursor: 'pointer', fontFamily: 'IBM Plex Mono, monospace',
-                  }}
-                >
-                  + Add
-                </button>
+                <button className="dash-add" onClick={() => setAddingFocus(true)}>+ Add</button>
               </div>
+
               {addingFocus && (
-                <div style={{
-                  background: 'var(--white)', border: '1.5px solid var(--border)',
-                  borderRadius: 18, padding: 14, marginBottom: 10,
-                  display: 'flex', flexDirection: 'column', gap: 8,
-                }}>
+                <div className="dash-form">
                   <input
                     className="form-input"
                     placeholder="What's the focus?"
                     value={newFocus}
                     onChange={e => setNewFocus(e.target.value)}
                     onKeyDown={e => e.key === 'Enter' && addFocus()}
-                    style={{ fontSize: '0.85rem' }}
                   />
-                  <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                    <input
-                      className="form-input"
-                      placeholder="Est. minutes (optional)"
-                      value={newFocusMins}
-                      onChange={e => setNewFocusMins(e.target.value)}
-                      style={{ fontSize: '0.82rem', flex: 1 }}
-                      type="number"
-                    />
-                    <button className="btn btn-primary btn-sm" onClick={addFocus}>Save</button>
-                    <button className="btn btn-ghost btn-sm" onClick={() => setAddingFocus(false)}>Cancel</button>
+                  <input
+                    className="form-input"
+                    placeholder="Est. minutes (optional)"
+                    value={newFocusMins}
+                    onChange={e => setNewFocusMins(e.target.value)}
+                    type="number"
+                  />
+                  <div className="dash-form-actions">
+                    <button className="btn btn-primary" onClick={addFocus}>Save</button>
+                    <button className="btn btn-ghost" onClick={() => setAddingFocus(false)}>Cancel</button>
                   </div>
                 </div>
               )}
+
               {focuses.length === 0 && !addingFocus ? (
-                <EmptyState image={emptyDash} message="No focuses set for today." size={65} />
+                <EmptyState image={emptyDash} message="No focuses set for today." size={90} />
               ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <div className="dash-focus-list">
                   {sortedFocuses.map(f => (
-                    <div
-                      key={f.id}
-                      style={{
-                        display: 'flex', alignItems: 'center', gap: 12,
-                        background: f.completed ? 'var(--blush)' : 'var(--white)',
-                        border: `1.5px solid ${f.completed ? 'var(--pink-light)' : 'var(--border)'}`,
-                        borderRadius: 18, padding: '12px 14px',
-                        transition: 'all 0.2s ease',
-                      }}
-                    >
+                    <div key={f.id} className={`dash-focus${f.completed ? ' is-done' : ''}`}>
                       <button
+                        className="dash-check"
                         onClick={() => toggleFocus(f)}
                         aria-label={f.completed ? 'Mark not done' : 'Mark done'}
-                        style={{
-                          width: 24, height: 24, flexShrink: 0,
-                          border: 'none', background: 'none', padding: 0,
-                          cursor: 'pointer', display: 'flex',
-                          alignItems: 'center', justifyContent: 'center',
-                        }}
                       >
-                        <CheckMark completed={f.completed} size={22} />
+                        <CheckMark completed={f.completed} size={30} />
                       </button>
 
-                      <div style={{ flex: 1 }}>
-                        <div style={{
-                          fontSize: '0.88rem', fontWeight: 600,
-                          color: f.completed ? 'var(--ink-muted)' : 'var(--ink)',
-                          textDecoration: f.completed ? 'line-through' : 'none',
-                        }}>
-                          {f.title}
-                        </div>
+                      <div className="dash-focus-text">
+                        <div className="dash-focus-title">{f.title}</div>
                         {f.carried_over && !f.completed && (
-                          <div style={{ fontSize: '0.7rem', color: 'var(--pink-dark)', fontWeight: 700, marginTop: 2 }}>
-                            Not finished!
-                          </div>
+                          <div className="dash-focus-note">Not finished!</div>
                         )}
                         {f.estimated_minutes && (
-                          <div style={{ fontSize: '0.72rem', color: 'var(--ink-muted)', marginTop: 2, fontFamily: 'IBM Plex Mono, monospace' }}>
-                            Est. {f.estimated_minutes} min
-                          </div>
+                          <div className="dash-focus-meta">Est. {f.estimated_minutes} min</div>
                         )}
                       </div>
+
                       <button
+                        className={`dash-icon-btn dash-star${f.priority ? ' is-on' : ''}`}
                         onClick={() => toggleFocusPriority(f)}
                         aria-label={f.priority ? 'Unstar priority' : 'Mark as priority'}
-                        title={f.priority ? 'Priority focus' : 'Mark as priority'}
-                        style={{
-                          background: 'none', border: 'none', cursor: 'pointer', padding: 0,
-                          display: 'flex', alignItems: 'center', flexShrink: 0,
-                          fontSize: '1.15rem', lineHeight: 1,
-                          color: f.priority ? 'var(--gold)' : 'var(--border)',
-                        }}
                       >
                         {f.priority ? '★' : '☆'}
                       </button>
                       <button
+                        className="dash-icon-btn"
                         onClick={() => deleteFocus(f.id)}
-                        style={{
-                          background: 'none', border: 'none', cursor: 'pointer',
-                          color: 'var(--ink-muted)', fontSize: '0.65rem', fontWeight: 700,
-                          textTransform: 'uppercase', letterSpacing: '0.06em',
-                          fontFamily: 'IBM Plex Mono, monospace', padding: '2px 4px',
-                        }}
+                        aria-label="Remove focus"
                       >
-                        Remove
+                        ✕
                       </button>
                     </div>
                   ))}
@@ -322,11 +248,10 @@ export default function Dashboard({ onNavigate }: { onNavigate?: (page: string, 
               )}
             </section>
 
-            {/* ── TODAY'S PLAN — only shows when a day plan exists for today ── */}
             <DayPlanCard onNavigate={onNavigate} />
 
             {user && (
-              <section style={{ marginTop: 4 }}>
+              <section>
                 <QuestBoard userId={user.id} />
               </section>
             )}
