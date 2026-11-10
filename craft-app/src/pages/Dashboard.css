@@ -1,50 +1,71 @@
-/* Dashboard layout: fewer things per row, bigger type, more room.
-   Keeps the soft, cozy look (rounded cards, blush tint, Polly). */
+/* Dashboard layout: calm, a little roomier than before, not oversized.
+   One page, no tabs. Keeps the cozy look (rounded blush cards, Polly). */
 
 .dash {
-  padding-bottom: 24px;
+  padding-bottom: 20px;
 }
 
 .dash-hero {
   display: flex;
-  flex-direction: column;
   align-items: flex-start;
-  gap: 10px;
-  margin-bottom: 22px;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
 }
 
 .dash-hero h1 {
   margin: 0;
-  font-size: 2.1rem;
-  line-height: 1.1;
+  font-size: 1.7rem;
+  line-height: 1.15;
 }
 
 .dash-subdate {
-  font-size: 1rem;
+  margin-top: 2px;
+  font-size: 0.85rem;
   font-weight: 600;
   color: var(--ink-soft);
-  letter-spacing: 0.02em;
+}
+
+/* one clear on/off switch instead of two buttons */
+.dash-energy {
+  flex-shrink: 0;
+  min-height: 36px;
+  padding: 0 14px;
+  border-radius: 999px;
+  background: transparent;
+  border: 1.5px solid var(--border);
+  color: var(--ink-muted);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.dash-energy.is-on {
+  background: var(--blush);
+  border-color: var(--pink-dark);
+  color: var(--pink-dark);
 }
 
 .dash-chips {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 16px;
+  gap: 14px;
+  margin-bottom: 20px;
 }
 
 .dash-body {
   display: flex;
   flex-direction: column;
-  gap: 32px;
-  margin-top: 8px;
+  gap: 24px;
 }
 
 .dash-polly {
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin: 4px 0;
+  margin: 0;
 }
 
 .dash-section-head {
@@ -52,21 +73,25 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 16px;
+  margin-bottom: 12px;
 }
 
 .dash-label {
   font-family: 'Nunito Sans', sans-serif;
-  font-size: 0.9rem;
+  font-size: 0.75rem;
   font-weight: 800;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.09em;
   color: var(--green-dark);
 }
 
+.dash-label--solo {
+  margin-bottom: 12px;
+}
+
 .dash-count {
-  margin-left: 10px;
-  font-size: 0.85rem;
+  margin-left: 8px;
+  font-size: 0.72rem;
   font-weight: 700;
   color: var(--pink-dark);
   text-transform: none;
@@ -74,14 +99,14 @@
 }
 
 .dash-add {
-  min-height: 44px;
-  padding: 0 20px;
+  min-height: 36px;
+  padding: 0 16px;
   border-radius: 999px;
   background: var(--blush);
   border: 1.5px solid var(--border);
   color: var(--pink-dark);
   font-family: 'IBM Plex Mono', monospace;
-  font-size: 0.95rem;
+  font-size: 0.8rem;
   font-weight: 700;
   cursor: pointer;
 }
@@ -89,58 +114,52 @@
 .dash-form {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding: 20px;
-  margin-bottom: 16px;
+  gap: 10px;
+  padding: 16px;
+  margin-bottom: 12px;
   background: var(--surface);
   border: 1.5px solid var(--border);
-  border-radius: 24px;
-  box-shadow: var(--shadow);
+  border-radius: 20px;
 }
 
 .dash-form .form-input {
-  font-size: 1rem;
-  min-height: 48px;
+  font-size: 0.95rem;
 }
 
 .dash-form-actions {
   display: flex;
-  gap: 12px;
+  gap: 10px;
 }
 
 .dash-form-actions .btn {
-  min-height: 48px;
-  font-size: 1rem;
   flex: 1;
 }
 
 .dash-focus-list {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 10px;
 }
 
 .dash-focus {
   display: flex;
   align-items: center;
-  gap: 14px;
-  padding: 18px 16px;
+  gap: 10px;
+  padding: 14px 12px;
   background: var(--surface);
   border: 1.5px solid var(--border);
-  border-radius: 24px;
-  box-shadow: var(--shadow);
+  border-radius: 20px;
   transition: background 0.2s ease, border-color 0.2s ease;
 }
 
 .dash-focus.is-done {
   background: var(--blush);
   border-color: var(--pink-light);
-  box-shadow: none;
 }
 
 .dash-check {
-  width: 44px;
-  height: 44px;
+  width: 36px;
+  height: 36px;
   flex-shrink: 0;
   display: flex;
   align-items: center;
@@ -157,7 +176,7 @@
 }
 
 .dash-focus-title {
-  font-size: 1.1rem;
+  font-size: 0.95rem;
   font-weight: 700;
   line-height: 1.3;
   color: var(--ink);
@@ -169,22 +188,22 @@
 }
 
 .dash-focus-note {
-  margin-top: 4px;
-  font-size: 0.85rem;
+  margin-top: 2px;
+  font-size: 0.75rem;
   font-weight: 700;
   color: var(--pink-dark);
 }
 
 .dash-focus-meta {
-  margin-top: 4px;
-  font-size: 0.85rem;
+  margin-top: 2px;
+  font-size: 0.75rem;
   color: var(--ink-muted);
   font-family: 'IBM Plex Mono', monospace;
 }
 
 .dash-icon-btn {
-  width: 44px;
-  height: 44px;
+  width: 36px;
+  height: 36px;
   flex-shrink: 0;
   display: flex;
   align-items: center;
@@ -193,13 +212,13 @@
   background: none;
   padding: 0;
   cursor: pointer;
-  font-size: 1.1rem;
+  font-size: 0.95rem;
   color: var(--ink-muted);
   border-radius: 999px;
 }
 
 .dash-star {
-  font-size: 1.6rem;
+  font-size: 1.3rem;
   color: var(--border);
 }
 
