@@ -19,6 +19,7 @@ import CheckMark from '../components/CheckMark';
 import { triggerActionEvent } from '../lib/questSystem';
 import { useToast } from '../hooks/useToast';
 import PageTitleLogo from "../components/PageTitleLogo";
+import './Dashboard.css';
 
 interface DailyTask {
   id: string;
