@@ -3,7 +3,6 @@ import { supabase } from '../lib/supabase';
 import MoonWidget from "../components/MoonWidget";
 import TodaySnapshot from "../components/TodaySnapshot";
 import LowEnergyChecklist from "../components/LowEnergyChecklist";
-import EnergyModeSwitch from "../components/EnergyModeSwitch";
 import { useEnergy } from "../context/EnergyContext";
 import emptyDash from '../assets/icons/empty-dashboard.png';
 import WeatherBadge from '../components/WeatherBadge';
@@ -16,7 +15,6 @@ import { triggerActionEvent } from '../lib/questSystem';
 import QuestBoard from '../components/QuestBoard';
 import DayPlanCard from '../components/DayPlanCard';
 import { useAuth } from '../context/AuthContext';
-import PageTabs, { type PageTab } from '../components/PageTabs';
 import './Dashboard.css';
 
 
@@ -30,13 +28,6 @@ interface Focus {
   priority: boolean;
 }
 
-type DashTab = 'main' | 'radar';
-
-const DASH_TABS: PageTab<DashTab>[] = [
-  { key: 'main', label: 'Main', icon: 'icon-home' },
-  { key: 'radar', label: 'Radar', icon: 'sparkle-single' },
-];
-
 const DAY_NAMES = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 
 function getGreeting() {
@@ -49,13 +40,12 @@ function getGreeting() {
 }
 
 export default function Dashboard({ onNavigate }: { onNavigate?: (page: string, tab?: string) => void }) {
-  const { mode } = useEnergy();
+  const { mode, setMode } = useEnergy();
   const { user } = useAuth();
   const [focuses, setFocuses] = useState<Focus[]>([]);
   const [newFocus, setNewFocus] = useState('');
   const [newFocusMins, setNewFocusMins] = useState('');
   const [addingFocus, setAddingFocus] = useState(false);
-  const [tab, setTab] = useState<DashTab>('main');
 
   const now = new Date();
   const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
@@ -127,26 +117,28 @@ export default function Dashboard({ onNavigate }: { onNavigate?: (page: string, 
   return (
     <div className="dash">
       <header className="dash-hero">
-        <h1>{getGreeting()}</h1>
-        <div className="dash-subdate">
-          {todayName}, {new Date().toLocaleDateString(undefined, { month: 'long', day: 'numeric' })}
+        <div>
+          <h1>{getGreeting()}</h1>
+          <div className="dash-subdate">
+            {todayName}, {new Date().toLocaleDateString(undefined, { month: 'long', day: 'numeric' })}
+          </div>
         </div>
-        <div className="dash-chips">
-          <WeatherBadge />
-          <MoonWidget compact />
-        </div>
-        <EnergyModeSwitch />
+        <button
+          className={`dash-energy${mode !== 'normal' ? ' is-on' : ''}`}
+          onClick={() => setMode(mode === 'normal' ? 'noEnergy' : 'normal')}
+          aria-pressed={mode !== 'normal'}
+        >
+          {mode === 'normal' ? 'Low energy day?' : 'Back to normal'}
+        </button>
       </header>
 
-      <PageTabs tabs={DASH_TABS} active={tab} onChange={setTab} />
+      <div className="dash-chips">
+        <WeatherBadge />
+        <MoonWidget compact />
+      </div>
 
       <div className="dash-body">
-        {tab === 'radar' ? (
-          <section>
-            <div className="dash-label">Also on your radar</div>
-            <TodaySnapshot onNavigate={onNavigate} />
-          </section>
-        ) : mode !== 'normal' ? (
+        {mode !== 'normal' ? (
           <>
             <section>
               <LowEnergyChecklist onNavigate={onNavigate} />
@@ -205,7 +197,7 @@ export default function Dashboard({ onNavigate }: { onNavigate?: (page: string, 
               )}
 
               {focuses.length === 0 && !addingFocus ? (
-                <EmptyState image={emptyDash} message="No focuses set for today." size={90} />
+                <EmptyState image={emptyDash} message="No focuses set for today." size={70} />
               ) : (
                 <div className="dash-focus-list">
                   {sortedFocuses.map(f => (
@@ -215,7 +207,7 @@ export default function Dashboard({ onNavigate }: { onNavigate?: (page: string, 
                         onClick={() => toggleFocus(f)}
                         aria-label={f.completed ? 'Mark not done' : 'Mark done'}
                       >
-                        <CheckMark completed={f.completed} size={30} />
+                        <CheckMark completed={f.completed} size={24} />
                       </button>
 
                       <div className="dash-focus-text">
@@ -249,6 +241,11 @@ export default function Dashboard({ onNavigate }: { onNavigate?: (page: string, 
             </section>
 
             <DayPlanCard onNavigate={onNavigate} />
+
+            <section>
+              <div className="dash-label dash-label--solo">Also on your radar</div>
+              <TodaySnapshot onNavigate={onNavigate} />
+            </section>
 
             {user && (
               <section>
