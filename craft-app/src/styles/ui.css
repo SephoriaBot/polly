@@ -2273,3 +2273,56 @@
   color: var(--ink-muted);
   cursor: pointer;
 }
+
+/* ================================================================
+   Habitat: Closet
+   ================================================================ */
+
+.closet-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.closet-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 14px 10px;
+  background: transparent;
+  border: 1.5px solid var(--border);
+  border-radius: 18px;
+  font: inherit;
+  text-align: center;
+  color: var(--ink);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.closet-item.is-equipped {
+  background: var(--blush);
+  border-color: var(--pink-dark);
+}
+
+.closet-item:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.closet-item img {
+  width: 64px;
+  height: 64px;
+  object-fit: contain;
+}
+
+.closet-item-name {
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.closet-item-hint {
+  font-size: 0.8rem;
+  color: var(--ink-muted);
+}
