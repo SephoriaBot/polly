@@ -1887,3 +1887,201 @@
   opacity: 0.35;
   cursor: default;
 }
+
+/* ================================================================
+   Habitat: Breeder
+   ================================================================ */
+
+@keyframes adoptPop {
+  0% { transform: scale(0.3); opacity: 0; }
+  60% { transform: scale(1.15); opacity: 1; }
+  100% { transform: scale(1); }
+}
+
+@keyframes breederRefreshSpin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes breederSavingPulse {
+  0% { transform: scale(0.9); opacity: 0.55; }
+  50% { transform: scale(1.1); opacity: 1; }
+  100% { transform: scale(0.9); opacity: 0.55; }
+}
+
+.help-text.is-pink { color: var(--pink-dark); }
+
+.card.is-outlined {
+  margin-top: 20px;
+  border: 1.5px solid var(--pink-light);
+}
+
+.bank-chip {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--ink-muted);
+}
+
+.icon-circle-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 1.5px solid var(--pink-light);
+  border-radius: 50%;
+  background: var(--blush);
+  cursor: pointer;
+}
+
+.icon-circle-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.breeder-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 8px;
+  text-align: center;
+}
+
+.state-orb {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 80px;
+  height: 80px;
+  margin-bottom: 4px;
+  border-radius: 50%;
+  background: var(--blush);
+  border: 1.5px solid var(--pink-light);
+}
+
+.state-orb.is-plain {
+  width: 96px;
+  height: 96px;
+  background: none;
+  border: none;
+}
+
+.state-title {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--pink-dark);
+}
+
+.adopt-img {
+  width: 110px;
+  height: 110px;
+  object-fit: contain;
+  animation: adoptPop 0.7s ease;
+}
+
+.text-link {
+  padding: 8px;
+  background: none;
+  border: none;
+  font-family: inherit;
+  font-size: 0.85rem;
+  color: var(--pink-dark);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.litter-grid {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+}
+
+.litter-card {
+  width: 120px;
+  padding: 10px;
+  text-align: center;
+  background: var(--blush);
+  border: 1.5px solid var(--pink-light);
+  border-radius: 18px;
+}
+
+.litter-card.is-busy { opacity: 0.6; }
+
+.litter-card img {
+  width: 80px;
+  height: 80px;
+  object-fit: contain;
+}
+
+.litter-name {
+  margin-top: 4px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--ink-muted);
+}
+
+.litter-stage {
+  font-size: 0.75rem;
+  color: var(--ink-muted);
+}
+
+.litter-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  margin-top: 8px;
+}
+
+.litter-btn {
+  width: 100%;
+  min-height: 36px;
+  margin-top: 8px;
+  padding: 0 8px;
+  background: var(--cream);
+  border: 1.5px solid var(--pink-light);
+  border-radius: 999px;
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--pink-dark);
+  cursor: pointer;
+}
+
+.litter-btn:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.litter-btn.is-muted { color: var(--ink-muted); }
+
+.litter-actions .litter-btn { margin-top: 0; }
+
+.litter-btn.is-solid {
+  background: var(--pink-dark);
+  border-color: var(--pink-dark);
+  color: var(--white);
+}
+
+.points-strip {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+  padding-bottom: 2px;
+  overflow-x: auto;
+}
+
+.points-chip {
+  flex-shrink: 0;
+  padding: 5px 12px;
+  background: var(--blush);
+  border: 1.5px solid var(--pink-light);
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  white-space: nowrap;
+  color: var(--pink-dark);
+}
