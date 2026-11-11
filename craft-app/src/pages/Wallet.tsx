@@ -1510,9 +1510,9 @@ async function updateMonthBill(
 
   function renderBillForm() {
     return (
-<div style={{ background: "var(--accent)", borderRadius: 16, padding: 14, marginBottom: 14, display: "flex", flexDirection: "column", gap: 10 }}>
-                    <div className="section-label" style={{ marginBottom: 0 }}>{newBill.recurring ? "New recurring bill" : `One-time bill for ${MONTH_NAMES[selectedMonth - 1]}`}</div>
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+<div className="form-panel is-accent">
+                    <div className="section-label">{newBill.recurring ? "New recurring bill" : `One-time bill for ${MONTH_NAMES[selectedMonth - 1]}`}</div>
+                    <div className="field-grid">
                       <div>
                         <div className="form-label">Bill Name</div>
                         <input className="form-input" type="text" placeholder="e.g. Rent" value={newBill.name} onChange={e => setNewBill(p => ({ ...p, name: e.target.value }))} />
@@ -1554,7 +1554,7 @@ async function updateMonthBill(
                         </div>
                       )}
                     </div>
-                    <button className="btn btn-green" style={{ justifyContent: "center" }} onClick={addBill}>Save Bill</button>
+                    <button className="btn btn-green btn-block" onClick={addBill}>Save Bill</button>
                   </div>
     );
   }
@@ -1622,11 +1622,11 @@ async function updateMonthBill(
           <div key={i} style={{ position: "absolute", left: `${Math.random() * 100}%`, top: "-10px", width: `${Math.random() * 8 + 4}px`, height: `${Math.random() * 8 + 4}px`, background: colors[Math.floor(Math.random() * colors.length)], borderRadius: Math.random() > 0.5 ? "50%" : "0", animation: `fall ${Math.random() * 2 + 2}s linear ${Math.random() * 2}s forwards` }} />
         ))}
         <style>{`@keyframes fall { to { transform: translateY(100vh) rotate(720deg); opacity: 0; } }`}</style>
-        <div style={{ position: "absolute", top: "35%", left: "50%", transform: "translateX(-50%)", textAlign: "center", background: "var(--white)", border: "2px solid var(--border)", borderRadius: 32, padding: "24px 32px", minWidth: 220 }}>
+        <div className="celebrate-box">
                     <Polly mood="cheering" size="large" animate={false} />
-          <div style={{ fontSize: 20, fontWeight: 800, color: "var(--green-dark)", marginTop: 8 }}>{celebration.title}</div>
-          <div style={{ fontSize: 16, color: "var(--pink-dark)", marginTop: 4 }}>{celebration.subtitle}</div>
-          <div style={{ fontSize: 13, color: "var(--ink-muted)", marginTop: 8 }}>Keep going — you are crushing it!</div>
+          <div className="celebrate-title">{celebration.title}</div>
+          <div className="celebrate-sub">{celebration.subtitle}</div>
+          <div className="celebrate-note">Keep going — you are crushing it!</div>
         </div>
       </div>
     );
@@ -2353,7 +2353,7 @@ async function updateMonthBill(
 
         {view === "bills" && (
           <>
-            <div style={{ display: "flex", gap: 6 }}>
+            <div className="add-row">
               <button
                 onClick={() => { setBillsTab("month"); setShowBillForm(false); }}
                 className={billsTab === "month" ? "btn btn-primary btn-sm" : "btn btn-ghost btn-sm"}
@@ -2370,114 +2370,93 @@ async function updateMonthBill(
 
             {billsTab === "month" && (
               <>
-            <div style={{ display: "flex", gap: 6, overflowX: "auto", paddingBottom: 4 }}>
+            <div className="scroll-chips">
               {availableMonths.map(({ month, year, label }) => (
                 <button
                   key={`${month}-${year}`}
                   onClick={() => { setSelectedMonth(month); setSelectedYear(year); }}
                   className={selectedMonth === month && selectedYear === year ? "btn btn-primary btn-sm" : "btn btn-ghost btn-sm"}
-                  style={{ whiteSpace: "nowrap" }}
                 >
                   {label}
                 </button>
               ))}
             </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10 }}>
+            <div className="stat-row">
               {[
-                { label: "Total", val: fmt(totalMonthlyBills), color: "var(--ink)" },
-                { label: "Paid", val: fmt(paidTotal), color: "var(--green-dark)" },
-                { label: "Unpaid", val: fmt(unpaidTotal), color: "var(--pink-dark)" },
-              ].map(({ label, val, color }) => (
-                <div key={label} className="card" style={{ cursor: "default" }}>
-                  <div className="card-body" style={{ padding: "10px 12px" }}>
-                    <div className="section-label" style={{ marginBottom: 4 }}>{label}</div>
-                    <div style={{ fontSize: 15, fontWeight: 800, color }}>{val}</div>
-                  </div>
+                { label: "Total", val: fmt(totalMonthlyBills), tone: "" },
+                { label: "Paid", val: fmt(paidTotal), tone: " is-green" },
+                { label: "Unpaid", val: fmt(unpaidTotal), tone: " is-pink" },
+              ].map(({ label, val, tone }) => (
+                <div key={label} className="stat-tile">
+                  <div className="stat-label">{label}</div>
+                  <div className={`stat-value${tone}`}>{val}</div>
                 </div>
               ))}
             </div>
 
             <div className="card">
               <div className="card-body">
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-                  <div className="section-label" style={{ marginBottom: 0 }}>{MONTH_NAMES[selectedMonth - 1]} {selectedYear}</div>
+                <div className="section-head">
+                  <div className="section-label">{MONTH_NAMES[selectedMonth - 1]} {selectedYear}</div>
                   <button className="btn btn-primary btn-sm" onClick={() => openBillForm(false)}>+ One-time Bill</button>
                 </div>
 
-
-                <div style={{ fontSize: 11, color: "var(--ink-muted)", marginBottom: 10 }}>
+                <p className="hint-text">
                   Edits here only change this month. To change a bill for every month, use the Recurring tab.
-                </div>
+                </p>
                 {showBillForm && renderBillForm()}
-                <div style={{ overflowX: "auto" }}>
-                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
-                  <thead>
-                    <tr>
-                      {["", "Bill", "Amount", "Due", "Status", ""].map(h => (
-                        <th key={h} style={{ fontSize: 10, color: "var(--ink-muted)", textTransform: "uppercase", padding: "8px 8px", textAlign: "left", borderBottom: "1.5px solid var(--border)", fontWeight: 700 }}>{h}</th>
-                      ))}
-                    </tr>
-                  </thead>
 
-                    {monthBills.length === 0 ? (
-                      <tr><td colSpan={6} style={{ padding: 24, textAlign: "center", color: "var(--ink-muted)" }}>
-                        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
-                          <img src={emptyWallet} alt="" style={{ width: 100 }} />
-                          No bills this month — add one in the Recurring tab.
-                        </div>
-                      </td></tr>
-                    ) : (
-                  <tbody>
-                    {monthBills.map((b, i) => {
-                      const isAccentRow = !b.late && !b.paid && i % 2 !== 0;
-                      return (
-                      <tr key={b.paymentId ?? `${b.id}-fallback`} style={{ background: b.late ? "var(--danger-bg)" : b.paid ? "var(--sage-light)" : i % 2 === 0 ? "transparent" : "var(--accent)" }}>
-                        <td style={{ padding: "9px 8px" }}>
-                          <button
-                            onClick={() => togglePaid(b)}
-                            aria-label={b.paid ? "Mark not paid" : "Mark paid"}
-                            style={{
-                              width: 26, height: 26, flexShrink: 0,
-                              border: "none", background: "none", padding: 0,
-                              cursor: "pointer", display: "flex",
-                              alignItems: "center", justifyContent: "center",
-                            }}
-                          >
-                            <CheckMark completed={b.paid} size={22} />
-                          </button>
-                        </td>
-                        <td style={{ padding: "9px 8px", textDecoration: b.paid ? "line-through" : "none" }}>
-                          <EditableCell value={b.name} onChange={v => updateMonthBill(b, "name", v)} type="text" style={{ color: b.paid ? "var(--ink-muted)" : isAccentRow ? "var(--accent-text)" : "var(--ink)", fontWeight: 600 }} />
+                {monthBills.length === 0 ? (
+                  <div className="empty-block">
+                    <img src={emptyWallet} alt="" />
+                    No bills this month — add one in the Recurring tab.
+                  </div>
+                ) : (
+                  <div className="row-list">
+                    {monthBills.map(b => (
+                      <div key={b.paymentId ?? `${b.id}-fallback`} className={`bill-row${b.late ? " is-late" : b.paid ? " is-paid" : ""}`}>
+                        <button
+                          className="row-check"
+                          onClick={() => togglePaid(b)}
+                          aria-label={b.paid ? "Mark not paid" : "Mark paid"}
+                        >
+                          <CheckMark completed={b.paid} size={24} />
+                        </button>
+
+                        <div className="bill-main">
+                          <EditableCell value={b.name} onChange={v => updateMonthBill(b, "name", v)} type="text" className="cell-input is-bold" />
+                          <div className="bill-sub">
+                            <span className="inline-label">Due day</span>
+                            <div className="mini-field">
+                              <EditableCell value={b.due_day} onChange={v => updateMonthBill(b, "due_day", parseInt(v) || 1)} />
+                            </div>
+                            {b.paid
+                              ? <span className="badge badge-green">PAID</span>
+                              : b.late ? <span className="badge badge-late">LATE</span>
+                              : b.days === 0 ? <span className="badge badge-lavender">DUE TODAY</span>
+                              : b.days <= 3 ? <span className="badge badge-lavender">DUE SOON</span>
+                              : <span className="badge badge-pink">{b.days}d away</span>}
+                          </div>
                           {b.recurring && b.frequency_unit === "week" && (
-                            <div style={{ fontSize: 10, color: isAccentRow ? "var(--accent-text-muted)" : "var(--ink-muted)", marginTop: 2 }}>{frequencyLabel(b.frequency_unit, b.frequency_interval)}</div>
+                            <div className="row-meta">{frequencyLabel(b.frequency_unit, b.frequency_interval)}</div>
                           )}
-                        </td>
-                        <td style={{ padding: "9px 8px", textDecoration: b.paid ? "line-through" : "none" }}>
-                          <EditableCell value={b.amount} onChange={v => updateMonthBill(b, "amount", parseFloat(v) || 0)} style={{ color: b.paid ? "var(--ink-muted)" : isAccentRow ? "var(--accent-text)" : "var(--pink-dark)", fontWeight: 700 }} />
-                        </td>
-                        <td style={{ padding: "9px 8px" }}>
-                          <EditableCell value={b.due_day} onChange={v => updateMonthBill(b, "due_day", parseInt(v) || 1)} style={{ color: isAccentRow ? "var(--accent-text-muted)" : "var(--ink-muted)" }} />
-                        </td>
-                        <td style={{ padding: "9px 8px" }}>
-                          {b.paid
-                            ? <span className="badge badge-green">PAID</span>
-                            : b.late ? <span className="badge" style={{ background: "var(--danger-bg)", color: "var(--danger)" }}>LATE</span>
-                            : b.days === 0 ? <span className="badge badge-lavender">DUE TODAY</span>
-                            : b.days <= 3 ? <span className="badge badge-lavender">DUE SOON</span>
-                            : <span className="badge badge-pink">{b.days}d away</span>}
-                            </td>
-                        <td style={{ padding: "9px 8px", textAlign: "center" }}>
-                          {!b.recurring && <button className="btn btn-ghost btn-sm" onClick={() => removeBill(b.id)}><Icon name="icon-trash2" size={24} /></button>}
-                        </td>
-                      </tr>
-                      );
-                    })}
-                    
-                  </tbody>
+                        </div>
+
+                        <div className="bill-amount">
+                          <span className="inline-label">$</span>
+                          <EditableCell value={b.amount} onChange={v => updateMonthBill(b, "amount", parseFloat(v) || 0)} />
+                        </div>
+
+                        {!b.recurring && (
+                          <button className="row-icon-btn" onClick={() => removeBill(b.id)} aria-label="Delete bill">
+                            <Icon name="icon-trash2" size={22} />
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
                 )}
-                </table>
-                </div>
               </div>
             </div>
               </>
@@ -2486,48 +2465,45 @@ async function updateMonthBill(
             {billsTab === "recurring" && (
               <div className="card">
                 <div className="card-body">
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-                    <div className="section-label" style={{ marginBottom: 0 }}>Recurring Bills</div>
+                  <div className="section-head">
+                    <div className="section-label">Recurring Bills</div>
                     <button className="btn btn-primary btn-sm" onClick={() => openBillForm(true)}>+ Add Recurring Bill</button>
                   </div>
-                  <div style={{ fontSize: 11, color: "var(--ink-muted)", marginBottom: 10 }}>
+                  <p className="hint-text">
                     Change a bill here and it updates every unpaid month from this month on. Months you already paid stay as they were.
-                  </div>
+                  </p>
                   {showBillForm && renderBillForm()}
                   {bills.filter(b => b.recurring).length === 0 ? (
-                    <div style={{ padding: 24, textAlign: "center", color: "var(--ink-muted)" }}>
-                      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
-                        <img src={emptyWallet} alt="" style={{ width: 100 }} />
-                        No recurring bills yet.
-                      </div>
+                    <div className="empty-block">
+                      <img src={emptyWallet} alt="" />
+                      No recurring bills yet.
                     </div>
                   ) : (
                     bills.filter(b => b.recurring).map(b => (
-                      <div key={b.id} style={{ padding: "12px 0", borderBottom: "1.5px solid var(--border)", display: "flex", flexDirection: "column", gap: 8 }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                          <div style={{ flex: 1 }}>
+                      <div key={b.id} className="recurring-item">
+                        <div className="recurring-head">
+                          <div className="row-text">
                             <EditableCell
                               value={b.name}
                               type="text"
                               onChange={v => { if (v.trim()) updateRecurringBill(b, { name: v.trim() }); }}
-                              style={{ fontWeight: 700, color: "var(--ink)" }}
+                              className="cell-input is-bold"
                             />
                           </div>
                           <button
-                            className="btn btn-ghost btn-sm"
+                            className="row-icon-btn"
                             aria-label="Delete recurring bill"
                             onClick={() => { if (window.confirm(`Delete "${b.name}" from all months?`)) removeBill(b.id); }}
                           >
-                            <Icon name="icon-trash2" size={24} />
+                            <Icon name="icon-trash2" size={22} />
                           </button>
                         </div>
-                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                        <div className="field-grid">
                           <div>
                             <div className="form-label">Amount ($)</div>
                             <EditableCell
                               value={b.amount}
                               onChange={v => updateRecurringBill(b, { amount: parseFloat(v) || 0 })}
-                              style={{ color: "var(--pink-dark)", fontWeight: 700 }}
                             />
                           </div>
                           {b.frequency_unit === "week" ? (
@@ -2558,7 +2534,7 @@ async function updateMonthBill(
                             </div>
                           )}
                         </div>
-                        <div style={{ fontSize: 10, color: "var(--ink-muted)" }}>{frequencyLabel(b.frequency_unit, b.frequency_interval)}</div>
+                        <div className="row-meta">{frequencyLabel(b.frequency_unit, b.frequency_interval)}</div>
                       </div>
                     ))
                   )}
@@ -2573,211 +2549,170 @@ async function updateMonthBill(
         {view === "debts" && (
           <>
 
-{/* SELECT DEBT PAYOFF STRATEGY */}      
+{/* SELECT DEBT PAYOFF STRATEGY */}
 
-<div className="card" style={{ marginBottom: 12 }}>
+<div className="card">
   <div className="card-body">
-    <div style={{ fontWeight: 700, marginBottom: 10 }}>
-      Select Debt Payoff Strategy
-    </div>
+    <div className="section-label">Debt Payoff Strategy</div>
 
-        <label
-      style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8, cursor: "pointer" }}
-      onClick={() => setDebtStrategy("snowball")}
-    >
-      <Icon name={debtStrategy === "snowball" ? "heartfull" : "heartempty"} size={18} />
+    <label className="choice-row" onClick={() => setDebtStrategy("snowball")}>
+      <Icon name={debtStrategy === "snowball" ? "heartfull" : "heartempty"} size={22} />
       <div>
-        Snowball
-        <div style={{ fontSize: 12, opacity: .7 }}>
-          Pay the smallest balance first.
-        </div>
+        <div className="choice-title">Snowball</div>
+        <div className="choice-sub">Pay the smallest balance first.</div>
       </div>
     </label>
 
-
-       <label
-      style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}
-      onClick={() => setDebtStrategy("avalanche")}
-    >
-      <Icon name={debtStrategy === "avalanche" ? "heartfull" : "heartempty"} size={18} />
+    <label className="choice-row" onClick={() => setDebtStrategy("avalanche")}>
+      <Icon name={debtStrategy === "avalanche" ? "heartfull" : "heartempty"} size={22} />
       <div>
-        Avalanche
-        <div style={{ fontSize: 12, opacity: .7 }}>
-          Pay the highest APR first.
-        </div>
+        <div className="choice-title">Avalanche</div>
+        <div className="choice-sub">Pay the highest APR first.</div>
       </div>
     </label>
-
   </div>
 </div>
 
 <StitchDivider />
 
-{/* ACTIVE DEBTS */}  
+{/* ACTIVE DEBTS */}
 
-              <div className="card">
+            <div className="card">
               <div className="card-body">
-                <div className="section-header">
-
+                <div className="section-head">
                   <div className="section-label">Active Debts</div>
-
                   <button className="btn btn-primary btn-sm" onClick={() => addDebt(false)}>
                     + Add
                   </button>
                 </div>
-                <div style={{ overflowX: "auto" }}>
-                  <table className="table">
-  <colgroup>
-    <col style={{ width: 40 }} />
-    <col style={{ width: 28 }} />
-    <col style={{ width: 130 }} />
-    <col style={{ width: 80 }} />
-    <col style={{ width: 90 }} />
-    <col style={{ width: 60 }} />
-    <col style={{ width: 80 }} />
-    <col style={{ width: 40 }} />
-  </colgroup>
-  <thead>
 
-                      <tr>
-                        {["","#","Name","Balance","Progress","APR%","Min/Mo",""].map(h => (
-                          <th key={h} style={{ fontSize: 10, color: "var(--ink-muted)", textTransform: "uppercase", padding: "8px", textAlign: "left", borderBottom: "1.5px solid var(--border)", fontWeight: 700 }}>{h}</th>
-                        ))}
-                      </tr>
-                    </thead>
+                {activeDebts.length === 0 ? (
+                  <EmptyState image={emptyWallet} message="No debts listed yet. Add one to start tracking." />
+                ) : (
+                  <div className="row-list">
+                    {activeDebts.filter(d => !d.paid_off).map((d, i) => {
+                      const origBal = d.original_balance || d.balance;
+                      const paidPct = origBal > 0 ? Math.min(100, ((origBal - d.balance) / origBal) * 100) : 0;
+                      return (
+                        <div key={d.id} className="debt-row">
+                          <button
+                            className="row-check"
+                            onClick={() => markDebtPaid(d.id, d.name)}
+                            aria-label="Mark debt paid off"
+                          >
+                            <CheckMark completed={false} size={24} />
+                          </button>
 
-                  {activeDebts.length === 0 ? (
-  <tbody>
-    <tr>
-      <td colSpan={8} style={{ padding: 24, textAlign: "center" }}>
-        <EmptyState image={emptyWallet} message="No debts listed yet. Add one to start tracking." />
-      </td>
-    </tr>
-  </tbody>
-) : (
-                    <tbody>
-                      {activeDebts.filter(d => !d.paid_off).map((d, i) => {
-                        const origBal = d.original_balance || d.balance;
-                        const paidPct = origBal > 0 ? Math.min(100, ((origBal - d.balance) / origBal) * 100) : 0;
-                        return (
-                          <tr key={d.id} style={{ background: i % 2 === 0 ? "transparent" : "var(--accent)" }}>
-                            <td style={{ padding: "9px 8px" }}>
-                              <button
-                                onClick={() => markDebtPaid(d.id, d.name)}
-                                aria-label="Mark debt paid off"
-                                style={{
-                                  width: 26, height: 26, flexShrink: 0,
-                                  border: "none", background: "none", padding: 0,
-                                  cursor: "pointer", display: "flex",
-                                  alignItems: "center", justifyContent: "center",
-                                }}
-                              >
-                                <CheckMark completed={false} size={22} />
-            </button>
-                            </td>
-                            <td style={{ padding: "9px 8px" }}>
+                          <div className="debt-main">
+                            <div className="debt-top">
                               {i === 0
                                 ? <span className="badge badge-pink">Target</span>
-                                : <span style={{ color: "var(--ink-muted)", fontWeight: 700 }}>{i + 1}</span>}
-                            </td>
-                            <td style={{ padding: "9px 8px", minWidth: 130 }}><EditableCell value={d.name} onChange={v => updateDebt(d.id, "name", v)} type="text" /></td>
-                            <td style={{ padding: "9px 8px" }}><EditableCell value={d.balance} onChange={v => updateDebt(d.id, "balance", parseFloat(v) || 0)} /></td>
-                            <td style={{ padding: "9px 8px", minWidth: 90 }}>
-                              <div style={{ height: 6, background: "var(--border)", borderRadius: 99, overflow: "hidden" }}>
-                                <div style={{ height: "100%", width: `${paidPct}%`, background: "var(--green-dark)", borderRadius: 99 }} />
+                                : <span className="debt-rank">#{i + 1}</span>}
+                              <EditableCell value={d.name} onChange={v => updateDebt(d.id, "name", v)} type="text" className="cell-input is-bold" />
+                            </div>
+
+                            <div className="progress">
+                              <div className="progress-fill is-green" style={{ width: `${paidPct}%` }} />
+                            </div>
+                            <div className="row-meta">{paidPct.toFixed(1)}% paid off</div>
+
+                            <div className="debt-fields">
+                              <div>
+                                <div className="form-label">Balance</div>
+                                <EditableCell value={d.balance} onChange={v => updateDebt(d.id, "balance", parseFloat(v) || 0)} />
                               </div>
-                              <div style={{ fontSize: 10, color: "var(--ink-muted)", marginTop: 3 }}>{paidPct.toFixed(1)}%</div>
-                            </td>
-                            <td style={{ padding: "9px 8px" }}><EditableCell value={d.apr} onChange={v => updateDebt(d.id, "apr", parseFloat(v) || 0)} /></td>
-                            <td style={{ padding: "9px 8px" }}><EditableCell value={d.min_payment} onChange={v => updateDebt(d.id, "min_payment", parseFloat(v) || 0)} /></td>
-                            <td style={{ padding: "9px 8px" }}>
-                              <button className="btn btn-ghost btn-sm" onClick={() => removeDebt(d.id)}><Icon name="icon-trash2" size={24} /></button>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  )}
-                  </table>
-                </div>
+                              <div>
+                                <div className="form-label">APR %</div>
+                                <EditableCell value={d.apr} onChange={v => updateDebt(d.id, "apr", parseFloat(v) || 0)} />
+                              </div>
+                              <div>
+                                <div className="form-label">Min / mo</div>
+                                <EditableCell value={d.min_payment} onChange={v => updateDebt(d.id, "min_payment", parseFloat(v) || 0)} />
+                              </div>
+                            </div>
+                          </div>
+
+                          <button className="row-icon-btn" onClick={() => removeDebt(d.id)} aria-label="Delete debt">
+                            <Icon name="icon-trash2" size={22} />
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             </div>
 
             {activeDebts.filter(d => d.paid_off).length > 0 && (
-              <div className="card" style={{ opacity: 0.9 }}>
+              <div className="card">
                 <div className="card-body">
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
-                    <div className="section-label" style={{ marginBottom: 0 }}><Icon name="trophy" size={16} /> Paid Off</div>
-                    <span style={{ fontSize: 12, color: "var(--green-dark)", fontWeight: 600 }}>Amazing work!</span>
+                  <div className="section-head">
+                    <div className="section-label"><Icon name="trophy" size={16} /> Paid Off</div>
+                    <span className="goal-status is-done">Amazing work!</span>
                   </div>
-                  <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
-                    <tbody>
-                      {activeDebts.filter(d => d.paid_off).map(d => (
-                        <tr key={d.id} style={{ background: "var(--sage-light)" }}>
-                          <td style={{ padding: "9px 8px", width: 36 }}>
-                            <button
-                              onClick={() => unmarkDebtPaid(d.id)}
-                              aria-label="Mark debt not paid off"
-                              style={{
-                                width: 26, height: 26, flexShrink: 0,
-                                border: "none", background: "none", padding: 0,
-                                cursor: "pointer", display: "flex",
-                                alignItems: "center", justifyContent: "center",
-                              }}
-                            >
-                            <CheckMark completed={true} size={22} />
-          </button>
-                          </td>
-                          <td style={{ padding: "9px 8px", textDecoration: "line-through", color: "var(--green-dark)", fontWeight: 700 }}>{d.name}</td>
-                          <td style={{ padding: "9px 8px", color: "var(--green-dark)", fontWeight: 800 }}>$0.00</td>
-                          <td style={{ padding: "9px 8px" }}><span className="badge badge-green">PAID OFF</span></td>
-                          <td style={{ padding: "9px 8px", textAlign: "center" }}>
-                            <button className="btn btn-ghost btn-sm" onClick={() => removeDebt(d.id)}><Icon name="icon-trash2" size={24} /></button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                  <div className="row-list">
+                    {activeDebts.filter(d => d.paid_off).map(d => (
+                      <div key={d.id} className="row-item is-sage">
+                        <button
+                          className="row-check"
+                          onClick={() => unmarkDebtPaid(d.id)}
+                          aria-label="Mark debt not paid off"
+                        >
+                          <CheckMark completed={true} size={24} />
+                        </button>
+                        <div className="row-text">
+                          <div className="row-title is-struck">{d.name}</div>
+                        </div>
+                        <span className="badge badge-green">PAID OFF</span>
+                        <button className="row-icon-btn" onClick={() => removeDebt(d.id)} aria-label="Delete debt">
+                          <Icon name="icon-trash2" size={22} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
             )}
 
-{/* DEFERRED DEBTS */}  
+{/* DEFERRED DEBTS */}
 
-            <div className="card" style={{ opacity: 0.85 }}>
+            <div className="card">
               <div className="card-body">
-                <div className="section-header">
-                  <div className="section-label" style={{ marginBottom: 0 }}>Deferred Debts</div>
-                  <div style={{ display: "flex", gap: 8 }}>
+                <div className="section-head">
+                  <div className="section-label">Deferred Debts</div>
+                  <div className="add-row">
                     <button className="btn btn-ghost btn-sm" onClick={() => setShowDeferred(v => !v)}>{showDeferred ? "Hide" : "Show"}</button>
                     <button className="btn btn-primary btn-sm" onClick={() => addDebt(true)}>+ Add</button>
                   </div>
                 </div>
                 {showDeferred && (
-                  <div style={{ overflowX: "auto" }}>
-                    <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
-                      <thead>
-                        <tr>
-                          {["Name","Balance","APR%","Note",""].map(h => (
-                            <th key={h} style={{ fontSize: 10, color: "var(--ink-muted)", textTransform: "uppercase", padding: "8px", textAlign: "left", borderBottom: "1.5px solid var(--border)", fontWeight: 700 }}>{h}</th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {deferredDebts.map((d, i) => (
-                          <tr key={d.id} style={{ background: i % 2 === 0 ? "transparent" : "var(--accent)" }}>
-                            <td style={{ padding: "9px 8px" }}><EditableCell value={d.name} onChange={v => updateDebt(d.id, "name", v)} type="text" /></td>
-                            <td style={{ padding: "9px 8px" }}><EditableCell value={d.balance} onChange={v => updateDebt(d.id, "balance", parseFloat(v) || 0)} /></td>
-                            <td style={{ padding: "9px 8px" }}><EditableCell value={d.apr} onChange={v => updateDebt(d.id, "apr", parseFloat(v) || 0)} /></td>
-                            <td style={{ padding: "9px 8px", color: "var(--ink-muted)", fontSize: 11 }}>Not targeted until active debts clear</td>
-                            <td style={{ padding: "9px 8px", textAlign: "center", whiteSpace: "nowrap" }}>
-                              <button className="btn btn-primary btn-sm" style={{ marginRight: 6 }} onClick={() => activateDebt(d.id)}>Activate</button>
-                              <button className="btn btn-ghost btn-sm" onClick={() => removeDebt(d.id)}><Icon name="icon-trash2" size={24} /></button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                  <div className="row-list">
+                    {deferredDebts.map(d => (
+                      <div key={d.id} className="debt-row">
+                        <div className="debt-main">
+                          <div className="debt-top">
+                            <EditableCell value={d.name} onChange={v => updateDebt(d.id, "name", v)} type="text" className="cell-input is-bold" />
+                          </div>
+                          <div className="debt-fields is-two">
+                            <div>
+                              <div className="form-label">Balance</div>
+                              <EditableCell value={d.balance} onChange={v => updateDebt(d.id, "balance", parseFloat(v) || 0)} />
+                            </div>
+                            <div>
+                              <div className="form-label">APR %</div>
+                              <EditableCell value={d.apr} onChange={v => updateDebt(d.id, "apr", parseFloat(v) || 0)} />
+                            </div>
+                          </div>
+                          <div className="row-meta">Not targeted until active debts clear</div>
+                          <div className="add-row">
+                            <button className="btn btn-primary btn-sm" onClick={() => activateDebt(d.id)}>Activate</button>
+                          </div>
+                        </div>
+                        <button className="row-icon-btn" onClick={() => removeDebt(d.id)} aria-label="Delete debt">
+                          <Icon name="icon-trash2" size={22} />
+                        </button>
+                      </div>
+                    ))}
                   </div>
                 )}
               </div>
@@ -2785,36 +2720,36 @@ async function updateMonthBill(
 
             <StitchDivider />
 
-{/* PAYOFF SCHEDULE */}  
+{/* PAYOFF SCHEDULE */}
 
-            <div className="section-label" style={{ marginTop: 4 }}><Icon name="clipboard-list" size={16} /> Payoff Schedule</div>
+            <div className="section-label"><Icon name="clipboard-list" size={16} /> Payoff Schedule</div>
             {extraDebtPayment < 0 && (
-              <div style={{ background: "var(--danger-bg)", border: "1.5px solid var(--danger)", borderRadius: 16, padding: "12px 16px", fontSize: 13, color: "var(--danger)", fontWeight: 600 }}>
+              <div className="alert is-danger">
                 <Icon name="lightning" size={13} /> Extra debt payment is negative — minimum payments exceed your budget!
               </div>
             )}
 
             <div className="card">
               <div className="card-body">
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-                  <div className="section-label" style={{ marginBottom: 0 }}>Month-by-Month Payoff</div>
+                <div className="section-head">
+                  <div className="section-label">Month-by-Month Payoff</div>
                   <span className="badge badge-green">Done in {payoffMonth} months</span>
                 </div>
-                <div style={{ overflowX: "auto" }}>
-                  <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
+                <div className="table-scroll">
+                  <table className="data-table">
                     <thead>
                       <tr>
-                        <th style={{ fontSize: 10, color: "var(--ink-muted)", textTransform: "uppercase", padding: "8px", textAlign: "left", borderBottom: "1.5px solid var(--border)", fontWeight: 700 }}>Mo.</th>
+                        <th>Mo.</th>
                         {activeDebts.filter(d => !d.paid_off).map(d => (
-                          <th key={d.id} style={{ fontSize: 10, color: "var(--ink-muted)", textTransform: "uppercase", padding: "8px", textAlign: "right", borderBottom: "1.5px solid var(--border)", fontWeight: 700, minWidth: 90 }}>{d.name}</th>
+                          <th key={d.id} className="num">{d.name}</th>
                         ))}
-                        <th style={{ fontSize: 10, color: "var(--pink-dark)", textTransform: "uppercase", padding: "8px", textAlign: "left", borderBottom: "1.5px solid var(--border)", fontWeight: 700 }}>Target</th>
+                        <th className="is-pink">Target</th>
                       </tr>
                     </thead>
                     <tbody>
                       {months.map((snap, mi) => (
-                        <tr key={mi} style={{ background: mi % 2 === 0 ? "transparent" : "var(--accent)" }}>
-                          <td style={{ padding: "8px", color: "var(--ink-muted)", fontWeight: 700 }}>{snap.month}</td>
+                        <tr key={mi}>
+                          <td className="is-muted">{snap.month}</td>
                           {activeDebts.filter(d => !d.paid_off).map(d => {
                             const bal = snap.balances[d.id] ?? 0;
                             const paid = bal < 0.01;
@@ -2822,17 +2757,17 @@ async function updateMonthBill(
                             const origBal = d.original_balance || d.balance;
                             const paidPct = origBal > 0 ? Math.min(100, ((origBal - bal) / origBal) * 100) : 0;
                             return (
-                              <td key={d.id} style={{ padding: "8px", background: paid ? "var(--sage-light)" : isTgt ? "var(--accent)" : "transparent", color: paid ? "var(--green-dark)" : isTgt ? "var(--pink-dark)" : "var(--ink-muted)", fontWeight: isTgt ? 700 : 400, textAlign: "right" }}>
+                              <td key={d.id} className={`num${paid ? " is-paid" : isTgt ? " is-target" : ""}`}>
                                 <div>{paid ? <>PAID <Icon name="clipboard-check" size={12} /></> : fmt(bal)}</div>
                                 {!paid && (
-                                  <div style={{ height: 4, background: "var(--border)", borderRadius: 99, overflow: "hidden", marginTop: 3 }}>
-                                    <div style={{ height: "100%", width: `${paidPct}%`, background: isTgt ? "var(--pink-dark)" : "var(--green-dark)", borderRadius: 99 }} />
+                                  <div className="mini-bar">
+                                    <div className={isTgt ? "is-target" : ""} style={{ width: `${paidPct}%` }} />
                                   </div>
                                 )}
                               </td>
                             );
                           })}
-                          <td style={{ padding: "8px", color: "var(--pink-dark)", fontWeight: 700, fontSize: 11 }}>{snap.target}</td>
+                          <td className="is-pink">{snap.target}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -2843,31 +2778,31 @@ async function updateMonthBill(
 
             <StitchDivider />
 
-            {/* DEFERRED LOANS (ACCRUING) */}  
+            {/* DEFERRED LOANS (ACCRUING) */}
 
             {deferredDebts.length > 0 && (
               <div className="card">
                 <div className="card-body">
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-                    <div className="section-label" style={{ marginBottom: 0 }}>Deferred Loans (accruing)</div>
-                    <span style={{ fontSize: 12, color: "var(--ink-soft)", fontWeight: 600 }}>At payoff: {fmt(finalDeferred)}</span>
+                  <div className="section-head">
+                    <div className="section-label">Deferred Loans (accruing)</div>
+                    <span className="inline-label">At payoff: {fmt(finalDeferred)}</span>
                   </div>
-                  <div style={{ overflowX: "auto" }}>
-                    <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
+                  <div className="table-scroll">
+                    <table className="data-table">
                       <thead>
                         <tr>
-                          <th style={{ fontSize: 10, color: "var(--ink-muted)", textTransform: "uppercase", padding: "8px", textAlign: "left", borderBottom: "1.5px solid var(--border)", fontWeight: 700 }}>Mo.</th>
+                          <th>Mo.</th>
                           {deferredDebts.map(d => (
-                            <th key={d.id} style={{ fontSize: 10, color: "var(--ink-muted)", textTransform: "uppercase", padding: "8px", textAlign: "right", borderBottom: "1.5px solid var(--border)", fontWeight: 700, minWidth: 110 }}>{d.name}</th>
+                            <th key={d.id} className="num">{d.name}</th>
                           ))}
                         </tr>
                       </thead>
                       <tbody>
                         {months.filter((_, i) => i % 3 === 0 || i === months.length - 1).map((snap, mi) => (
-                          <tr key={mi} style={{ background: mi % 2 === 0 ? "transparent" : "var(--accent)" }}>
-                            <td style={{ padding: "8px", color: "var(--ink-muted)", fontWeight: 700 }}>{snap.month}</td>
+                          <tr key={mi}>
+                            <td className="is-muted">{snap.month}</td>
                             {deferredDebts.map(d => (
-                              <td key={d.id} style={{ padding: "8px", color: "var(--ink-soft)", textAlign: "right", fontWeight: 600 }}>{fmt(snap.deferredBalances[d.id] ?? d.balance)}</td>
+                              <td key={d.id} className="num">{fmt(snap.deferredBalances[d.id] ?? d.balance)}</td>
                             ))}
                           </tr>
                         ))}
