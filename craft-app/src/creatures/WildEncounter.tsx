@@ -54,11 +54,14 @@ interface FighterEntry {
 
 type Phase = "pick" | "scouting" | "found" | "battling" | "result";
 
-function HpBar({ current, max, color }: { current: number; max: number; color: string }) {
+function HpBar({ current, max, tone }: { current: number; max: number; tone: "player" | "opponent" }) {
   const pct = Math.max(0, Math.round((current / max) * 100));
   return (
-    <div style={{ height: 8, background: "var(--border)", borderRadius: 99, overflow: "hidden" }}>
-      <div style={{ height: "100%", width: `${pct}%`, background: color, borderRadius: 99, transition: "width 0.35s ease" }} />
+    <div className="progress">
+      <div
+        className={`progress-fill ${tone === "player" ? "is-pink" : "is-danger"}`}
+        style={{ width: `${pct}%` }}
+      />
     </div>
   );
 }
@@ -283,7 +286,7 @@ const goScout = () => {
   if (loading) {
     return (
       <div className="card">
-        <div className="card-body" style={{ textAlign: "center", fontSize: 12, color: "var(--ink-muted)" }}>
+        <div className="card-body center-text muted-text">
           checking the tournament board...
         </div>
       </div>
@@ -296,7 +299,7 @@ const goScout = () => {
   return (
     <div className="card">
       <div className="card-body">
-        <div className="section-label" style={{ marginBottom: 10 }}>
+        <div className="section-label">
           <Icon name="map-pin" size={16} /> Tournaments
         </div>
 
@@ -306,22 +309,16 @@ const goScout = () => {
           <>
             {(phase === "pick" || phase === "scouting" || phase === "found") && (
               <>
-                <div style={{ fontSize: 11, color: "var(--ink-muted)", marginBottom: 8 }}>Choose your fighter</div>
-                <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
+                <div className="mini-label">Choose your fighter</div>
+                <div className="fighter-row">
                   {fighters.map((f) => (
                     <button
                       key={f.id}
+                      className={`fighter-btn${selectedId === f.id ? " is-selected" : ""}`}
                       onClick={() => setSelectedId(f.id)}
                       disabled={phase !== "pick"}
-                      style={{
-                        border: `2px solid ${selectedId === f.id ? "var(--pink-dark)" : "var(--border)"}`,
-                        background: selectedId === f.id ? "var(--blush)" : "transparent",
-                        borderRadius: 12,
-                        padding: 4,
-                        cursor: phase === "pick" ? "pointer" : "default",
-                      }}
                     >
-                      <img src={f.image} alt={f.creatureId} style={{ width: 48, height: 48, objectFit: "contain" }} />
+                      <img src={f.image} alt={f.creatureId} />
                     </button>
                   ))}
                 </div>
@@ -329,30 +326,17 @@ const goScout = () => {
             )}
 
             {phase === "pick" && isAutoSpawned && (
-              <div
-                style={{
-                  fontSize: 11,
-                  color: "var(--pink-dark)",
-                  fontWeight: 700,
-                  textAlign: "center",
-                  marginBottom: 8,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: 6,
-                }}
-              >
-                <Icon name="hamster-wild" size={18} />
+              <div className="match-notice">
+                <Icon name="hamster-wild" size={20} />
                 A tournament match is open for entry!
               </div>
             )}
 
             {phase === "pick" && (
               <button
-                className="btn-primary"
+                className="btn btn-primary btn-block"
                 disabled={!selected}
                 onClick={goScout}
-                style={{ width: "100%", opacity: selected ? 1 : 0.5 }}
               >
                 <Icon name="lightning" size={14} />{" "}
                 {isAutoSpawned ? "Enter the match!" : "Enter a tournament"}
@@ -360,38 +344,38 @@ const goScout = () => {
             )}
 
             {phase === "scouting" && (
-              <div style={{ textAlign: "center", fontSize: 12, color: "var(--ink-muted)", padding: "16px 0" }}>
+              <div className="center-text muted-text arena-wait">
                 finding you a matchup...
               </div>
             )}
 
             {(phase === "found" || phase === "battling" || phase === "result") && wild && selected && playerStats && (
-              <div style={{ marginTop: 8 }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
-                  <div style={{ flex: 1, textAlign: "center" }}>
-                    <img src={selected.image} alt="your creature" style={{ width: 64, height: 64, objectFit: "contain" }} />
-                    <div style={{ fontSize: 11, fontWeight: 700, color: "var(--pink-dark)" }}>{selected.name || `Your ${SPECIES_LABELS[selected.species].toLowerCase()}`}</div>
+              <div className="arena">
+                <div className="arena-row">
+                  <div className="arena-side">
+                    <img src={selected.image} alt="your creature" />
+                    <div className="arena-name">{selected.name || `Your ${SPECIES_LABELS[selected.species].toLowerCase()}`}</div>
                     <HpBar
                       current={phase === "found" ? playerStats.hp : playerHp}
                       max={playerStats.hp}
-                      color="var(--pink-dark)"
+                      tone="player"
                     />
-                    <div style={{ fontSize: 10, color: "var(--ink-muted)" }}>
+                    <div className="help-text">
                       {phase === "found" ? playerStats.hp : playerHp} / {playerStats.hp} HP
                     </div>
                   </div>
-                  <div style={{ fontSize: 16, fontWeight: 800, color: "var(--ink-muted)" }}>vs</div>
-                  <div style={{ flex: 1, textAlign: "center" }}>
-                    <img src={wild.image} alt="opponent" style={{ width: 64, height: 64, objectFit: "contain" }} />
-                    <div style={{ fontSize: 11, fontWeight: 700, color: "var(--pink-dark)" }}>
+                  <div className="arena-vs">vs</div>
+                  <div className="arena-side">
+                    <img src={wild.image} alt="opponent" />
+                    <div className="arena-name">
                       Opponent: {wild.stage} {SPECIES_LABELS[wild.species].toLowerCase()}
                     </div>
                     <HpBar
                       current={phase === "found" ? wild.stats.hp : opponentHp}
                       max={wild.stats.hp}
-                      color="#B85C5C"
+                      tone="opponent"
                     />
-                    <div style={{ fontSize: 10, color: "var(--ink-muted)" }}>
+                    <div className="help-text">
                       {phase === "found" ? wild.stats.hp : opponentHp} / {wild.stats.hp} HP
                     </div>
                   </div>
@@ -399,16 +383,16 @@ const goScout = () => {
 
                 {phase === "found" && (
                   <>
-                    <div style={{ fontSize: 11, color: "var(--ink-muted)", marginTop: 10, textAlign: "center" }}>
+                    <div className="help-text center-text subsection">
                       Quirk: {wild.personality.quirk}
                     </div>
-                    <div style={{ fontSize: 11, color: "var(--ink-muted)", marginTop: 2, textAlign: "center" }}>
+                    <div className="help-text center-text">
                       Knows: {wild.abilities.map(abilityShortName).join(", ")}
                     </div>
-                    <div style={{ fontSize: 10, color: "var(--ink-muted)", marginTop: 6, textAlign: "center" }}>
+                    <div className="help-text center-text">
                       Win for +{BATTLE_REWARDS[wild.stage].statPoints} TP / +{BATTLE_REWARDS[wild.stage].shopPoints} bank points
                     </div>
-                    <button className="btn-primary" onClick={startFight} style={{ width: "100%", marginTop: 12 }}>
+                    <button className="btn btn-primary btn-block is-spaced" onClick={startFight}>
                       <Icon name="lightning" size={14} /> Fight!
                     </button>
                   </>
@@ -417,34 +401,14 @@ const goScout = () => {
                 {(phase === "battling" || phase === "result") && (
                   <>
                     {lastEntry && (
-                      <div style={{ fontSize: 12, textAlign: "center", marginTop: 12, minHeight: 18 }}>
-                        {lastEntry.hit ? (
-                          <span style={{ color: "var(--ink)" }}>
-                            {lastEntry.side === "player" ? "Yours" : "Opponent"} used{" "}
-                            <strong>{lastEntry.move}</strong> — {lastEntry.damage} dmg
-                          </span>
-                        ) : (
-                          <span style={{ color: "var(--ink-muted)" }}>
-                            {lastEntry.side === "player" ? "Yours" : "Opponent"} used{" "}
-                            <strong>{lastEntry.move}</strong> — missed!
-                          </span>
-                        )}
+                      <div className={`battle-line${lastEntry.hit ? "" : " is-miss"}`}>
+                        {lastEntry.side === "player" ? "Yours" : "Opponent"} used{" "}
+                        <strong>{lastEntry.move}</strong>{lastEntry.hit ? ` — ${lastEntry.damage} dmg` : " — missed!"}
                       </div>
                     )}
 
                     {log.length > 1 && (
-                      <div
-                        style={{
-                          marginTop: 6,
-                          maxHeight: 90,
-                          overflowY: "auto",
-                          fontSize: 10,
-                          color: "var(--ink-muted)",
-                          display: "flex",
-                          flexDirection: "column",
-                          gap: 2,
-                        }}
-                      >
+                      <div className="battle-log">
                         {log.slice(0, -1).map((t, i) => (
                           <div key={i}>
                             {t.side === "player" ? "Yours" : "Opponent"} used {t.move}
@@ -457,38 +421,25 @@ const goScout = () => {
                 )}
 
                 {phase === "battling" && (
-                  <div style={{ marginTop: 14 }}>
+                  <div className="subsection">
                     {playersTurn ? (
                       <>
-                        <div style={{ fontSize: 11, color: "var(--ink-muted)", marginBottom: 6, textAlign: "center" }}>
-                          Pick a move
-                        </div>
-                        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                        <div className="mini-label center-text">Pick a move</div>
+                        <div className="move-list">
                           {(selected.abilities.length ? selected.abilities : ["Nibble"]).map((a) => (
                             <button
                               key={a}
+                              className="move-btn"
                               onClick={() => useMove(a)}
-                              style={{
-                                display: "flex",
-                                justifyContent: "space-between",
-                                alignItems: "center",
-                                border: "2px solid var(--border)",
-                                background: "transparent",
-                                borderRadius: 10,
-                                padding: "8px 10px",
-                                cursor: "pointer",
-                                fontSize: 12,
-                                textAlign: "left",
-                              }}
                             >
                               <span>{abilityShortName(a)}</span>
-                              <span style={{ fontSize: 10, color: "var(--ink-muted)" }}>{moveFlavor(a)}</span>
+                              <span className="move-flavor">{moveFlavor(a)}</span>
                             </button>
                           ))}
                         </div>
                       </>
                     ) : (
-                      <div style={{ textAlign: "center", fontSize: 11, color: "var(--ink-muted)", padding: "8px 0" }}>
+                      <div className="help-text center-text">
                         {busy ? "..." : "waiting..."}
                       </div>
                     )}
@@ -496,27 +447,27 @@ const goScout = () => {
                 )}
 
                 {phase === "result" && winner && (
-                  <div style={{ marginTop: 12, textAlign: "center" }}>
+                  <div className="result-block">
                     {winner === "player" ? (
                       <>
-                        <div style={{ fontSize: 14, fontWeight: 800, color: "var(--pink-dark)" }}>
-                          <Icon name="trophy" size={16} /> Victory!
+                        <div className="result-title">
+                          <Icon name="trophy" size={18} /> Victory!
                         </div>
                         {reward && (
-                          <div style={{ fontSize: 11, color: "var(--ink-muted)", marginTop: 4 }}>
+                          <div className="help-text">
                             +{reward.statPoints} TP for {selected?.name || "your creature"} • +{reward.shopPoints} bank points
                           </div>
                         )}
-                        <button className="btn-primary" onClick={reset} style={{ width: "100%", marginTop: 10 }}>
+                        <button className="btn btn-primary btn-block is-spaced" onClick={reset}>
                           Next match
                         </button>
                       </>
                     ) : (
                       <>
-                        <div style={{ fontSize: 14, fontWeight: 800, color: "#B85C5C" }}>
-                          <Icon name="mood-sad" size={16} /> Not this time — the opponent took the match...
+                        <div className="result-title is-lose">
+                          <Icon name="mood-sad" size={18} /> Not this time — the opponent took the match...
                         </div>
-                        <button className="btn-primary" onClick={reset} style={{ width: "100%", marginTop: 10 }}>
+                        <button className="btn btn-primary btn-block is-spaced" onClick={reset}>
                           Rematch
                         </button>
                       </>
