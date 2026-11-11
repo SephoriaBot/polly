@@ -114,15 +114,7 @@ export default function Closet() {
         <Polly mood="happy" size="large" />
       </div>
 
-      <div
-        className="closet-grid"
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))',
-          gap: 12,
-          marginTop: 16,
-        }}
-      >
+      <div className="closet-grid">
         {owned.map(item => {
           const isEquipped =
             item.slot === 'outfits'
@@ -133,32 +125,13 @@ export default function Closet() {
           return (
             <button
               key={item.cosmeticId}
+              className={`closet-item${isEquipped ? ' is-equipped' : ''}`}
               onClick={() => handleEquip(item, isEquipped)}
               disabled={isPending}
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                gap: 6,
-                padding: 10,
-                borderRadius: 12,
-                border: `1.5px solid ${isEquipped ? 'var(--primary)' : 'var(--border)'}`,
-                background: isEquipped ? 'var(--primary-soft, rgba(0,0,0,0.04))' : 'transparent',
-                cursor: isPending ? 'default' : 'pointer',
-                opacity: isPending ? 0.6 : 1,
-                color: 'var(--text, inherit)',
-                font: 'inherit',
-                textAlign: 'center',
-                WebkitTapHighlightColor: 'transparent',
-              }}
             >
-              <img
-                src={iconSrcFor(item)}
-                alt={item.name}
-                style={{ width: 48, height: 48, objectFit: 'contain' }}
-              />
-              <span style={{ fontSize: 13, color: 'inherit' }}>{item.name}</span>
-              <span style={{ fontSize: 11, opacity: 0.7, color: 'inherit' }}>
+              <img src={iconSrcFor(item)} alt={item.name} />
+              <span className="closet-item-name">{item.name}</span>
+              <span className="closet-item-hint">
                 {isPending ? '…' : isEquipped ? 'Equipped — tap to remove' : 'Tap to equip'}
               </span>
             </button>
