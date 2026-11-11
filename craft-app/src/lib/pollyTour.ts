@@ -29,7 +29,7 @@ export const POLLY_TOUR_CONTENT: Record<string, PollyTourStep[]> = {
   habitat: [
     {
     title: "This is my favorite part- the Habitat",
-    body: "This is my home! Decorate my shelf with items you collect on your journey, visit the breeder, train your creatures in tournaments and watch them evolve with training points.",
+    body: "This is my home! Visit the breeder, train your creatures in tournaments and watch them evolve with training points.",
   },
   {
     title: "Hmmm..",
