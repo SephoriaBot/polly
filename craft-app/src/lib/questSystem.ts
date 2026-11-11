@@ -20,7 +20,6 @@
 import { supabase } from './supabase';
 import { publishToast } from './toastBus';
 import { publishQuestChanged } from './questBus';
-import { HABITAT_ITEMS } from './habitatItems';
 import { localDateKey } from './dateKey';
 
 import { rollRandomSpecies, rollRandomCreature } from '../creatures/creatures';
@@ -36,13 +35,19 @@ const DAILY_SPAWN_CHANCE = 0.4;
 type RewardType = 'cosmetic' | 'egg' | 'points' | 'shelf_item';
 
 // Relative odds each reward type is picked. Equal by default — tune as
-// you like (e.g. lower egg/shelf_item if they should feel rarer).
+// you like (e.g. lower egg if it should feel rarer). shelf_item is retired
+// (the Habitat shelf was removed) so it is never rolled; the type stays only
+// so quests spawned before the removal can still be claimed (see claimQuest).
 const REWARD_WEIGHTS: Record<RewardType, number> = {
   cosmetic: 1,
   egg: 1,
   points: 1,
-  shelf_item: 1,
+  shelf_item: 0,
 };
+
+// Old quests that were already sitting in the database with a shelf item
+// reward pay out this many bank points instead.
+const LEGACY_SHELF_QUEST_POINTS = 25;
 
 // Bank-point reward scaling. Chore "difficulty" is estimated_minutes off
 // the chore itself; action-quest difficulty comes from the
@@ -141,30 +146,7 @@ async function rollReward(
   sourceType: 'chore' | 'action',
   difficulty: number
 ): Promise<RewardRoll> {
-  let type = pickWeightedRewardType(REWARD_WEIGHTS);
-
-  if (type === 'shelf_item') {
-    const { data: unlocked } = await supabase
-      .from('habitat_unlocked_items')
-      .select('item_key')
-      .eq('user_id', userId);
-    const owned = new Set((unlocked ?? []).map((r) => r.item_key));
-    const available = HABITAT_ITEMS.filter((i) => !owned.has(i.key));
-
-    if (available.length === 0) {
-      // Every shelf item is already owned — fall back to points instead
-      // of leaving the quest without a reward.
-      type = 'points';
-    } else {
-      const picked = available[Math.floor(Math.random() * available.length)];
-      return {
-        reward_type: 'shelf_item',
-        reward_cosmetic_id: null,
-        reward_points: null,
-        reward_shelf_item_key: picked.key,
-      };
-    }
-  }
+  const type = pickWeightedRewardType(REWARD_WEIGHTS);
 
   if (type === 'points') {
     return {
@@ -334,7 +316,6 @@ type ClaimResult =
   | { ok: true; reward: 'cosmetic'; cosmeticId: string }
   | { ok: true; reward: 'egg'; hatchAt: string }
   | { ok: true; reward: 'points'; points: number }
-  | { ok: true; reward: 'shelf_item'; itemKey: string; itemLabel: string }
   | {
       ok: false;
       reason: 'egg_already_incubating' | 'not_found' | 'already_claimed';
@@ -411,26 +392,22 @@ export async function claimQuest(
   }
 
   if (quest.reward_type === 'shelf_item') {
-    await supabase
-      .from('habitat_unlocked_items')
-      .upsert({ item_key: quest.reward_shelf_item_key }, { onConflict: 'item_key' });
+    // Retired reward type — the shelf no longer exists, so a quest that was
+    // created with one pays out bank points instead.
+    const { data: bankRow } = await supabase.from('bank_points').select('points').maybeSingle();
+    const current = Number(bankRow?.points) || 0;
+    const newPoints = current + LEGACY_SHELF_QUEST_POINTS;
+
+    await supabase.from('bank_points').upsert({ points: newPoints }, { onConflict: 'user_id' });
 
     await supabase
       .from('quests')
       .update({ status: 'claimed', claimed_at: new Date().toISOString() })
       .eq('id', questId);
 
-    const item = HABITAT_ITEMS.find((i) => i.key === quest.reward_shelf_item_key);
-    publishToast(
-      `Quest complete: ${quest.title}! You found ${item?.label ?? 'a new item'} for the shelf 🗄️`
-    );
+    publishToast(`Quest complete: ${quest.title}! +${LEGACY_SHELF_QUEST_POINTS} points 💰`);
     publishQuestChanged();
-    return {
-      ok: true,
-      reward: 'shelf_item',
-      itemKey: quest.reward_shelf_item_key,
-      itemLabel: item?.label ?? 'a new item',
-    };
+    return { ok: true, reward: 'points', points: LEGACY_SHELF_QUEST_POINTS };
   }
 
   // Cosmetic reward
