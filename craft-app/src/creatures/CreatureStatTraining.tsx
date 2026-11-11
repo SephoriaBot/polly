@@ -48,43 +48,23 @@ function StatRow({
   const maxed = value >= cap;
 
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-      <div style={{ width: 78, fontSize: 11, color: "var(--ink)", fontWeight: 600, display: "flex", alignItems: "center", gap: 4 }}>
-        <Icon name={label.icon} size={13} /> {label.text}
+    <div className="stat-row-line">
+      <div className="stat-name">
+        <Icon name={label.icon} size={16} /> {label.text}
       </div>
-      <div style={{ flex: 1 }}>
-        <div style={{ height: 7, background: "var(--border)", borderRadius: 99, overflow: "hidden" }}>
+      <div className="stat-bar">
+        <div className="progress is-thick">
           <div
-            style={{
-              height: "100%",
-              width: `${pct}%`,
-              background: maxed ? "var(--accent)" : "var(--pink-dark)",
-              borderRadius: 99,
-              transition: "width 0.3s ease",
-            }}
+            className={`progress-fill${maxed ? " is-ready" : " is-pink"}`}
+            style={{ width: `${pct}%` }}
           />
         </div>
       </div>
-      <div style={{ width: 46, fontSize: 10, color: "var(--ink-muted)", textAlign: "right" }}>
-        {value}/{cap}
-      </div>
+      <div className="stat-count">{value}/{cap}</div>
       <button
+        className="stat-plus"
         onClick={onAllocate}
         disabled={disabled || maxed}
-        style={{
-          width: 22,
-          height: 22,
-          borderRadius: 999,
-          border: "1.5px solid var(--pink-light)",
-          background: disabled || maxed ? "transparent" : "var(--blush)",
-          color: "var(--pink-dark)",
-          fontSize: 13,
-          fontWeight: 800,
-          lineHeight: 1,
-          cursor: disabled || maxed ? "default" : "pointer",
-          opacity: disabled || maxed ? 0.35 : 1,
-          flexShrink: 0,
-        }}
         aria-label={`Add ${incrementLabel} to ${label.text}`}
       >
         +
@@ -129,84 +109,54 @@ export default function CreatureStatTraining({ entryId, stage, name, trainingPoi
   };
 
   return (
-    <div style={{ marginTop: 10, paddingTop: 10, borderTop: "1px dashed var(--border)" }}>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+    <div className="training-block">
+      <div className="training-name">
         {editingName ? (
-          <div style={{ display: "flex", gap: 6, alignItems: "center", flex: 1 }}>
+          <div className="add-row">
             <input
               autoFocus
+              className="form-input grow"
               value={nameDraft}
               onChange={(e) => setNameDraft(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && saveName()}
               placeholder="Give it a name..."
               maxLength={24}
-              style={{
-                flex: 1,
-                fontSize: 13,
-                fontFamily: "var(--font-heading)",
-                padding: "4px 8px",
-                borderRadius: 8,
-                border: "1.5px solid var(--pink-light)",
-                background: "var(--white)",
-                color: "var(--ink)",
-              }}
             />
-            <button
-              onClick={saveName}
-              style={{ fontSize: 11, padding: "4px 10px", borderRadius: 8, border: "none", background: "var(--gold, var(--pink-dark))", color: "var(--ink)", fontWeight: 700 }}
-            >
+            <button className="btn btn-primary btn-sm" onClick={saveName}>
               Save
             </button>
           </div>
         ) : (
           <button
+            className={`name-btn${name ? "" : " is-empty"}`}
             onClick={() => {
               setNameDraft(name || "");
               setEditingName(true);
             }}
             aria-label={name ? "Edit creature name" : "Name this creature"}
-            style={{
-              display: "flex", alignItems: "center", gap: 6, background: "transparent", border: "none",
-              padding: 0, cursor: "pointer", fontFamily: "var(--font-heading)", fontSize: 14, fontWeight: 700,
-              color: name ? "var(--ink)" : "var(--ink-muted)",
-            }}
           >
             {name ? (
-              <>{name} <Icon name="notepad-pencil" size={15} /> Edit</>
+              <>{name} <Icon name="notepad-pencil" size={16} /> Edit</>
             ) : (
-              <><Icon name="notepad-pencil" size={15} /> Name this creature</>
+              <><Icon name="notepad-pencil" size={16} /> Name this creature</>
             )}
           </button>
         )}
       </div>
 
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
-        <div style={{ fontSize: 10, fontWeight: 700, color: "var(--ink-muted)", textTransform: "uppercase", letterSpacing: 0.4 }}>
-          Stat training
-        </div>
-        <span className="badge badge-pink" style={{ fontSize: 10 }}>
-          {trainingPoints} TP
-        </span>
+      <div className="section-head">
+        <div className="mini-label">Stat training</div>
+        <span className="badge badge-pink">{trainingPoints} TP</span>
       </div>
 
-      <div style={{ display: "flex", gap: 4, marginBottom: 8 }}>
+      <div className="seg-row">
         {INCREMENT_OPTIONS.map((opt) => {
           const selected = increment === opt.value;
           return (
             <button
               key={opt.label}
+              className={`seg-btn${selected ? " is-on" : ""}`}
               onClick={() => setIncrement(opt.value)}
-              style={{
-                flex: 1,
-                fontSize: 10,
-                fontWeight: 700,
-                padding: "4px 0",
-                borderRadius: 8,
-                border: `1.5px solid ${selected ? "var(--pink-dark)" : "var(--border)"}`,
-                background: selected ? "var(--pink-dark)" : "transparent",
-                color: selected ? "var(--white)" : "var(--ink-muted)",
-                cursor: "pointer",
-              }}
               aria-pressed={selected}
             >
               {opt.label}
@@ -227,13 +177,9 @@ export default function CreatureStatTraining({ entryId, stage, name, trainingPoi
         />
       ))}
 
-      {message && (
-        <div style={{ fontSize: 10, color: "var(--ink-muted)", marginTop: 2 }}>{message}</div>
-      )}
+      {message && <div className="help-text">{message}</div>}
       {trainingPoints <= 0 && !message && (
-        <div style={{ fontSize: 10, color: "var(--ink-muted)", marginTop: 2 }}>
-          Win battles to earn TP for this creature.
-        </div>
+        <div className="help-text">Win battles to earn TP for this creature.</div>
       )}
     </div>
   );
