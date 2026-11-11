@@ -390,256 +390,77 @@ export default function CreatureBreeder() {
     <div className="card">
       <div className="card-body">
 
-        {/* --------------------------------------------------------------- */}
-        {/* HEADER                                                          */}
-        {/* --------------------------------------------------------------- */}
+        {/* HEADER */}
+        <div className="section-head">
+          <div className="section-label">
+            <Icon name="shopping-cart" size={16} /> The Breeder
+          </div>
 
-        <div
-          className="section-label"
-          style={{
-            marginBottom: 10,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-          }}
-        >
-          <span>
-            <Icon
-              name="shopping-cart"
-              size={16}
-            />{" "}
-            The Breeder
-          </span>
-
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 8,
-            }}
-          >
-            <div
-              style={{
-                fontSize: "0.68rem",
-                fontWeight: 700,
-                color: "var(--ink-muted)",
-              }}
-            >
-              {bankPoints} pts
-            </div>
-
+          <div className="add-row">
+            <span className="bank-chip">{bankPoints} pts</span>
             <button
               type="button"
+              className="icon-circle-btn"
               onClick={refresh}
-              disabled={
-                refreshing ||
-                firstCreatureSaving
-              }
+              disabled={refreshing || firstCreatureSaving}
               aria-label="Refresh bank points"
               title="Refresh bank points"
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                justifyContent: "center",
-                width: 26,
-                height: 26,
-                padding: 0,
-                border:
-                  "1px solid var(--pink-light)",
-                borderRadius: 99,
-                background: "var(--blush)",
-                cursor:
-                  refreshing ||
-                  firstCreatureSaving
-                    ? "default"
-                    : "pointer",
-                opacity:
-                  refreshing ||
-                  firstCreatureSaving
-                    ? 0.6
-                    : 1,
-              }}
             >
               <Icon
                 name="icon-recur"
-                size={24}
+                size={22}
                 color="var(--pink-dark)"
-                style={
-                  refreshing
-                    ? {
-                        animation:
-                          "breederRefreshSpin 0.8s linear infinite",
-                      }
-                    : undefined
-                }
+                style={refreshing ? { animation: "breederRefreshSpin 0.8s linear infinite" } : undefined}
               />
             </button>
           </div>
         </div>
 
-
-        {/* --------------------------------------------------------------- */}
-        {/* SHOPKEEPER                                                      */}
-        {/* --------------------------------------------------------------- */}
-
-        <ShopkeeperBubble
-          expression={expression}
-          message={keeperMessage}
-        />
-
-
-        {/* =============================================================== */}
-        {/* FIRST-CREATURE SAVING                                          */}
-        {/* =============================================================== */}
+        {/* SHOPKEEPER */}
+        <ShopkeeperBubble expression={expression} message={keeperMessage} />
 
         {firstCreatureSaving ? (
-          <div
-            style={{
-              textAlign: "center",
-              padding: "24px 10px 18px",
-            }}
-          >
-            <div
-              style={{
-                width: 74,
-                height: 74,
-                margin: "0 auto 12px",
-                borderRadius: "50%",
-                background: "var(--blush)",
-                border:
-                  "1px solid var(--pink-light)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
+
+          /* FIRST-CREATURE SAVING */
+          <div className="breeder-state">
+            <div className="state-orb">
               <Icon
                 name="sparkles-cluster"
-                size={30}
+                size={32}
                 color="var(--pink-dark)"
-                style={{
-                  animation:
-                    "breederSavingPulse 1s ease-in-out infinite",
-                }}
+                style={{ animation: "breederSavingPulse 1s ease-in-out infinite" }}
               />
             </div>
-
-            <div
-              style={{
-                fontSize: 14,
-                fontWeight: 800,
-                color: "var(--pink-dark)",
-              }}
-            >
-              Bringing your baby home...
-            </div>
-
-            <div
-              style={{
-                fontSize: 11,
-                color: "var(--ink-muted)",
-                marginTop: 6,
-                lineHeight: 1.5,
-              }}
-            >
-              Just getting everything ready for
-              your new creature.
-            </div>
-
-            <div
-              style={{
-                marginTop: 14,
-                fontSize: 10,
-                color: "var(--ink-muted)",
-              }}
-            >
-              Please wait a moment...
-            </div>
+            <div className="state-title">Bringing your baby home...</div>
+            <div className="help-text">Just getting everything ready for your new creature.</div>
+            <div className="help-text">Please wait a moment...</div>
           </div>
 
         ) : firstCreatureClaimedHere ? (
 
-          /* ============================================================= */
-          /* FIRST-CREATURE ADOPTION COMPLETE                              */
-          /* ============================================================= */
-
-          <div
-            style={{
-              textAlign: "center",
-              padding: "10px 0",
-            }}
-          >
+          /* FIRST-CREATURE ADOPTION COMPLETE */
+          <div className="breeder-state">
             {justAdopted ? (
               <img
+                className="adopt-img"
                 src={justAdopted.image}
                 alt="a new creature you adopted from the breeder"
-                style={{
-                  width: 96,
-                  height: 96,
-                  objectFit: "contain",
-                  animation:
-                    "adoptPop 0.7s ease",
-                }}
               />
             ) : (
-              <div
-                style={{
-                  width: 96,
-                  height: 96,
-                  margin: "0 auto",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <Icon
-                  name="sparkles-cluster"
-                  size={40}
-                  color="var(--pink-dark)"
-                />
+              <div className="state-orb is-plain">
+                <Icon name="sparkles-cluster" size={40} color="var(--pink-dark)" />
               </div>
             )}
 
-            <div
-              style={{
-                fontSize: 14,
-                fontWeight: 800,
-                color: "var(--pink-dark)",
-                marginTop: 6,
-              }}
-            >
-              Welcome home!{" "}
-              <Icon
-                name="sparkles-cluster"
-                size={16}
-              />
+            <div className="state-title">
+              Welcome home! <Icon name="sparkles-cluster" size={16} />
             </div>
-
-            <div
-              style={{
-                fontSize: 11,
-                color: "var(--ink-muted)",
-                marginTop: 5,
-                lineHeight: 1.5,
-              }}
-            >
-              Your new baby is now part of your
-              creature collection.
-            </div>
-
-            <div
-              style={{
-                fontSize: 10,
-                color: "var(--ink-muted)",
-                marginTop: 6,
-              }}
-            >
-              You can train, evolve, and battle
-              with your new creature.
-            </div>
+            <div className="help-text">Your new baby is now part of your creature collection.</div>
+            <div className="help-text">You can train, evolve, and battle with your new creature.</div>
 
             <button
               type="button"
+              className="text-link"
               onClick={() => {
                 /*
                  * Clear the normal adoption notification only when the
@@ -655,15 +476,6 @@ export default function CreatureBreeder() {
                 setBuyError(null);
                 setSellError(null);
               }}
-              style={{
-                marginTop: 12,
-                fontSize: 11,
-                color: "var(--pink-dark)",
-                background: "none",
-                border: "none",
-                cursor: "pointer",
-                textDecoration: "underline",
-              }}
             >
               back to the breeder
             </button>
@@ -671,238 +483,70 @@ export default function CreatureBreeder() {
 
         ) : firstCreatureEventActive ? (
 
-          /* ============================================================= */
-          /* FIRST-CREATURE EVENT                                          */
-          /* ============================================================= */
-
-          <div
-            style={{
-              padding: "6px 0 4px",
-            }}
-          >
-
-            <div
-              style={{
-                textAlign: "center",
-                fontSize: 12,
-                fontWeight: 700,
-                color: "var(--pink-dark)",
-                marginBottom: 4,
-              }}
-            >
-              A little surprise litter
+          /* FIRST-CREATURE EVENT */
+          <div className="breeder-state">
+            <div className="state-title">A little surprise litter</div>
+            <div className="help-text">
+              He needs to find a home for one of these babies. Pick the one you want to bring home — this first one is on the house.
             </div>
 
-            <div
-              style={{
-                textAlign: "center",
-                fontSize: 11,
-                color: "var(--ink-muted)",
-                marginBottom: 12,
-                lineHeight: 1.45,
-              }}
-            >
-              He needs to find a home for one of these
-              babies. Pick the one you want to bring
-              home — this first one is on the house.
-            </div>
-
-
-            <div
-              style={{
-                display: "flex",
-                gap: 10,
-                justifyContent: "center",
-                flexWrap: "wrap",
-              }}
-            >
-              {firstCreatureCandidates.map(
-                (creature) => (
+            <div className="litter-grid">
+              {firstCreatureCandidates.map((creature) => {
+                const busy = firstCreatureSaving || claimingFirstCreature;
+                return (
                   <div
                     key={`${creature.species}-${creature.id}`}
-                    style={{
-                      width: 102,
-                      textAlign: "center",
-                      border:
-                        "1px solid var(--pink-light)",
-                      borderRadius: 14,
-                      padding: 9,
-                      background: "var(--blush)",
-                      opacity:
-                        firstCreatureSaving
-                          ? 0.6
-                          : 1,
-                    }}
+                    className={`litter-card${firstCreatureSaving ? " is-busy" : ""}`}
                   >
-
                     <img
                       src={creature.image}
                       alt={`${SPECIES_LABELS[creature.species]} baby`}
-                      style={{
-                        width: 72,
-                        height: 72,
-                        objectFit: "contain",
-                      }}
                     />
-
-                    <div
-                      style={{
-                        fontSize: 10,
-                        fontWeight: 700,
-                        color: "var(--ink-muted)",
-                        marginTop: 4,
-                      }}
-                    >
-                      {SPECIES_LABELS[
-                        creature.species
-                      ]}
-                    </div>
-
-
+                    <div className="litter-name">{SPECIES_LABELS[creature.species]}</div>
                     <button
                       type="button"
-                      onClick={() =>
-                        handleFirstCreatureClaim(
-                          creature
-                        )
-                      }
-                      disabled={
-                        firstCreatureSaving ||
-                        claimingFirstCreature
-                      }
-                      style={{
-                        marginTop: 7,
-                        fontSize: 11,
-                        fontWeight: 700,
-                        color: "var(--pink-dark)",
-                        background:
-                          "var(--cream)",
-                        border:
-                          "1px solid var(--pink-light)",
-                        borderRadius: 99,
-                        padding: "5px 8px",
-                        width: "100%",
-                        cursor:
-                          firstCreatureSaving ||
-                          claimingFirstCreature
-                            ? "default"
-                            : "pointer",
-                        opacity:
-                          firstCreatureSaving ||
-                          claimingFirstCreature
-                            ? 0.55
-                            : 1,
-                      }}
+                      className="litter-btn"
+                      onClick={() => handleFirstCreatureClaim(creature)}
+                      disabled={busy}
                     >
-                      {firstCreatureSaving ||
-                      claimingFirstCreature
-                        ? "..."
-                        : "Take me home"}
+                      {busy ? "..." : "Take me home"}
                     </button>
-
                   </div>
-                )
-              )}
+                );
+              })}
             </div>
-
 
             {firstCreatureError && (
-              <div
-                style={{
-                  fontSize: 11,
-                  color: "var(--pink-dark)",
-                  marginTop: 10,
-                  textAlign: "center",
-                }}
-              >
-                {firstCreatureError}
-              </div>
+              <div className="help-text is-pink">{firstCreatureError}</div>
             )}
 
-
-            <div
-              style={{
-                textAlign: "center",
-                marginTop: 12,
-                fontSize: 10,
-                color: "var(--ink-muted)",
-              }}
-            >
-              <Icon
-                name="sparkles-cluster"
-                size={13}
-              />{" "}
-              Your first creature is free
+            <div className="help-text">
+              <Icon name="sparkles-cluster" size={13} /> Your first creature is free
             </div>
-
           </div>
 
         ) : justAdopted ? (
 
-          /* ============================================================= */
-          /* NORMAL ADOPTION COMPLETE                                      */
-          /* ============================================================= */
-
-          <div
-            style={{
-              textAlign: "center",
-              padding: "10px 0",
-            }}
-          >
+          /* NORMAL ADOPTION COMPLETE */
+          <div className="breeder-state">
             <img
+              className="adopt-img"
               src={justAdopted.image}
               alt="a new creature you adopted from the breeder"
-              style={{
-                width: 96,
-                height: 96,
-                objectFit: "contain",
-                animation:
-                  "adoptPop 0.7s ease",
-              }}
             />
-
-            <div
-              style={{
-                fontSize: 14,
-                fontWeight: 800,
-                color: "var(--pink-dark)",
-                marginTop: 6,
-              }}
-            >
-              Welcome home!{" "}
-              <Icon
-                name="sparkles-cluster"
-                size={16}
-              />
+            <div className="state-title">
+              Welcome home! <Icon name="sparkles-cluster" size={16} />
             </div>
-
-            <div
-              style={{
-                fontSize: 11,
-                color: "var(--ink-muted)",
-                marginTop: 5,
-              }}
-            >
-              Your new baby is now part of your
-              creature collection.
-            </div>
+            <div className="help-text">Your new baby is now part of your creature collection.</div>
 
             <button
               type="button"
+              className="text-link"
               onClick={() => {
                 clearJustAdopted();
                 setFirstCreatureClaimedHere(false);
                 setFirstCreatureError(null);
                 setBuyError(null);
-              }}
-              style={{
-                marginTop: 8,
-                fontSize: 11,
-                color: "var(--pink-dark)",
-                background: "none",
-                border: "none",
-                cursor: "pointer",
-                textDecoration: "underline",
               }}
             >
               back to the breeder
@@ -911,529 +555,134 @@ export default function CreatureBreeder() {
 
         ) : (
 
-          /* ============================================================= */
-          /* NORMAL BREEDER                                                */
-          /* ============================================================= */
-
+          /* NORMAL BREEDER */
           <>
-            <div
-              style={{
-                fontSize: 11,
-                color: "var(--ink-muted)",
-                marginBottom: 10,
-                textAlign: "center",
-              }}
-            >
-              Today's litter — {BREEDER_COST} pts
-              each, new babies at midnight
-            </div>
+            <p className="hint-text center-text">
+              Today's litter — {BREEDER_COST} pts each, new babies at midnight
+            </p>
 
-
-            <div
-              style={{
-                display: "flex",
-                gap: 10,
-                justifyContent: "center",
-                flexWrap: "wrap",
-              }}
-            >
+            <div className="litter-grid">
               {litter.map((creature) => {
-                const adopted =
-                  alreadyAdoptedToday(
-                    creature.id
-                  );
-
-                const canAfford =
-                  bankPoints >= BREEDER_COST;
-
-                const disabled =
-                  adopted ||
-                  !canAfford ||
-                  buyingId === creature.id;
-
+                const adopted = alreadyAdoptedToday(creature.id);
+                const canAfford = bankPoints >= BREEDER_COST;
+                const disabled = adopted || !canAfford || buyingId === creature.id;
 
                 return (
-                  <div
-                    key={creature.id}
-                    style={{
-                      width: 96,
-                      textAlign: "center",
-                      border:
-                        "1px solid var(--pink-light)",
-                      borderRadius: 14,
-                      padding: 8,
-                      background: "var(--blush)",
-                    }}
-                  >
-
+                  <div key={creature.id} className="litter-card">
                     <img
                       src={creature.image}
                       alt={`${SPECIES_LABELS[creature.species]} baby`}
-                      style={{
-                        width: 64,
-                        height: 64,
-                        objectFit: "contain",
-                      }}
                     />
-
-                    <div
-                      style={{
-                        fontSize: 10,
-                        fontWeight: 700,
-                        color: "var(--ink-muted)",
-                        marginTop: 4,
-                      }}
-                    >
-                      {
-                        SPECIES_LABELS[
-                          creature.species
-                        ]
-                      }
-                    </div>
-
-
+                    <div className="litter-name">{SPECIES_LABELS[creature.species]}</div>
                     <button
                       type="button"
-                      onClick={() =>
-                        handleBuy(
-                          creature.species,
-                          creature
-                        )
-                      }
+                      className={`litter-btn${adopted ? " is-muted" : ""}`}
+                      onClick={() => handleBuy(creature.species, creature)}
                       disabled={disabled}
-                      style={{
-                        marginTop: 6,
-                        fontSize: 11,
-                        fontWeight: 700,
-                        color: adopted
-                          ? "var(--ink-muted)"
-                          : "var(--pink-dark)",
-                        background:
-                          "var(--cream)",
-                        border:
-                          "1px solid var(--pink-light)",
-                        borderRadius: 99,
-                        padding: "4px 8px",
-                        width: "100%",
-                        cursor: disabled
-                          ? "default"
-                          : "pointer",
-                        opacity:
-                          buyingId ===
-                          creature.id
-                            ? 0.6
-                            : 1,
-                      }}
                     >
-                      {adopted
-                        ? "Adopted"
-                        : buyingId ===
-                          creature.id
-                        ? "..."
-                        : `${BREEDER_COST} pts`}
+                      {adopted ? "Adopted" : buyingId === creature.id ? "..." : `${BREEDER_COST} pts`}
                     </button>
-
                   </div>
                 );
               })}
             </div>
 
+            {buyError && <div className="help-text is-pink center-text">{buyError}</div>}
 
-            {buyError && (
-              <div
-                style={{
-                  fontSize: 11,
-                  color: "var(--pink-dark)",
-                  marginTop: 10,
-                  textAlign: "center",
-                }}
-              >
-                {buyError}
-              </div>
-            )}
-
-
-            {/* ----------------------------------------------------------- */}
-            {/* SELL TO BREEDER                                             */}
-            {/* ----------------------------------------------------------- */}
-
+            {/* SELL TO BREEDER */}
             {collection.length > 0 && (
-              <div
-                className="card"
-                style={{
-                  marginTop: 14,
-                  border:
-                    "1px solid var(--pink-light)",
-                }}
-              >
+              <div className="card is-outlined">
                 <div className="card-body">
+                  <div className="section-label">Sell to the Breeder</div>
+                  <p className="hint-text center-text">
+                    Price scales with stage and trained stats. Unused training points are lost on sale.
+                  </p>
 
-                  <div
-                    className="section-label"
-                    style={{ marginBottom: 8 }}
-                  >
-                    Sell to the Breeder
-                  </div>
-
-                  <div
-                    style={{
-                      fontSize: 11,
-                      color: "var(--ink-muted)",
-                      marginBottom: 10,
-                      textAlign: "center",
-                    }}
-                  >
-                    Price scales with stage and
-                    trained stats. Unused training
-                    points are lost on sale.
-                  </div>
-
-
-                  <div
-                    style={{
-                      display: "flex",
-                      gap: 10,
-                      justifyContent: "center",
-                      flexWrap: "wrap",
-                    }}
-                  >
+                  <div className="litter-grid">
                     {collection.map((entry) => {
-
                       const baseImage =
-                        allBabiesFor(
-                          entry.species
-                        ).find(
-                          (c) =>
-                            c.id ===
-                            entry.hamsterId
-                        )?.image || "";
-
-
-                      const image =
-                        imageForForm(
-                          entry.species,
-                          entry.stage,
-                          entry.teenFormId,
-                          entry.finalFormId,
-                          baseImage
-                        );
-
-
-                      const price =
-                        computeSellPrice(
-                          entry.stage,
-                          entry.trainedStats
-                        );
-
-
-                      const isThisSelling =
-                        sellingId === entry.id;
-
-                      const isConfirming =
-                        confirmSellId ===
-                        entry.id;
-
+                        allBabiesFor(entry.species).find((c) => c.id === entry.hamsterId)?.image || "";
+                      const image = imageForForm(
+                        entry.species,
+                        entry.stage,
+                        entry.teenFormId,
+                        entry.finalFormId,
+                        baseImage
+                      );
+                      const price = computeSellPrice(entry.stage, entry.trainedStats);
+                      const isThisSelling = sellingId === entry.id;
+                      const isConfirming = confirmSellId === entry.id;
 
                       return (
-                        <div
-                          key={entry.id}
-                          style={{
-                            width: 96,
-                            textAlign: "center",
-                            border:
-                              "1px solid var(--pink-light)",
-                            borderRadius: 14,
-                            padding: 8,
-                            background:
-                              "var(--blush)",
-                          }}
-                        >
-
+                        <div key={entry.id} className="litter-card">
                           <img
                             src={image}
                             alt={`${SPECIES_LABELS[entry.species]} (${STAGE_LABELS[entry.stage]})`}
-                            style={{
-                              width: 64,
-                              height: 64,
-                              objectFit:
-                                "contain",
-                            }}
                           />
-
-
-                          <div
-                            style={{
-                              fontSize: 10,
-                              fontWeight: 700,
-                              color:
-                                "var(--ink-muted)",
-                              marginTop: 4,
-                            }}
-                          >
-                            {entry.name ||
-                              SPECIES_LABELS[
-                                entry.species
-                              ]}
+                          <div className="litter-name">
+                            {entry.name || SPECIES_LABELS[entry.species]}
                           </div>
-
-
-                          <div
-                            style={{
-                              fontSize: 9,
-                              color:
-                                "var(--ink-muted)",
-                            }}
-                          >
-                            {
-                              STAGE_LABELS[
-                                entry.stage
-                              ]
-                            }
-                          </div>
-
+                          <div className="litter-stage">{STAGE_LABELS[entry.stage]}</div>
 
                           {isConfirming ? (
-
-                            <div
-                              style={{
-                                display: "flex",
-                                flexDirection:
-                                  "column",
-                                gap: 4,
-                                marginTop: 6,
-                              }}
-                            >
-
+                            <div className="litter-actions">
                               <button
                                 type="button"
-                                onClick={() =>
-                                  handleSell(
-                                    entry.id
-                                  )
-                                }
-                                disabled={
-                                  isThisSelling
-                                }
-                                style={{
-                                  fontSize: 10,
-                                  fontWeight: 700,
-                                  color: "white",
-                                  background:
-                                    "var(--pink-dark)",
-                                  border: "none",
-                                  borderRadius: 99,
-                                  padding:
-                                    "4px 8px",
-                                  cursor:
-                                    isThisSelling
-                                      ? "default"
-                                      : "pointer",
-                                }}
+                                className="litter-btn is-solid"
+                                onClick={() => handleSell(entry.id)}
+                                disabled={isThisSelling}
                               >
-                                {isThisSelling
-                                  ? "..."
-                                  : `Confirm (${price} pts)`}
+                                {isThisSelling ? "..." : `Confirm (${price} pts)`}
                               </button>
-
-
                               <button
                                 type="button"
-                                onClick={() =>
-                                  setConfirmSellId(
-                                    null
-                                  )
-                                }
-                                disabled={
-                                  isThisSelling
-                                }
-                                style={{
-                                  fontSize: 10,
-                                  color:
-                                    "var(--ink-muted)",
-                                  background:
-                                    "none",
-                                  border: "none",
-                                  cursor:
-                                    "pointer",
-                                  textDecoration:
-                                    "underline",
-                                }}
+                                className="text-link"
+                                onClick={() => setConfirmSellId(null)}
+                                disabled={isThisSelling}
                               >
                                 cancel
                               </button>
-
                             </div>
-
                           ) : (
-
                             <button
                               type="button"
-                              onClick={() =>
-                                setConfirmSellId(
-                                  entry.id
-                                )
-                              }
-                              style={{
-                                marginTop: 6,
-                                fontSize: 11,
-                                fontWeight: 700,
-                                color:
-                                  "var(--pink-dark)",
-                                background:
-                                  "var(--cream)",
-                                border:
-                                  "1px solid var(--pink-light)",
-                                borderRadius: 99,
-                                padding:
-                                  "4px 8px",
-                                width: "100%",
-                                cursor:
-                                  "pointer",
-                              }}
+                              className="litter-btn"
+                              onClick={() => setConfirmSellId(entry.id)}
                             >
                               Sell — {price} pts
                             </button>
-
                           )}
-
                         </div>
                       );
                     })}
                   </div>
 
-
-                  {sellError && (
-                    <div
-                      style={{
-                        fontSize: 11,
-                        color:
-                          "var(--pink-dark)",
-                        marginTop: 10,
-                        textAlign: "center",
-                      }}
-                    >
-                      {sellError}
-                    </div>
-                  )}
-
+                  {sellError && <div className="help-text is-pink center-text">{sellError}</div>}
                 </div>
               </div>
             )}
 
-
-            {/* ----------------------------------------------------------- */}
-            {/* RECENT POINTS                                               */}
-            {/* ----------------------------------------------------------- */}
-
+            {/* RECENT POINTS */}
             {recentPoints.length > 0 && (
-              <div
-                style={{
-                  display: "flex",
-                  gap: 6,
-                  overflowX: "auto",
-                  marginTop: 14,
-                  paddingBottom: 2,
-                }}
-              >
+              <div className="points-strip">
                 {recentPoints.map((entry) => (
-                  <div
-                    key={entry.id}
-                    style={{
-                      flexShrink: 0,
-                      whiteSpace: "nowrap",
-                      fontSize: 11,
-                      fontWeight: 600,
-                      color: "var(--pink-dark)",
-                      background:
-                        "var(--blush)",
-                      border:
-                        "1px solid var(--pink-light)",
-                      borderRadius: 99,
-                      padding: "4px 10px",
-                    }}
-                  >
-                    {SOURCE_LABELS[
-                      entry.source
-                    ] ? (
+                  <div key={entry.id} className="points-chip">
+                    {SOURCE_LABELS[entry.source] ? (
                       <>
-                        <Icon
-                          name={
-                            SOURCE_LABELS[
-                              entry.source
-                            ].icon
-                          }
-                          size={13}
-                        />{" "}
-                        {
-                          SOURCE_LABELS[
-                            entry.source
-                          ].text
-                        }
+                        <Icon name={SOURCE_LABELS[entry.source].icon} size={13} />{" "}
+                        {SOURCE_LABELS[entry.source].text}
                       </>
                     ) : (
                       entry.source
                     )}{" "}
-                    {entry.amount >= 0
-                      ? "+"
-                      : ""}
+                    {entry.amount >= 0 ? "+" : ""}
                     {entry.amount}
                   </div>
                 ))}
               </div>
             )}
-
           </>
         )}
-
-
-        {/* ----------------------------------------------------------------- */}
-        {/* ANIMATIONS                                                        */}
-        {/* ----------------------------------------------------------------- */}
-
-        <style>{`
-          @keyframes adoptPop {
-            0% {
-              transform: scale(0.3);
-              opacity: 0;
-            }
-
-            60% {
-              transform: scale(1.15);
-              opacity: 1;
-            }
-
-            100% {
-              transform: scale(1);
-            }
-          }
-
-          @keyframes breederRefreshSpin {
-            from {
-              transform: rotate(0deg);
-            }
-
-            to {
-              transform: rotate(360deg);
-            }
-          }
-
-          @keyframes breederSavingPulse {
-            0% {
-              transform: scale(0.9);
-              opacity: 0.55;
-            }
-
-            50% {
-              transform: scale(1.1);
-              opacity: 1;
-            }
-
-            100% {
-              transform: scale(0.9);
-              opacity: 0.55;
-            }
-          }
-        `}</style>
 
       </div>
     </div>
