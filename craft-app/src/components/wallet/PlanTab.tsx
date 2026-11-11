@@ -71,13 +71,11 @@ function shortDate(d: Date) {
   return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 }
 
-function tierFor(safe: number): { label: string; color: string; bg: string } {
-  if (safe <= 0) return { label: 'Tight', color: 'var(--danger)', bg: 'var(--danger-bg)' };
-  if (safe < SAFE_TO_SPEND_BUFFER) return { label: 'OK', color: 'var(--gold-dark)', bg: 'var(--gold-light)' };
-  return { label: 'Comfortable', color: 'var(--green-dark)', bg: 'var(--sage-light)' };
+function tierFor(safe: number): { label: string; tone: 'tight' | 'ok' | 'good' } {
+  if (safe <= 0) return { label: 'Tight', tone: 'tight' };
+  if (safe < SAFE_TO_SPEND_BUFFER) return { label: 'OK', tone: 'ok' };
+  return { label: 'Comfortable', tone: 'good' };
 }
-
-const labelStyle = { fontSize: 12, color: 'var(--ink-muted)' } as const;
 
 function Line({
   label,
@@ -93,18 +91,7 @@ function Line({
   muted?: boolean;
 }) {
   return (
-    <div
-      style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        gap: 12,
-        padding: '6px 0',
-        fontSize: bold ? 15 : 13,
-        fontWeight: bold ? 800 : 500,
-        color: muted ? 'var(--ink-muted)' : undefined,
-        borderTop: bold ? '1.5px solid var(--border, rgba(0,0,0,0.12))' : undefined,
-      }}
-    >
+    <div className={`plan-line${bold ? ' is-bold' : ''}${muted ? ' is-muted' : ''}`}>
       <span>{label}</span>
       <span>
         {sign === '-' ? '−' : sign === '+' ? '+' : ''}
@@ -256,7 +243,7 @@ export default function PlanTab() {
   if (loading && !data) {
     return (
       <div className="card">
-        <div className="card-body" style={{ textAlign: 'center', fontSize: 13, color: 'var(--ink-muted)' }}>
+        <div className="card-body center-text muted-text">
           Crunching your numbers…
         </div>
       </div>
@@ -266,8 +253,8 @@ export default function PlanTab() {
   if (error || !plan) {
     return (
       <div className="card">
-        <div className="card-body" style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: 13, color: 'var(--danger)', marginBottom: 10 }}>{error || 'Nothing to show yet.'}</div>
+        <div className="card-body center-text">
+          <div className="help-text is-danger">{error || 'Nothing to show yet.'}</div>
           <button type="button" className="btn btn-primary btn-sm" onClick={load}>Try again</button>
         </div>
       </div>
@@ -286,33 +273,22 @@ export default function PlanTab() {
       {/* ---------- THIS WEEK ---------- */}
       <div className="card">
         <div className="card-body">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
+          <div className="section-head">
             <div className="section-label">Safe to set aside this week</div>
-            <span
-              style={{
-                fontSize: 11,
-                fontWeight: 800,
-                padding: '3px 10px',
-                borderRadius: 999,
-                color: tier.color,
-                background: tier.bg,
-              }}
-            >
-              {tier.label}
-            </span>
+            <span className={`tier-pill is-${tier.tone}`}>{tier.label}</span>
           </div>
 
-          <div style={{ fontSize: 40, fontWeight: 900, lineHeight: 1.1, margin: '6px 0 2px', color: tier.color }}>
+          <div className={`plan-hero is-${tier.tone}`}>
             {short > 0 ? `Short ${fmt(short)}` : fmt(weekSafe)}
           </div>
-          <div style={labelStyle}>
+          <div className="help-text">
             {thisWeek ? `${shortDate(thisWeek.start < plan.today ? plan.today : thisWeek.start)} – ${shortDate(addDays(thisWeek.start, 6))}` : ''}
             {' · '}keeps you above {fmt(SAFE_TO_SPEND_BUFFER)} through {shortDate(addDays(plan.today, SAFE_TO_SPEND_LOOKAHEAD_DAYS))}
           </div>
 
           {short === 0 && weekSafe > 0 && (
             <>
-              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 14 }}>
+              <div className="chip-row">
                 {SPLITS.map(s => (
                   <button
                     key={s.id}
@@ -324,18 +300,15 @@ export default function PlanTab() {
                   </button>
                 ))}
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, marginTop: 10 }}>
+              <div className="split-grid">
                 {[
                   { name: 'Debt', amount: weekSafe * split.debt, pct: split.debt },
                   { name: 'Fun', amount: weekSafe * split.fun, pct: split.fun },
                   { name: 'Savings', amount: weekSafe * split.save, pct: split.save },
                 ].map(b => (
-                  <div
-                    key={b.name}
-                    style={{ textAlign: 'center', padding: '10px 4px', borderRadius: 14, background: 'var(--sage-light)' }}
-                  >
-                    <div style={{ fontSize: 18, fontWeight: 800 }}>{fmt(b.amount)}</div>
-                    <div style={labelStyle}>
+                  <div key={b.name} className="split-tile">
+                    <div className="split-amount">{fmt(b.amount)}</div>
+                    <div className="help-text">
                       {b.name} · {Math.round(b.pct * 100)}%
                     </div>
                   </div>
@@ -345,22 +318,21 @@ export default function PlanTab() {
           )}
 
           {short > 0 && (
-            <div style={{ fontSize: 13, color: 'var(--danger)', marginTop: 10, fontWeight: 600 }}>
+            <div className="help-text is-danger is-bold">
               Nothing is safe to set aside right now. Pay the bills coming up first, then check back.
             </div>
           )}
 
           <button
             type="button"
-            className="btn btn-secondary btn-sm"
-            style={{ marginTop: 14 }}
+            className="btn btn-secondary btn-sm is-spaced"
             onClick={() => setShowMath(v => !v)}
           >
             {showMath ? 'Hide my math' : 'Show my math'}
           </button>
 
           {showMath && (
-            <div style={{ marginTop: 10 }}>
+            <div className="subsection">
               <Line label="Money in hand now" value={data!.currentBalance} />
               {plan.overdueTotal > 0 && <Line label="Overdue bills" value={plan.overdueTotal} sign="-" />}
               <Line
@@ -369,18 +341,15 @@ export default function PlanTab() {
               />
               <Line label="Safety buffer" value={SAFE_TO_SPEND_BUFFER} sign="-" />
               <Line label="Safe to set aside" value={plan.weekSafeRaw} bold />
-              <div style={{ ...labelStyle, marginTop: 8 }}>
+              <div className="help-text">
                 We use the lower of your balance today and your lowest balance in the next {SAFE_TO_SPEND_LOOKAHEAD_DAYS} days,
                 so rent a few weeks out is already counted.
               </div>
               {plan.upcomingBills.length > 0 && (
-                <div style={{ marginTop: 10 }}>
-                  <div className="form-label" style={{ marginBottom: 4 }}>Bills in that window</div>
+                <div className="subsection">
+                  <div className="form-label">Bills in that window</div>
                   {plan.upcomingBills.map((b, i) => (
-                    <div
-                      key={`${b.id}-${i}`}
-                      style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, padding: '2px 0' }}
-                    >
+                    <div key={`${b.id}-${i}`} className="mini-line">
                       <span>{b.name} · {shortDate(b.date)}</span>
                       <span>{fmt(b.amount)}</span>
                     </div>
@@ -395,25 +364,14 @@ export default function PlanTab() {
       {/* ---------- THIS MONTH ---------- */}
       <div className="card">
         <div className="card-body">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
+          <div className="section-head">
             <div className="section-label">
               {plan.today.toLocaleDateString(undefined, { month: 'long' })} at a glance
             </div>
-            <span
-              style={{
-                fontSize: 11,
-                fontWeight: 800,
-                padding: '3px 10px',
-                borderRadius: 999,
-                color: monthTier.color,
-                background: monthTier.bg,
-              }}
-            >
-              {monthTier.label}
-            </span>
+            <span className={`tier-pill is-${monthTier.tone}`}>{monthTier.label}</span>
           </div>
 
-          <div style={{ marginTop: 8 }}>
+          <div className="plan-lines">
             <Line label="In hand now" value={plan.inHand} />
             <Line label="Pay still coming" value={plan.payIn} sign="+" />
             <Line label="Bills still to pay" value={plan.billsOut + plan.overdueTotal} sign="-" />
@@ -422,23 +380,15 @@ export default function PlanTab() {
             <Line label={`Left to plan by ${shortDate(plan.monthEnd)}`} value={plan.monthLanding} bold />
           </div>
 
-          <div style={{ marginTop: 12 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', ...labelStyle, marginBottom: 4 }}>
+          <div className="subsection">
+            <div className="help-text split-line">
               <span>Bills paid this month</span>
               <span>
                 {fmt(plan.paidThisMonth)} of {fmt(plan.paidThisMonth + plan.stillToPay)}
               </span>
             </div>
-            <div style={{ height: 10, borderRadius: 999, background: 'var(--sage-light)', overflow: 'hidden' }}>
-              <div
-                style={{
-                  width: `${plan.paidPct}%`,
-                  height: '100%',
-                  background: 'var(--green-dark)',
-                  borderRadius: 999,
-                  transition: 'width 0.3s',
-                }}
-              />
+            <div className="progress is-thick">
+              <div className="progress-fill is-green" style={{ width: `${plan.paidPct}%` }} />
             </div>
           </div>
 
@@ -449,54 +399,35 @@ export default function PlanTab() {
       <div className="card">
         <div className="card-body">
           <div className="section-label">Week by week</div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 8 }}>
+          <div className="row-list">
             {plan.weeks.map((w, i) => {
               const t = tierFor(w.lowBalance - SAFE_TO_SPEND_BUFFER);
               const from = w.start < plan.today ? plan.today : w.start;
               return (
-                <div
-                  key={dateKey(w.start)}
-                  style={{
-                    padding: '10px 12px',
-                    borderRadius: 14,
-                    background: i === 0 ? 'var(--sage-light)' : undefined,
-                    border: '1.5px solid var(--border, rgba(0,0,0,0.12))',
-                  }}
-                >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div style={{ fontSize: 13, fontWeight: 800 }}>
+                <div key={dateKey(w.start)} className={`week-card${i === 0 ? ' is-first' : ''}`}>
+                  <div className="section-head">
+                    <div className="week-card-title">
                       {i === 0 ? 'This week · ' : ''}
                       {shortDate(from)} – {shortDate(w.end)}
                     </div>
-                    <span
-                      style={{
-                        fontSize: 10,
-                        fontWeight: 800,
-                        padding: '2px 8px',
-                        borderRadius: 999,
-                        color: t.color,
-                        background: t.bg,
-                      }}
-                    >
-                      {t.label}
-                    </span>
+                    <span className={`tier-pill is-small is-${t.tone}`}>{t.label}</span>
                   </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginTop: 6 }}>
-                    <span style={{ color: 'var(--green-dark)' }}>+{fmt(w.income)} in</span>
-                    <span style={{ color: 'var(--danger)' }}>−{fmt(w.out)} out</span>
-                    <span style={{ fontWeight: 700 }}>{fmt(w.endBalance)} end</span>
+                  <div className="week-card-nums">
+                    <span className="is-in">+{fmt(w.income)} in</span>
+                    <span className="is-out">−{fmt(w.out)} out</span>
+                    <span className="is-end">{fmt(w.endBalance)} end</span>
                   </div>
                 </div>
               );
             })}
           </div>
-          <div style={{ ...labelStyle, marginTop: 10 }}>
+          <div className="help-text">
             Week-by-week balances don't subtract the buffer; "Tight / OK / Comfortable" does include it.
           </div>
         </div>
       </div>
 
-      <div style={{ textAlign: 'center' }}>
+      <div className="center-text">
         <button type="button" className="btn btn-secondary btn-sm" onClick={load} disabled={loading}>
           {loading ? 'Refreshing…' : 'Refresh numbers'}
         </button>
