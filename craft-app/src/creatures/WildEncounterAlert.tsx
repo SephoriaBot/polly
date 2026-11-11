@@ -45,47 +45,19 @@ export default function WildEncounterAlert({ currentPage, onNavigate }: Props) {
   return (
     <div
       role="button"
-            onClick={() => onNavigate("habitat", "wild")}
-      style={{
-        position: "fixed",
-        top: visible ? 14 : -80,
-        left: 12,
-        right: 12,
-        zIndex: 999,
-        margin: "0 auto",
-        maxWidth: 420,
-        display: "flex",
-        alignItems: "center",
-        gap: 10,
-        background: "var(--blush)",
-        border: "2px solid var(--pink-dark)",
-        borderRadius: 16,
-        padding: "10px 12px",
-        boxShadow: "0 6px 18px rgba(0,0,0,0.18)",
-        cursor: "pointer",
-        transition: "top 0.35s cubic-bezier(0.34, 1.56, 0.64, 1)",
-      }}
+      onClick={() => onNavigate("habitat", "wild")}
+      className={`match-alert${visible ? " is-visible" : ""}`}
     >
-      <Icon name="hamster-wild" size={30} />
-      <div style={{ flex: 1 }}>
-        <div style={{ fontSize: 12, fontWeight: 800, color: "var(--pink-dark)" }}>
-          A tournament match is open!
-        </div>
-        <div style={{ fontSize: 10, color: "var(--ink-muted)" }}>Tap to enter</div>
+      <Icon name="hamster-wild" size={32} />
+      <div className="row-text">
+        <div className="match-alert-title">A tournament match is open!</div>
+        <div className="help-text">Tap to enter</div>
       </div>
       <button
+        className="match-alert-close"
         onClick={(e) => {
           e.stopPropagation();
           setDismissed(true);
-        }}
-        style={{
-          background: "transparent",
-          border: "none",
-          color: "var(--ink-muted)",
-          fontSize: 18,
-          lineHeight: 1,
-          padding: 4,
-          cursor: "pointer",
         }}
         aria-label="Dismiss"
       >
