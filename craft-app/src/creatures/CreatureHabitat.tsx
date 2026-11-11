@@ -13,10 +13,10 @@ function imageFor(species: Species, hamsterId: string) {
   return allBabiesFor(species).find((h) => h.id === hamsterId)?.image;
 }
 
-const STAGE_LABEL: Record<string, { text: string; icon: IconName }> = {
-  baby: { text: "Baby", icon: "egg" },
-  teen: { text: "Teen", icon: "potted-plant" },
-  final: { text: "Final Form", icon: "medal-wings" },
+const STAGE_LABEL: Record<string, { text: string }> = {
+  baby: { text: "Baby"},
+  teen: { text: "Teen"},
+  final: { text: "Final Form" },
 };
 
 // Highest-effort stage first, so a group opens with its most-evolved
@@ -134,8 +134,8 @@ export default function CreatureHabitat() {
             />
             <div className="evolve-title">
               {justEvolved.stage === "final"
-                ? <>Reached final form! <Icon name="medal-wings" size={16} /></>
-                : <>Evolved! <Icon name="potted-plant" size={16} /></>}
+                ? <>Reached final form! </>
+                : <>Evolved! </>}
             </div>
             {justEvolved.newAbilities.length > 0 && (
               <div className="help-text">
@@ -198,11 +198,7 @@ export default function CreatureHabitat() {
                             }}
                           >
                             {img && <img src={img} alt={entry.name || entry.hamsterId} />}
-                            {entry.stage !== "baby" && (
-                              <span className="creature-badge">
-                                <Icon name={entry.stage === "final" ? "medal-wings" : "potted-plant"} size={14} />
-                              </span>
-                            )}
+                          
                             {entry.name && <span className="creature-name">{entry.name}</span>}
                           </button>
                         );
