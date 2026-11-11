@@ -1650,3 +1650,240 @@
 .week-card-nums .is-in { color: var(--green-dark); }
 .week-card-nums .is-out { color: var(--danger); }
 .week-card-nums .is-end { font-weight: 700; }
+
+/* ================================================================
+   Habitat: collection, creature detail, stat training
+   ================================================================ */
+
+@keyframes hatchPop {
+  0% { transform: scale(0.3); opacity: 0; }
+  60% { transform: scale(1.15); opacity: 1; }
+  100% { transform: scale(1); }
+}
+
+.progress-fill.is-pink { background: var(--pink-dark); }
+.progress-fill.is-ready { background: var(--accent); }
+
+.mini-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+}
+
+.evolve-block { margin-top: 10px; }
+
+.evolve-banner {
+  margin-bottom: 14px;
+  padding: 14px 0;
+  text-align: center;
+  background: var(--blush);
+  border: 1.5px solid var(--pink-light);
+  border-radius: 20px;
+}
+
+.evolve-img {
+  width: 96px;
+  height: 96px;
+  object-fit: contain;
+  animation: hatchPop 0.7s ease;
+}
+
+.evolve-title {
+  margin-top: 6px;
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--pink-dark);
+}
+
+.filter-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.creature-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(88px, 100%), 1fr));
+  gap: 10px;
+}
+
+.creature-tile {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 6px;
+  background: transparent;
+  border: 1.5px solid transparent;
+  border-radius: 16px;
+  cursor: pointer;
+}
+
+.creature-tile.is-selected {
+  background: var(--blush);
+  border-color: var(--pink-light);
+}
+
+.creature-tile img {
+  width: 76px;
+  height: 76px;
+  object-fit: contain;
+}
+
+.creature-badge {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+}
+
+.creature-name {
+  max-width: 76px;
+  margin-top: 2px;
+  font-size: 0.75rem;
+  color: var(--ink-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.detail-panel {
+  margin-top: 16px;
+  padding: 16px;
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: 20px;
+}
+
+.detail-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.detail-head img {
+  width: 52px;
+  height: 52px;
+  object-fit: contain;
+}
+
+.detail-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--pink-dark);
+}
+
+.trait-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 12px;
+  font-size: 0.9rem;
+}
+
+.trait {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.trait.is-good { color: var(--green-dark); }
+.trait.is-quirk { color: var(--pink-dark); }
+
+.training-block {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px dashed var(--border);
+}
+
+.training-name { margin-bottom: 12px; }
+
+.name-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  font-family: var(--font-heading);
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.name-btn.is-empty { color: var(--ink-muted); }
+
+.seg-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.seg-btn {
+  flex: 1;
+  min-height: 36px;
+  border-radius: 12px;
+  background: transparent;
+  border: 1.5px solid var(--border);
+  color: var(--ink-muted);
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.seg-btn.is-on {
+  background: var(--pink-dark);
+  border-color: var(--pink-dark);
+  color: var(--white);
+}
+
+.stat-row-line {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.stat-name {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 96px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.stat-bar { flex: 1; }
+
+.stat-count {
+  width: 52px;
+  text-align: right;
+  font-size: 0.75rem;
+  color: var(--ink-muted);
+}
+
+.stat-plus {
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  padding: 0;
+  border-radius: 50%;
+  background: var(--blush);
+  border: 1.5px solid var(--pink-light);
+  color: var(--pink-dark);
+  font-size: 1.1rem;
+  font-weight: 800;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.stat-plus:disabled {
+  background: transparent;
+  opacity: 0.35;
+  cursor: default;
+}
