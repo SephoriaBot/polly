@@ -494,38 +494,16 @@ setNewTaskSlot('anytime');
 
       <div className="page-body">
 
-        <div style={{ display: 'flex', gap: 8 }}>
-          {activeTab === 'tasks' && tasks.length > 0 && (
-            <button className="btn btn-ghost" onClick={resetAll}>
-              <Icon name="icon-recur" size={20} /> Reset
-            </button>
-          )}
-        </div>
-
-            {activeTab === 'tasks' && (
-            <p style={{ color: allDone ? 'var(--pink-dark)' : 'var(--ink-muted)' }}>
-            {`${doneCount} of ${tasks.length} done today`}
-          </p>
-          )}
-
         {activeTab === 'tasks' && tasks.length > 0 && (
-          <div style={{ marginBottom: 4, maxWidth: 560 }}>
-            <div style={{
-              height: 10,
-              borderRadius: 999,
-              background: 'var(--border)',
-              overflow: 'hidden',
-            }}>
-              <div style={{
-                height: '100%',
-                width: `${(doneCount / tasks.length) * 100}%`,
-                background: allDone
-                  ? 'linear-gradient(90deg, var(--pink-light-solid), var(--pink-dark))'
-                  : 'linear-gradient(90deg, var(--secondary), var(--accent))',
-                borderRadius: 999,
-                transition: 'width 0.4s ease',
-              }} />
+          <div className="progress-row">
+            <div className="progress">
+              <div
+                className={`progress-fill${allDone ? ' is-complete' : ''}`}
+                style={{ width: `${(doneCount / tasks.length) * 100}%` }}
+              />
             </div>
+            <span className={`progress-text${allDone ? ' is-complete' : ''}`}>{doneCount}/{tasks.length}</span>
+            <button className="btn btn-ghost btn-sm" onClick={resetAll}>Reset</button>
           </div>
         )}
 
@@ -548,86 +526,56 @@ setNewTaskSlot('anytime');
     
               ) : (
                                               <>
-                <p className="daily-tasks-subtitle">Tap a task to mark it done</p>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 18, marginBottom: 16 }}>
+                <div className="group-list">
                   {TIME_SLOTS.map(slot => {
                     const slotTasks = groupedTasks[slot.key];
                     if (slotTasks.length === 0) return null;
                     return (
                       <div key={slot.key}>
-                        <div style={{
-                          display: 'flex', alignItems: 'center', gap: 6,
-                          fontSize: 11, fontWeight: 800, letterSpacing: '0.06em',
-                          textTransform: 'uppercase', color: 'var(--ink-muted)',
-                          marginBottom: 8,
-                        }}>
-                          <img src={slot.icon} alt="" style={{ width: 26, height: 26, objectFit: 'contain', flexShrink: 0 }} />
+                        <div className="group-label">
+                          <img className="group-icon" src={slot.icon} alt="" />
                           <span>{slot.label}</span>
-                          <span style={{ fontWeight: 600, opacity: 0.6, textTransform: 'none', letterSpacing: 0 }}>
+                          <span className="group-count">
                             {slotTasks.filter(t => t.done).length}/{slotTasks.length}
                           </span>
                         </div>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                        <div className="row-list">
                           {slotTasks.map(task => (
-                            <div
-                              key={task.id}
-                              style={{
-                                display: 'flex', alignItems: 'center', gap: 12,
-                                padding: '16px 18px', borderRadius: 'var(--radius-md)',
-                                background: task.done ? 'var(--blush)' : 'var(--white)',
-                                border: `1.5px solid ${task.done ? 'var(--pink-light)' : 'var(--border)'}`,
-                                opacity: task.done ? 0.55 : 1,
-                              }}
-                            >
+                            <div key={task.id} className={`row-item${task.done ? ' is-done' : ''}`}>
                               <button
+                                className="row-check"
                                 onClick={e => toggleTask(task, e)}
                                 aria-label={task.done ? 'Mark not done' : 'Mark done'}
-                                style={{
-                                  width: 24, height: 24, flexShrink: 0,
-                                  border: 'none', background: 'none', padding: 0,
-                                  cursor: 'pointer', display: 'flex',
-                                  alignItems: 'center', justifyContent: 'center',
-                                }}
                               >
-                                <CheckMark completed={task.done} size={22} />
+                                <CheckMark completed={task.done} size={24} />
                               </button>
-                              <span style={{
-                                flex: 1, fontSize: '0.92rem', fontWeight: 600,
-                                letterSpacing: '0.01em', lineHeight: 1.4,
-                                color: task.done ? 'var(--ink-muted)' : 'var(--ink)',
-                                textDecoration: task.done ? 'line-through' : 'none',
-                                display: 'flex', alignItems: 'center', gap: 6,
-                              }}>
-                                {task.label}
-                                {task.template_id && (
-                                  <button
-                                    type="button"
-                                    onClick={(e) => { e.stopPropagation(); stopRecurring(task.template_id!); }}
-                                    title="Repeats — tap to stop"
-                                    style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', color: 'var(--ink-muted)', opacity: 0.6, flexShrink: 0 }}
-                                  >
-                                    <Icon name="icon-recur" size={24} />
-                                  </button>
-                                )}
-                              </span>
+                              <div className="row-text">
+                                <div className="row-title">{task.label}</div>
+                              </div>
+                              {task.template_id && (
+                                <button
+                                  type="button"
+                                  className="row-icon-btn"
+                                  onClick={(e) => { e.stopPropagation(); stopRecurring(task.template_id!); }}
+                                  title="Repeats — tap to stop"
+                                >
+                                  <Icon name="icon-recur" size={20} />
+                                </button>
+                              )}
                               <button
+                                className={`row-icon-btn row-star${task.priority ? ' is-on' : ''}`}
                                 onClick={() => togglePriority(task)}
                                 aria-label={task.priority ? 'Unstar priority' : 'Mark as priority'}
                                 title={task.priority ? 'Priority — shows in No Energy Mode' : 'Mark as priority for No Energy Mode'}
-                                style={{
-                                  background: 'none', border: 'none', cursor: 'pointer', padding: 0,
-                                  display: 'flex', alignItems: 'center', flexShrink: 0,
-                                  fontSize: '1.05rem', lineHeight: 1,
-                                  color: task.priority ? 'var(--gold)' : 'var(--border)',
-                                }}
                               >
                                 {task.priority ? '★' : '☆'}
                               </button>
                               <button
+                                className="row-icon-btn"
                                 onClick={() => deleteTask(task.id)}
-                                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-muted)', padding: 0, display: 'flex', alignItems: 'center', opacity: 0.4 }}
+                                aria-label="Delete task"
                               >
-                                <Icon name="icon-clear" size={24} />
+                                ✕
                               </button>
                             </div>
                           ))}

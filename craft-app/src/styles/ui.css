@@ -224,3 +224,74 @@
   color: var(--ink-muted);
   font-family: 'IBM Plex Mono', monospace;
 }
+
+/* ---------- grouped lists (time-of-day, categories) ---------- */
+.group-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  margin-bottom: 16px;
+}
+
+.group-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+}
+
+.group-icon {
+  width: 26px;
+  height: 26px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.group-count {
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+  opacity: 0.6;
+}
+
+/* ---------- progress bar with count + action ---------- */
+.progress-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.progress {
+  flex: 1;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--border);
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--secondary), var(--accent));
+  transition: width 0.4s ease;
+}
+
+.progress-fill.is-complete {
+  background: linear-gradient(90deg, var(--pink-light-solid), var(--pink-dark));
+}
+
+.progress-text {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--ink-muted);
+}
+
+.progress-text.is-complete {
+  color: var(--pink-dark);
+}
