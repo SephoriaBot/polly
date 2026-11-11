@@ -503,7 +503,6 @@ export default function App() {
                         <Habitat
                           initialTab={
                             initialTab as
-                              | 'shelf'
                               | 'breeder'
                               | 'wild'
                               | 'collection'
