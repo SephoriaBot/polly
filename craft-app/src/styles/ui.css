@@ -749,3 +749,520 @@
   justify-content: space-between;
   margin: 16px 0 10px;
 }
+
+/* ================================================================
+   Wallet (and money-style screens)
+   ================================================================ */
+
+.view-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 14px;
+  font-size: 1.1rem;
+}
+
+.alert {
+  padding: 14px 16px;
+  border-radius: 18px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.alert.is-danger {
+  background: var(--danger-bg);
+  border: 1.5px solid var(--danger);
+  color: var(--danger);
+}
+
+.form-input.grow-2 {
+  flex: 2 1 160px;
+}
+
+/* editable inline numbers/text (Wallet tables, goals, bills) */
+.cell-input {
+  width: 100%;
+  min-height: 36px;
+  padding: 4px 6px;
+  background: transparent;
+  border: none;
+  border-bottom: 1.5px dashed var(--border);
+  border-radius: 0;
+  outline: none;
+  font-family: inherit;
+  font-size: 0.95rem;
+  color: var(--ink);
+}
+
+.cell-input.is-bold {
+  font-weight: 700;
+}
+
+.cell-input:focus {
+  border-bottom-style: solid;
+  border-bottom-color: var(--pink-dark);
+  box-shadow: none;
+}
+
+.money-field {
+  width: 88px;
+}
+
+.row-icon-btn:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+/* savings goals */
+.goal-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.goal-item {
+  padding: 14px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.goal-item:last-child {
+  border-bottom: none;
+}
+
+.goal-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.goal-rank {
+  width: 24px;
+  flex-shrink: 0;
+  text-align: center;
+  font-size: 0.9rem;
+  font-weight: 800;
+  color: var(--pink-dark);
+}
+
+.goal-foot {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+  font-size: 0.85rem;
+  color: var(--ink-muted);
+}
+
+.goal-status {
+  margin-left: auto;
+  font-weight: 700;
+}
+
+.goal-status.is-done {
+  color: var(--green-dark);
+}
+
+.progress.is-thick {
+  height: 12px;
+}
+
+.progress-fill.is-green {
+  background: var(--green-dark);
+}
+
+/* ================================================================
+   Money Calendar
+   ================================================================ */
+
+.form-label {
+  font-size: 0.8rem;
+  margin-bottom: 4px;
+}
+
+.card-heading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 6px;
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--ink);
+}
+
+.card-sub {
+  margin: 0 0 16px;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--pink-dark);
+}
+
+.scroll-chips {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 18px;
+  padding-bottom: 4px;
+  overflow-x: auto;
+}
+
+.scroll-chips .btn {
+  white-space: nowrap;
+}
+
+.field-group {
+  margin-bottom: 18px;
+}
+
+.field-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.grid-note {
+  display: flex;
+  align-items: flex-end;
+}
+
+.help-text {
+  margin-top: 6px;
+  font-size: 0.8rem;
+  line-height: 1.45;
+  color: var(--ink-muted);
+}
+
+.help-text.is-danger {
+  color: var(--danger);
+}
+
+.form-input.is-big {
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.form-input.time {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.95rem;
+  padding: 6px 8px;
+}
+
+.info-card {
+  margin-bottom: 18px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: var(--info-card-bg);
+  border: 1px solid var(--info-card-border);
+}
+
+.info-card .form-label,
+.info-card .help-text {
+  color: var(--info-card-text);
+}
+
+.fold {
+  margin-bottom: 18px;
+}
+
+.fold-summary {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--pink-dark);
+  cursor: pointer;
+}
+
+.fold-body {
+  margin-top: 10px;
+  font-size: 0.85rem;
+  line-height: 1.6;
+  color: var(--ink-muted);
+}
+
+.fold-body a {
+  color: var(--pink-dark);
+}
+
+.sub-card {
+  margin-bottom: 14px;
+  padding: 14px;
+  border: 1.5px solid var(--border);
+  border-radius: 16px;
+}
+
+.time-range {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.dow-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.dow-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: transparent;
+  border: 1.5px solid var(--border);
+  color: var(--ink-muted);
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.dow-btn.is-on {
+  background: var(--accent);
+  border-color: var(--pink-dark);
+  color: var(--accent-text);
+}
+
+/* weeks + days */
+.week-block {
+  margin-bottom: 14px;
+}
+
+.week-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 12px 14px;
+  background: transparent;
+  border: 1.5px solid var(--border);
+  border-radius: 16px;
+  text-align: left;
+  font-family: inherit;
+  color: var(--ink-muted);
+  cursor: pointer;
+}
+
+.week-head.is-open {
+  margin-bottom: 10px;
+}
+
+.week-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.week-end {
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.week-total {
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--green-dark);
+}
+
+.week-total.is-neg {
+  color: var(--danger);
+}
+
+.week-low {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--danger);
+}
+
+.day-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.day-card {
+  --c: var(--ink);
+  --muted: var(--ink-muted);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+  background: transparent;
+  border: 1.5px solid var(--border);
+  border-radius: 16px;
+  color: var(--c);
+}
+
+.day-card.is-today {
+  --c: var(--accent-text);
+  --muted: var(--accent-text-muted);
+  background: var(--accent);
+  border-color: var(--pink-dark);
+}
+
+.day-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.day-date {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--c);
+}
+
+.day-today-tag {
+  margin-left: 8px;
+  font-size: 0.7rem;
+  color: var(--accent-text);
+}
+
+.day-balance {
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--green-dark);
+}
+
+.day-balance.is-neg {
+  color: var(--danger);
+}
+
+.day-card.is-today .day-balance {
+  color: var(--accent-text);
+}
+
+.day-bills {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.day-bill {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  color: var(--pink-dark);
+}
+
+.day-card.is-today .day-bill {
+  color: var(--accent-text);
+}
+
+.day-mini {
+  font-size: 0.8rem;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.day-figures {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.day-ot {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--gold-dark);
+  white-space: nowrap;
+}
+
+.day-pay {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--green-dark);
+  white-space: nowrap;
+}
+
+.day-card.is-today .day-ot,
+.day-card.is-today .day-pay {
+  color: var(--accent-text);
+}
+
+.day-chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.day-chip {
+  min-height: 34px;
+  padding: 0 14px;
+  border-radius: 999px;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--ink);
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.day-card.is-today .day-chip {
+  border-color: var(--accent-text-muted);
+  color: var(--accent-text);
+}
+
+.day-chip.is-accent {
+  border-color: var(--pink-dark);
+  color: var(--pink-dark);
+}
+
+.day-card.is-today .day-chip.is-accent {
+  color: var(--accent-text);
+}
+
+.day-note {
+  font-size: 0.75rem;
+  color: var(--muted, var(--ink-muted));
+}
+
+.day-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.day-line {
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.day-line.is-gold {
+  color: var(--gold);
+}
+
+.day-line.is-danger {
+  color: var(--danger);
+}
+
+.day-card.is-today .day-line {
+  color: var(--accent-text);
+}
+
+.day-fold summary {
+  font-size: 0.8rem;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.day-fold-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 10px;
+}
+
+.day-done {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 6px;
+  font-size: 0.85rem;
+  color: var(--ink-muted);
+}

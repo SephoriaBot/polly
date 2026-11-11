@@ -494,7 +494,6 @@ export default function App() {
                               | 'calendar'
                               | 'bills'
                               | 'debts'
-                              | 'supplies'
                               | undefined
                           }
                         />

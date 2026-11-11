@@ -3,7 +3,6 @@ import type { CSSProperties } from "react";
 import { supabase } from '../lib/supabase';
 import Icon from '../components/Icon';
 import PageTabs, { type PageTab } from '../components/PageTabs';
-import SuppliesTab from '../components/wallet/SuppliesTab';
 import PlanTab from '../components/wallet/PlanTab';
 import { useTheme } from '../context/ThemeContext';
 import { Polly } from '../lib';
@@ -14,7 +13,6 @@ import CheckMark from '../components/CheckMark';
 import { useCreatureGrowth } from '../creatures/CreatureGrowthContext';
 import { triggerActionEvent } from '../lib/questSystem';
 import PageTitleLogo from "../components/PageTitleLogo";
-
 import {
   EARLY_PAY_PRESETS,
   buildBillsByDate as buildBillsByDateShared,
@@ -309,14 +307,10 @@ function EditableCell({ value, onChange, type = "number", style, className, plac
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const defaultStyle: CSSProperties = className
-    ? {}
-    : { width: "100%", background: "transparent", border: "none", borderBottom: "1.5px dashed var(--border)", color: "var(--ink)", fontSize: 13, padding: "2px 4px", outline: "none", fontFamily: "inherit" };
-
   return (
     <input
       type={type}
-      className={className}
+      className={className ?? 'cell-input'}
       placeholder={placeholder}
       value={draft}
       onChange={e => {
@@ -326,12 +320,12 @@ function EditableCell({ value, onChange, type = "number", style, className, plac
       }}
       onBlur={() => { if (timerRef.current) clearTimeout(timerRef.current); commit(); }}
       onKeyDown={e => { if (e.key === "Enter") (e.target as HTMLInputElement).blur(); }}
-      style={{ ...defaultStyle, ...style }}
+      style={style}
     />
   );
 }
 
-export default function Wallet({ initialView }: { initialView?: 'home' | 'calendar' | 'bills' | 'debts' | 'supplies' } = {}) {
+export default function Wallet({ initialView }: { initialView?: 'home' | 'calendar' | 'bills' | 'debts' } = {}) {
   const { theme } = useTheme();
   const { notifyGrowth } = useCreatureGrowth();
   const [debts, setDebts] = useState<Debt[]>([]);
@@ -342,7 +336,7 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
   const [payments, setPayments] = useState<BillPayment[]>([]);
   const [nextId, setNextId] = useState(20);
   const [nextBillId, setNextBillId] = useState(10);
-  const [view, setView] = useState<"home" | "plan" | "calendar" | "bills" | "debts" | "supplies">(initialView ?? "home");  const [showDeferred, setShowDeferred] = useState(false);
+  const [view, setView] = useState<"home" | "plan" | "calendar" | "bills" | "debts">(initialView ?? "home");  const [showDeferred, setShowDeferred] = useState(false);
   const [, setLoading] = useState(true);
   const [showBillForm, setShowBillForm] = useState(false);
   const [billsTab, setBillsTab] = useState<"month" | "recurring">("month");
@@ -1644,7 +1638,6 @@ async function updateMonthBill(
     calendar: { text: "Money Calendar", icon: "calendar" },
     bills: { text: "Bills", icon: "house" },
     debts: { text: "Debts", icon: "calculator-hearts" },
-    supplies: { text: "Supplies", icon: "basket" },
   };
 
   const WALLET_TABS: PageTab<typeof view>[] = [
@@ -1653,7 +1646,6 @@ async function updateMonthBill(
     { key: "calendar", label: "Money Calendar", icon: "calendar" },
     { key: "bills", label: "Bills", icon: "house" },
     { key: "debts", label: "Debts", icon: "calculator-hearts" },
-    { key: "supplies", label: "Supplies", icon: "basket" },
   ];
 
   return (
@@ -1664,11 +1656,9 @@ async function updateMonthBill(
         <h1><PageTitleLogo name="wallet" height={28} /></h1>
       </div>
 
-   <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <h2>{VIEW_TITLES[view].icon && <Icon name={VIEW_TITLES[view].icon!} size={20} />} {VIEW_TITLES[view].text}</h2>
-          
-        </div>
-    
+      <h2 className="view-title">
+        {VIEW_TITLES[view].icon && <Icon name={VIEW_TITLES[view].icon!} size={20} />} {VIEW_TITLES[view].text}
+      </h2>
 
       <PageTabs
         tabs={WALLET_TABS}
@@ -1676,13 +1666,13 @@ async function updateMonthBill(
         onChange={setView}
       />
 
-      <div className="page-body" style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+      <div className="page-body">
 
         {view === "home" && (
           <>
 
             {urgentBills.length > 0 && (
-              <div style={{ background: "var(--danger-bg)", border: "1.5px solid var(--danger)", borderRadius: 16, padding: "12px 16px", fontSize: 13, color: "var(--danger)", fontWeight: 600 }}>
+              <div className="alert is-danger">
                 Bills due within 7 days: {urgentBills.map(b => `${b.name} (${fmt(b.amount)}) in ${b.days}d`).join(" · ")}
               </div>
             )}
@@ -1690,17 +1680,16 @@ async function updateMonthBill(
             {/* ── SAVINGS GOALS ── */}
             <div className="card">
               <div className="card-body">
-                <div className="section-header">
-                  <div className="section-label" style={{ marginBottom: 0 }}><Icon name="piggy-bank" size={16} /> Savings Goals</div>
-                  <button className="btn btn-primary btn-sm" onClick={() => setShowGoalForm(v => !v)}>+ Add Goal</button>
+                <div className="section-head">
+                  <div className="section-label"><Icon name="piggy-bank" size={16} /> Savings Goals</div>
+                  <button className="pill-btn" onClick={() => setShowGoalForm(v => !v)}>+ Add Goal</button>
                 </div>
 
                 {showGoalForm && (
-                  <div style={{ display: "flex", gap: 8, marginBottom: 12, flexWrap: "wrap" }}>
+                  <div className="add-row subsection-end">
                     <input
                       type="text"
-                      className="form-input"
-                      style={{ flex: "2 1 140px" }}
+                      className="form-input grow-2"
                       placeholder="What do you want?"
                       value={newGoalName}
                       onChange={e => setNewGoalName(e.target.value)}
@@ -1712,8 +1701,7 @@ async function updateMonthBill(
                       inputMode="decimal"
                       min="0"
                       step="0.01"
-                      className="form-input"
-                      style={{ flex: "1 1 90px" }}
+                      className="form-input grow"
                       placeholder="How much?"
                       value={newGoalTarget}
                       onChange={e => setNewGoalTarget(e.target.value)}
@@ -1727,45 +1715,45 @@ async function updateMonthBill(
                   <EmptyState image={emptyWallet} message="No savings goals yet. Add something you're saving for." />
                 ) : (
                   <>
-                    <div style={{ fontSize: 12, color: "var(--ink-muted)", marginBottom: 10 }}>
+                    <p className="hint-text">
                       {fmt(goalTotals.saved)} saved of {fmt(goalTotals.target)} across {goals.length} {goals.length === 1 ? "goal" : "goals"}. Top of the list is what you want first.
-                    </div>
+                    </p>
 
-                    <div style={{ display: "flex", flexDirection: "column" }}>
+                    <div className="goal-list">
                       {goals.map((g, i) => {
                         const done = g.target > 0 && g.saved >= g.target;
                         const fill = g.target > 0 ? Math.min(100, (g.saved / g.target) * 100) : 0;
                         const remaining = Math.max(0, g.target - g.saved);
                         return (
-                          <div key={g.id} style={{ padding: "10px 0", borderBottom: "1px solid var(--border)" }}>
-                            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-                              <div style={{ width: 22, textAlign: "center", fontSize: 13, fontWeight: 800, color: "var(--pink-dark)", flexShrink: 0 }}>{i + 1}</div>
-                              <div style={{ flex: 1, minWidth: 0 }}>
+                          <div key={g.id} className="goal-item">
+                            <div className="goal-head">
+                              <div className="goal-rank">{i + 1}</div>
+                              <div className="row-text">
                                 <EditableCell
                                   type="text"
                                   value={g.name}
                                   onChange={v => { const name = v.trim(); if (name) updateGoal(g.id, { name }); }}
-                                  style={{ fontWeight: 700 }}
+                                  className="cell-input is-bold"
                                 />
                               </div>
-                              <button className="btn btn-ghost btn-sm" onClick={() => moveGoal(g.id, -1)} disabled={i === 0} aria-label="Move up" style={{ opacity: i === 0 ? 0.35 : 1 }}>
+                              <button className="row-icon-btn" onClick={() => moveGoal(g.id, -1)} disabled={i === 0} aria-label="Move up">
                                 <Icon name="icon-chevronup" size={20} />
                               </button>
-                              <button className="btn btn-ghost btn-sm" onClick={() => moveGoal(g.id, 1)} disabled={i === goals.length - 1} aria-label="Move down" style={{ opacity: i === goals.length - 1 ? 0.35 : 1 }}>
+                              <button className="row-icon-btn" onClick={() => moveGoal(g.id, 1)} disabled={i === goals.length - 1} aria-label="Move down">
                                 <Icon name="icon-chevrondown" size={20} />
                               </button>
-                              <button className="btn btn-ghost btn-sm" onClick={() => deleteGoal(g.id)} aria-label="Delete goal">
-                                <Icon name="icon-trash2" size={24} />
+                              <button className="row-icon-btn" onClick={() => deleteGoal(g.id)} aria-label="Delete goal">
+                                ✕
                               </button>
                             </div>
 
-                            <div style={{ height: 12, borderRadius: 99, overflow: "hidden", background: "var(--border)", marginBottom: 8 }}>
-                              <div style={{ width: `${fill}%`, height: "100%", borderRadius: 99, background: done ? "var(--green-dark)" : "var(--pink-dark)", transition: "width 0.3s" }} />
+                            <div className="progress is-thick">
+                              <div className={`progress-fill${done ? " is-green" : ""}`} style={{ width: `${fill}%` }} />
                             </div>
 
-                            <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", fontSize: 12, color: "var(--ink-muted)" }}>
+                            <div className="goal-foot">
                               <span>Saved $</span>
-                              <div style={{ width: 80 }}>
+                              <div className="money-field">
                                 <EditableCell
                                   type="number"
                                   value={g.saved || ""}
@@ -1774,7 +1762,7 @@ async function updateMonthBill(
                                 />
                               </div>
                               <span>of $</span>
-                              <div style={{ width: 80 }}>
+                              <div className="money-field">
                                 <EditableCell
                                   type="number"
                                   value={g.target || ""}
@@ -1782,7 +1770,7 @@ async function updateMonthBill(
                                   onChange={v => { const t = parseFloat(v); if (t > 0) updateGoal(g.id, { target: t }); }}
                                 />
                               </div>
-                              <span style={{ marginLeft: "auto", fontWeight: 700, color: done ? "var(--green-dark)" : "var(--ink-muted)" }}>
+                              <span className={`goal-status${done ? " is-done" : ""}`}>
                                 {done ? "Goal reached!" : `${Math.round(fill)}% · ${fmt(remaining)} to go`}
                               </span>
                             </div>
@@ -1801,27 +1789,24 @@ async function updateMonthBill(
   <>
             <div className="card">
               <div className="card-body">
-            
-                <div style={{ fontSize: 24, lineHeight: 1 }}><Icon name="calendar" size={24} /></div>
-                <div style={{ fontSize: 14, fontWeight: 800, color: "var(--ink)" }}>Money Calendar</div>
-                <div style={{ fontSize: 11, color: "var(--pink-dark)", marginBottom: 14 }}>
+                <div className="card-heading"><Icon name="calendar" size={24} /> Money Calendar</div>
+                <p className="card-sub">
                   Log your shift times (or planned shift times) each day to see your projected pay through the end of the month. Hours past 40 in a Sunday–Saturday week are paid at your OT wage automatically.
-                </div>
+                </p>
 
-                <div style={{ display: "flex", gap: 6, overflowX: "auto", paddingBottom: 4, marginBottom: 14 }}>
+                <div className="scroll-chips">
                   {availableMonths.map(({ month, year, label }) => (
                     <button
                       key={`${month}-${year}`}
                       onClick={() => { setSelectedMonth(month); setSelectedYear(year); }}
                       className={selectedMonth === month && selectedYear === year ? "btn btn-primary btn-sm" : "btn btn-ghost btn-sm"}
-                      style={{ whiteSpace: "nowrap" }}
                     >
                       {label}
                     </button>
                   ))}
                 </div>
 
-                <div style={{ marginBottom: 14 }}>
+                <div className="field-group">
                   <div className="form-label">Early Pay Settings</div>
                   <select
                     className="form-input"
@@ -1832,15 +1817,15 @@ async function updateMonthBill(
                       <option key={p.id} value={p.id}>{p.label}</option>
                     ))}
                   </select>
-                  <div style={{ fontSize: 10, color: "var(--ink-muted)", marginTop: 4 }}>
+                  <div className="help-text">
                     {earlyPayPresetId === "amazon"
                       ? "A 2% safety buffer that steps up to 8% once you've logged 55+ hours in the week."
                       : "Set your own safety buffer and hours threshold below."}
                   </div>
                   {earlyPayPresetId === "custom" && (
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginTop: 8 }}>
+                    <div className="field-grid">
                       <div>
-                        <div className="form-label" style={{ fontSize: 10 }}>Safety Buffer (%)</div>
+                        <div className="form-label">Safety Buffer (%)</div>
                         <input
                           type="number" className="form-input"
                           value={customEarlyPayPreset.safetyBufferNormal * 100}
@@ -1848,7 +1833,7 @@ async function updateMonthBill(
                         />
                       </div>
                       <div>
-                        <div className="form-label" style={{ fontSize: 10 }}>High-Hours Buffer (%)</div>
+                        <div className="form-label">High-Hours Buffer (%)</div>
                         <input
                           type="number" className="form-input"
                           value={customEarlyPayPreset.safetyBufferHighHours * 100}
@@ -1856,7 +1841,7 @@ async function updateMonthBill(
                         />
                       </div>
                       <div>
-                        <div className="form-label" style={{ fontSize: 10 }}>High-Hours Threshold</div>
+                        <div className="form-label">High-Hours Threshold</div>
                         <input
                           type="number" className="form-input"
                           value={customEarlyPayPreset.highHoursThreshold}
@@ -1864,7 +1849,7 @@ async function updateMonthBill(
                         />
                       </div>
                       <div>
-                        <div className="form-label" style={{ fontSize: 10 }}>Garnishments ($)</div>
+                        <div className="form-label">Garnishments ($)</div>
                         <input
                           type="number" className="form-input"
                           value={customEarlyPayPreset.garnishments}
@@ -1876,24 +1861,21 @@ async function updateMonthBill(
                 </div>
 
                 {isCalendarCurrentMonth && new Date().getDay() !== 0 && (
-                  <div style={{
-                    marginBottom: 14, padding: "10px 12px", borderRadius: "var(--radius-sm)",
-                    background: "var(--info-card-bg)", border: "1px solid var(--info-card-border)",
-                  }}>
-                                        <div className="form-label" style={{ marginBottom: 4, color: "var(--info-card-text)" }}>
+                  <div className="info-card">
+                    <div className="form-label">
                       Hours already worked this week (Sun–yesterday)
                     </div>
-                    <div style={{ fontSize: 11, color: "var(--info-card-text)", marginBottom: 8 }}>
+                    <div className="help-text">
                       The calendar below only starts from today, so this covers the part it can't see. It adds each finished day from your day cards on its own. If it's off, type the right number and it keeps adding from there.
                     </div>
                     <div>
-                      <div className="form-label" style={{ fontSize: 10 }}>Hours worked</div>
+                      <div className="form-label">Hours worked</div>
                       <input
                         type="number" inputMode="decimal" step="0.5" className="form-input" placeholder="0"
                         value={priorWeekEffective.reg}
                         onChange={e => setPriorWeekHoursValue(e.target.value)}
                       />
-                      <div style={{ fontSize: 10, color: "var(--info-card-text)", marginTop: 4 }}>
+                      <div className="help-text">
                         Past 40 hours for the week counts as OT automatically.
                       </div>
                     </div>
@@ -1947,27 +1929,14 @@ async function updateMonthBill(
     });
 
   return (
-    <div
-      style={{
-        marginBottom: 14,
-        padding: "10px 12px",
-        borderRadius: "var(--radius-sm)",
-        background: "var(--info-card-bg)", border: "1px solid var(--info-card-border)",
-      }}
-    >
-            <div className="form-label" style={{ marginBottom: 4, color: "var(--info-card-text)" }}>
+    <div className="info-card">
+      <div className="form-label">
         {partlyVisibleWeek
           ? <>Hours worked {fmt(periodStartSunday)}–{fmt(new Date(rangeStart.getFullYear(), rangeStart.getMonth(), rangeStart.getDate() - 1))} (before this calendar starts)</>
           : <>Hours worked {fmt(periodStartSunday)}–{fmt(closingSaturday)}</>}
       </div>
 
-      <div
-        style={{
-          fontSize: 11,
-          color: "var(--info-card-text)",
-          marginBottom: 8,
-        }}
-      >
+      <div className="help-text">
         {partlyVisibleWeek
           ? <>This week started before the calendar's first day. Enter only the hours
             from before {fmt(rangeStart)} here — the days you log below ({fmt(rangeStart)}–{fmt(closingSaturday)}) count
@@ -1979,9 +1948,7 @@ async function updateMonthBill(
       </div>
 
       <div>
-        <div className="form-label" style={{ fontSize: 10 }}>
-          Hours worked
-        </div>
+        <div className="form-label">Hours worked</div>
         <input
           type="number"
           inputMode="decimal"
@@ -1997,7 +1964,7 @@ async function updateMonthBill(
             setClosedWeekHoursValue(periodStartKey, e.target.value)
           }
         />
-        <div style={{ fontSize: 10, color: "var(--info-card-text)", marginTop: 4 }}>
+        <div className="help-text">
           Past 40 hours for the week counts as OT automatically.
         </div>
       </div>
@@ -2005,19 +1972,18 @@ async function updateMonthBill(
   );
 })()}
 
-                <div style={{ marginBottom: 14 }}>
+                <div className="field-group">
                   <div className="form-label">{isCalendarCurrentMonth ? "Current Balance" : `Starting Balance — ${MONTH_NAMES[selectedMonth - 1]}`}</div>
                   {isCalendarCurrentMonth ? (
                     <>
                       <EditableCell
                         type="number"
-                        className="form-input"
+                        className="form-input is-big"
                         placeholder="check your bank app, enter it here"
                         value={budget.current_balance || ""}
                         onChange={v => updateBudget("current_balance", parseFloat(v) || 0)}
-                        style={{ fontSize: 18, fontWeight: 700 }}
                       />
-                      <div style={{ fontSize: 10, color: "var(--ink-muted)", marginTop: 4 }}>
+                      <div className="help-text">
                         The calendar's running balance starts from this number. Update it whenever you check your real balance for the most accurate picture — it won't drift correct on its own. Syncs across devices now.
                       </div>
                     </>
@@ -2025,95 +1991,88 @@ async function updateMonthBill(
                     <>
                       <input
                         type="number"
-                        className="form-input"
+                        className="form-input is-big"
                         placeholder="not set yet — enter a projected balance when you get closer"
                         value={monthBalances[calendarMonthKey] || ""}
                         onChange={e => setMonthBalance(selectedMonth, selectedYear, e.target.value)}
-                        style={{ fontSize: 18, fontWeight: 700 }}
                       />
-                      <div style={{ fontSize: 10, color: "var(--ink-muted)", marginTop: 4 }}>
+                      <div className="help-text">
                         Each future month starts blank — it doesn't inherit today's balance or any other month's number. Enter a projected starting balance for {MONTH_NAMES[selectedMonth - 1]} once you have a sense of it.
                       </div>
                     </>
                   )}
                 </div>
 
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 10 }}>
+                <div className="field-grid">
                   <div>
                     <div className="form-label">Tax Withholding (%)</div>
                     <EditableCell type="number" className="form-input" value={budget.tax_rate ?? ""} placeholder="set in Budget Calculator" onChange={v => updateBudget("tax_rate", parseFloat(v) || 0)} />
-                    {budgetSaveError && <div style={{ fontSize: 10, color: "var(--danger)", marginTop: 4 }}><Icon name="lightning" size={12} /> {budgetSaveError}</div>}
+                    {budgetSaveError && <div className="help-text is-danger"><Icon name="lightning" size={12} /> {budgetSaveError}</div>}
                   </div>
 
                   <div>
                     <div className="form-label">Hourly Wage</div>
                     <EditableCell type="number" className="form-input" value={budget.hourly_wage || ""} placeholder="set in Budget Calculator" onChange={v => updateBudget("hourly_wage", parseFloat(v) || 0)} />
-                    {budgetSaveError && <div style={{ fontSize: 10, color: "var(--danger)", marginTop: 4 }}><Icon name="lightning" size={12} /> {budgetSaveError}</div>}
+                    {budgetSaveError && <div className="help-text is-danger"><Icon name="lightning" size={12} /> {budgetSaveError}</div>}
                   </div>
                   <div>
                     <div className="form-label">OT Wage</div>
                     <input type="number" className="form-input" value={otWageOverride} placeholder={budget.hourly_wage > 0 ? `${(budget.hourly_wage * 1.5).toFixed(2)} (1.5x)` : "e.g. 29.25"} onChange={e => updateOtWageOverride(e.target.value)} />
                   </div>
-                  <div style={{ display: "flex", alignItems: "flex-end" }}>
-                    <div style={{ fontSize: 10, color: "var(--ink-muted)" }}>leave blank to auto-use 1.5x your hourly wage</div>
+                  <div className="grid-note">
+                    <div className="help-text">leave blank to auto-use 1.5x your hourly wage</div>
                   </div>
                 </div>
 
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 10 }}>
+                <div className="field-grid">
                   <div>
                     <div className="form-label">Net-to-Gross Ratio</div>
                     <EditableCell type="number" className="form-input" value={budget.net_to_gross_ratio || ""} placeholder="e.g. 0.77" onChange={v => updateBudget("net_to_gross_ratio", parseFloat(v) || 0)} />
-                    <div style={{ fontSize: 10, color: "var(--ink-muted)", marginTop: 4 }}>
-                      {earlyPayPresetId === "amazon"
-                        ? "Previous paycheck's post-tax ÷ pre-tax earnings, from your pay portal. Update it each payday."
-                        : "Previous paycheck's post-tax ÷ pre-tax earnings, from your pay portal. Update it each payday."}
+                    <div className="help-text">
+                      Previous paycheck's post-tax ÷ pre-tax earnings, from your pay portal. Update it each payday.
                     </div>
                   </div>
                   <div>
                     <div className="form-label">Flat Deductions ($)</div>
                     <EditableCell type="number" className="form-input" value={budget.flat_deductions_prev || ""} placeholder="e.g. 62.84" onChange={v => updateBudget("flat_deductions_prev", parseFloat(v) || 0)} />
-                    <div style={{ fontSize: 10, color: "var(--ink-muted)", marginTop: 4 }}>
-                      {earlyPayPresetId === "amazon"
-                        ? "Flat deductions from your previous paycheck — for most people this is just the health premium."
-                        : "Flat deductions from your previous paycheck — for most people this is just the health premium."}
+                    <div className="help-text">
+                      Flat deductions from your previous paycheck — for most people this is just the health premium.
                     </div>
                   </div>
                 </div>
 
-                <details style={{ marginBottom: 16 }}>
-                  <summary style={{ fontSize: 11, color: "var(--pink-dark)", fontWeight: 600, cursor: "pointer" }}>Not sure what % to enter for tax withholding?</summary>
-                  <div style={{ fontSize: 11, color: "var(--ink-muted)", marginTop: 8, lineHeight: 1.6 }}>
+                <details className="fold">
+                  <summary className="fold-summary">Not sure what % to enter for tax withholding?</summary>
+                  <div className="fold-body">
                     Easiest way: grab a recent pay stub and find the line(s) for federal tax, state tax, Social Security, Medicare, and any benefits/401k deductions. Add those dollar amounts together, divide by your gross pay for that same period, and multiply by 100 — that's your real total withholding rate (not just tax).
                     <br /><br />
                     No pay stub handy? Most hourly W-2 workers land somewhere around 15–25% for tax alone, often more once benefits are included. 20% is a reasonable tax-only starting guess.
                     <br /><br />
-                    For a precise number, the IRS has a free calculator that walks you through it: <a href="https://www.irs.gov/individuals/tax-withholding-estimator" target="_blank" rel="noopener noreferrer" style={{ color: "var(--pink-dark)" }}>irs.gov/individuals/tax-withholding-estimator</a>
+                    For a precise number, the IRS has a free calculator that walks you through it: <a href="https://www.irs.gov/individuals/tax-withholding-estimator" target="_blank" rel="noopener noreferrer">irs.gov/individuals/tax-withholding-estimator</a>
                   </div>
                 </details>
 
                 {budget.hourly_wage > 0 && (
-                  <div style={{ border: "1.5px solid var(--border)", borderRadius: 14, padding: "10px 12px", marginBottom: 12 }}>
-                    <div className="section-label" style={{ marginBottom: 6 }}>My Regular Shift</div>
-                    <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}>
+                  <div className="sub-card">
+                    <div className="section-label">My Regular Shift</div>
+                    <div className="time-range">
                       <input
                         type="time"
-                        className="form-input"
+                        className="form-input time"
                         aria-label="Regular shift start"
                         value={regStart}
                         onChange={e => setRegStart(e.target.value)}
-                        style={{ flex: 1, minWidth: 0, fontSize: 12, padding: "4px 8px" }}
                       />
-                      <span style={{ fontSize: 10, color: "var(--ink-muted)" }}>to</span>
+                      <span className="inline-label">to</span>
                       <input
                         type="time"
-                        className="form-input"
+                        className="form-input time"
                         aria-label="Regular shift end"
                         value={regEnd}
                         onChange={e => setRegEnd(e.target.value)}
-                        style={{ flex: 1, minWidth: 0, fontSize: 12, padding: "4px 8px" }}
                       />
                     </div>
-                    <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 8 }}>
+                    <div className="dow-picker">
                       {["S", "M", "T", "W", "T", "F", "S"].map((label, d) => {
                         const on = regDays.includes(d);
                         return (
@@ -2121,37 +2080,34 @@ async function updateMonthBill(
                             key={d}
                             type="button"
                             aria-pressed={on}
+                            className={`dow-btn${on ? " is-on" : ""}`}
                             onClick={() => setRegDays(prev => on ? prev.filter(x => x !== d) : [...prev, d])}
-                            style={{
-                              width: 32, height: 32, borderRadius: 99, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit",
-                              border: `1.5px solid ${on ? "var(--pink-dark)" : "var(--border)"}`,
-                              background: on ? "var(--accent)" : "transparent",
-                              color: on ? "var(--accent-text)" : "var(--ink-muted)",
-                            }}
                           >
                             {label}
                           </button>
                         );
                       })}
                     </div>
-                    <button
-                      type="button"
-                      className="btn btn-primary btn-sm"
-                      onClick={applyRegularShift}
-                      disabled={timeToMin(regStart) === null || timeToMin(regEnd) === null || regDays.length === 0}
-                    >
-                      Fill my calendar
-                    </button>
-                    {shiftHours({ start: regStart, end: regEnd }) !== "" && (
-                      <span style={{ fontSize: 10, color: "var(--ink-muted)", marginLeft: 8 }}>
-                        {shiftHours({ start: regStart, end: regEnd })}h paid per shift
-                      </span>
-                    )}
+                    <div className="add-row">
+                      <button
+                        type="button"
+                        className="btn btn-primary btn-sm"
+                        onClick={applyRegularShift}
+                        disabled={timeToMin(regStart) === null || timeToMin(regEnd) === null || regDays.length === 0}
+                      >
+                        Fill my calendar
+                      </button>
+                      {shiftHours({ start: regStart, end: regEnd }) !== "" && (
+                        <span className="inline-label">
+                          {shiftHours({ start: regStart, end: regEnd })}h paid per shift
+                        </span>
+                      )}
+                    </div>
                   </div>
                 )}
 
                 {budget.hourly_wage <= 0 ? (
-                  <div style={{ fontSize: 12, color: "var(--ink-muted)" }}>Enter your hourly wage above to see your calendar.</div>
+                  <p className="hint-text">Enter your hourly wage above to see your calendar.</p>
                 ) : (
                   moneyCalendarWeekChunks.map(({ title, rows }, chunkIdx) => {
                     const weekKey = rows[0].key;
@@ -2179,26 +2135,21 @@ async function updateMonthBill(
                     if (hasPayday) summaryParts.push("payday catch-up");
 
                     return (
-                    <div key={weekKey} style={{ marginBottom: 12 }}>
+                    <div key={weekKey} className="week-block">
                       <button
                         type="button"
                         aria-expanded={isOpen}
+                        className={`week-head${isOpen ? " is-open" : ""}`}
                         onClick={() => setWeekOpen(prev => ({ ...prev, [weekKey]: !isOpen }))}
-                        style={{
-                          width: "100%", display: "flex", alignItems: "center", gap: 8, textAlign: "left",
-                          background: "transparent", border: "1.5px solid var(--border)", borderRadius: 14,
-                          padding: "10px 12px", cursor: "pointer", fontFamily: "inherit",
-                          marginBottom: isOpen ? 8 : 0,
-                        }}
                       >
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ fontSize: 12, fontWeight: 700, color: "var(--ink)" }}>{title}</div>
-                          <div style={{ fontSize: 10, color: "var(--ink-muted)", marginTop: 2 }}>{summaryParts.join(" · ")}</div>
+                        <div className="row-text">
+                          <div className="week-title">{title}</div>
+                          <div className="row-meta">{summaryParts.join(" · ")}</div>
                         </div>
-                        <div style={{ textAlign: "right", flexShrink: 0 }}>
-                          <div style={{ fontSize: 13, fontWeight: 800, color: endBal < 0 ? "var(--danger)" : "var(--green-dark)" }}>{fmt(endBal)}</div>
+                        <div className="week-end">
+                          <div className={`week-total${endBal < 0 ? " is-neg" : ""}`}>{fmt(endBal)}</div>
                           {lowBal < 0 && (
-                            <div style={{ fontSize: 10, color: "var(--danger)", fontWeight: 700 }}>
+                            <div className="week-low">
                               <Icon name="lightning" size={11} /> low {fmt(lowBal)}
                             </div>
                           )}
@@ -2207,11 +2158,9 @@ async function updateMonthBill(
                       </button>
 
                       {isOpen && (
-                      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                      <div className="day-list">
                         {rows.map(row => {
                           const isToday = row.key === dateKey(new Date());
-                          const textColor = isToday ? "var(--accent-text)" : "var(--ink)";
-                          const mutedColor = isToday ? "var(--accent-text-muted)" : "var(--ink-muted)";
                           const dow = row.date.getDay();
                           const isEdited = dailyHours[row.key] !== undefined;
                           const dayOt = payHours.otByDay[row.key] || 0;
@@ -2219,86 +2168,77 @@ async function updateMonthBill(
                           // Today's card goes away once its shift is over.
                           if (isToday && isShiftOver(row.key, dow) && editingDay !== row.key && revealedDay !== row.key) {
                             return (
-                              <div key={row.key} id={`money-day-${row.key}`} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 11, color: "var(--ink-muted)", padding: "2px 4px" }}>
+                              <div key={row.key} id={`money-day-${row.key}`} className="day-done">
                                 <span>Today's shift is done</span>
-                                <button type="button" onClick={() => setRevealedDay(row.key)} style={{ padding: "3px 10px", fontSize: 11, fontWeight: 600, borderRadius: 99, border: "1px solid var(--border)", background: "transparent", color: "var(--ink)", cursor: "pointer", fontFamily: "inherit" }}>Edit</button>
+                                <button type="button" className="day-chip" onClick={() => setRevealedDay(row.key)}>Edit</button>
                               </div>
                             );
                           }
                           const shift: Shift = dailyShifts[row.key] ?? recurringShifts[dow] ?? { start: "", end: "" };
                           const dayHrs = effectiveHours(row.key, dow);
-                          const chipStyle: CSSProperties = {
-                            padding: "3px 10px", fontSize: 11, fontWeight: 600, borderRadius: 99,
-                            border: `1px solid ${isToday ? "var(--accent-text-muted)" : "var(--border)"}`,
-                            background: "transparent", color: textColor, cursor: "pointer", fontFamily: "inherit",
-                          };
                           return (
                             <div
                               key={row.key}
                               id={`money-day-${row.key}`}
+                              className={`day-card${isToday ? " is-today" : ""}`}
                               onFocus={() => setEditingDay(row.key)}
                               onBlur={e => { if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setEditingDay(null); }}
-                              style={{ border: `1.5px solid ${isToday ? "var(--pink-dark)" : "var(--border)"}`, borderRadius: 14, padding: "10px 12px", background: isToday ? "var(--accent)" : "transparent" }}>
-                              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
-                                <div style={{ fontSize: 12, fontWeight: 700, color: textColor }}>
+                            >
+                              <div className="day-top">
+                                <div className="day-date">
                                   {row.date.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })}
-                                  {isToday && <span style={{ color: "var(--accent-text)", marginLeft: 6, fontSize: 10 }}>TODAY</span>}
+                                  {isToday && <span className="day-today-tag">TODAY</span>}
                                 </div>
-                                <div style={{ fontSize: 13, fontWeight: 800, color: isToday ? "var(--accent-text)" : (row.balance < 0 ? "var(--danger)" : "var(--green-dark)") }}>
+                                <div className={`day-balance${row.balance < 0 ? " is-neg" : ""}`}>
                                   {fmt(row.balance)}
                                 </div>
                               </div>
 
                               {row.billsToday.length > 0 && (
-                                <div style={{ marginBottom: 6 }}>
+                                <div className="day-bills">
                                   {row.billsToday.map(b => (
-                                    <div key={b.id} style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: isToday ? "var(--accent-text)" : "var(--pink-dark)" }}>
+                                    <div key={b.id} className="day-bill">
                                       <span><Icon name="house" size={14} /> {b.name}</span>
-                                      <span style={{ fontWeight: 700 }}>-{fmt(b.amount)}</span>
+                                      <strong>-{fmt(b.amount)}</strong>
                                     </div>
                                   ))}
                                 </div>
                               )}
 
-                              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                                <span style={{ fontSize: 10, color: mutedColor, whiteSpace: "nowrap" }}>Shift</span>
+                              <div className="time-range">
+                                <span className="day-mini">Shift</span>
                                 <input
                                   type="time"
-                                  className="form-input"
+                                  className="form-input time"
                                   aria-label="Shift start"
                                   value={shift.start}
                                   onChange={e => setDayShift(row.key, dow, "start", e.target.value)}
-                                  style={{ flex: 1, minWidth: 0, fontSize: 12, padding: "4px 8px" }}
                                 />
-                                <span style={{ fontSize: 10, color: mutedColor }}>to</span>
+                                <span className="day-mini">to</span>
                                 <input
                                   type="time"
-                                  className="form-input"
+                                  className="form-input time"
                                   aria-label="Shift end"
                                   value={shift.end}
                                   onChange={e => setDayShift(row.key, dow, "end", e.target.value)}
-                                  style={{ flex: 1, minWidth: 0, fontSize: 12, padding: "4px 8px" }}
                                 />
-                                {dayHrs > 0 && (
-                                  <span style={{ fontSize: 10, color: mutedColor, whiteSpace: "nowrap" }}>{round2(dayHrs)}h</span>
-                                )}
-
-                                {dayOt > 0.004 && (
-                                  <span style={{ fontSize: 10, color: isToday ? "var(--accent-text)" : "var(--gold-dark)", fontWeight: 700, whiteSpace: "nowrap" }}>{round2(dayOt)}h OT</span>
-                                )}
-
-                                {row.hoursToday > 0 && (
-                                  <span style={{ fontSize: 11, color: isToday ? "var(--accent-text)" : "var(--green-dark)", fontWeight: 700, whiteSpace: "nowrap" }}>+{fmt(row.availableToday)}</span>
-                                )}
                               </div>
 
+                              {(dayHrs > 0 || dayOt > 0.004 || row.hoursToday > 0) && (
+                                <div className="day-figures">
+                                  {dayHrs > 0 && <span className="day-mini">{round2(dayHrs)}h</span>}
+                                  {dayOt > 0.004 && <span className="day-ot">{round2(dayOt)}h OT</span>}
+                                  {row.hoursToday > 0 && <span className="day-pay">+{fmt(row.availableToday)}</span>}
+                                </div>
+                              )}
+
                               {/* One-tap shift fixes — no typing needed for a shift that ran short or long */}
-                              <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center", marginTop: 6 }}>
+                              <div className="day-chips">
                                 {isEdited && (
                                   <button
                                     type="button"
+                                    className="day-chip is-accent"
                                     onClick={() => resetDayHours(row.key)}
-                                    style={{ ...chipStyle, borderColor: "var(--pink-dark)", color: isToday ? "var(--accent-text)" : "var(--pink-dark)" }}
                                   >
                                     As planned
                                   </button>
@@ -2307,35 +2247,34 @@ async function updateMonthBill(
                                   <button
                                     key={c.id}
                                     type="button"
+                                    className="day-chip"
                                     onClick={() => applyShiftChip(row.key, dow, c.id)}
-                                    style={chipStyle}
                                   >
                                     {c.label}
                                   </button>
                                 ))}
                                 {isEdited && planTotal > 0 && (
-                                  <span style={{ fontSize: 9, color: mutedColor }}>plan was {Math.round(planTotal * 10) / 10}h</span>
+                                  <span className="day-note">plan was {Math.round(planTotal * 10) / 10}h</span>
                                 )}
                               </div>
 
-                              <label style={{ display: "flex", alignItems: "center", gap: 4, marginTop: 6, cursor: "pointer" }}>
+                              <label className="day-check">
                                 <input
                                   type="checkbox"
                                   checked={recurringHours[dow] !== undefined}
                                   onChange={e => toggleRecurringWeekday(dow, row.key, e.target.checked)}
                                 />
-                                <span style={{ fontSize: 9, color: mutedColor }}>
+                                <span className="day-note">
                                   Recurring every {row.date.toLocaleDateString(undefined, { weekday: "long" })}
                                 </span>
                               </label>
 
-
                               {row.hoursToday > 0 && (
-                                <div style={{ fontSize: 9, color: mutedColor, marginTop: 3 }}>
+                                <div className="day-note">
                                   {Math.round(row.eligiblePct * 100)}% of period pool available
                                   {row.heldInPool > 0.005 && ` · ${fmt(row.heldInPool)} still held this period`}
                                   {row.withdrawnBeforeToday > 0.005 && (
-                                    <div style={{ marginTop: 1 }}>
+                                    <div>
                                       {fmt(row.ceilingToday)} ceiling · {fmt(row.withdrawnBeforeToday)} already pulled
                                     </div>
                                   )}
@@ -2343,22 +2282,17 @@ async function updateMonthBill(
                               )}
 
                               {row.releasedToday > 0.005 && (
-                                <div style={{ fontSize: 11, color: isToday ? "var(--accent-text)" : "var(--gold)", fontWeight: 700, marginTop: 4 }}>
+                                <div className="day-line is-gold">
                                   <Icon name="money-bag" size={14} /> +{fmt(row.releasedToday)} payday catch-up
                                 </div>
                               )}
 
                               {/* Extra funds / expenses tucked away so each day reads shorter */}
-                              <details style={{ marginTop: 8 }}>
-                                <summary style={{ fontSize: 10, color: mutedColor, cursor: "pointer" }}>
-                                  Extra funds / expenses
-                                </summary>
+                              <details className="day-fold">
+                                <summary>Extra funds / expenses</summary>
 
-                                <div style={{ marginTop: 6 }}>
-                                  <span style={{ fontSize: 10, color: mutedColor }}>
-                                    Expected Extra Funds
-                                  </span>
-
+                                <div className="day-fold-field">
+                                  <span className="day-mini">Expected Extra Funds</span>
                                   <input
                                     type="number"
                                     className="form-input"
@@ -2373,11 +2307,8 @@ async function updateMonthBill(
                                   />
                                 </div>
 
-                                <div style={{ marginTop: 8 }}>
-                                  <span style={{ fontSize: 10, color: mutedColor }}>
-                                    Expected Purchase / Expense
-                                  </span>
-
+                                <div className="day-fold-field">
+                                  <span className="day-mini">Expected Purchase / Expense</span>
                                   <input
                                     type="number"
                                     className="form-input"
@@ -2394,27 +2325,13 @@ async function updateMonthBill(
                               </details>
 
                               {row.extraToday > 0 && (
-                                <div
-                                  style={{
-                                    fontSize: 11,
-                                    color: isToday ? "var(--accent-text)" : "var(--gold)",
-                                    fontWeight: 700,
-                                    marginTop: 4,
-                                  }}
-                                >
+                                <div className="day-line is-gold">
                                   +{fmt(row.extraToday)} expected
                                 </div>
                               )}
 
                               {row.extraExpenseToday > 0 && (
-                                <div
-                                  style={{
-                                    fontSize: 11,
-                                    color: isToday ? "var(--accent-text)" : "var(--danger)",
-                                    fontWeight: 700,
-                                    marginTop: 4,
-                                  }}
-                                >
+                                <div className="day-line is-danger">
                                   -{fmt(row.extraExpenseToday)} expected
                                 </div>
                               )}
@@ -2432,10 +2349,6 @@ async function updateMonthBill(
             </div>
   </>
 )}
-
-
-
-
 
 
         {view === "bills" && (
@@ -2656,7 +2569,6 @@ async function updateMonthBill(
         )}
 
         {view === "plan" && <PlanTab />}
-        {view === "supplies" && <SuppliesTab />}
 
         {view === "debts" && (
           <>
