@@ -15,7 +15,6 @@ import { triggerActionEvent } from '../lib/questSystem';
 import QuestBoard from '../components/QuestBoard';
 import DayPlanCard from '../components/DayPlanCard';
 import { useAuth } from '../context/AuthContext';
-import './Dashboard.css';
 
 
 interface Focus {
@@ -115,16 +114,16 @@ export default function Dashboard({ onNavigate }: { onNavigate?: (page: string, 
 
 
   return (
-    <div className="dash">
-      <header className="dash-hero">
+    <div>
+      <header className="page-header">
         <div>
           <h1>{getGreeting()}</h1>
-          <div className="dash-subdate">
+          <div className="page-subtitle">
             {todayName}, {new Date().toLocaleDateString(undefined, { month: 'long', day: 'numeric' })}
           </div>
         </div>
         <button
-          className={`dash-energy${mode !== 'normal' ? ' is-on' : ''}`}
+          className={`pill-toggle${mode !== 'normal' ? ' is-on' : ''}`}
           onClick={() => setMode(mode === 'normal' ? 'noEnergy' : 'normal')}
           aria-pressed={mode !== 'normal'}
         >
@@ -132,19 +131,19 @@ export default function Dashboard({ onNavigate }: { onNavigate?: (page: string, 
         </button>
       </header>
 
-      <div className="dash-chips">
+      <div className="chips">
         <WeatherBadge />
         <MoonWidget compact />
       </div>
 
-      <div className="dash-body">
+      <div className="page-body">
         {mode !== 'normal' ? (
           <>
             <section>
               <LowEnergyChecklist onNavigate={onNavigate} />
             </section>
 
-            <div className="dash-polly">
+            <div className="polly-stage">
               {yawningMessage && <PollyBubble message={yawningMessage} size="medium" />}
               <Polly mood="yawning" size="medium" />
             </div>
@@ -157,24 +156,24 @@ export default function Dashboard({ onNavigate }: { onNavigate?: (page: string, 
           </>
         ) : (
           <>
-            <div className="dash-polly">
+            <div className="polly-stage">
               {neutralMessage && <PollyBubble message={neutralMessage} size="medium" />}
               <Polly mood="neutral" size="medium" />
             </div>
 
             <section>
-              <div className="dash-section-head">
-                <div className="dash-label">
+              <div className="section-head">
+                <div className="section-label">
                   Today&apos;s Focus
                   {focuses.length > 0 && (
-                    <span className="dash-count">{completedFocuses}/{focuses.length} done</span>
+                    <span className="section-count">{completedFocuses}/{focuses.length} done</span>
                   )}
                 </div>
-                <button className="dash-add" onClick={() => setAddingFocus(true)}>+ Add</button>
+                <button className="pill-btn" onClick={() => setAddingFocus(true)}>+ Add</button>
               </div>
 
               {addingFocus && (
-                <div className="dash-form">
+                <div className="form-panel">
                   <input
                     className="form-input"
                     placeholder="What's the focus?"
@@ -189,7 +188,7 @@ export default function Dashboard({ onNavigate }: { onNavigate?: (page: string, 
                     onChange={e => setNewFocusMins(e.target.value)}
                     type="number"
                   />
-                  <div className="dash-form-actions">
+                  <div className="form-actions">
                     <button className="btn btn-primary" onClick={addFocus}>Save</button>
                     <button className="btn btn-ghost" onClick={() => setAddingFocus(false)}>Cancel</button>
                   </div>
@@ -199,36 +198,36 @@ export default function Dashboard({ onNavigate }: { onNavigate?: (page: string, 
               {focuses.length === 0 && !addingFocus ? (
                 <EmptyState image={emptyDash} message="No focuses set for today." size={70} />
               ) : (
-                <div className="dash-focus-list">
+                <div className="row-list">
                   {sortedFocuses.map(f => (
-                    <div key={f.id} className={`dash-focus${f.completed ? ' is-done' : ''}`}>
+                    <div key={f.id} className={`row-item${f.completed ? ' is-done' : ''}`}>
                       <button
-                        className="dash-check"
+                        className="row-check"
                         onClick={() => toggleFocus(f)}
                         aria-label={f.completed ? 'Mark not done' : 'Mark done'}
                       >
                         <CheckMark completed={f.completed} size={24} />
                       </button>
 
-                      <div className="dash-focus-text">
-                        <div className="dash-focus-title">{f.title}</div>
+                      <div className="row-text">
+                        <div className="row-title">{f.title}</div>
                         {f.carried_over && !f.completed && (
-                          <div className="dash-focus-note">Not finished!</div>
+                          <div className="row-note">Not finished!</div>
                         )}
                         {f.estimated_minutes && (
-                          <div className="dash-focus-meta">Est. {f.estimated_minutes} min</div>
+                          <div className="row-meta">Est. {f.estimated_minutes} min</div>
                         )}
                       </div>
 
                       <button
-                        className={`dash-icon-btn dash-star${f.priority ? ' is-on' : ''}`}
+                        className={`row-icon-btn row-star${f.priority ? ' is-on' : ''}`}
                         onClick={() => toggleFocusPriority(f)}
                         aria-label={f.priority ? 'Unstar priority' : 'Mark as priority'}
                       >
                         {f.priority ? '★' : '☆'}
                       </button>
                       <button
-                        className="dash-icon-btn"
+                        className="row-icon-btn"
                         onClick={() => deleteFocus(f.id)}
                         aria-label="Remove focus"
                       >
@@ -243,7 +242,7 @@ export default function Dashboard({ onNavigate }: { onNavigate?: (page: string, 
             <DayPlanCard onNavigate={onNavigate} />
 
             <section>
-              <div className="dash-label dash-label--solo">Also on your radar</div>
+              <div className="section-label">Also on your radar</div>
               <TodaySnapshot onNavigate={onNavigate} />
             </section>
 

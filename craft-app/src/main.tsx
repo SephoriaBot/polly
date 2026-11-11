@@ -6,6 +6,7 @@ import App from './App.tsx';
 import './index.css';
 import './styles/theme.css';
 import './styles/palette-misty-meadow.css';
+import './styles/ui.css';
 
 import { AuthProvider } from './context/AuthContext';
 

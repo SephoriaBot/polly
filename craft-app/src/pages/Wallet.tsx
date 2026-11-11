@@ -14,7 +14,7 @@ import CheckMark from '../components/CheckMark';
 import { useCreatureGrowth } from '../creatures/CreatureGrowthContext';
 import { triggerActionEvent } from '../lib/questSystem';
 import PageTitleLogo from "../components/PageTitleLogo";
-import './Dashboard.css';
+
 import {
   EARLY_PAY_PRESETS,
   buildBillsByDate as buildBillsByDateShared,
