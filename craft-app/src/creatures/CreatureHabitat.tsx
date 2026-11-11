@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useCreatureGrowth } from "./CreatureGrowthContext";
 import { allBabiesFor, imageForForm, SPECIES_LABELS, SPECIES } from "./creatures";
 import type { Species, EvolutionStage } from "./creatures";
@@ -26,36 +26,6 @@ const STAGE_ORDER: Record<EvolutionStage, number> = { final: 0, teen: 1, baby: 2
 type StageFilter = "all" | EvolutionStage;
 type SpeciesFilter = "all" | Species;
 
-function FilterPill({
-  active,
-  onClick,
-  children,
-}: {
-  active: boolean;
-  onClick: () => void;
-  children: ReactNode;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      style={{
-        padding: "4px 10px",
-        borderRadius: 99,
-        fontSize: 11,
-        fontWeight: 700,
-        border: active ? "1.5px solid var(--pink-dark)" : "1.5px solid var(--border)",
-        background: active ? "var(--blush)" : "transparent",
-        color: active ? "var(--pink-dark)" : "var(--ink-muted)",
-        cursor: "pointer",
-        whiteSpace: "nowrap",
-      }}
-    >
-      {children}
-    </button>
-  );
-}
-
 // Evolution is no longer point/threshold-based — it's unlocked by maxing
 // every trained stat for the current stage (see isMaxedOut in battle.ts).
 // This shows how many of the 4 stats are maxed, and surfaces the Evolve
@@ -78,29 +48,23 @@ function EvolutionReadiness({
   const ready = isMaxedOut(stage, trained);
 
   return (
-    <div style={{ marginTop: 6 }}>
-      <div style={{ height: 8, background: "var(--border)", borderRadius: 99, overflow: "hidden" }}>
+    <div className="evolve-block">
+      <div className="progress is-thick">
         <div
-          style={{
-            height: "100%",
-            width: `${(maxedCount / 4) * 100}%`,
-            background: ready ? "var(--accent)" : "var(--pink-dark)",
-            borderRadius: 99,
-            transition: "width 0.4s ease",
-          }}
+          className={`progress-fill${ready ? " is-ready" : " is-pink"}`}
+          style={{ width: `${(maxedCount / 4) * 100}%` }}
         />
       </div>
-      <div style={{ fontSize: 10, color: "var(--ink-muted)", marginTop: 3, textAlign: "center" }}>
+      <div className="help-text center-text">
         {ready ? "Ready to evolve!" : `${maxedCount}/4 stats maxed — win battles to earn TP`}
       </div>
       {ready && (
         <button
-          className="btn-primary"
+          className="btn btn-primary btn-block is-spaced"
           onClick={onEvolve}
           disabled={evolving}
-          style={{ width: "100%", marginTop: 8, opacity: evolving ? 0.6 : 1 }}
         >
-          <Icon name="sparkles-cluster" size={14} /> {evolving ? "Evolving..." : "Evolve!"}
+          <Icon name="sparkles-cluster" size={16} /> {evolving ? "Evolving..." : "Evolve!"}
         </button>
       )}
     </div>
@@ -156,34 +120,25 @@ export default function CreatureHabitat() {
   return (
     <div className="card">
       <div className="card-body">
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
-          <div className="section-label" style={{ marginBottom: 0 }}><Icon name="house" size={16} /> Habitat</div>
+        <div className="section-head">
+          <div className="section-label"><Icon name="house" size={16} /> Habitat</div>
           <span className="badge badge-pink">{collection.length} hatched</span>
         </div>
 
         {justEvolved && evolvedEntry && (
-          <div
-            style={{
-              textAlign: "center",
-              padding: "10px 0",
-              marginBottom: 10,
-              background: "var(--blush)",
-              border: "1.5px solid var(--pink-light)",
-              borderRadius: 16,
-            }}
-          >
+          <div className="evolve-banner">
             <img
+              className="evolve-img"
               src={imageForForm(evolvedEntry.species, justEvolved.stage, evolvedEntry.teenFormId, evolvedEntry.finalFormId, imageFor(evolvedEntry.species, evolvedEntry.hamsterId) || "")}
               alt="evolved"
-              style={{ width: 88, height: 88, objectFit: "contain", animation: "hatchPop 0.7s ease" }}
             />
-            <div style={{ fontSize: 14, fontWeight: 800, color: "var(--pink-dark)", marginTop: 6 }}>
+            <div className="evolve-title">
               {justEvolved.stage === "final"
-                ? <>Reached final form! <Icon name="medal-wings" size={14} /></>
-                : <>Evolved! <Icon name="potted-plant" size={14} /></>}
+                ? <>Reached final form! <Icon name="medal-wings" size={16} /></>
+                : <>Evolved! <Icon name="potted-plant" size={16} /></>}
             </div>
             {justEvolved.newAbilities.length > 0 && (
-              <div style={{ fontSize: 11, color: "var(--ink-muted)", marginTop: 4 }}>
+              <div className="help-text">
                 New: {justEvolved.newAbilities.join(" • ")}
               </div>
             )}
@@ -194,71 +149,61 @@ export default function CreatureHabitat() {
         <EmptyState image={emptyHabitat} message="No creatures in the habitat yet." />
         ) : (
           <>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 12 }}>
-              <FilterPill active={speciesFilter === "all"} onClick={() => setSpeciesFilter("all")}>All species</FilterPill>
-              {SPECIES.map((sp) => (
-                <FilterPill key={sp} active={speciesFilter === sp} onClick={() => setSpeciesFilter(sp)}>
-                  {SPECIES_LABELS[sp]}
-                </FilterPill>
-              ))}
-              <span style={{ width: 1, alignSelf: "stretch", background: "var(--border)", margin: "0 2px" }} />
-              <FilterPill active={stageFilter === "all"} onClick={() => setStageFilter("all")}>All stages</FilterPill>
-              {(["final", "teen", "baby"] as EvolutionStage[]).map((st) => (
-                <FilterPill key={st} active={stageFilter === st} onClick={() => setStageFilter(st)}>
-                  {STAGE_LABEL[st].text}
-                </FilterPill>
-              ))}
+            <div className="filter-row">
+              <select
+                className="form-input"
+                value={speciesFilter}
+                onChange={(e) => setSpeciesFilter(e.target.value as SpeciesFilter)}
+                aria-label="Filter by species"
+              >
+                <option value="all">All species</option>
+                {SPECIES.map((sp) => (
+                  <option key={sp} value={sp}>{SPECIES_LABELS[sp]}</option>
+                ))}
+              </select>
+              <select
+                className="form-input"
+                value={stageFilter}
+                onChange={(e) => setStageFilter(e.target.value as StageFilter)}
+                aria-label="Filter by stage"
+              >
+                <option value="all">All stages</option>
+                {(["final", "teen", "baby"] as EvolutionStage[]).map((st) => (
+                  <option key={st} value={st}>{STAGE_LABEL[st].text}</option>
+                ))}
+              </select>
             </div>
 
             {groups.length === 0 ? (
-              <div style={{ fontSize: 12, color: "var(--ink-muted)", textAlign: "center", padding: "16px 0" }}>
-                Nothing matches those filters yet.
-              </div>
+              <p className="hint-text center-text">Nothing matches those filters yet.</p>
             ) : (
-              <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+              <div className="group-list">
                 {groups.map((group) => (
                   <div key={group.species}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
-                      <span style={{ fontSize: 11, fontWeight: 800, color: "var(--ink-muted)", textTransform: "uppercase", letterSpacing: 0.4 }}>
-                        {SPECIES_LABELS[group.species]}s
-                      </span>
-                      <span className="badge badge-pink" style={{ fontSize: 10 }}>{group.entries.length}</span>
+                    <div className="group-label">
+                      <span>{SPECIES_LABELS[group.species]}s</span>
+                      <span className="badge badge-pink">{group.entries.length}</span>
                     </div>
-                    <div
-                      style={{
-                        display: "grid",
-                        gridTemplateColumns: "repeat(auto-fill, minmax(min(80px, 100%), 1fr))",
-                        gap: 8,
-                      }}
-                    >
+                    <div className="creature-grid">
                       {group.entries.map((entry) => {
                         const img = imageForForm(entry.species, entry.stage, entry.teenFormId, entry.finalFormId, imageFor(entry.species, entry.hamsterId) || "");
                         const isSelected = entry.id === selectedId;
                         return (
                           <button
                             key={entry.id}
+                            className={`creature-tile${isSelected ? " is-selected" : ""}`}
                             onClick={() => {
                               setSelectedId(isSelected ? null : entry.id);
                               setEvolveMessage(null);
                             }}
-                            style={{
-                              display: "flex", flexDirection: "column", alignItems: "center",
-                              background: isSelected ? "var(--blush)" : "transparent",
-                              border: isSelected ? "1.5px solid var(--pink-light)" : "1.5px solid transparent",
-                              borderRadius: 12, padding: 4, cursor: "pointer", position: "relative",
-                            }}
                           >
-                            {img && <img src={img} alt={entry.name || entry.hamsterId} style={{ width: 72, height: 72, objectFit: "contain" }} />}
+                            {img && <img src={img} alt={entry.name || entry.hamsterId} />}
                             {entry.stage !== "baby" && (
-                              <span style={{ position: "absolute", top: 0, right: 0, fontSize: 10 }}>
-                                <Icon name={entry.stage === "final" ? "medal-wings" : "potted-plant"} size={12} />
+                              <span className="creature-badge">
+                                <Icon name={entry.stage === "final" ? "medal-wings" : "potted-plant"} size={14} />
                               </span>
                             )}
-                            {entry.name && (
-                              <span style={{ fontSize: 9, color: "var(--ink-muted)", marginTop: 2, maxWidth: 52, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                                {entry.name}
-                              </span>
-                            )}
+                            {entry.name && <span className="creature-name">{entry.name}</span>}
                           </button>
                         );
                       })}
@@ -269,48 +214,39 @@ export default function CreatureHabitat() {
             )}
 
             {selected && (
-              <div
-                style={{
-                  marginTop: 12, padding: "12px 14px",
-                  background: "var(--white)", border: "1.5px solid var(--border)",
-                  borderRadius: 16,
-                }}
-              >
-                <div style={{ display: "flex", gap: 10, alignItems: "center", marginBottom: 8 }}>
+              <div className="detail-panel">
+                <div className="detail-head">
                   {imageForForm(selected.species, selected.stage, selected.teenFormId, selected.finalFormId, imageFor(selected.species, selected.hamsterId) || "") && (
                     <img
                       src={imageForForm(selected.species, selected.stage, selected.teenFormId, selected.finalFormId, imageFor(selected.species, selected.hamsterId) || "")}
                       alt=""
-                      style={{ width: 44, height: 44, objectFit: "contain" }}
                     />
                   )}
                   <div>
-                    <div style={{ fontSize: 12, fontWeight: 700, color: "var(--pink-dark)" }}>
-                      <Icon name={STAGE_LABEL[selected.stage].icon} size={14} /> {STAGE_LABEL[selected.stage].text} · {SPECIES_LABELS[selected.species]}
+                    <div className="detail-title">
+                      <Icon name={STAGE_LABEL[selected.stage].icon} size={16} /> {STAGE_LABEL[selected.stage].text} · {SPECIES_LABELS[selected.species]}
                     </div>
-                    <div style={{ fontSize: 11, color: "var(--ink-muted)" }}>
+                    <div className="help-text">
                       hatched {new Date(selected.hatchedAt).toLocaleDateString()}
                     </div>
                   </div>
                 </div>
 
                 {selected.personality ? (
-                  <div style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: 12, marginBottom: 8 }}>
-                    <div style={{ color: "var(--green-dark)", fontWeight: 600 }}><Icon name="clipboard-check" size={14} /> {selected.personality.good[0]}</div>
-                    <div style={{ color: "var(--green-dark)", fontWeight: 600 }}><Icon name="clipboard-check" size={14} /> {selected.personality.good[1]}</div>
-                    <div style={{ color: "var(--pink-dark)", fontWeight: 600 }}><Icon name="lightning" size={14} /> {selected.personality.quirk}</div>
+                  <div className="trait-list">
+                    <div className="trait is-good"><Icon name="clipboard-check" size={16} /> {selected.personality.good[0]}</div>
+                    <div className="trait is-good"><Icon name="clipboard-check" size={16} /> {selected.personality.good[1]}</div>
+                    <div className="trait is-quirk"><Icon name="lightning" size={16} /> {selected.personality.quirk}</div>
                   </div>
                 ) : (
-                  <div style={{ fontSize: 11, color: "var(--ink-muted)" }}>no personality on record yet</div>
+                  <div className="help-text">no personality on record yet</div>
                 )}
 
                 {selected.abilities.length > 0 && (
-                  <div style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: 12, marginTop: 4 }}>
-                    <div style={{ fontSize: 10, fontWeight: 700, color: "var(--ink-muted)", textTransform: "uppercase", letterSpacing: 0.4 }}>
-                      Combat abilities
-                    </div>
+                  <div className="trait-list">
+                    <div className="mini-label">Combat abilities</div>
                     {selected.abilities.map((a, i) => (
-                      <div key={i} style={{ color: "var(--ink)", fontWeight: 600 }}><Icon name="medal-wings" size={14} /> {a}</div>
+                      <div key={i} className="trait"><Icon name="medal-wings" size={16} /> {a}</div>
                     ))}
                   </div>
                 )}
@@ -324,7 +260,7 @@ export default function CreatureHabitat() {
                       evolving={evolving}
                     />
                     {evolveMessage && (
-                      <div style={{ fontSize: 10, color: "var(--ink-muted)", marginTop: 4, textAlign: "center" }}>
+                      <div className="help-text center-text">
                         {evolveMessage}
                       </div>
                     )}
@@ -342,14 +278,6 @@ export default function CreatureHabitat() {
             )}
           </>
         )}
-
-        <style>{`
-          @keyframes hatchPop {
-            0% { transform: scale(0.3); opacity: 0; }
-            60% { transform: scale(1.15); opacity: 1; }
-            100% { transform: scale(1); }
-          }
-        `}</style>
       </div>
     </div>
   );
