@@ -139,38 +139,13 @@ export default function DayPlanner() {
     day: 'numeric',
   });
 
-  const rowStyle = {
-    display: 'flex',
-    alignItems: 'center',
-    gap: 10,
-    padding: '10px 12px',
-    borderRadius: 16,
-    background: 'var(--white)',
-    border: '1.5px solid var(--border)',
-  } as const;
-
-  const addBtnStyle = {
-    background: 'var(--blush)',
-    border: '1.5px solid var(--border)',
-    borderRadius: '50%',
-    width: 30,
-    height: 30,
-    flexShrink: 0,
-    cursor: 'pointer',
-    color: 'var(--pink-dark)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 0,
-  } as const;
-
   return (
     <div className="card">
       <div className="card-body">
         <div className="section-label">Plan a day</div>
 
         {/* DATE PICKER */}
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginBottom: 6 }}>
+        <div className="add-row">
           <button
             className={date === todayKey ? 'btn btn-primary btn-sm' : 'btn btn-ghost btn-sm'}
             onClick={() => setDate(todayKey)}
@@ -184,49 +159,42 @@ export default function DayPlanner() {
             Tomorrow
           </button>
           <input
-            className="form-input"
+            className="form-input auto"
             type="date"
             value={date}
             min={todayKey}
             onChange={e => e.target.value && setDate(e.target.value)}
-            style={{ width: 'auto', fontSize: '0.85rem' }}
           />
         </div>
-        <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--pink-dark)', marginBottom: 14 }}>
-          {dateHeading}
-        </div>
+        <div className="date-heading">{dateHeading}</div>
 
         {loading ? (
-          <p style={{ fontSize: 13, color: 'var(--ink-muted)' }}>Loading…</p>
+          <p className="muted-text">Loading…</p>
         ) : (
           <>
             {/* THE PLAN */}
-            <div className="section-label" style={{ marginTop: 4 }}>
+            <div className="section-label">
               On the plan{planned.length > 0 ? ` · ${planned.length}` : ''}
             </div>
             {planned.length === 0 ? (
-              <p style={{ fontSize: 13, color: 'var(--ink-muted)', margin: '0 0 14px' }}>
-                Nothing planned yet. Tap things in below.
-              </p>
+              <p className="hint-text">Nothing planned yet. Tap things in below.</p>
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16 }}>
+              <div className="row-list subsection-end">
                 {planned.map(item => (
-                  <div key={item.id} style={rowStyle}>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--ink)' }}>
-                        {item.label}
-                      </div>
-                      <div style={{ fontSize: '0.72rem', color: 'var(--ink-muted)', marginTop: 2 }}>
+                  <div key={item.id} className="row-item">
+                    <div className="row-text">
+                      <div className="row-title">{item.label}</div>
+                      <div className="row-meta">
                         {KIND_LABEL[item.kind]}
                         {item.starts_at ? ` · ${planTime(item.starts_at)}` : ''}
                       </div>
                     </div>
                     <button
+                      className="row-icon-btn"
                       onClick={() => removeItem(item.id)}
                       aria-label="Remove from plan"
-                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-muted)', padding: 0, opacity: 0.5, flexShrink: 0 }}
                     >
-                      <Icon name="icon-clear" size={24} />
+                      ✕
                     </button>
                   </div>
                 ))}
@@ -236,30 +204,23 @@ export default function DayPlanner() {
             {/* CHORES */}
             <div className="section-label">Add from chores</div>
             {availableChores.length === 0 ? (
-              <p style={{ fontSize: 13, color: 'var(--ink-muted)', margin: '0 0 14px' }}>
+              <p className="hint-text">
                 {chores.length === 0 ? 'No chores set up yet.' : 'All your chores are on the plan.'}
               </p>
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16 }}>
+              <div className="row-list subsection-end">
                 {availableChores.map(({ chore, status }) => (
-                  <div key={chore.id} style={rowStyle}>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--ink)' }}>{chore.name}</div>
-                      <div
-                        style={{
-                          fontSize: '0.72rem',
-                          marginTop: 2,
-                          fontWeight: status.tone === 'due' ? 700 : 500,
-                          color: status.tone === 'due' ? 'var(--pink-dark)' : 'var(--ink-muted)',
-                        }}
-                      >
+                  <div key={chore.id} className="row-item">
+                    <div className="row-text">
+                      <div className="row-title">{chore.name}</div>
+                      <div className={`row-meta${status.tone === 'due' ? ' is-due' : ''}`}>
                         {status.label} · ~{chore.estimated_minutes}min
                       </div>
                     </div>
                     <button
+                      className="row-add-btn"
                       disabled={saving}
                       aria-label={`Add ${chore.name} to the plan`}
-                      style={addBtnStyle}
                       onClick={() =>
                         addItem({ kind: 'chore', ref_id: String(chore.id), label: chore.name, starts_at: null })
                       }
@@ -274,23 +235,21 @@ export default function DayPlanner() {
             {/* APPOINTMENTS */}
             <div className="section-label">Appointments that day</div>
             {availableAppts.length === 0 ? (
-              <p style={{ fontSize: 13, color: 'var(--ink-muted)', margin: '0 0 14px' }}>
+              <p className="hint-text">
                 {appts.length === 0 ? 'No appointments on this day.' : 'All of them are on the plan.'}
               </p>
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16 }}>
+              <div className="row-list subsection-end">
                 {availableAppts.map(appt => (
-                  <div key={appt.id} style={rowStyle}>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--ink)' }}>{appt.title}</div>
-                      <div style={{ fontSize: '0.72rem', color: 'var(--ink-muted)', marginTop: 2 }}>
-                        {planTime(appt.date_time)}
-                      </div>
+                  <div key={appt.id} className="row-item">
+                    <div className="row-text">
+                      <div className="row-title">{appt.title}</div>
+                      <div className="row-meta">{planTime(appt.date_time)}</div>
                     </div>
                     <button
+                      className="row-add-btn"
                       disabled={saving}
                       aria-label={`Add ${appt.title} to the plan`}
-                      style={addBtnStyle}
                       onClick={() =>
                         addItem({
                           kind: 'appointment',
@@ -309,22 +268,20 @@ export default function DayPlanner() {
 
             {/* CUSTOM */}
             <div className="section-label">Add your own</div>
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+            <div className="add-row">
               <input
-                className="form-input"
+                className="form-input grow"
                 placeholder="What do you want to do?"
                 value={customText}
                 onChange={e => setCustomText(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && addCustom()}
-                style={{ flex: 1, minWidth: 160, fontSize: '0.85rem' }}
               />
               <input
-                className="form-input"
+                className="form-input auto"
                 type="time"
                 value={customTime}
                 onChange={e => setCustomTime(e.target.value)}
                 aria-label="Time (optional)"
-                style={{ width: 'auto', fontSize: '0.85rem' }}
               />
               <button
                 className="btn btn-primary btn-sm"

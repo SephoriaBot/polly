@@ -295,3 +295,457 @@
 .progress-text.is-complete {
   color: var(--pink-dark);
 }
+
+/* ---------- add rows, chips, small helpers ---------- */
+.add-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.form-input.grow {
+  flex: 1;
+  min-width: 140px;
+}
+
+.date-input {
+  width: 150px;
+}
+
+.chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.chip-day {
+  min-width: 44px;
+  justify-content: center;
+}
+
+.chip-icon {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.subsection {
+  margin-top: 18px;
+}
+
+.action-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.text-btn {
+  min-height: 34px;
+  padding: 0 14px;
+  border-radius: 999px;
+  background: none;
+  border: 1.5px solid var(--border);
+  color: var(--ink-muted);
+  font-size: 0.8rem;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.link-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0;
+  margin-bottom: 10px;
+  background: none;
+  border: none;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--ink-muted);
+  cursor: pointer;
+}
+
+.scroll-box {
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.row-item.is-scheduled {
+  border-style: dashed;
+  padding: 10px 12px;
+}
+
+.row-date {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.75rem;
+  color: var(--ink-muted);
+}
+
+/* ---------- bigger item with several parts (appointments, etc.) ---------- */
+.panel-item {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px 12px;
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: 20px;
+}
+
+.panel-item.is-editing {
+  border-color: var(--pink-dark);
+}
+
+.panel-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.panel-icon {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  background: var(--blush);
+  color: var(--pink-dark);
+}
+
+.note-box {
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: var(--cream);
+  font-size: 0.85rem;
+  color: var(--ink);
+  white-space: pre-wrap;
+}
+
+.note-text {
+  white-space: pre-wrap;
+}
+
+.muted-text {
+  font-size: 0.85rem;
+  color: var(--ink-muted);
+}
+
+/* ================================================================
+   Shared pieces used by Chores, Life Events, Goals, Day plan, Trackers
+   ================================================================ */
+
+.hint-text {
+  margin: 0 0 14px;
+  font-size: 0.85rem;
+  color: var(--ink-muted);
+}
+
+.subsection-end {
+  margin-bottom: 16px;
+}
+
+.date-heading {
+  margin: 8px 0 16px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--pink-dark);
+}
+
+.inline-label {
+  font-size: 0.85rem;
+  color: var(--ink-muted);
+}
+
+.num-input {
+  width: 64px;
+}
+
+.form-input.auto {
+  width: auto;
+}
+
+.w-md { width: 200px; }
+.w-sm { width: 140px; }
+
+.btn-block {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.form-actions .btn {
+  justify-content: center;
+}
+
+/* ---------- row variants ---------- */
+.row-item.is-clickable {
+  cursor: pointer;
+}
+
+.row-item.is-open {
+  border-radius: 20px 20px 0 0;
+}
+
+.row-item.is-compact {
+  padding: 10px 12px;
+  border-radius: 16px;
+}
+
+.row-tap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+  cursor: pointer;
+}
+
+.row-title.is-small {
+  font-size: 0.85rem;
+}
+
+.row-meta.is-due {
+  font-weight: 700;
+  color: var(--pink-dark);
+}
+
+.panel-icon.is-due {
+  background: var(--blush);
+}
+
+.row-add-btn {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border-radius: 50%;
+  background: var(--blush);
+  border: 1.5px solid var(--border);
+  color: var(--pink-dark);
+  cursor: pointer;
+}
+
+.link-btn.is-accent {
+  margin-bottom: 0;
+  color: var(--pink-dark);
+}
+
+.row-item .link-btn {
+  margin-bottom: 0;
+}
+
+/* ---------- expanding cards (life events, goals) ---------- */
+.accordion {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: 20px;
+  overflow: hidden;
+}
+
+.accordion-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 12px;
+  background: transparent;
+  border: none;
+  text-align: left;
+  font-family: inherit;
+  color: var(--ink-muted);
+  cursor: pointer;
+}
+
+.accordion-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 0 12px 14px;
+}
+
+.substeps {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 6px 0 0 20px;
+  padding-left: 10px;
+  border-left: 2px solid var(--border);
+}
+
+/* ---------- drawer under a row (chore cleaning plan) ---------- */
+.plan-drawer {
+  margin-top: -2px;
+  padding: 12px 14px 14px;
+  background: var(--cream);
+  border: 1.5px solid var(--border);
+  border-top: none;
+  border-radius: 0 0 20px 20px;
+}
+
+.drawer-count {
+  margin: 0 0 8px;
+}
+
+.drawer-foot {
+  margin-top: 12px;
+}
+
+.drawer-foot .link-btn {
+  margin-bottom: 0;
+}
+
+.check-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.check-line {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.9rem;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.check-line input {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  accent-color: var(--pink-dark);
+}
+
+.check-line.is-done span {
+  color: var(--ink-muted);
+  text-decoration: line-through;
+}
+
+/* ---------- pickers (icons, templates, timeframes) ---------- */
+.icon-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.icon-choice {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  background: transparent;
+  border: 1.5px solid var(--border);
+  color: var(--pink-dark);
+  cursor: pointer;
+}
+
+.icon-choice.is-selected {
+  background: var(--blush);
+  border-color: var(--pink-dark);
+}
+
+.pick-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.pick-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 8px;
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: 18px;
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-align: center;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.pick-tile svg,
+.pick-tile img {
+  color: var(--pink-dark);
+}
+
+.pick-tile.is-option {
+  padding: 12px 8px;
+}
+
+.pick-tile.is-selected {
+  background: var(--blush);
+  border-color: var(--pink-dark);
+  color: var(--pink-dark);
+}
+
+.form-panel.is-dashed {
+  margin: 6px 0 0;
+  border-style: dashed;
+  background: var(--cream);
+}
+
+/* ---------- trackers ---------- */
+.card.is-tinted {
+  background: var(--blush);
+}
+
+.card.is-spaced {
+  margin-bottom: 16px;
+}
+
+.meta-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 6px;
+  font-size: 0.8rem;
+  color: var(--ink-muted);
+}
+
+.meta-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.end-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 12px;
+}
+
+.month-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 16px 0 10px;
+}

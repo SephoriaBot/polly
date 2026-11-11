@@ -107,57 +107,45 @@ export default function Chores() {
   return (
     <div className="card">
       <div className="card-body">
-        <div className="section-label" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span>Chores</span>
-        </div>
+        <div className="section-label">Chores</div>
 
         {loading ? (
-          <p style={{ fontSize: 13, color: 'var(--ink-muted)' }}>Loading…</p>
+          <p className="muted-text">Loading…</p>
         ) : sorted.length === 0 ? (
           <EmptyState image={checklistImg} message="No chores tracked yet. Add one below — Polly will remind you based on how long it's been, not a fixed schedule." />
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16 }}>
+          <div className="row-list subsection-end">
             {sorted.map(chore => {
               const status = statusFor(chore, now);
               const isOpen = openChoreId === chore.id;
+              const isDue = status.tone === 'due';
               return (
                 <div key={chore.id}>
                   <div
+                    className={`row-item is-clickable${isOpen ? ' is-open' : ''}`}
                     onClick={() => toggleOpen(chore.id)}
-                    style={{
-                      display: 'flex', alignItems: 'center', gap: 10,
-                      padding: '10px 12px',
-                      borderRadius: isOpen ? '16px 16px 0 0' : 16,
-                      background: 'var(--white)', border: '1.5px solid var(--border)',
-                      cursor: 'pointer',
-                    }}
                   >
-                    <div style={{
-                      width: 30, height: 30, borderRadius: 'var(--radius-sm)', flexShrink: 0,
-                      background: status.tone === 'due' ? 'var(--blush)' : 'var(--cream)',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    }}>
-                      <Icon name={chore.icon} size={15} style={{ color: 'var(--pink-dark)' }} />
+                    <div className={`panel-icon${isDue ? ' is-due' : ''}`}>
+                      <Icon name={chore.icon} size={18} />
                     </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--ink)' }}>{chore.name}</div>
-                      <div style={{ fontSize: '0.72rem', marginTop: 2, fontWeight: status.tone === 'due' ? 700 : 500, color: status.tone === 'due' ? 'var(--pink-dark)' : 'var(--ink-muted)' }}>
+                    <div className="row-text">
+                      <div className="row-title">{chore.name}</div>
+                      <div className={`row-meta${isDue ? ' is-due' : ''}`}>
                         {status.label} · every {chore.interval_days}d · ~{chore.estimated_minutes}min
                       </div>
                     </div>
                     <button
                       className="btn btn-primary btn-sm"
-                      style={{ fontSize: '0.68rem', padding: '5px 9px', flexShrink: 0 }}
                       onClick={(e) => { e.stopPropagation(); markDone(chore); }}
                     >
-                      Mark done
+                      Done
                     </button>
                     <button
+                      className="row-icon-btn"
                       onClick={(e) => { e.stopPropagation(); removeChore(chore.id); }}
-                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-muted)', padding: 0, opacity: 0.4, flexShrink: 0 }}
                       aria-label="Remove chore"
                     >
-                      <Icon name="icon-clear" size={24} />
+                      ✕
                     </button>
                   </div>
                   <ChoreCleaningPlan choreId={chore.id} choreName={chore.name} isOpen={isOpen} />
@@ -167,59 +155,51 @@ export default function Chores() {
           </div>
         )}
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          <div style={{ display: 'flex', gap: 8 }}>
+        <div className="stack">
+          <div className="add-row">
             <input
-              className="form-input"
+              className="form-input grow"
               placeholder="Chore name (e.g. Wash bedding)…"
               value={name}
               onChange={e => setName(e.target.value)}
-              style={{ flex: 1 }}
             />
             <button
-              className="btn btn-primary"
-              style={{ padding: '10px 14px' }}
+              className="btn btn-primary btn-sm"
               onClick={addChore}
               disabled={adding || !name.trim()}
+              aria-label="Add chore"
             >
-              <Icon name="icon-plus" size={24} />
+              <Icon name="icon-plus" size={20} />
             </button>
           </div>
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-            <span style={{ fontSize: 12, color: 'var(--ink-muted)' }}>Every</span>
+          <div className="add-row">
+            <span className="inline-label">Every</span>
             <input
-              className="form-input"
+              className="form-input num-input"
               type="number"
               min={1}
               value={intervalDays}
               onChange={e => setIntervalDays(e.target.value)}
-              style={{ width: 56 }}
             />
-            <span style={{ fontSize: 12, color: 'var(--ink-muted)' }}>days,</span>
+            <span className="inline-label">days,</span>
             <input
-              className="form-input"
+              className="form-input num-input"
               type="number"
               min={1}
               value={estimatedMinutes}
               onChange={e => setEstimatedMinutes(e.target.value)}
-              style={{ width: 56 }}
             />
-            <span style={{ fontSize: 12, color: 'var(--ink-muted)' }}>min</span>
+            <span className="inline-label">min</span>
           </div>
-          <div style={{ display: 'flex', gap: 4 }}>
+          <div className="icon-picker">
             {CHORE_ICONS.map(i => (
               <button
                 key={i}
+                className={`icon-choice${icon === i ? ' is-selected' : ''}`}
                 onClick={() => setIcon(i)}
-                style={{
-                  width: 26, height: 26, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  background: icon === i ? 'var(--blush)' : 'transparent',
-                  border: icon === i ? '1.5px solid var(--pink-dark)' : '1.5px solid var(--border)',
-                  cursor: 'pointer',
-                }}
                 aria-label={i}
               >
-                <Icon name={i} size={22} style={{ color: 'var(--pink-dark)' }} />
+                <Icon name={i} size={22} />
               </button>
             ))}
           </div>

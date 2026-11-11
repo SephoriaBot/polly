@@ -295,15 +295,15 @@ export default function Goals() {
   return (
     <div className="card">
       <div className="card-body">
-        <div className="section-label" style={{ marginBottom: 4 }}>Goals</div>
-        <p style={{ fontSize: '0.78rem', color: 'var(--ink-muted)', marginTop: 0, marginBottom: 14 }}>
+        <div className="section-label">Goals</div>
+        <p className="hint-text">
           Tell it a goal and how many steps you want, and it breaks it down into a checklist for you.
         </p>
 
         {loading ? (
-          <p style={{ fontSize: 13, color: 'var(--ink-muted)' }}>Loading…</p>
+          <p className="muted-text">Loading…</p>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 14 }}>
+          <div className="row-list subsection-end">
             {goals.map(goal => {
               const steps = stepsByGoal[goal.id] ?? [];
               const doneCount = steps.filter(s => s.done).length;
@@ -312,26 +312,23 @@ export default function Goals() {
               const childrenOf = (parentId: string) =>
                 steps.filter(s => s.parent_step_id === parentId).sort((a, b) => a.step_order - b.step_order);
               return (
-                <div key={goal.id} style={{ border: '1.5px solid var(--border)', borderRadius: 18, overflow: 'hidden', background: 'var(--white)' }}>
+                <div key={goal.id} className="accordion">
                   <button
+                    className="accordion-head"
                     onClick={() => setExpanded(isOpen ? null : goal.id)}
-                    style={{
-                      display: 'flex', alignItems: 'center', gap: 10, width: '100%',
-                      padding: '12px 14px', background: 'transparent', border: 'none', cursor: 'pointer', fontFamily: 'inherit',
-                    }}
                   >
-                    <Icon name="trophy" size={20} style={{ color: 'var(--pink-dark)', flexShrink: 0 }} />
-                    <div style={{ flex: 1, textAlign: 'left' }}>
-                      <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--ink)' }}>{goal.title}</div>
-                      <div style={{ fontSize: '0.68rem', color: 'var(--ink-muted)' }}>
-                        {doneCount}/{steps.length} done
-                      </div>
+                    <span className="panel-icon">
+                      <Icon name="trophy" size={18} />
+                    </span>
+                    <div className="row-text">
+                      <div className="row-title">{goal.title}</div>
+                      <div className="row-meta">{doneCount}/{steps.length} done</div>
                     </div>
-                    <Icon name={isOpen ? 'icon-chevronup' : 'icon-chevrondown'} size={14} style={{ color: 'var(--ink-muted)', flexShrink: 0 }} />
+                    <Icon name={isOpen ? 'icon-chevronup' : 'icon-chevrondown'} size={16} />
                   </button>
 
                   {isOpen && (
-                    <div style={{ padding: '0 14px 14px', display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    <div className="accordion-body">
                       {topSteps.map(step => {
                         const children = childrenOf(step.id);
                         const hasChildren = children.length > 0;
@@ -340,47 +337,29 @@ export default function Goals() {
                         const isBreakingDown = breakdownLoading === step.id;
                         return (
                           <div key={step.id}>
-                            <div
-                              style={{
-                                display: 'flex', alignItems: 'center', gap: 10,
-                                background: step.done ? 'var(--blush)' : 'var(--cream)',
-                                border: `1.5px solid ${step.done ? 'var(--pink-light)' : 'var(--border)'}`,
-                                borderRadius: 12, padding: '8px 10px',
-                              }}
-                            >
-                              <div
-                                onClick={() => toggleStep(step)}
-                                style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, cursor: 'pointer', minWidth: 0 }}
-                              >
-                                <CheckMark completed={step.done} size={16} />                                <span style={{
-                                  fontSize: '0.78rem', fontWeight: 600, flex: 1,
-                                  color: step.done ? 'var(--ink-muted)' : 'var(--ink)',
-                                  textDecoration: step.done ? 'line-through' : 'none',
-                                }}>
-                                  {step.label}
-                                </span>
+                            <div className={`row-item is-compact${step.done ? ' is-done' : ''}`}>
+                              <div className="row-tap" onClick={() => toggleStep(step)}>
+                                <CheckMark completed={step.done} size={20} />
+                                <div className="row-text">
+                                  <div className="row-title">{step.label}</div>
+                                </div>
                               </div>
 
                               {hasChildren ? (
                                 <button
+                                  className="row-icon-btn"
                                   onClick={() => setSubstepsOpen(prev => ({ ...prev, [step.id]: !subOpen }))}
                                   aria-label={subOpen ? 'Collapse sub-steps' : 'Expand sub-steps'}
-                                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-muted)', flexShrink: 0, display: 'flex' }}
                                 >
-                                  <Icon name={subOpen ? 'icon-chevronup' : 'icon-chevrondown'} size={13} />
+                                  <Icon name={subOpen ? 'icon-chevronup' : 'icon-chevrondown'} size={16} />
                                 </button>
                               ) : (
                                 <button
+                                  className="link-btn is-accent"
                                   onClick={() => setBreakingDownStep(isPicking ? null : step.id)}
                                   disabled={isBreakingDown}
                                   title="This is a whole task itself — break it into steps"
                                   aria-label="Break this step into sub-steps"
-                                  style={{
-                                    background: 'none', border: 'none', cursor: isBreakingDown ? 'default' : 'pointer',
-                                    color: 'var(--pink-dark)', flexShrink: 0, display: 'flex', alignItems: 'center', gap: 4,
-                                    fontSize: '0.68rem', fontWeight: 600,
-                                    opacity: isBreakingDown ? 0.5 : 1,
-                                  }}
                                 >
                                   <Icon name="icon-chevrondown" size={16} /> Break into steps
                                 </button>
@@ -396,26 +375,17 @@ export default function Goals() {
                             )}
 
                             {hasChildren && subOpen && (
-                              <div style={{ display: 'flex', flexDirection: 'column', gap: 5, marginTop: 5, marginLeft: 20, paddingLeft: 10, borderLeft: '2px solid var(--border)' }}>
+                              <div className="substeps">
                                 {children.map(sub => (
                                   <div
                                     key={sub.id}
+                                    className={`row-item is-clickable is-compact${sub.done ? ' is-done' : ''}`}
                                     onClick={() => toggleStep(sub)}
-                                    style={{
-                                      display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer',
-                                      background: sub.done ? 'var(--blush)' : 'var(--cream)',
-                                      border: `1.5px solid ${sub.done ? 'var(--pink-light)' : 'var(--border)'}`,
-                                      borderRadius: 10, padding: '6px 9px',
-                                    }}
                                   >
-                                   <CheckMark completed={sub.done} size={13} />
-                                      <span style={{
-                                      fontSize: '0.72rem', fontWeight: 600, flex: 1,
-                                      color: sub.done ? 'var(--ink-muted)' : 'var(--ink)',
-                                      textDecoration: sub.done ? 'line-through' : 'none',
-                                    }}>
-                                      {sub.label}
-                                    </span>
+                                    <CheckMark completed={sub.done} size={18} />
+                                    <div className="row-text">
+                                      <div className="row-title is-small">{sub.label}</div>
+                                    </div>
                                   </div>
                                 ))}
                               </div>
@@ -425,8 +395,7 @@ export default function Goals() {
                       })}
                       <button
                         onClick={() => archiveGoal(goal.id)}
-                        className="btn btn-ghost btn-sm"
-                        style={{ marginTop: 4, justifyContent: 'center' }}
+                        className="btn btn-ghost btn-sm btn-block"
                       >
                         All wrapped up — archive this
                       </button>
@@ -439,7 +408,7 @@ export default function Goals() {
         )}
 
         {!creating ? (
-          <button className="btn btn-primary" onClick={() => setCreating(true)} style={{ width: '100%', justifyContent: 'center' }}>
+          <button className="btn btn-primary btn-block" onClick={() => setCreating(true)}>
             <Icon name="icon-plus" size={20} /> Set a goal
           </button>
         ) : (
@@ -454,8 +423,8 @@ function SubstepPicker({ loading, onConfirm, onCancel }: { loading: boolean; onC
   const [count, setCount] = useState(3);
 
   return (
-    <div style={{ marginTop: 5, padding: 8, borderRadius: 10, background: 'var(--cream)', border: '1px dashed var(--border)', display: 'flex', flexDirection: 'column', gap: 6 }}>
-      <label style={{ fontSize: '0.68rem', color: 'var(--ink-muted)', fontWeight: 600 }}>
+    <div className="form-panel is-dashed">
+      <label className="form-label">
         Break this into how many sub-steps? ({count})
       </label>
       <input
@@ -466,16 +435,11 @@ function SubstepPicker({ loading, onConfirm, onCancel }: { loading: boolean; onC
         onChange={e => setCount(Number(e.target.value))}
         disabled={loading}
       />
-      <div style={{ display: 'flex', gap: 6 }}>
-        <button className="btn btn-ghost btn-sm" style={{ flex: 1, justifyContent: 'center' }} onClick={onCancel} disabled={loading}>
+      <div className="form-actions">
+        <button className="btn btn-ghost btn-sm" onClick={onCancel} disabled={loading}>
           Cancel
         </button>
-        <button
-          className="btn btn-primary btn-sm"
-          style={{ flex: 1, justifyContent: 'center', opacity: loading ? 0.6 : 1 }}
-          onClick={() => onConfirm(count)}
-          disabled={loading}
-        >
+        <button className="btn btn-primary btn-sm" onClick={() => onConfirm(count)} disabled={loading}>
           {loading ? 'Breaking it down…' : 'Break it down'}
         </button>
       </div>
@@ -511,50 +475,37 @@ function GoalCreator({ onCreate, onCancel }: { onCreate: (title: string, timefra
   ];
 
   return (
-    <div style={{ padding: 10, borderRadius: 14, background: 'var(--cream)', border: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: 8 }}>
-      <label style={{ fontSize: '0.72rem', color: 'var(--ink-muted)', fontWeight: 600 }}>What's the goal?</label>
+    <div className="form-panel">
+      <label className="form-label">What's the goal?</label>
       <input
         type="text"
         className="form-input"
         placeholder="Learn to bake sourdough"
         value={title}
         onChange={e => setTitle(e.target.value)}
-        style={{ fontSize: '0.85rem' }}
         autoFocus
       />
 
-      <label style={{ fontSize: '0.72rem', color: 'var(--ink-muted)', fontWeight: 600 }}>
-        How much time do you have to get this done?
-      </label>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
-        {options.map(opt => {
-          const selected = timeframe === opt.value;
-          return (
-            <button
-              key={opt.value}
-              onClick={() => setTimeframe(opt.value)}
-              disabled={generating}
-              style={{
-                padding: '9px 6px', borderRadius: 12, cursor: generating ? 'default' : 'pointer',
-                border: `1.5px solid ${selected ? 'var(--pink-dark)' : 'var(--border)'}`,
-                background: selected ? 'var(--blush)' : 'var(--white)',
-                fontSize: '0.78rem', fontWeight: 700,
-                color: selected ? 'var(--pink-dark)' : 'var(--ink)',
-              }}
-            >
-              {opt.label}
-            </button>
-          );
-        })}
+      <label className="form-label">How much time do you have to get this done?</label>
+      <div className="pick-grid">
+        {options.map(opt => (
+          <button
+            key={opt.value}
+            className={`pick-tile is-option${timeframe === opt.value ? ' is-selected' : ''}`}
+            onClick={() => setTimeframe(opt.value)}
+            disabled={generating}
+          >
+            {opt.label}
+          </button>
+        ))}
       </div>
 
-      <div style={{ display: 'flex', gap: 6 }}>
-        <button className="btn btn-ghost btn-sm" style={{ flex: 1, justifyContent: 'center' }} onClick={onCancel} disabled={generating}>
+      <div className="form-actions">
+        <button className="btn btn-ghost btn-sm" onClick={onCancel} disabled={generating}>
           Cancel
         </button>
         <button
           className="btn btn-primary btn-sm"
-          style={{ flex: 1, justifyContent: 'center', opacity: generating || !title.trim() ? 0.6 : 1 }}
           onClick={handleCreate}
           disabled={generating || !title.trim()}
         >

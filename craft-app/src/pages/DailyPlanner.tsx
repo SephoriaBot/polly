@@ -1,4 +1,4 @@
-import { useEffect, useState, type CSSProperties } from 'react';
+import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import Chores from '../components/planner/Chores';
 import LifeEvents from '../components/planner/LifeEvents';
@@ -71,13 +71,6 @@ interface Appointment {
   attended: boolean | null; // null = not yet marked, true = attended, false = cancelled
   notes: string | null;
 }
-
-const apptBtnStyle: CSSProperties = {
-  background: 'none', border: '1.5px solid var(--border)', borderRadius: 'var(--radius-sm)',
-  cursor: 'pointer', color: 'var(--ink-muted)', padding: '6px 12px',
-  display: 'flex', alignItems: 'center', fontSize: '0.74rem', fontWeight: 600,
-  whiteSpace: 'nowrap',
-};
 
 
 interface Spark {
@@ -513,13 +506,11 @@ setNewTaskSlot('anytime');
           {/* Dailies checklist */}
           <div className="card">
             <div className="card-body">
-              <div className="section-label" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span>Daily Tasks</span>
-              </div>
+              <div className="section-label">Daily Tasks</div>
              
 
               {loading ? (
-                <p style={{ fontSize: 13, color: 'var(--ink-muted)' }}>Loading…</p>
+                <p className="muted-text">Loading…</p>
               ) : tasks.length === 0 ? (
                 
         <EmptyState image={emptyPlanner} message="No tasks yet. Add a new or recurring one below to get started." />
@@ -587,69 +578,64 @@ setNewTaskSlot('anytime');
               </>
             )}
 
-              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              <div className="add-row">
                 <input
-                  className="form-input"
+                  className="form-input grow"
                   placeholder="Add a task…"
                   value={newTask}
                   onChange={e => setNewTask(e.target.value)}
                   onKeyDown={e => e.key === 'Enter' && addTask()}
-                  style={{ flex: 1, minWidth: 140 }}
                 />
                 <button
                   type="button"
-                  className={repeatMode ? 'btn btn-primary' : 'btn btn-ghost'}
+                  className={repeatMode ? 'btn btn-primary btn-sm' : 'btn btn-ghost btn-sm'}
                   onClick={() => setRepeatMode(r => !r)}
                   title="Repeat on specific days instead of a one-time date"
-                  style={{ padding: '10px 12px' }}
                 >
                   <Icon name="icon-calendar" size={14} /> Repeat
                 </button>
                 {!repeatMode && (
                   <input
-                    className="form-input"
+                    className="form-input date-input"
                     type="date"
                     value={newTaskDate}
                     min={todayISO()}
                     onChange={e => setNewTaskDate(e.target.value)}
                     title="Defaults to today — pick a future date to schedule it instead"
-                    style={{ width: 150 }}
                   />
                 )}
                 <button
-                  className="btn btn-primary"
-                  style={{ padding: '10px 14px' }}
+                  className="btn btn-primary btn-sm"
                   onClick={addTask}
                   disabled={savingTemplate || !newTask.trim() || (repeatMode && newTaskDays.length === 0)}
+                  aria-label="Add task"
                 >
-                  <Icon name="icon-plus" size={24} />
+                  <Icon name="icon-plus" size={20} />
                 </button>
-                    </div>
+              </div>
 
-      <div style={{ display: 'flex', gap: 6, marginTop: 8 }}>
-        {TIME_SLOTS.map(slot => (
-          <button
-            key={slot.key}
-            type="button"
-            onClick={() => setNewTaskSlot(slot.key)}
-            className={newTaskSlot === slot.key ? 'btn btn-primary btn-sm' : 'btn btn-ghost btn-sm'}
-            style={{ display: 'flex', alignItems: 'center', gap: 5 }}
-          >
-            <img src={slot.icon} alt="" style={{ width: 16, height: 16, objectFit: 'contain' }} />
-{slot.label}
-          </button>
-        ))}
-      </div>
+              <div className="chip-row">
+                {TIME_SLOTS.map(slot => (
+                  <button
+                    key={slot.key}
+                    type="button"
+                    onClick={() => setNewTaskSlot(slot.key)}
+                    className={`chip ${newTaskSlot === slot.key ? 'btn btn-primary btn-sm' : 'btn btn-ghost btn-sm'}`}
+                  >
+                    <img className="chip-icon" src={slot.icon} alt="" />
+                    {slot.label}
+                  </button>
+                ))}
+              </div>
 
-      {repeatMode && (
-                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 8 }}>
+              {repeatMode && (
+                <div className="chip-row">
                   {DAY_LABELS.map((label, day) => (
                     <button
                       key={day}
                       type="button"
                       onClick={() => toggleNewTaskDay(day)}
-                      className={newTaskDays.includes(day) ? 'btn btn-primary btn-sm' : 'btn btn-ghost btn-sm'}
-                      style={{ minWidth: 44 }}
+                      className={`chip chip-day ${newTaskDays.includes(day) ? 'btn btn-primary btn-sm' : 'btn btn-ghost btn-sm'}`}
                     >
                       {label}
                     </button>
@@ -658,24 +644,21 @@ setNewTaskSlot('anytime');
               )}
 
               {upcomingTasks.length > 0 && (
-                <div style={{ marginTop: 16 }}>
-                  <div className="section-label" style={{ fontSize: 11, marginBottom: 8 }}>Scheduled</div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <div className="subsection">
+                  <div className="section-label">Scheduled</div>
+                  <div className="row-list">
                     {upcomingTasks.map(task => (
-                      <div key={task.id} style={{
-                        display: 'flex', alignItems: 'center', gap: 10,
-                        padding: '8px 10px', borderRadius: 'var(--radius-sm)',
-                        border: '1.5px dashed var(--border)',
-                      }}>
-                        <span style={{ flex: 1, fontSize: 13 }}>{task.label}</span>
-                        <span style={{ fontSize: 10, color: 'var(--ink-muted)', fontFamily: "'IBM Plex Mono', monospace" }}>
-                          {formatScheduledDate(task.task_date)}
-                        </span>
+                      <div key={task.id} className="row-item is-scheduled">
+                        <div className="row-text">
+                          <div className="row-title">{task.label}</div>
+                        </div>
+                        <span className="row-date">{formatScheduledDate(task.task_date)}</span>
                         <button
+                          className="row-icon-btn"
                           onClick={() => deleteUpcomingTask(task.id)}
-                          style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-muted)', padding: 0, display: 'flex', alignItems: 'center', opacity: 0.4 }}
+                          aria-label="Remove scheduled task"
                         >
-                          <Icon name="icon-clear" size={24} />
+                          ✕
                         </button>
                       </div>
                     ))}
@@ -694,26 +677,16 @@ setNewTaskSlot('anytime');
           {/* Appointments */}
           <div className="card">
             <div className="card-body">
-              <div className="section-label" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span>Schedule & Appointments</span>
-              </div>
+              <div className="section-label">Schedule &amp; Appointments</div>
 
               {upcomingAppts.length === 0 ? (
-              
-        <EmptyState image={emptyPlanner} message="No appointments scheduled yet" />
-    
-            ) : (
-
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16 }}>
+                <EmptyState image={emptyPlanner} message="No appointments scheduled yet" />
+              ) : (
+                <div className="row-list subsection">
                   {upcomingAppts.map(appt => {
                     if (editingApptId === appt.id) {
                       return (
-                        <div key={appt.id} style={{
-                          display: 'flex', flexDirection: 'column', gap: 8,
-                          padding: '12px 14px', borderRadius: 18,
-                          background: 'var(--white)',
-                          border: '1.5px solid var(--pink-dark)',
-                        }}>
+                        <div key={appt.id} className="panel-item is-editing">
                           <input
                             className="form-input"
                             placeholder="Appointment title…"
@@ -726,22 +699,11 @@ setNewTaskSlot('anytime');
                             value={editApptDate}
                             onChange={e => setEditApptDate(e.target.value)}
                           />
-                          <div style={{ display: 'flex', gap: 8 }}>
-                            <button
-                              className="btn btn-primary"
-                              style={{ padding: '8px 14px', flex: 1 }}
-                              onClick={saveAppointmentEdit}
-                            >
+                          <div className="form-actions">
+                            <button className="btn btn-primary btn-sm" onClick={saveAppointmentEdit}>
                               Save
                             </button>
-                            <button
-                              onClick={cancelEditAppointment}
-                              style={{
-                                background: 'none', border: '1.5px solid var(--border)', borderRadius: 'var(--radius-sm)',
-                                cursor: 'pointer', color: 'var(--ink-muted)', padding: '8px 14px',
-                                fontSize: '0.74rem', fontWeight: 600,
-                              }}
-                            >
+                            <button className="text-btn" onClick={cancelEditAppointment}>
                               Cancel
                             </button>
                           </div>
@@ -750,75 +712,55 @@ setNewTaskSlot('anytime');
                     }
                     const isNoting = noteApptId === appt.id;
                     return (
-                      <div key={appt.id} style={{
-                        display: 'flex', flexDirection: 'column', gap: 10,
-                        padding: '12px 14px', borderRadius: 18,
-                        background: 'var(--white)',
-                        border: '1.5px solid var(--border)',
-                      }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                          <div style={{
-                            width: 30, height: 30, borderRadius: 'var(--radius-sm)', flexShrink: 0,
-                            background: 'var(--blush)',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          }}>
-                            <Icon name="icon-calendar" size={13} style={{ color: 'var(--pink-dark)' }} />
+                      <div key={appt.id} className="panel-item">
+                        <div className="panel-head">
+                          <div className="panel-icon">
+                            <Icon name="icon-calendar" size={16} />
                           </div>
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ fontWeight: 600, fontSize: '0.88rem', color: 'var(--ink)' }}>{appt.title}</div>
-                            <div style={{ fontSize: '0.74rem', color: 'var(--ink-muted)', marginTop: 2, fontFamily: "'IBM Plex Mono', monospace" }}>
-                              {formatApptDate(appt.date_time)}
-                            </div>
+                          <div className="row-text">
+                            <div className="row-title">{appt.title}</div>
+                            <div className="row-meta">{formatApptDate(appt.date_time)}</div>
                           </div>
                           <button
+                            className="row-icon-btn"
                             onClick={() => deleteAppointment(appt.id)}
                             title="Delete"
-                            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-muted)', padding: 0, display: 'flex', alignItems: 'center', opacity: 0.4 }}
+                            aria-label="Delete appointment"
                           >
-                            <Icon name="icon-clear" size={24} />
+                            ✕
                           </button>
                         </div>
 
                         {appt.notes && !isNoting && (
-                          <div style={{
-                            fontSize: '0.8rem', color: 'var(--ink)', whiteSpace: 'pre-wrap',
-                            background: 'var(--cream)', borderRadius: 12, padding: '8px 10px',
-                          }}>
-                            {appt.notes}
-                          </div>
+                          <div className="note-box">{appt.notes}</div>
                         )}
 
                         {isNoting ? (
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                          <div className="stack">
                             <textarea
                               className="form-input"
                               rows={3}
                               placeholder="Things to bring up, questions, reminders…"
                               value={noteDraft}
                               onChange={e => setNoteDraft(e.target.value)}
-                              style={{ resize: 'vertical' }}
                               autoFocus
                             />
-                            <div style={{ display: 'flex', gap: 8 }}>
-                              <button
-                                className="btn btn-primary"
-                                style={{ padding: '8px 14px', flex: 1 }}
-                                onClick={saveNote}
-                              >
+                            <div className="form-actions">
+                              <button className="btn btn-primary btn-sm" onClick={saveNote}>
                                 Save note
                               </button>
-                              <button onClick={cancelNote} style={apptBtnStyle}>Cancel</button>
+                              <button className="text-btn" onClick={cancelNote}>Cancel</button>
                             </div>
                           </div>
                         ) : (
-                          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                            <button onClick={() => startNote(appt)} title="Add or edit a note" style={apptBtnStyle}>
+                          <div className="action-row">
+                            <button className="text-btn" onClick={() => startNote(appt)} title="Add or edit a note">
                               {appt.notes ? 'Edit note' : 'Add note'}
                             </button>
-                            <button onClick={() => startEditAppointment(appt)} title="Edit title or date/time" style={apptBtnStyle}>
+                            <button className="text-btn" onClick={() => startEditAppointment(appt)} title="Edit title or date/time">
                               Edit
                             </button>
-                            <button onClick={() => markAttended(appt.id)} title="Mark attended (+10 points)" style={apptBtnStyle}>
+                            <button className="text-btn" onClick={() => markAttended(appt.id)} title="Mark attended (+10 points)">
                               Attended
                             </button>
                           </div>
@@ -830,51 +772,28 @@ setNewTaskSlot('anytime');
               )}
 
               {attendedAppts.length > 0 && (
-                <div style={{ marginBottom: 16 }}>
-                  <button
-                    onClick={() => setShowAttended(prev => !prev)}
-                    style={{
-                      background: 'none', border: 'none', cursor: 'pointer', padding: 0,
-                      display: 'flex', alignItems: 'center', gap: 6,
-                      fontSize: '0.76rem', fontWeight: 700, color: 'var(--ink-muted)', marginBottom: showAttended ? 8 : 0,
-                    }}
-                  >
-                    <Icon name={showAttended ? 'icon-chevronup' : 'icon-chevrondown'} size={11} />
+                <div className="subsection">
+                  <button className="link-btn" onClick={() => setShowAttended(prev => !prev)}>
+                    <Icon name={showAttended ? 'icon-chevronup' : 'icon-chevrondown'} size={12} />
                     Attended ({attendedAppts.length})
                   </button>
 
                   {showAttended && (
-                    <div style={{
-                      display: 'flex', flexDirection: 'column', gap: 6,
-                      maxHeight: 180, overflowY: 'auto',
-                      padding: '2px 2px',
-                    }}>
+                    <div className="row-list scroll-box">
                       {attendedAppts.map(appt => (
-                        <div key={appt.id} style={{
-                          display: 'flex', alignItems: 'center', gap: 10,
-                          padding: '9px 12px', borderRadius: 14,
-                          background: 'var(--cream)',
-                          border: '1.5px solid var(--border)',
-                          opacity: 0.7,
-                        }}>
-                          <Icon name="clipboard-check" size={12} style={{ color: 'var(--pink-dark)', flexShrink: 0 }} />
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ fontWeight: 600, fontSize: '0.8rem', color: 'var(--ink-muted)', textDecoration: 'line-through' }}>{appt.title}</div>
-                            <div style={{ fontSize: '0.7rem', color: 'var(--ink-muted)', marginTop: 1, fontFamily: "'IBM Plex Mono', monospace" }}>
-                              {formatApptDate(appt.date_time)}
-                            </div>
-                            {appt.notes && (
-                              <div style={{ fontSize: '0.72rem', color: 'var(--ink-muted)', marginTop: 4, whiteSpace: 'pre-wrap' }}>
-                                {appt.notes}
-                              </div>
-                            )}
+                        <div key={appt.id} className="row-item is-done">
+                          <div className="row-text">
+                            <div className="row-title">{appt.title}</div>
+                            <div className="row-meta">{formatApptDate(appt.date_time)}</div>
+                            {appt.notes && <div className="row-meta note-text">{appt.notes}</div>}
                           </div>
                           <button
+                            className="row-icon-btn"
                             onClick={() => deleteAppointment(appt.id)}
                             title="Remove"
-                            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-muted)', padding: 0, display: 'flex', alignItems: 'center', opacity: 0.4, flexShrink: 0 }}
+                            aria-label="Remove appointment"
                           >
-                            <Icon name="icon-clear" size={24} />
+                            ✕
                           </button>
                         </div>
                       ))}
@@ -883,33 +802,24 @@ setNewTaskSlot('anytime');
                 </div>
               )}
 
-              <div style={{ fontSize: 12, marginBottom: 4 }}>
-                    New Appointment Title
-                    </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <div className="stack subsection">
+                <label className="form-label">New appointment</label>
                 <input
                   className="form-input"
                   placeholder="Appointment title…"
                   value={newApptTitle}
                   onChange={e => setNewApptTitle(e.target.value)}
                 />
-                    <div style={{ fontSize: 12, marginBottom: 4 }}>
-                    Date & Time
-                    </div>
-                <div style={{ display: 'flex', gap: 8 }}>
+                <label className="form-label">Date &amp; time</label>
+                <div className="add-row">
                   <input
-                    className="form-input"
+                    className="form-input grow"
                     type="datetime-local"
                     value={newApptDate}
                     onChange={e => setNewApptDate(e.target.value)}
-                    style={{ flex: 1 }}
                   />
-                  <button
-                    className="btn btn-primary"
-                    style={{ padding: '10px 14px' }}
-                    onClick={addAppointment}
-                  >
-                    <Icon name="icon-plus" size={24} />
+                  <button className="btn btn-primary btn-sm" onClick={addAppointment} aria-label="Add appointment">
+                    <Icon name="icon-plus" size={20} />
                   </button>
                 </div>
               </div>

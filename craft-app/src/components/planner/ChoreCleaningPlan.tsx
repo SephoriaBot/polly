@@ -199,126 +199,44 @@ export default function ChoreCleaningPlan({
     steps?.filter((step) => step.done).length ?? 0;
 
   return (
-    <div
-      style={{
-        margin: '-2px 0 0 0',
-        padding: '10px 12px 12px 12px',
-        borderRadius: '0 0 16px 16px',
-        background: 'var(--cream)',
-        border: '1.5px solid var(--border)',
-        borderTop: 'none',
-      }}
-    >
-      {loadingPlan && (
-        <p
-          style={{
-            fontSize: 12,
-            color: 'var(--ink-muted)',
-            margin: 0,
-          }}
-        >
-          Loading plan…
-        </p>
-      )}
+    <div className="plan-drawer">
+      {loadingPlan && <p className="muted-text">Loading plan…</p>}
 
       {!loadingPlan && !steps && (
         <button
           className="btn btn-primary btn-sm"
-          style={{
-            fontSize: '0.72rem',
-            padding: '6px 10px',
-          }}
           onClick={runGeneration}
           disabled={generating}
         >
-          {generating
-            ? 'Generating…'
-            : '✨ Generate cleaning plan'}
+          {generating ? 'Generating…' : '✨ Generate cleaning plan'}
         </button>
       )}
 
       {steps && steps.length > 0 && (
         <div>
-          <div
-            style={{
-              fontSize: '0.7rem',
-              fontWeight: 600,
-              color: 'var(--ink-muted)',
-              marginBottom: 6,
-            }}
-          >
+          <div className="row-meta drawer-count">
             {doneCount}/{steps.length} done
           </div>
 
-          <div
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 6,
-            }}
-          >
+          <div className="check-list">
             {steps.map((step) => (
-              <label
-                key={step.id}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 8,
-                  cursor: 'pointer',
-                }}
-              >
+              <label key={step.id} className={`check-line${step.done ? ' is-done' : ''}`}>
                 <input
                   type="checkbox"
                   checked={step.done}
                   onChange={() => toggleStep(step.id)}
-                  style={{
-                    width: 15,
-                    height: 15,
-                    flexShrink: 0,
-                    accentColor: 'var(--pink-dark)',
-                  }}
                 />
-
-                <span
-                  style={{
-                    fontSize: '0.78rem',
-                    color: step.done
-                      ? 'var(--ink-muted)'
-                      : 'var(--ink)',
-                    textDecoration: step.done
-                      ? 'line-through'
-                      : 'none',
-                  }}
-                >
-                  {step.text}
-                </span>
+                <span>{step.text}</span>
               </label>
             ))}
           </div>
 
-          <button
-            onClick={runGeneration}
-            disabled={generating}
-            style={{
-              marginTop: 10,
-              background: 'none',
-              border: 'none',
-              cursor: generating ? 'default' : 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 4,
-              fontSize: '0.68rem',
-              color: 'var(--ink-muted)',
-              padding: 0,
-              opacity: generating ? 0.6 : 1,
-            }}
-          >
-            <Icon name="icon-refresh" size={12} />
-
-            {generating
-              ? 'Regenerating…'
-              : 'Regenerate plan'}
-          </button>
+          <div className="drawer-foot">
+            <button className="link-btn" onClick={runGeneration} disabled={generating}>
+              <Icon name="icon-refresh" size={12} />
+              {generating ? 'Regenerating…' : 'Regenerate plan'}
+            </button>
+          </div>
         </div>
       )}
     </div>

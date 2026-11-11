@@ -258,12 +258,7 @@ export default function TrackerPage({
       {isHabits ? (
         <>
           <div
-            style={{
-              display: 'flex',
-              gap: '0.5rem',
-              margin: '1rem 0',
-              flexWrap: 'wrap',
-            }}
+            className="chip-row"
           >
             <button
               className="btn-primary"
@@ -332,10 +327,7 @@ export default function TrackerPage({
           {/* DAY X OF YOUR CYCLE CARD */}
           {cycleDay !== null && (
             <div
-              className="card"
-              style={{
-                background: 'var(--blush)',
-              }}
+              className="card is-tinted"
             >
               <div>
                 <Icon name="flower" size={16} /> Day {cycleDay} of
@@ -345,23 +337,11 @@ export default function TrackerPage({
 
               {(cycleMoon.start || cycleMoon.end) && (
                 <div
-                  style={{
-                    fontSize: 12,
-                    color: 'var(--ink-muted)',
-                    marginTop: '0.25rem',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 10,
-                    flexWrap: 'wrap',
-                  }}
+                  className="meta-row"
                 >
                   {cycleMoon.start && (
                     <span
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 4,
-                      }}
+                      className="meta-item"
                     >
                       <Icon
                         name={
@@ -380,11 +360,7 @@ export default function TrackerPage({
 
                   {cycleMoon.end && (
                     <span
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 4,
-                      }}
+                      className="meta-item"
                     >
                       <Icon
                         name={
@@ -408,12 +384,7 @@ export default function TrackerPage({
 
           {/* SELECT TRACKER TYPE */}
           <div
-            style={{
-              display: 'flex',
-              gap: '0.5rem',
-              margin: '1rem 0',
-              flexWrap: 'wrap',
-            }}
+            className="chip-row"
           >
             <button
               className="btn-secondary"
@@ -487,17 +458,12 @@ export default function TrackerPage({
           {/* ADD CUSTOM TRACKER */}
           {showAddTracker && (
             <div
-              className="card"
-              style={{ marginBottom: '1rem' }}
+              className="card is-spaced"
             >
               <h4>New Custom Tracker</h4>
 
               <div
-                style={{
-                  fontSize: 11,
-                  color: 'var(--ink-muted)',
-                  marginBottom: 8,
-                }}
+                className="hint-text"
               >
                 Track anything with a single daily number — water
                 intake, pages read, mood score, whatever's useful
@@ -505,32 +471,28 @@ export default function TrackerPage({
               </div>
 
               <div
-                style={{
-                  display: 'flex',
-                  gap: 8,
-                  flexWrap: 'wrap',
-                }}
+                className="add-row"
               >
                 <input
-                  className="form-input"
+                  className="form-input w-md"
                   type="text"
                   placeholder="Name (e.g. Water Intake)"
                   value={newTrackerLabel}
                   onChange={(e) =>
                     setNewTrackerLabel(e.target.value)
                   }
-                  style={{ width: 200 }}
+                  
                 />
 
                 <input
-                  className="form-input"
+                  className="form-input w-sm"
                   type="text"
                   placeholder="Unit (e.g. cups)"
                   value={newTrackerUnit}
                   onChange={(e) =>
                     setNewTrackerUnit(e.target.value)
                   }
-                  style={{ width: 140 }}
+                  
                 />
 
                 <button
@@ -550,11 +512,7 @@ export default function TrackerPage({
           {/* REMOVE CUSTOM TRACKER */}
           {activeCustomTracker && (
             <div
-              style={{
-                display: 'flex',
-                justifyContent: 'flex-end',
-                marginBottom: 8,
-              }}
+              className="end-row"
             >
               <button
                 className="btn-secondary"
@@ -614,12 +572,7 @@ export default function TrackerPage({
 
               {/* MONTH NAVIGATION */}
               <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  margin: '1rem 0 0.5rem',
-                }}
+                className="month-nav"
               >
                 <button
                   className="btn-secondary"
@@ -637,11 +590,7 @@ export default function TrackerPage({
                 </button>
 
                 <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 8,
-                  }}
+                  className="add-row"
                 >
                   <strong>
                     {monthLabel(viewMonth)}

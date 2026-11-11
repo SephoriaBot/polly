@@ -182,65 +182,57 @@ export default function LifeEvents() {
   return (
     <div className="card">
       <div className="card-body">
-        <div className="section-label" style={{ marginBottom: 4 }}>Life Events</div>
-        <p style={{ fontSize: '0.78rem', color: 'var(--ink-muted)', marginTop: 0, marginBottom: 14 }}>
+        <div className="section-label">Life Events</div>
+        <p className="hint-text">
           Big life stuff gets its own temporary checklist instead of you building one from scratch.
         </p>
 
         {loading ? (
-          <p style={{ fontSize: 13, color: 'var(--ink-muted)' }}>Loading…</p>
+          <p className="muted-text">Loading…</p>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 14 }}>
+          <div className="row-list subsection-end">
             {events.map(event => {
               const items = itemsByEvent[event.id] ?? [];
               const doneCount = items.filter(i => i.done).length;
               const isOpen = expanded === event.id;
               const template = LIFE_EVENT_TEMPLATES.find(t => t.key === event.template_key);
               return (
-                <div key={event.id} style={{ border: '1.5px solid var(--border)', borderRadius: 18, overflow: 'hidden', background: 'var(--white)' }}>
+                <div key={event.id} className="accordion">
                   <button
+                    className="accordion-head"
                     onClick={() => setExpanded(isOpen ? null : event.id)}
-                    style={{
-                      display: 'flex', alignItems: 'center', gap: 10, width: '100%',
-                      padding: '12px 14px', background: 'transparent', border: 'none', cursor: 'pointer', fontFamily: 'inherit',
-                    }}
                   >
-                    {template && <Icon name={template.icon as Parameters<typeof Icon>[0]['name']} size={20} style={{ color: 'var(--pink-dark)', flexShrink: 0 }} />}
-                    <div style={{ flex: 1, textAlign: 'left' }}>
-                      <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--ink)' }}>{event.title}</div>
-                      <div style={{ fontSize: '0.68rem', color: 'var(--ink-muted)' }}>
+                    {template && (
+                      <span className="panel-icon">
+                        <Icon name={template.icon as Parameters<typeof Icon>[0]['name']} size={18} />
+                      </span>
+                    )}
+                    <div className="row-text">
+                      <div className="row-title">{event.title}</div>
+                      <div className="row-meta">
                         {doneCount}/{items.length} done{event.event_date ? ` · ${new Date(event.event_date + 'T00:00:00').toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}` : ''}
                       </div>
                     </div>
-                    <Icon name={isOpen ? 'icon-chevronup' : 'icon-chevrondown'} size={14} style={{ color: 'var(--ink-muted)', flexShrink: 0 }} />
+                    <Icon name={isOpen ? 'icon-chevronup' : 'icon-chevrondown'} size={16} />
                   </button>
 
                   {isOpen && (
-                    <div style={{ padding: '0 14px 14px', display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    <div className="accordion-body">
                       {items.map(item => (
                         <div
                           key={item.id}
+                          className={`row-item is-clickable is-compact${item.done ? ' is-done' : ''}`}
                           onClick={() => toggleItem(item)}
-                          style={{
-                            display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer',
-                            background: item.done ? 'var(--blush)' : 'var(--cream)',
-                            border: `1.5px solid ${item.done ? 'var(--pink-light)' : 'var(--border)'}`,
-                            borderRadius: 12, padding: '8px 10px',
-                          }}
                         >
-                          <CheckMark completed={item.done} size={16} />                          <span style={{
-                            fontSize: '0.78rem', fontWeight: 600, flex: 1,
-                            color: item.done ? 'var(--ink-muted)' : 'var(--ink)',
-                            textDecoration: item.done ? 'line-through' : 'none',
-                          }}>
-                            {item.label}
-                          </span>
+                          <CheckMark completed={item.done} size={20} />
+                          <div className="row-text">
+                            <div className="row-title">{item.label}</div>
+                          </div>
                         </div>
                       ))}
                       <button
                         onClick={() => archiveEvent(event.id)}
-                        className="btn btn-ghost btn-sm"
-                        style={{ marginTop: 4, justifyContent: 'center' }}
+                        className="btn btn-ghost btn-sm btn-block"
                       >
                         All wrapped up — archive this
                       </button>
@@ -253,7 +245,7 @@ export default function LifeEvents() {
         )}
 
         {!picking ? (
-          <button className="btn btn-primary" onClick={() => setPicking(true)} style={{ width: '100%', justifyContent: 'center' }}>
+          <button className="btn btn-primary btn-block" onClick={() => setPicking(true)}>
             <Icon name="icon-plus" size={20} /> Start a life event
           </button>
         ) : (
@@ -282,11 +274,11 @@ function TemplatePicker({ onPick, onCancel }: { onPick: (t: LifeEventTemplate, d
 
   if (selected) {
     return (
-      <div style={{ padding: 10, borderRadius: 14, background: 'var(--cream)', border: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: 8 }}>
-        <div style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--ink)' }}>{selected.label}</div>
-        <label style={{ fontSize: '0.72rem', color: 'var(--ink-muted)', fontWeight: 600 }}>Event date (optional)</label>
-        <input type="date" className="form-input" value={date} onChange={e => setDate(e.target.value)} disabled={generating} style={{ fontSize: '0.8rem' }} />
-        <label style={{ fontSize: '0.72rem', color: 'var(--ink-muted)', fontWeight: 600 }}>Anything specific? (optional)</label>
+      <div className="form-panel">
+        <div className="row-title">{selected.label}</div>
+        <label className="form-label">Event date (optional)</label>
+        <input type="date" className="form-input" value={date} onChange={e => setDate(e.target.value)} disabled={generating} />
+        <label className="form-label">Anything specific? (optional)</label>
         <textarea
           className="form-input"
           rows={3}
@@ -295,16 +287,10 @@ function TemplatePicker({ onPick, onCancel }: { onPick: (t: LifeEventTemplate, d
           value={details}
           onChange={e => setDetails(e.target.value)}
           disabled={generating}
-          style={{ fontSize: '0.8rem', resize: 'vertical', fontFamily: 'inherit' }}
         />
-        <div style={{ display: 'flex', gap: 6 }}>
-          <button className="btn btn-ghost btn-sm" style={{ flex: 1, justifyContent: 'center' }} onClick={() => setSelected(null)} disabled={generating}>Back</button>
-          <button
-            className="btn btn-primary btn-sm"
-            style={{ flex: 1, justifyContent: 'center', opacity: generating ? 0.6 : 1 }}
-            onClick={handleCreate}
-            disabled={generating}
-          >
+        <div className="form-actions">
+          <button className="btn btn-ghost btn-sm" onClick={() => setSelected(null)} disabled={generating}>Back</button>
+          <button className="btn btn-primary btn-sm" onClick={handleCreate} disabled={generating}>
             {generating ? 'Tailoring your checklist…' : 'Create workspace'}
           </button>
         </div>
@@ -313,24 +299,16 @@ function TemplatePicker({ onPick, onCancel }: { onPick: (t: LifeEventTemplate, d
   }
 
   return (
-    <div>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 8 }}>
+    <div className="stack">
+      <div className="pick-grid">
         {LIFE_EVENT_TEMPLATES.map(t => (
-          <button
-            key={t.key}
-            onClick={() => setSelected(t)}
-            style={{
-              display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6,
-              background: 'var(--white)', border: '1.5px solid var(--border)',
-              borderRadius: 16, padding: '12px 6px', cursor: 'pointer', fontFamily: 'inherit',
-            }}
-          >
-            <Icon name={t.icon as Parameters<typeof Icon>[0]['name']} size={20} style={{ color: 'var(--pink-dark)' }} />
-            <span style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--ink)', textAlign: 'center' }}>{t.label}</span>
+          <button key={t.key} className="pick-tile" onClick={() => setSelected(t)}>
+            <Icon name={t.icon as Parameters<typeof Icon>[0]['name']} size={24} />
+            <span>{t.label}</span>
           </button>
         ))}
       </div>
-      <button className="btn btn-ghost btn-sm" onClick={onCancel} style={{ width: '100%', justifyContent: 'center' }}>Cancel</button>
+      <button className="btn btn-ghost btn-sm btn-block" onClick={onCancel}>Cancel</button>
     </div>
   );
 }
