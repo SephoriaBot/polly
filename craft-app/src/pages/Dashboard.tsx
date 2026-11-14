@@ -23,7 +23,6 @@ interface Focus {
   estimated_minutes: number | null;
   completed: boolean;
   date: string;
-  carried_over: boolean;
   priority: boolean;
 }
 
@@ -58,16 +57,8 @@ export default function Dashboard({ onNavigate }: { onNavigate?: (page: string, 
     loadAll();
   }, []);
 
-  async function carryOverFocuses() {
-    await supabase.from('focuses')
-      .update({ date: todayStr, carried_over: true })
-      .lt('date', todayStr)
-      .eq('completed', false);
-  }
-
   async function loadAll() {
-    await carryOverFocuses();
-    const { data } = await supabase.from('focuses').select('*').eq('date', todayStr).order('created_at');
+    const { data } = await supabase.from('focuses').select('*').order('created_at');
     setFocuses(data || []);
   }
 
@@ -164,7 +155,7 @@ export default function Dashboard({ onNavigate }: { onNavigate?: (page: string, 
             <section>
               <div className="section-head">
                 <div className="section-label">
-                  Today&apos;s Focus
+                  Focuses
                   {focuses.length > 0 && (
                     <span className="section-count">{completedFocuses}/{focuses.length} done</span>
                   )}
@@ -196,7 +187,7 @@ export default function Dashboard({ onNavigate }: { onNavigate?: (page: string, 
               )}
 
               {focuses.length === 0 && !addingFocus ? (
-                <EmptyState image={emptyDash} message="No focuses set for today." size={70} />
+                <EmptyState image={emptyDash} message="No focuses yet." size={70} />
               ) : (
                 <div className="row-list">
                   {sortedFocuses.map(f => (
@@ -211,9 +202,6 @@ export default function Dashboard({ onNavigate }: { onNavigate?: (page: string, 
 
                       <div className="row-text">
                         <div className="row-title">{f.title}</div>
-                        {f.carried_over && !f.completed && (
-                          <div className="row-note">Not finished!</div>
-                        )}
                         {f.estimated_minutes && (
                           <div className="row-meta">Est. {f.estimated_minutes} min</div>
                         )}
