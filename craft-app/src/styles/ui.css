@@ -2158,7 +2158,7 @@
   object-fit: contain;
 }
 
-.arena-side .progress { width: 100%; }
+.arena-side .progress { width: 100%; flex: 0 0 auto; height: 10px; }
 
 .arena-name {
   font-size: 0.85rem;
