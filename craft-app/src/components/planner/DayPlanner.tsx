@@ -18,6 +18,7 @@ import {
   dayKeyFromToday,
   dateFromKey,
 } from '../../lib/dayPlan';
+import PollyLoading from '../PollyLoading';
 
 interface PlanAppt {
   id: string;
@@ -169,7 +170,7 @@ export default function DayPlanner() {
         <div className="date-heading">{dateHeading}</div>
 
         {loading ? (
-          <p className="muted-text">Loading…</p>
+          <PollyLoading message="Loading your day…" />
         ) : (
           <>
             {/* THE PLAN */}

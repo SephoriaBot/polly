@@ -7,6 +7,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '../../lib/supabase';
 import { useToast } from '../../hooks/useToast';
 import Icon from '../Icon';
+import PollyLoading from '../PollyLoading';
 
 interface PlanStep {
   id: string;
@@ -200,7 +201,7 @@ export default function ChoreCleaningPlan({
 
   return (
     <div className="plan-drawer">
-      {loadingPlan && <p className="muted-text">Loading plan…</p>}
+      {loadingPlan && <PollyLoading size="small" message="Loading plan…" />}
 
       {!loadingPlan && !steps && (
         <button

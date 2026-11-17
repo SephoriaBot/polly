@@ -7,6 +7,7 @@ import {
   SAFE_TO_SPEND_BUFFER,
   SAFE_TO_SPEND_LOOKAHEAD_DAYS,
 } from '../../lib/payProjection';
+import PollyLoading from '../PollyLoading';
 
 /* ------------------------------------------------------------------
    Plan tab: one calm page that answers
@@ -243,8 +244,8 @@ export default function PlanTab() {
   if (loading && !data) {
     return (
       <div className="card">
-        <div className="card-body center-text muted-text">
-          Crunching your numbers…
+        <div className="card-body">
+          <PollyLoading message="Crunching your numbers…" />
         </div>
       </div>
     );

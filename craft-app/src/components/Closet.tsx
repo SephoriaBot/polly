@@ -14,6 +14,7 @@ import { useToast } from '../hooks/useToast';
 import { outfitIconPath, hatIdFromAssetKey } from '../creatures/equipRender';
 import Polly from './Polly';
 import { triggerActionEvent } from '../lib/questSystem';
+import PollyLoading from './PollyLoading';
 
 type CosmeticSlot = 'headwear' | 'outfits';
 
@@ -97,7 +98,7 @@ export default function Closet() {
   }
 
   if (loading) {
-    return <div className="section-label">Loading your closet…</div>;
+    return <PollyLoading message="Loading your closet…" />;
   }
 
   if (owned.length === 0) {

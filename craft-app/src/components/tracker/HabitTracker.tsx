@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { supabase } from '../../lib/supabase';
 import './HabitTracker.css';
+import PollyLoading from '../PollyLoading';
 
 // ---------- types ----------
 
@@ -283,7 +284,11 @@ export default function HabitTracker() {
   const [showAdd, setShowAdd] = useState(false);
 
   if (loading) {
-    return <div className="habit-tracker habit-tracker--loading">Loading your habits…</div>;
+    return (
+      <div className="habit-tracker habit-tracker--loading">
+        <PollyLoading message="Loading your habits…" />
+      </div>
+    );
   }
 
   return (

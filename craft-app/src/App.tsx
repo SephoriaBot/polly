@@ -28,6 +28,7 @@ import Login from './pages/Login';
 
 import PollyPageTour from './components/PollyPageTour';
 import PollyPopIn from './components/PollyPopIn';
+import PollyLoading from './components/PollyLoading';
 
 import PageTitleLogo from "./components/PageTitleLogo";
 import {
@@ -461,11 +462,7 @@ export default function App() {
                     <PollyPageTour page={page} />
                     <PollyPopIn page={page} />
                     <Suspense
-                      fallback={
-                        <div className="page-loading">
-                          Loading…
-                        </div>
-                      }
+                      fallback={<PollyLoading message="Loading…" />}
                     >
                       {page === 'dashboard' && (
                         <Dashboard onNavigate={navigate} />

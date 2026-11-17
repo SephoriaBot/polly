@@ -17,6 +17,7 @@ import { useCreatureGrowth } from '../../creatures/CreatureGrowthContext';
 import ChoreCleaningPlan from './ChoreCleaningPlan';
 import { useAuth } from '../../context/AuthContext';
 import { completeChoreQuest } from '../../lib/questSystem';
+import PollyLoading from '../PollyLoading';
 
 interface Chore extends ChoreBase {
   icon: IconName;
@@ -110,7 +111,7 @@ export default function Chores() {
         <div className="section-label">Chores</div>
 
         {loading ? (
-          <p className="muted-text">Loading…</p>
+          <PollyLoading message="Loading chores…" />
         ) : sorted.length === 0 ? (
           <EmptyState image={checklistImg} message="No chores tracked yet. Add one below — Polly will remind you based on how long it's been, not a fixed schedule." />
         ) : (

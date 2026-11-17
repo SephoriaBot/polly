@@ -15,6 +15,7 @@ import { useTheme } from '../../context/ThemeContext';
 import { useCreatureGrowth } from '../../creatures/CreatureGrowthContext';
 import CheckMark from '../CheckMark';
 import { triggerActionEvent } from '../../lib/questSystem';
+import PollyLoading from '../PollyLoading';
 
 interface GoalRow {
   id: string;
@@ -301,7 +302,7 @@ export default function Goals() {
         </p>
 
         {loading ? (
-          <p className="muted-text">Loading…</p>
+          <PollyLoading message="Loading goals…" />
         ) : (
           <div className="row-list subsection-end">
             {goals.map(goal => {

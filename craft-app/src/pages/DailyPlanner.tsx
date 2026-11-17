@@ -19,6 +19,7 @@ import CheckMark from '../components/CheckMark';
 import { triggerActionEvent } from '../lib/questSystem';
 import { useToast } from '../hooks/useToast';
 import PageTitleLogo from "../components/PageTitleLogo";
+import PollyLoading from '../components/PollyLoading';
 
 interface DailyTask {
   id: string;
@@ -510,7 +511,7 @@ setNewTaskSlot('anytime');
              
 
               {loading ? (
-                <p className="muted-text">Loading…</p>
+                <PollyLoading message="Loading tasks…" />
               ) : tasks.length === 0 ? (
                 
         <EmptyState image={emptyPlanner} message="No tasks yet. Add a new or recurring one below to get started." />

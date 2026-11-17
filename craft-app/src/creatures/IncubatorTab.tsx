@@ -8,6 +8,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { collectEgg } from '../lib/questSystem';
 import { SPECIES_LABELS, type Species } from './creatures';
+import PollyLoading from '../components/PollyLoading';
 
 // There's no dedicated "ready" egg art yet, so both states use the same egg
 // and the ready state is distinguished with a wobble + glow in CSS. Drop an
@@ -97,7 +98,7 @@ export default function IncubatorTab({ userId }: IncubatorTabProps) {
         <h2 className="incubator-tab__title">Incubator</h2>
 
         {egg.status === 'loading' && (
-          <p className="incubator-tab__hint">Checking the nest...</p>
+          <PollyLoading size="small" message="Checking the nest..." />
         )}
 
         {egg.status === 'empty' && !justHatched && (

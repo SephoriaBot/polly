@@ -39,6 +39,7 @@ import {
 import type { WildCreature, AttackOutcome, TrainedStats } from "./battle";
 import EmptyState from '../components/EmptyState';
 import emptyHabitat from '../assets/icons/empty-habitat.png';
+import PollyLoading from '../components/PollyLoading';
 
 
 interface FighterEntry {
@@ -286,8 +287,8 @@ const goScout = () => {
   if (loading) {
     return (
       <div className="card">
-        <div className="card-body center-text muted-text">
-          checking the tournament board...
+        <div className="card-body">
+          <PollyLoading message="checking the tournament board..." />
         </div>
       </div>
     );

@@ -20,6 +20,7 @@ import { LIFE_EVENT_TEMPLATES, type LifeEventTemplate } from '../../lib/lifeEven
 import { requestChecklist } from '../../lib/aiChecklist';
 import { useCreatureGrowth } from '../../creatures/CreatureGrowthContext';
 import CheckMark from '../CheckMark';
+import PollyLoading from '../PollyLoading';
 
 interface LifeEventRow {
   id: string;
@@ -188,7 +189,7 @@ export default function LifeEvents() {
         </p>
 
         {loading ? (
-          <p className="muted-text">Loading…</p>
+          <PollyLoading message="Loading events…" />
         ) : (
           <div className="row-list subsection-end">
             {events.map(event => {
