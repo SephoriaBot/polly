@@ -21,7 +21,7 @@ interface QuestRow {
   id: string;
   title: string;
   source_type: 'chore' | 'action';
-  reward_type: 'cosmetic' | 'egg' | 'points' | 'shelf_item';
+  reward_type: 'cosmetic' | 'egg';
   reward_cosmetic_id: string | null;
   reward_name?: string;
 }

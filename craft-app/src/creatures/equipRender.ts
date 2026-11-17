@@ -89,11 +89,26 @@ const NOODLE_FILE_OVERRIDES: Record<string, string> = {
 // back to the flat icon for quest cosmetics instead of a missing sprite.
 const QUEST_ART_SPECIES: CreatureSpecies[] = ["wereham", "noodle", "dragon"];
 
+// The duck hat's sprites were uploaded with their own per-species names
+// (no underscore in "duckhat"), and only the 3 pickable species have art.
+// hatId here matches the flat icon, headwear_duck_hat.png.
+const DUCK_HAT_ID = "duck_hat";
+const DUCK_HAT_ART_SPECIES: CreatureSpecies[] = ["wereham", "noodle", "dragon"];
+
+function duckHatFileName(species: CreatureSpecies, expression: Expression): string {
+  if (species === "wereham") return `wereham-duckhat-${expression}.png`;
+  if (species === "noodle") return `duckhat_noodle_${expression}.png`;
+  return `dragon_duckhat_${expression}.png`;
+}
+
 function isQuestCosmetic(hatId: string): boolean {
   return (QUEST_COSMETIC_IDS as readonly string[]).includes(hatId);
 }
 
 function spriteFileName(species: CreatureSpecies, config: SpeciesAssetConfig, hatId: string, expression: Expression): string {
+  if (hatId === DUCK_HAT_ID) {
+    return duckHatFileName(species, expression);
+  }
   if (isQuestCosmetic(hatId)) {
     if (species === "wereham") {
       return `${config.filePrefix}-${hatId}-${expression}.png`;
@@ -194,7 +209,12 @@ export function resolveEquipRender({ species, hatId, expression }: EquipRenderIn
   }
 
   const config = SPECIES_CONFIG[species];
-  const hasArt = isQuestCosmetic(hatId) ? QUEST_ART_SPECIES.includes(species) : !!config;
+  const hasArt =
+    hatId === DUCK_HAT_ID
+      ? DUCK_HAT_ART_SPECIES.includes(species)
+      : isQuestCosmetic(hatId)
+        ? QUEST_ART_SPECIES.includes(species)
+        : !!config;
   if (config && hasArt) {
     return {
       imagePath: buildSpritePath(species, config, hatId, expression),

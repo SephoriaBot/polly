@@ -32,40 +32,14 @@ const EGG_HATCH_HOURS = 24;
 // no quest is currently active. Tune as you like.
 const DAILY_SPAWN_CHANCE = 0.4;
 
-type RewardType = 'cosmetic' | 'egg' | 'points' | 'shelf_item';
+type RewardType = 'cosmetic' | 'egg';
 
-// Relative odds each reward type is picked. Equal by default — tune as
-// you like (e.g. lower egg if it should feel rarer). shelf_item is retired
-// (the Habitat shelf was removed) so it is never rolled; the type stays only
-// so quests spawned before the removal can still be claimed (see claimQuest).
+// Relative odds each reward type is picked. Cosmetics are the bread and
+// butter; eggs are the rare drop. Tune as you like.
 const REWARD_WEIGHTS: Record<RewardType, number> = {
-  cosmetic: 1,
+  cosmetic: 3,
   egg: 1,
-  points: 1,
-  shelf_item: 0,
 };
-
-// Old quests that were already sitting in the database with a shelf item
-// reward pay out this many bank points instead.
-const LEGACY_SHELF_QUEST_POINTS = 25;
-
-// Bank-point reward scaling. Chore "difficulty" is estimated_minutes off
-// the chore itself; action-quest difficulty comes from the
-// quest_templates.difficulty column (a small int you set per template,
-// e.g. 1-5). Clamped so no single quest is worth an absurd number of
-// points. Tune all four as you like.
-const CHORE_POINTS_PER_MINUTE = 2;
-const ACTION_POINTS_PER_DIFFICULTY = 15;
-const MIN_POINTS_REWARD = 10;
-const MAX_POINTS_REWARD = 150;
-
-function pointsForDifficulty(sourceType: 'chore' | 'action', difficulty: number): number {
-  const raw =
-    sourceType === 'chore'
-      ? difficulty * CHORE_POINTS_PER_MINUTE
-      : difficulty * ACTION_POINTS_PER_DIFFICULTY;
-  return Math.max(MIN_POINTS_REWARD, Math.min(MAX_POINTS_REWARD, Math.round(raw)));
-}
 
 function pickWeightedRewardType(weights: Record<RewardType, number>): RewardType {
   const entries = Object.entries(weights) as [RewardType, number][];
@@ -131,39 +105,19 @@ async function getCandidatePool(userId: string): Promise<QuestCandidate[]> {
 }
 
 // ---------------------------------------------------------------------------
-// 2. REWARD ROLL — one reward, of one of four types, per spawned quest.
+// 2. REWARD ROLL — one reward, either a cosmetic or an egg, per spawned quest.
 // ---------------------------------------------------------------------------
 
 interface RewardRoll {
   reward_type: RewardType;
   reward_cosmetic_id: string | null;
-  reward_points: number | null;
-  reward_shelf_item_key: string | null;
 }
 
-async function rollReward(
-  userId: string,
-  sourceType: 'chore' | 'action',
-  difficulty: number
-): Promise<RewardRoll> {
+async function rollReward(userId: string): Promise<RewardRoll> {
   const type = pickWeightedRewardType(REWARD_WEIGHTS);
 
-  if (type === 'points') {
-    return {
-      reward_type: 'points',
-      reward_cosmetic_id: null,
-      reward_points: pointsForDifficulty(sourceType, difficulty),
-      reward_shelf_item_key: null,
-    };
-  }
-
   if (type === 'egg') {
-    return {
-      reward_type: 'egg',
-      reward_cosmetic_id: null,
-      reward_points: null,
-      reward_shelf_item_key: null,
-    };
+    return { reward_type: 'egg', reward_cosmetic_id: null };
   }
 
   // cosmetic — only ones the player doesn't already own
@@ -175,23 +129,12 @@ async function rollReward(
   const pool = (cosmetics ?? []).filter((c) => !ownedCosmeticIds.has(c.id));
 
   if (pool.length === 0) {
-    // Every cosmetic is already owned — fall back to points instead of
-    // handing out a duplicate.
-    return {
-      reward_type: 'points',
-      reward_cosmetic_id: null,
-      reward_points: pointsForDifficulty(sourceType, difficulty),
-      reward_shelf_item_key: null,
-    };
+    // Every cosmetic is already owned — give an egg instead of a duplicate.
+    return { reward_type: 'egg', reward_cosmetic_id: null };
   }
 
   const picked = pool[Math.floor(Math.random() * pool.length)];
-  return {
-    reward_type: 'cosmetic',
-    reward_cosmetic_id: picked.id,
-    reward_points: null,
-    reward_shelf_item_key: null,
-  };
+  return { reward_type: 'cosmetic', reward_cosmetic_id: picked.id };
 }
 
 // ---------------------------------------------------------------------------
@@ -240,7 +183,7 @@ export async function maybeSpawnQuest(userId: string) {
   if (pool.length === 0) return;
 
   const candidate = pool[Math.floor(Math.random() * pool.length)];
-  const reward = await rollReward(userId, candidate.source_type, candidate.difficulty);
+  const reward = await rollReward(userId);
 
   const { error: insertError } = await supabase.from('quests').insert({
     source_type: candidate.source_type,
@@ -249,8 +192,8 @@ export async function maybeSpawnQuest(userId: string) {
     title: candidate.title,
     reward_type: reward.reward_type,
     reward_cosmetic_id: reward.reward_cosmetic_id,
-    reward_points: reward.reward_points,
-    reward_shelf_item_key: reward.reward_shelf_item_key,
+    reward_points: null,
+    reward_shelf_item_key: null,
     // Missed = gone: expires at the end of the day it spawned on, with
     // no carryover into tomorrow.
     expires_at: endOfTodayIso(),
@@ -315,7 +258,6 @@ export async function triggerActionEvent(userId: string, eventKey: string) {
 type ClaimResult =
   | { ok: true; reward: 'cosmetic'; cosmeticId: string }
   | { ok: true; reward: 'egg'; hatchAt: string }
-  | { ok: true; reward: 'points'; points: number }
   | {
       ok: false;
       reason: 'egg_already_incubating' | 'not_found' | 'already_claimed';
@@ -335,6 +277,23 @@ export async function claimQuest(
   if (!quest) return { ok: false, reason: 'not_found' };
   if (quest.status !== 'active') {
     return { ok: false, reason: 'already_claimed' };
+  }
+
+  // Quests spawned before points/shelf rewards were removed get re-rolled
+  // into a cosmetic or an egg when claimed.
+  if (quest.reward_type === 'points' || quest.reward_type === 'shelf_item') {
+    const reroll = await rollReward(userId);
+    quest.reward_type = reroll.reward_type;
+    quest.reward_cosmetic_id = reroll.reward_cosmetic_id;
+    await supabase
+      .from('quests')
+      .update({
+        reward_type: reroll.reward_type,
+        reward_cosmetic_id: reroll.reward_cosmetic_id,
+        reward_points: null,
+        reward_shelf_item_key: null,
+      })
+      .eq('id', questId);
   }
 
   if (quest.reward_type === 'egg') {
@@ -367,47 +326,6 @@ export async function claimQuest(
     publishToast(`Quest complete: ${quest.title}! An egg is in the Incubator 🥚`);
     publishQuestChanged();
     return { ok: true, reward: 'egg', hatchAt };
-  }
-
-  if (quest.reward_type === 'points') {
-    // Direct read-modify-write against bank_points, same pattern
-    // useCreatureGrowth uses elsewhere. Note this doesn't push the new
-    // total into any already-mounted useCreatureGrowth state — components
-    // showing the bank balance pick it up on their own next fetch.
-    const { data: bankRow } = await supabase.from('bank_points').select('points').maybeSingle();
-    const current = Number(bankRow?.points) || 0;
-    const rewardPoints = quest.reward_points ?? 0;
-    const newPoints = current + rewardPoints;
-
-    await supabase.from('bank_points').upsert({ points: newPoints }, { onConflict: 'user_id' });
-
-    await supabase
-      .from('quests')
-      .update({ status: 'claimed', claimed_at: new Date().toISOString() })
-      .eq('id', questId);
-
-    publishToast(`Quest complete: ${quest.title}! +${rewardPoints} points 💰`);
-    publishQuestChanged();
-    return { ok: true, reward: 'points', points: rewardPoints };
-  }
-
-  if (quest.reward_type === 'shelf_item') {
-    // Retired reward type — the shelf no longer exists, so a quest that was
-    // created with one pays out bank points instead.
-    const { data: bankRow } = await supabase.from('bank_points').select('points').maybeSingle();
-    const current = Number(bankRow?.points) || 0;
-    const newPoints = current + LEGACY_SHELF_QUEST_POINTS;
-
-    await supabase.from('bank_points').upsert({ points: newPoints }, { onConflict: 'user_id' });
-
-    await supabase
-      .from('quests')
-      .update({ status: 'claimed', claimed_at: new Date().toISOString() })
-      .eq('id', questId);
-
-    publishToast(`Quest complete: ${quest.title}! +${LEGACY_SHELF_QUEST_POINTS} points 💰`);
-    publishQuestChanged();
-    return { ok: true, reward: 'points', points: LEGACY_SHELF_QUEST_POINTS };
   }
 
   // Cosmetic reward

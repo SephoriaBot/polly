@@ -14,19 +14,15 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import webpush from 'web-push';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { HABITAT_ITEMS } from '../src/lib/habitatItems.js';
 
 const TZ = 'America/New_York';
 const SEND_HOUR = 6;
 
 // Keep these in step with src/lib/questSystem.ts
 const DAILY_SPAWN_CHANCE = 0.4;
-const CHORE_POINTS_PER_MINUTE = 2;
-const ACTION_POINTS_PER_DIFFICULTY = 15;
-const MIN_POINTS_REWARD = 10;
-const MAX_POINTS_REWARD = 150;
-const REWARD_TYPES = ['cosmetic', 'egg', 'points', 'shelf_item'] as const;
-type RewardType = (typeof REWARD_TYPES)[number];
+// Cosmetics are the common drop, eggs the rare one (3:1).
+const REWARD_TYPES = ['cosmetic', 'cosmetic', 'cosmetic', 'egg'] as const;
+type RewardType = 'cosmetic' | 'egg';
 
 // ---------- time helpers (all in Eastern time) ----------
 
@@ -81,21 +77,8 @@ function timeLabel(iso: string): string {
 
 // ---------- quest spawning (mirrors src/lib/questSystem.ts) ----------
 
-function pointsFor(sourceType: 'chore' | 'action', difficulty: number): number {
-  const raw =
-    sourceType === 'chore'
-      ? difficulty * CHORE_POINTS_PER_MINUTE
-      : difficulty * ACTION_POINTS_PER_DIFFICULTY;
-  return Math.max(MIN_POINTS_REWARD, Math.min(MAX_POINTS_REWARD, Math.round(raw)));
-}
-
-async function rollReward(
-  db: SupabaseClient,
-  userId: string,
-  sourceType: 'chore' | 'action',
-  difficulty: number,
-) {
-  let type: RewardType = REWARD_TYPES[Math.floor(Math.random() * REWARD_TYPES.length)];
+async function rollReward(db: SupabaseClient, userId: string) {
+  const type: RewardType = REWARD_TYPES[Math.floor(Math.random() * REWARD_TYPES.length)];
   const base = {
     reward_type: type as RewardType,
     reward_cosmetic_id: null as string | null,
@@ -103,26 +86,8 @@ async function rollReward(
     reward_shelf_item_key: null as string | null,
   };
 
-  if (type === 'shelf_item') {
-    const { data: unlocked } = await db
-      .from('habitat_unlocked_items')
-      .select('item_key')
-      .eq('user_id', userId);
-    const owned = new Set((unlocked ?? []).map((r) => r.item_key));
-    const available = HABITAT_ITEMS.filter((i) => !owned.has(i.key));
-    if (available.length > 0) {
-      const picked = available[Math.floor(Math.random() * available.length)];
-      return { ...base, reward_type: 'shelf_item' as RewardType, reward_shelf_item_key: picked.key };
-    }
-    type = 'points';
-  }
-
-  if (type === 'points') {
-    return { ...base, reward_type: 'points' as RewardType, reward_points: pointsFor(sourceType, difficulty) };
-  }
-
   if (type === 'egg') {
-    return { ...base, reward_type: 'egg' as RewardType };
+    return base;
   }
 
   const [{ data: cosmetics }, { data: ownedRows }] = await Promise.all([
@@ -132,7 +97,8 @@ async function rollReward(
   const ownedIds = new Set((ownedRows ?? []).map((r) => r.cosmetic_id));
   const pool = (cosmetics ?? []).filter((c) => !ownedIds.has(c.id));
   if (pool.length === 0) {
-    return { ...base, reward_type: 'points' as RewardType, reward_points: pointsFor(sourceType, difficulty) };
+    // Every cosmetic is owned — give an egg instead of a duplicate.
+    return { ...base, reward_type: 'egg' as RewardType };
   }
   const picked = pool[Math.floor(Math.random() * pool.length)];
   return { ...base, reward_type: 'cosmetic' as RewardType, reward_cosmetic_id: picked.id as string };
@@ -185,7 +151,7 @@ async function maybeSpawnQuest(db: SupabaseClient, userId: string, today: string
   if (pool.length === 0) return null;
 
   const candidate = pool[Math.floor(Math.random() * pool.length)];
-  const reward = await rollReward(db, userId, candidate.source_type, candidate.difficulty);
+  const reward = await rollReward(db, userId);
 
   const { error } = await db.from('quests').insert({
     user_id: userId,
