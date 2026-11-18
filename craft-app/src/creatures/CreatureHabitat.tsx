@@ -8,6 +8,7 @@ import EmptyState from '../components/EmptyState';
 import emptyHabitat from '../assets/icons/empty-habitat.png';
 import { STAT_CAPS, isMaxedOut } from "./battle";
 import type { TrainedStats } from "./battle";
+import PollyLoading from "../components/PollyLoading";
 
 function imageFor(species: Species, hamsterId: string) {
   return allBabiesFor(species).find((h) => h.id === hamsterId)?.image;
@@ -112,7 +113,7 @@ export default function CreatureHabitat() {
     }
   }, [justEvolved, clearJustEvolved]);
 
-  if (loading) return null;
+  if (loading) return <PollyLoading message="Loading your habitat…" />;
 
   const selected = collection.find((c) => c.id === selectedId) || null;
   const evolvedEntry = justEvolved ? collection.find((c) => c.id === justEvolved.entryId) : null;
