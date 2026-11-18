@@ -14,3 +14,8 @@
   font-size: 0.9rem;
   color: var(--ink-muted);
 }
+
+.polly-loading--boot {
+  min-height: 100vh;
+  min-height: 100dvh;
+}
