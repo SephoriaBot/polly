@@ -32,6 +32,17 @@ interface PollyCompanionContextValue {
   setEquippedOutfit: (cosmeticId: string | null) => Promise<{ error: string | null }>;
 }
 
+/** localStorage key so boot screens can show the user's creature before sign-in data loads. */
+export const COMPANION_CACHE_KEY = 'polly:companion-species';
+
+function cacheSpecies(species: PollySpecies) {
+  try {
+    localStorage.setItem(COMPANION_CACHE_KEY, species);
+  } catch {
+    /* storage unavailable — boot screen just falls back to the default */
+  }
+}
+
 const PollyCompanionContext = createContext<PollyCompanionContextValue | undefined>(undefined);
 
 export function PollyCompanionProvider({ children }: { children: ReactNode }) {
@@ -73,6 +84,7 @@ export function PollyCompanionProvider({ children }: { children: ReactNode }) {
 
       if (!error && data?.species) {
         setSpecies(data.species as PollySpecies);
+        cacheSpecies(data.species as PollySpecies);
         setNeedsChoice(false);
         const headwearCosmetic = Array.isArray(data.headwear_cosmetic)
           ? data.headwear_cosmetic[0]
@@ -100,6 +112,7 @@ export function PollyCompanionProvider({ children }: { children: ReactNode }) {
 
   async function chooseSpecies(next: PollySpecies) {
     setSpecies(next);
+    cacheSpecies(next);
     setNeedsChoice(false);
     const { error } = await supabase
       .from('polly_companion')
