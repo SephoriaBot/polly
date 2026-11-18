@@ -28,7 +28,7 @@ import Login from './pages/Login';
 
 import PollyPageTour from './components/PollyPageTour';
 import PollyPopIn from './components/PollyPopIn';
-import PollyLoading from './components/PollyLoading';
+import PollyLoading, { PollyBootLoading } from './components/PollyLoading';
 
 import PageTitleLogo from "./components/PageTitleLogo";
 import {
@@ -244,7 +244,7 @@ function PollyRecoveryScreen({ error }: { error: Error | null }) {
 function CompanionGate({ children }: { children: ReactNode }) {
   const { loaded, needsChoice } = usePollyCompanion();
 
-  if (!loaded) return <div className="page-loading">Loading…</div>;
+  if (!loaded) return <PollyBootLoading />;
   if (needsChoice) return <PollyCompanionPicker />;
   return <>{children}</>;
 }
@@ -292,7 +292,7 @@ export default function App() {
     <AppErrorBoundary>
       <ThemeProvider>
         {loading ? (
-          <div className="page-loading">Loading…</div>
+          <PollyBootLoading />
         ) : !session ? (
           <Login />
           ) : (
