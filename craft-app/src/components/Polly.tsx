@@ -38,7 +38,7 @@ const MOOD_TO_EXPRESSION: Record<PollyMood, Expression> = {
 // (the wereham set was drawn first and is the most complete), so moods
 // that don't have a dedicated pose fall back to the closest equivalent
 // for that species rather than breaking the image.
-const POLLY_IMAGES: Record<PollySpecies, Record<PollyMood, string>> = {
+export const POLLY_IMAGES: Record<PollySpecies, Record<PollyMood, string>> = {
   wereham: {
     neutral: '/assets/pollywereham/pollyneutral.png',
     confused: '/assets/pollywereham/pollysearching.png',
