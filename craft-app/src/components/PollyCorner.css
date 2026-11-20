@@ -1,0 +1,27 @@
+/* ================================
+   POLLY DASHBOARD CORNER
+   Fixed to a bottom corner above the BottomNav
+   (z-index 30). Which corner is picked in
+   Dashboard.tsx each time the page opens.
+   Taps pass through so she never blocks a card.
+   ================================ */
+
+.polly-corner {
+  position: fixed;
+  bottom: calc(72px + env(safe-area-inset-bottom));
+  z-index: 20;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  pointer-events: none;
+}
+
+.polly-corner-right { right: 12px; }
+.polly-corner-left  { left: 12px; }
+
+/* Keeps the last card scrollable clear of Polly. */
+.polly-corner-spacer {
+  height: 110px;
+}
