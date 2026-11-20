@@ -24,6 +24,7 @@ import { type Chore, statusFor } from '../lib/chores';
 import { getUnpaidBillsThisMonth, pickNextBill, daySuffix } from '../lib/money';
 import { listCustomTrackers } from '../lib/trackerApi';
 import { TRACKER_CONFIG } from '../data/trackerConfig';
+import { useAuth } from '../context/AuthContext';
 
 interface SnapshotRow {
   key: string;
@@ -62,9 +63,16 @@ function daysAgoISO(days: number): string {
 
 export default function TodaySnapshot({ onNavigate }: { onNavigate?: (page: string, tab?: string) => void }) {
   const [rows, setRows] = useState<SnapshotRow[] | null>(null);
+  const { user, loading: authLoading } = useAuth();
+  const userId = user?.id ?? null;
 
   useEffect(() => {
-    (async () => {
+    // Wait for the session. Querying before auth is ready makes RLS return
+    // empty lists, which used to render as "all caught up" until a remount.
+    if (authLoading || !userId) return;
+    let cancelled = false;
+
+    const load = async () => {
       const today = todayISO();
       const now = new Date();
 
@@ -82,6 +90,15 @@ export default function TodaySnapshot({ onNavigate }: { onNavigate?: (page: stri
           .eq('goals.archived', false)
           .order('step_order'),
       ]);
+
+      if (cancelled) return;
+
+      // If a core query failed, keep what's on screen instead of claiming
+      // everything is finished.
+      if (choresRes.error || dueChoresRes.error || apptRes.error || recentLogsRes.error || goalStepsRes.error) {
+        console.error('TodaySnapshot load failed', choresRes.error, dueChoresRes.error, apptRes.error, recentLogsRes.error, goalStepsRes.error);
+        return;
+      }
 
       const tasks = choresRes.data ?? [];
 
@@ -163,8 +180,25 @@ export default function TodaySnapshot({ onNavigate }: { onNavigate?: (page: stri
       }
 
       setRows(next);
-    })();
-  }, []);
+    };
+
+    load().catch(err => console.error('TodaySnapshot load failed', err));
+
+    // Refresh when the app comes back to the foreground (PWA resume, tab switch).
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') {
+        load().catch(err => console.error('TodaySnapshot load failed', err));
+      }
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    window.addEventListener('focus', onVisible);
+
+    return () => {
+      cancelled = true;
+      document.removeEventListener('visibilitychange', onVisible);
+      window.removeEventListener('focus', onVisible);
+    };
+  }, [authLoading, userId]);
 
   if (!rows) {
     return (
