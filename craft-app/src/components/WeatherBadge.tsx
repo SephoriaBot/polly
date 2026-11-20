@@ -93,7 +93,7 @@ export default function WeatherBadge() {
       fontSize: '0.78rem', color: 'var(--ink-muted)',
       fontFamily: 'IBM Plex Mono, monospace', marginTop: 2,
     }}>
-      <img src={icon} alt="" style={{ width: 26, height: 26, objectFit: 'contain' }} />
+      <img src={icon} alt="" style={{ width: 40, height: 40, objectFit: 'contain' }} />
       <span>{weather.tempF}°F</span>
     </div>
   );
