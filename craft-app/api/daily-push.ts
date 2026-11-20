@@ -16,7 +16,7 @@ import webpush from 'web-push';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 const TZ = 'America/New_York';
-const SEND_HOUR = 6;
+const SEND_HOUR = 5;
 
 // Keep these in step with src/lib/questSystem.ts
 const DAILY_SPAWN_CHANCE = 0.4;
