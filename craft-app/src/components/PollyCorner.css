@@ -8,7 +8,7 @@
 
 .polly-corner {
   position: fixed;
-  bottom: calc(80px + env(safe-area-inset-bottom));
+  bottom: calc(83px + env(safe-area-inset-bottom));
   z-index: 20;
 
   display: flex;
