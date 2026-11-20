@@ -15,6 +15,7 @@ import { triggerActionEvent } from '../lib/questSystem';
 import QuestBoard from '../components/QuestBoard';
 import DayPlanCard from '../components/DayPlanCard';
 import { useAuth } from '../context/AuthContext';
+import '../components/PollyCorner.css';
 
 
 interface Focus {
@@ -49,6 +50,8 @@ export default function Dashboard({ onNavigate }: { onNavigate?: (page: string, 
   const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
   const todayName = DAY_NAMES[new Date().getDay()];
   
+  // Polly lives in a bottom corner; which one is re-rolled each time the dashboard opens.
+  const pollyCorner = useMemo<'left' | 'right'>(() => (Math.random() < 0.5 ? 'left' : 'right'), []);
   const neutralMessage = useMemo(() => getPollyMessage('neutral'), []);
   const yawningMessage = useMemo(() => getPollyMessage('yawning'), []);
 
@@ -134,11 +137,6 @@ export default function Dashboard({ onNavigate }: { onNavigate?: (page: string, 
               <LowEnergyChecklist onNavigate={onNavigate} />
             </section>
 
-            <div className="polly-stage">
-              {yawningMessage && <PollyBubble message={yawningMessage} size="medium" />}
-              <Polly mood="yawning" size="medium" />
-            </div>
-
             {user && (
               <section>
                 <QuestBoard userId={user.id} />
@@ -147,11 +145,6 @@ export default function Dashboard({ onNavigate }: { onNavigate?: (page: string, 
           </>
         ) : (
           <>
-            <div className="polly-stage">
-              {neutralMessage && <PollyBubble message={neutralMessage} size="medium" />}
-              <Polly mood="neutral" size="medium" />
-            </div>
-
             <section>
               <div className="section-head">
                 <div className="section-label">
@@ -241,6 +234,15 @@ export default function Dashboard({ onNavigate }: { onNavigate?: (page: string, 
             )}
           </>
         )}
+      </div>
+
+      <div className="polly-corner-spacer" aria-hidden="true" />
+
+      <div className={`polly-corner polly-corner-${pollyCorner}`}>
+        {mode !== 'normal'
+          ? (yawningMessage && <PollyBubble message={yawningMessage} size="small" />)
+          : (neutralMessage && <PollyBubble message={neutralMessage} size="small" />)}
+        <Polly mood={mode !== 'normal' ? 'yawning' : 'neutral'} size="small" />
       </div>
     </div>
   );
