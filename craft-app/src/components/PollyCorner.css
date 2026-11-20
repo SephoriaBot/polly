@@ -8,7 +8,7 @@
 
 .polly-corner {
   position: fixed;
-  bottom: calc(72px + env(safe-area-inset-bottom));
+  bottom: calc(116px + env(safe-area-inset-bottom));
   z-index: 20;
 
   display: flex;
@@ -23,5 +23,5 @@
 
 /* Keeps the last card scrollable clear of Polly. */
 .polly-corner-spacer {
-  height: 110px;
+  height: 160px;
 }
