@@ -25,6 +25,7 @@ import { getUnpaidBillsThisMonth, pickNextBill, daySuffix } from '../lib/money';
 import { listCustomTrackers } from '../lib/trackerApi';
 import { TRACKER_CONFIG } from '../data/trackerConfig';
 import { useAuth } from '../context/AuthContext';
+import { ensureTodaysRecurringTasks } from '../lib/dailyTasks';
 
 interface SnapshotRow {
   key: string;
@@ -75,6 +76,11 @@ export default function TodaySnapshot({ onNavigate }: { onNavigate?: (page: stri
     const load = async () => {
       const today = todayISO();
       const now = new Date();
+
+      // Today's recurring tasks are normally created when the Tasks tab opens;
+      // make sure they exist first so the count is right before any click.
+      await ensureTodaysRecurringTasks().catch(err => console.error('ensureTodaysRecurringTasks failed', err));
+      if (cancelled) return;
 
       const [choresRes, dueChoresRes, apptRes, unpaidBills, recentLogsRes, customTrackers, goalStepsRes] = await Promise.all([
         supabase.from('daily_tasks').select('id,label,done').eq('task_date', today).eq('done', false).order('created_at'),
