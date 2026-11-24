@@ -175,7 +175,9 @@ export default function PlanTab() {
     const billsOut = monthRows.reduce((s, r) => s + r.billsTotal, 0);
     const otherOut = monthRows.reduce((s, r) => s + r.extraExpenseToday, 0);
     const monthEndBalance = monthRows[monthRows.length - 1].balance;
-    const monthLanding = monthEndBalance - SAFE_TO_SPEND_BUFFER;
+    const monthLanding = weekSafeRaw; // same rule as "safe to set aside"
+    const windowEnd = addDays(today, SAFE_TO_SPEND_LOOKAHEAD_DAYS);
+    const lowPoint = Math.min(low.balance, inHand);
 
     // Paid vs still-to-pay bills this month, for the progress bar.
     const paidThisMonth = data.payments
@@ -188,7 +190,7 @@ export default function PlanTab() {
     const monthBillsTotal = paidThisMonth + stillToPay;
     const paidPct = monthBillsTotal > 0 ? Math.min(100, Math.round((paidThisMonth / monthBillsTotal) * 100)) : 0;
 
-    // Sunday-start weeks, clipped to today..month end.
+    // Sunday-start weeks across the whole lookahead window (can run past month end).
     const weeks: {
       start: Date;
       end: Date;
@@ -197,7 +199,7 @@ export default function PlanTab() {
       endBalance: number;
       lowBalance: number;
     }[] = [];
-    monthRows.forEach(r => {
+    rows.forEach(r => {
       const weekStart = addDays(r.date, -r.date.getDay());
       const last = weeks[weeks.length - 1];
       if (last && dateKey(last.start) === dateKey(weekStart)) {
@@ -233,6 +235,8 @@ export default function PlanTab() {
       otherOut,
       monthEndBalance,
       monthLanding,
+      windowEnd,
+      lowPoint,
       paidThisMonth,
       stillToPay,
       paidPct,
@@ -374,11 +378,12 @@ export default function PlanTab() {
 
           <div className="plan-lines">
             <Line label="In hand now" value={plan.inHand} />
-            <Line label="Pay still coming" value={plan.payIn} sign="+" />
-            <Line label="Bills still to pay" value={plan.billsOut + plan.overdueTotal} sign="-" />
-            {plan.otherOut > 0 && <Line label="Other planned spending" value={plan.otherOut} sign="-" />}
+            <Line label={`Lowest balance through ${shortDate(plan.windowEnd)}`} value={plan.lowPoint} />
             <Line label="Safety buffer" value={SAFE_TO_SPEND_BUFFER} sign="-" />
-            <Line label={`Left to plan by ${shortDate(plan.monthEnd)}`} value={plan.monthLanding} bold />
+            <Line label="Left to plan" value={plan.monthLanding} bold />
+          </div>
+          <div className="help-text">
+            Same math as "Safe to set aside": your lowest point over the next {SAFE_TO_SPEND_LOOKAHEAD_DAYS} days, so next month's bills are included.
           </div>
 
           <div className="subsection">
