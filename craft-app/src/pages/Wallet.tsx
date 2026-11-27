@@ -40,6 +40,7 @@ interface Debt {
   deferred: boolean;
   paid_off?: boolean;
   last_processed_month?: string;
+  category?: string;
 }
 
 interface Budget {
@@ -102,6 +103,7 @@ interface SavingsGoal {
   created_at?: string;
 }
 
+const DEBT_CATEGORIES = ["Credit Card", "Loan", "Medical", "Student", "Auto", "Personal", "Other"];
 const MONTH_NAMES = ["January","February","March","April","May","June","July","August","September","October","November","December"];
 
 // Shift times replace typed hours. Paid hours = shift length minus an unpaid
@@ -338,6 +340,7 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
   const [nextBillId, setNextBillId] = useState(10);
   const [view, setView] = useState<"home" | "plan" | "calendar" | "bills" | "debts">(initialView ?? "home");  const [showDeferred, setShowDeferred] = useState(false);
   const [, setLoading] = useState(true);
+  const [debtCategory, setDebtCategory] = useState<string>("All");
   const [showBillForm, setShowBillForm] = useState(false);
   const [billsTab, setBillsTab] = useState<"month" | "recurring">("month");
   const [newBill, setNewBill] = useState({
@@ -624,6 +627,9 @@ const [budget, setBudget] = useState<Budget>({ take_home: 0, fixed_expenses: 0, 
     [debts, debtStrategy]
   );
   const deferredDebts = debts.filter(d => d.deferred);
+  const debtCategoryOf = (d: Debt) => d.category || "Other";
+  const matchesDebtCategory = (d: Debt) => debtCategory === "All" || debtCategoryOf(d) === debtCategory;
+  const debtCategoryTabs = ["All", ...DEBT_CATEGORIES.filter(c => c === debtCategory || debts.some(d => debtCategoryOf(d) === c))];
   const goalTotals = useMemo(
     () => ({
       target: goals.reduce((sum, g) => sum + g.target, 0),
@@ -1565,7 +1571,7 @@ async function updateMonthBill(
   }
 
   async function addDebt(deferred = false) {
-    const newDebt: Debt = { id: nextId, name: "New Debt", balance: 0, original_balance: 0, apr: 0, min_payment: 0, deferred };
+    const newDebt: Debt = { id: nextId, name: "New Debt", balance: 0, original_balance: 0, apr: 0, min_payment: 0, deferred, category: debtCategory !== "All" ? debtCategory : "Other" };
     setDebts(prev => [...prev, newDebt]);
     setNextId(n => n + 1);
     await supabase.from("debts").insert(newDebt);
@@ -1633,7 +1639,7 @@ async function updateMonthBill(
   };
 
     const VIEW_TITLES: Record<typeof view, { text: string; icon?: IconName }> = {
-    home: { text: "Overview", icon: "title-wallet" },
+    home: { text: "Savings Goals", icon: "title-wallet" },
     plan: { text: "Plan", icon: "piggy-bank" },
     calendar: { text: "Money Calendar", icon: "calendar" },
     bills: { text: "Bills", icon: "house" },
@@ -1641,7 +1647,7 @@ async function updateMonthBill(
   };
 
   const WALLET_TABS: PageTab<typeof view>[] = [
-    { key: "home", label: "Overview", icon: "title-wallet" },
+    { key: "home", label: "Savings Goals", icon: "title-wallet" },
     { key: "plan", label: "Plan", icon: "piggy-bank" },
     { key: "calendar", label: "Money Calendar", icon: "calendar" },
     { key: "bills", label: "Bills", icon: "house" },
@@ -2575,6 +2581,23 @@ async function updateMonthBill(
 
 <StitchDivider />
 
+{/* CATEGORY FILTER */}
+
+            <div className="scroll-chips">
+              {debtCategoryTabs.map(c => {
+                const count = c === "All" ? debts.length : debts.filter(d => debtCategoryOf(d) === c).length;
+                return (
+                  <button
+                    key={c}
+                    className={`btn btn-sm ${debtCategory === c ? "btn-primary" : "btn-ghost"}`}
+                    onClick={() => setDebtCategory(c)}
+                  >
+                    {c} ({count})
+                  </button>
+                );
+              })}
+            </div>
+
 {/* ACTIVE DEBTS */}
 
             <div className="card">
@@ -2588,9 +2611,11 @@ async function updateMonthBill(
 
                 {activeDebts.length === 0 ? (
                   <EmptyState image={emptyWallet} message="No debts listed yet. Add one to start tracking." />
+                ) : activeDebts.filter(d => !d.paid_off && matchesDebtCategory(d)).length === 0 ? (
+                  <EmptyState image={emptyWallet} message={`No active debts in ${debtCategory}.`} />
                 ) : (
                   <div className="row-list">
-                    {activeDebts.filter(d => !d.paid_off).map((d, i) => {
+                    {activeDebts.filter(d => !d.paid_off).map((d, i) => ({ d, i })).filter(({ d }) => matchesDebtCategory(d)).map(({ d, i }) => {
                       const origBal = d.original_balance || d.balance;
                       const paidPct = origBal > 0 ? Math.min(100, ((origBal - d.balance) / origBal) * 100) : 0;
                       return (
@@ -2630,6 +2655,16 @@ async function updateMonthBill(
                                 <EditableCell value={d.min_payment} onChange={v => updateDebt(d.id, "min_payment", parseFloat(v) || 0)} />
                               </div>
                             </div>
+                            <div className="debt-category">
+                              <div className="form-label">Category</div>
+                              <select
+                                className="form-input"
+                                value={debtCategoryOf(d)}
+                                onChange={e => updateDebt(d.id, "category", e.target.value)}
+                              >
+                                {DEBT_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                              </select>
+                            </div>
                           </div>
 
                           <button className="row-icon-btn" onClick={() => removeDebt(d.id)} aria-label="Delete debt">
@@ -2643,7 +2678,7 @@ async function updateMonthBill(
               </div>
             </div>
 
-            {activeDebts.filter(d => d.paid_off).length > 0 && (
+            {activeDebts.filter(d => d.paid_off && matchesDebtCategory(d)).length > 0 && (
               <div className="card">
                 <div className="card-body">
                   <div className="section-head">
@@ -2651,7 +2686,7 @@ async function updateMonthBill(
                     <span className="goal-status is-done">Amazing work!</span>
                   </div>
                   <div className="row-list">
-                    {activeDebts.filter(d => d.paid_off).map(d => (
+                    {activeDebts.filter(d => d.paid_off && matchesDebtCategory(d)).map(d => (
                       <div key={d.id} className="row-item is-sage">
                         <button
                           className="row-check"
@@ -2687,7 +2722,7 @@ async function updateMonthBill(
                 </div>
                 {showDeferred && (
                   <div className="row-list">
-                    {deferredDebts.map(d => (
+                    {deferredDebts.filter(matchesDebtCategory).map(d => (
                       <div key={d.id} className="debt-row">
                         <div className="debt-main">
                           <div className="debt-top">
@@ -2702,6 +2737,16 @@ async function updateMonthBill(
                               <div className="form-label">APR %</div>
                               <EditableCell value={d.apr} onChange={v => updateDebt(d.id, "apr", parseFloat(v) || 0)} />
                             </div>
+                          </div>
+                          <div className="debt-category">
+                            <div className="form-label">Category</div>
+                            <select
+                              className="form-input"
+                              value={debtCategoryOf(d)}
+                              onChange={e => updateDebt(d.id, "category", e.target.value)}
+                            >
+                              {DEBT_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                            </select>
                           </div>
                           <div className="row-meta">Not targeted until active debts clear</div>
                           <div className="add-row">
